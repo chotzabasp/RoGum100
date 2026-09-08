@@ -1,0 +1,143 @@
+/* ============================================================
+   web-style LIBRARY — canonical treatment recipes (84)
+   10 components. Every recipe is TREATMENT-ONLY (background border
+   radius shadow hover) so it overlays a student component without
+   touching its layout (padding font size stay as designed).
+   All recipes read --cs-* tokens. web-style fills --cs-* per student
+   from their resolved brand tokens (Step 2). Pure CSS no JS.
+   Apply: add the class + data-cnc-style marker to the element and
+   append the matching block (only) to styles.css. color held constant
+   only treatment changes.
+   ============================================================ */
+
+/* student tokens get mapped here by web-style (Step 2). fallback = yoga sample */
+[data-cnc-style]{
+  --cs-accent:var(--w-accent,#C97B5B);
+  --cs-accent-d:var(--w-accent-d,#a85f42);
+  --cs-ink:var(--w-text,#2B3A2E);
+  --cs-bg:var(--w-bg,#F5F0E8);
+  --cs-radius:var(--w-radius,6px);
+  --cs-mono:"IBM Plex Mono","Consolas",monospace;
+}
+
+/* ============ BUTTON (20) ============ overlay on student .btn */
+.cs-btn--solid{background:var(--cs-accent);color:#fff;border:0}
+.cs-btn--solid:hover{background:var(--cs-accent-d)}
+.cs-btn--pill{background:var(--cs-accent);color:#fff;border:0;border-radius:999px}
+.cs-btn--pill:hover{background:var(--cs-accent-d)}
+.cs-btn--outline{background:transparent;color:var(--cs-accent);border:2px solid var(--cs-accent);border-radius:6px}
+.cs-btn--outline:hover{background:var(--cs-accent);color:#fff}
+.cs-btn--gradient{background:linear-gradient(135deg,var(--cs-accent),var(--cs-ink));color:#fff;border:0}
+.cs-btn--gradient:hover{filter:brightness(1.08)}
+.cs-btn--elevated{background:var(--cs-accent);color:#fff;border:0;border-radius:14px;box-shadow:0 10px 22px -8px color-mix(in srgb,var(--cs-accent) 70%,transparent)}
+.cs-btn--elevated:hover{transform:translateY(-2px)}
+.cs-btn--link{background:transparent;color:var(--cs-accent);border:0;padding-left:2px;padding-right:2px}
+.cs-btn--link:hover{gap:14px}
+.cs-btn--offset{background:var(--cs-accent);color:#fff;border:2px solid var(--cs-ink);border-radius:0;box-shadow:5px 5px 0 0 var(--cs-ink)}
+.cs-btn--offset:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 0 var(--cs-ink)}
+.cs-btn--glow{background:var(--cs-accent);color:#fff;border:0;border-radius:10px;box-shadow:0 0 0 1px color-mix(in srgb,var(--cs-accent) 40%,transparent),0 0 18px 2px color-mix(in srgb,var(--cs-accent) 45%,transparent)}
+.cs-btn--glow:hover{box-shadow:0 0 0 1px var(--cs-accent),0 0 26px 4px color-mix(in srgb,var(--cs-accent) 60%,transparent)}
+.cs-btn--insetframe{background:var(--cs-accent);color:#fff;border:0;border-radius:4px;box-shadow:inset 0 0 0 2px var(--cs-bg),inset 0 0 0 3px var(--cs-accent)}
+.cs-btn--sweep{background:transparent;color:var(--cs-accent);border:2px solid var(--cs-accent);border-radius:0;position:relative;z-index:0;overflow:hidden}
+.cs-btn--sweep::before{content:"";position:absolute;inset:0;background:var(--cs-accent);transform:scaleX(0);transform-origin:left;transition:transform .22s ease;z-index:-1}
+.cs-btn--sweep:hover{color:#fff}.cs-btn--sweep:hover::before{transform:scaleX(1)}
+.cs-btn--pressed{background:var(--cs-accent);color:#fff;border:0;border-radius:8px;box-shadow:inset 0 3px 6px rgba(0,0,0,.35)}
+.cs-btn--edge3d{background:var(--cs-accent);color:#fff;border:0;border-radius:8px;box-shadow:0 4px 0 0 var(--cs-accent-d)}
+.cs-btn--edge3d:active{transform:translateY(4px);box-shadow:0 0 0 0 var(--cs-accent-d)}
+.cs-btn--dashed{background:transparent;color:var(--cs-accent);border:2px dashed var(--cs-accent);border-radius:6px}
+.cs-btn--dashed:hover{border-style:solid;background:var(--cs-accent);color:#fff}
+.cs-btn--gradborder{color:var(--cs-ink);border:2px solid transparent;border-radius:8px;background:linear-gradient(var(--cs-bg),var(--cs-bg)) padding-box,linear-gradient(135deg,var(--cs-accent),var(--cs-ink)) border-box}
+.cs-btn--gradborder:hover{color:var(--cs-accent)}
+.cs-btn--shine{background:var(--cs-accent);color:#fff;border:0;border-radius:8px;position:relative;overflow:hidden}
+.cs-btn--shine::after{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-20deg);transition:left .5s}
+.cs-btn--shine:hover::after{left:130%}
+.cs-btn--ugrow{background:transparent;color:var(--cs-ink);border:0;position:relative}
+.cs-btn--ugrow::after{content:"";position:absolute;left:0;bottom:2px;width:100%;height:8px;background:var(--cs-accent);opacity:.35;transform:scaleY(.3);transform-origin:bottom;transition:.18s}
+.cs-btn--ugrow:hover::after{transform:scaleY(1);opacity:.5}
+.cs-btn--ticket{background:var(--cs-accent);color:#fff;border:0;border-radius:0;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.cs-btn--ticket:hover{background:var(--cs-accent-d)}
+.cs-btn--siderule{background:transparent;color:var(--cs-ink);border:0;border-radius:0;padding-left:18px;text-transform:uppercase;letter-spacing:1px;position:relative}
+.cs-btn--siderule::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:4px;background:var(--cs-accent)}
+.cs-btn--siderule:hover{color:var(--cs-accent)}
+
+/* ============ INPUT (10) ============ overlay on student input */
+.cs-in--underline{background:transparent;border:0;border-bottom:1px solid color-mix(in srgb,var(--cs-ink) 25%,transparent);border-radius:0}
+.cs-in--underline:focus{border-bottom-color:var(--cs-accent);outline:none}
+.cs-in--boxed{border:1.5px solid color-mix(in srgb,var(--cs-ink) 28%,transparent);border-radius:var(--cs-radius)}
+.cs-in--boxed:focus{border-color:var(--cs-accent);outline:none}
+.cs-in--filled{background:color-mix(in srgb,var(--cs-ink) 7%,var(--cs-bg));border:0;border-radius:var(--cs-radius)}
+.cs-in--filled:focus{background:color-mix(in srgb,var(--cs-ink) 12%,var(--cs-bg));outline:none}
+.cs-in--ring{border:1.5px solid color-mix(in srgb,var(--cs-ink) 22%,transparent);border-radius:var(--cs-radius)}
+.cs-in--ring:focus{border-color:var(--cs-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--cs-accent) 28%,transparent);outline:none}
+.cs-in--inset{background:color-mix(in srgb,var(--cs-ink) 8%,var(--cs-bg));border:0;border-radius:var(--cs-radius);box-shadow:inset 0 2px 5px color-mix(in srgb,var(--cs-ink) 22%,transparent)}
+.cs-in--pill{background:color-mix(in srgb,var(--cs-ink) 7%,var(--cs-bg));border:0;border-radius:999px}
+.cs-in--pill:focus{box-shadow:0 0 0 2px var(--cs-accent);outline:none}
+.cs-in--heavy{background:transparent;border:0;border-bottom:2.5px solid var(--cs-ink);border-radius:0;font-weight:600}
+.cs-in--heavy:focus{border-bottom-color:var(--cs-accent);outline:none}
+/* draw + float need a wrapper -> see SKILL Step 5 structural notes */
+
+/* ============ CHOICE (8) ============ on student radio group, see SKILL for markup mapping */
+/* list cards blocks chips seg tags tabs select — recipes in SKILL Step 5 + preview */
+
+/* ============ EYEBROW (7) ============ */
+.cs-eb{display:inline-flex;align-items:center;gap:8px;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cs-accent);line-height:1}
+.cs-eb--rule::before{content:"";width:28px;height:1px;background:var(--cs-accent)}
+.cs-eb--num{color:color-mix(in srgb,var(--cs-ink) 55%,transparent)}
+.cs-eb--num::before{content:"01";color:var(--cs-accent);font-weight:700}
+.cs-eb--bracket::before{content:"["}.cs-eb--bracket::after{content:"]"}
+.cs-eb--badge{background:var(--cs-accent);color:#fff;padding:5px 11px;border-radius:var(--cs-radius);font-family:var(--cs-mono);text-transform:none}
+.cs-eb--dot::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cs-accent)}
+.cs-eb--bar{border-left:3px solid var(--cs-accent);padding-left:10px}
+
+/* ============ HEADING (7) ============ apply to heading, .hl marks the accent word */
+.cs-hd--word .hl{color:var(--cs-accent)}
+.cs-hd--underline .hl{background:linear-gradient(var(--cs-accent),var(--cs-accent)) left bottom / 100% 3px no-repeat;padding-bottom:3px}
+.cs-hd--mark .hl{background:color-mix(in srgb,var(--cs-accent) 30%,transparent);padding:0 .15em;box-decoration-break:clone}
+.cs-hd--big{font-size:clamp(34px,7vw,48px);letter-spacing:-1px;line-height:1.04}
+.cs-hd--rule{padding-left:16px;border-left:4px solid var(--cs-accent)}
+.cs-hd--mono{font-family:var(--cs-mono);text-transform:uppercase;letter-spacing:1px}
+
+/* ============ DIVIDER (6) ============ */
+.cs-dv--hair{border:0;height:1px;background:color-mix(in srgb,var(--cs-ink) 20%,transparent)}
+.cs-dv--thick{border:0;height:3px;width:64px;background:var(--cs-accent)}
+.cs-dv--dash{border:0;border-top:1px dashed color-mix(in srgb,var(--cs-ink) 32%,transparent)}
+.cs-dv--dot{border:0;border-top:2px dotted color-mix(in srgb,var(--cs-ink) 32%,transparent)}
+.cs-dv--fade{border:0;height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--cs-ink) 42%,transparent),transparent)}
+.cs-dv--label{display:flex;align-items:center;gap:14px;color:color-mix(in srgb,var(--cs-ink) 50%,transparent);font-size:13px;border:0}
+.cs-dv--label::before,.cs-dv--label::after{content:"";flex:1;height:1px;background:color-mix(in srgb,var(--cs-ink) 18%,transparent)}
+
+/* ============ BADGE (6) ============ */
+.cs-bdg{display:inline-flex;align-items:center;font-size:12px;letter-spacing:.5px;font-weight:600;line-height:1}
+.cs-bdg--solid{background:var(--cs-accent);color:#fff;padding:6px 13px;border-radius:999px}
+.cs-bdg--outline{border:1.5px solid var(--cs-accent);color:var(--cs-accent);padding:5px 12px;border-radius:999px}
+.cs-bdg--mono{background:var(--cs-accent);color:#fff;padding:5px 10px;border-radius:var(--cs-radius);font-family:var(--cs-mono);text-transform:uppercase}
+.cs-bdg--dot{color:var(--cs-ink);gap:7px}.cs-bdg--dot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--cs-accent)}
+.cs-bdg--tint{background:color-mix(in srgb,var(--cs-accent) 16%,transparent);color:var(--cs-accent);padding:6px 13px;border-radius:var(--cs-radius)}
+.cs-bdg--bracket{color:var(--cs-accent);font-family:var(--cs-mono)}.cs-bdg--bracket::before{content:"[ "}.cs-bdg--bracket::after{content:" ]"}
+
+/* ============ CARD / ROW (8) ============ overlay on student card */
+.cs-cd--hair{border:1px solid color-mix(in srgb,var(--cs-ink) 16%,transparent)}
+.cs-cd--heavy{border:2px solid var(--cs-ink);border-radius:0}
+.cs-cd--filled{background:color-mix(in srgb,var(--cs-ink) 6%,var(--cs-bg))}
+.cs-cd--shadow{background:color-mix(in srgb,var(--cs-ink) 3%,var(--cs-bg));border:1px solid color-mix(in srgb,var(--cs-ink) 8%,transparent);box-shadow:0 8px 24px -10px color-mix(in srgb,var(--cs-ink) 50%,transparent)}
+.cs-cd--offset{background:var(--cs-bg);border:2px solid var(--cs-ink);border-radius:0;box-shadow:6px 6px 0 0 var(--cs-accent)}
+.cs-cd--left{border-left:4px solid var(--cs-accent);background:color-mix(in srgb,var(--cs-ink) 4%,var(--cs-bg))}
+.cs-cd--top{border-top:3px solid var(--cs-accent);background:color-mix(in srgb,var(--cs-ink) 4%,var(--cs-bg))}
+.cs-cd--num{border-top:1px solid color-mix(in srgb,var(--cs-ink) 16%,transparent);border-radius:0}
+
+/* ============ STAT / NUMBER (6) ============ .stn = number .stl = label */
+.cs-st--accent .stn{color:var(--cs-accent)}
+.cs-st--rule{border-top:3px solid var(--cs-accent);padding-top:10px}
+.cs-st--box{border:1.5px solid color-mix(in srgb,var(--cs-ink) 20%,transparent);border-radius:var(--cs-radius);padding:16px 18px}
+.cs-st--side{display:flex;flex-direction:row;align-items:baseline;gap:10px}
+.cs-st--mono .stn{font-family:var(--cs-mono);color:var(--cs-accent)}
+.cs-st--mono .stl{text-transform:uppercase;letter-spacing:1px}
+
+/* ============ INDEX NUMBER (6) ============ */
+.cs-ix{display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-family:var(--cs-mono);line-height:1}
+.cs-ix--mono{color:var(--cs-accent);font-size:20px}
+.cs-ix--circle{width:42px;height:42px;border-radius:50%;border:2px solid var(--cs-accent);color:var(--cs-accent)}
+.cs-ix--fill{width:42px;height:42px;border-radius:50%;background:var(--cs-accent);color:#fff}
+.cs-ix--ghost{font-size:54px;color:color-mix(in srgb,var(--cs-accent) 28%,transparent)}
+.cs-ix--bracket{color:var(--cs-accent);font-size:18px}.cs-ix--bracket::before{content:"["}.cs-ix--bracket::after{content:"]"}
+.cs-ix--square{width:40px;height:40px;border-radius:var(--cs-radius);background:color-mix(in srgb,var(--cs-accent) 14%,transparent);color:var(--cs-accent)}

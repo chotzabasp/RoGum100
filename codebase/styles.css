@@ -1,0 +1,201 @@
+/* ============================================================
+   CNC Design System FOUNDATION
+   ============================================================
+
+   This file is the FOUNDATION layer only tokens reset type scale
+   and responsive containers. These guarantee mobile-first correctness.
+
+   USE these tokens and the responsive type scale AS-IS.
+
+   DO NOT expect component styles here (buttons forms cards counters).
+   You must CREATE your own component implementations following the
+   requirements in README.md. This is intentional so every design
+   has unique components not copied boilerplate.
+
+   ============================================================ */
+
+
+/* ============================================================
+   1. Color Tokens NEUTRAL PLACEHOLDERS
+   ALWAYS override with the specific colors from the prompt.
+   Do NOT ship a design using these grey placeholder values.
+   ============================================================ */
+
+:root {
+  --color-bg: #1a1a1a;          /* 60% dominant OVERRIDE per prompt */
+  --color-surface: #f0f0f0;     /* 30% secondary OVERRIDE per prompt */
+  --color-accent: #888888;      /* 10% accent OVERRIDE per prompt CHANGE THIS */
+  --color-text: #f0f0f0;        /* OVERRIDE per prompt */
+  --color-text-muted: #9a9a9a;  /* OVERRIDE per prompt */
+
+  /* Spacing scale base unit 8px */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 16px;
+  --s4: 24px;
+  --s5: 32px;
+  --s6: 48px;
+  --s7: 64px;
+  --s8: 96px;
+  --s9: 128px;
+
+  /* Typography OVERRIDE font families per prompt choice */
+  --font-display: 'IBM Plex Sans Thai', sans-serif;
+  --font-body: 'Sarabun', sans-serif;
+
+  /* Display size MOBILE BASE do not exceed in base styles */
+  --size-display: 32px;
+  --size-body: 16px;
+}
+
+
+/* ============================================================
+   2. Reset and Base (USE AS-IS guarantees no horizontal scroll)
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--size-body);
+  line-height: 1.5;                 /* body line-height minimum */
+  color: var(--color-text);
+  background: var(--color-bg);
+  overflow-x: hidden;               /* CRITICAL prevent horizontal scroll */
+  -webkit-font-smoothing: antialiased;
+}
+
+img, video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+
+/* ============================================================
+   3. Responsive Display Type Scale (USE AS-IS prevents Thai overflow)
+   This is the mobile-first guarantee. Apply .display to headlines.
+   Mobile base 32px scales up via min-width only.
+   ============================================================ */
+
+.display {
+  font-family: var(--font-display);
+  font-size: var(--size-display);   /* base 32px mobile */
+  font-weight: 800;
+  line-height: 1.5;                   /* Thai mark clearance sensible default web-finish enforces worst-case floor per element (display 1.7 stacks like ตั้ง) */
+  letter-spacing: -0.01em;
+  word-break: break-word;            /* Thai overflow protection */
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px)  { :root { --size-display: 56px; } }
+@media (min-width: 1024px) { :root { --size-display: 72px; } }
+@media (min-width: 1280px) { :root { --size-display: 96px; } }
+
+/* If you need a larger hero headline use these caps per breakpoint.
+   NEVER exceed these or Thai text overflows.
+   mobile 36 / tablet 64 / desktop 88 / large 112 max */
+
+
+/* ============================================================
+   4. Responsive Container (USE AS-IS)
+   ============================================================ */
+
+.container {
+  width: 100%;
+  max-width: 100vw;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--s3);
+  padding-right: var(--s3);
+}
+
+@media (min-width: 768px) {
+  .container { max-width: 720px; padding-left: var(--s5); padding-right: var(--s5); }
+}
+@media (min-width: 1024px) { .container { max-width: 1024px; } }
+@media (min-width: 1280px) { .container { max-width: 1240px; } }
+
+
+/* ============================================================
+   5. Mobile-First Grid Pattern (REFERENCE adapt as needed)
+   Base single column. Multi-column only at min-width 768px+.
+   This is the responsive PATTERN to follow not a fixed component.
+   ============================================================ */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;       /* base mobile single column */
+  gap: var(--s4);
+}
+
+@media (min-width: 768px) {
+  .grid--2 { grid-template-columns: 1fr 1fr; gap: var(--s5); }
+  .grid--3 { grid-template-columns: repeat(3, 1fr); gap: var(--s5); }
+}
+@media (min-width: 1024px) {
+  .grid--4 { grid-template-columns: repeat(4, 1fr); gap: var(--s5); }
+}
+
+
+/* ============================================================
+   6. Image Aspect Ratios (USE AS-IS — STRICT 3 ONLY)
+
+   Apply one of these classes to any image container.
+   Image inside MUST use object-fit: cover to fill the box.
+   Reason students photograph in 1 of 3 shapes web-images skill
+   matches photos against these 3 ratios only. NEVER invent new
+   ratios like 4/5 or 3/4.
+   ============================================================ */
+
+.ratio-landscape { aspect-ratio: 16 / 9; overflow: hidden; }
+.ratio-square    { aspect-ratio: 1 / 1;  overflow: hidden; }
+.ratio-portrait  { aspect-ratio: 9 / 16; overflow: hidden; }
+
+.ratio-landscape > img,
+.ratio-square > img,
+.ratio-portrait > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+
+/* ============================================================
+   7. Accessibility (USE AS-IS)
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* ============================================================
+   FOUNDATION ENDS HERE
+
+   Everything else (buttons forms cards counters reveals sticky CTA
+   hero entrance animations section layouts) you CREATE yourself
+   following README.md requirements.
+
+   Mobile-first rules to ALWAYS follow when writing your components
+   - Base styles = mobile use min-width media queries to enhance
+   - NEVER use @media (max-width) NEVER use clamp() with vw on headlines
+   - Form inputs width 100% font-size 16px (iOS zoom prevention)
+   - Buttons min-height 44px (tap target)
+   - Image containers MUST use .ratio-landscape .ratio-square or .ratio-portrait class
+   - Display headlines NEVER exceed the type scale caps above
+
+   Create UNIQUE component visuals and interactions for THIS brand.
+   Two different briefs should produce visually different components.
+   ============================================================ */

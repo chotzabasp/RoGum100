@@ -1309,6 +1309,11 @@ svg.icon{width:18px;height:18px;display:block}
     var merchantLogNeedsIdFix = false;
     App.merchantLog.forEach(function(entry){
       if(!entry.id){ entry.id = uid(); merchantLogNeedsIdFix = true; }
+      // legacy single-timestamp edit marker — carry it over as the first (detail-less) history entry
+      if(entry.editedAt && !entry.editHistory){
+        entry.editHistory = [{ ts: entry.editedAt, diff: null }];
+        merchantLogNeedsIdFix = true;
+      }
     });
     if(merchantLogNeedsIdFix) persist(keys.merchantLog, App.merchantLog);
     App.merchantServers = store(keys.merchantServers, null) || SERVER_RATES.map(function(s){ return s.id; });
@@ -2668,7 +2673,7 @@ svg.icon{width:18px;height:18px;display:block}
       var sv = serverRateById(e.serverId);
       var t = entryType(e);
       var lines = e.lines || [];
-      var editedAttrs = e.editedAt ? ' class="mr-edited-hover" data-edited-at="'+e.editedAt+'"' : '';
+      var editedAttrs = (e.editHistory && e.editHistory.length) ? ' class="mr-edited-hover"' : '';
       return '<div class="mr-entry type-'+t+(e.id===App.editingMerchantId?' editing':'')+'" data-entry-id="'+e.id+'">'+
         '<div class="mr-entry-top"><span>'+(sv?sv.name:e.serverId)+' · '+lines.length+' รายการ '+
           '<span class="mr-type-badge '+t+'">'+MR_TYPE_LABEL[t]+'</span></span>'+
@@ -2730,10 +2735,91 @@ svg.icon{width:18px;height:18px;display:block}
     return (sv?sv.name:entry.serverId)+' · '+names+'<br>'+fmtEntryTotal(entry)+' · '+fmtDateTime(entry.ts);
   }
 
+  function mrFlattenSlots(slots){
+    var parts = [];
+    (slots||[]).forEach(function(s){
+      String(s).split(',').forEach(function(p){
+        p = p.trim();
+        if(p) parts.push(p);
+      });
+    });
+    return parts;
+  }
+
+  // Returns a "พลังเสริม: แก้ไขเพิ่ม X, แก้ไขออก Y" fragment describing which enchants
+  // were added/removed, or null when the flattened set of slots is unchanged.
+  function mrSlotDiffText(oldSlots, newSlots){
+    var oldParts = mrFlattenSlots(oldSlots);
+    var newParts = mrFlattenSlots(newSlots);
+    var added = newParts.filter(function(p){ return oldParts.indexOf(p)===-1; });
+    var removed = oldParts.filter(function(p){ return newParts.indexOf(p)===-1; });
+    if(!added.length && !removed.length) return null;
+    var bits = [];
+    if(added.length) bits.push('แก้ไขเพิ่ม '+added.join(', '));
+    if(removed.length) bits.push('แก้ไขออก '+removed.join(', '));
+    return 'พลังเสริม: '+bits.join(', ');
+  }
+
+  // Returns HTML describing what actually changed between the saved entry and the
+  // pending edit, or null when nothing changed (so callers can skip the confirm step).
+  function mrEditDiffHtml(oldEntry, newData){
+    var oldLines = oldEntry.lines || [];
+    var newLines = newData.lines || [];
+    var rows = [];
+    var maxLen = Math.max(oldLines.length, newLines.length);
+    for(var i=0;i<maxLen;i++){
+      var o = oldLines[i], n = newLines[i];
+      if(o && !n){ rows.push('ลบ "'+o.name+'"'); continue; }
+      if(!o && n){ rows.push('เพิ่ม "'+n.name+'"'); continue; }
+      var changed = [];
+      if(o.name !== n.name) changed.push('ชื่อ');
+      if(Number(o.rate) !== Number(n.rate)) changed.push('ราคา');
+      if(Number(o.qty) !== Number(n.qty)) changed.push('จำนวน');
+      if((o.currency||'baht') !== (n.currency||'baht')) changed.push('หน่วยเงิน');
+      var parts = [];
+      if(changed.length) parts.push(changed.join(', ')+'เปลี่ยน');
+      var slotDiff = mrSlotDiffText(o.slots, n.slots);
+      if(slotDiff) parts.push(slotDiff);
+      if(parts.length) rows.push((n.name||o.name)+' — '+parts.join(', '));
+    }
+    if(oldEntry.serverId !== newData.serverId){
+      var sv = serverRateById(newData.serverId);
+      rows.unshift('เปลี่ยนเซิร์ฟเวอร์เป็น '+(sv?sv.name:newData.serverId));
+    }
+    var oldTotals = entryTotals(oldEntry), newTotals = entryTotals(newData);
+    var totalChanged = oldTotals.baht!==newTotals.baht || oldTotals.zeny!==newTotals.zeny;
+
+    if(!rows.length && !totalChanged) return null;
+
+    var html = rows.map(function(r){ return '• '+r; }).join('<br>');
+    if(totalChanged){
+      html += (html?'<br>':'')+'ยอดรวม: '+fmtEntryTotal(oldEntry)+' → '+fmtEntryTotal(newData);
+    }
+    return html;
+  }
+
+  var MR_EDIT_HISTORY_TOOLTIP_LIMIT = 5;
+
   function showMrEditedTooltip(el){
-    var editedAt = parseInt(el.dataset.editedAt, 10);
+    var entryEl = el.closest('.mr-entry');
+    var entry = entryEl ? App.merchantLog.filter(function(x){ return x.id===entryEl.dataset.entryId; })[0] : null;
+    var history = (entry && entry.editHistory ? entry.editHistory.slice() : []).reverse();
     var tip = document.getElementById('mrEditedTooltip');
-    tip.innerHTML = '<div class="ct-row"><span class="ct-key">แก้ไขล่าสุด</span><span class="ct-val">'+fmtDateTime(editedAt)+'</span></div>';
+    if(!history.length){ tip.hidden = true; return; }
+
+    var shown = history.slice(0, MR_EDIT_HISTORY_TOOLTIP_LIMIT);
+    var rows = shown.map(function(h, idx){
+      var sep = idx>0 ? 'border-top:1px dashed var(--border);margin-top:.35rem;padding-top:.35rem;' : '';
+      return '<div style="'+sep+'">'+
+        '<span class="ct-time" style="margin-bottom:.15rem">'+fmtDateTime(h.ts)+'</span>'+
+        (h.diff ? '<div style="color:var(--text-dim);font-size:.7rem;line-height:1.4">'+h.diff+'</div>' : '')+
+      '</div>';
+    }).join('');
+    if(history.length > shown.length){
+      rows += '<div style="border-top:1px dashed var(--border);margin-top:.35rem;padding-top:.35rem;color:var(--text-dim);font-size:.68rem">และอีก '+(history.length-shown.length)+' ครั้งก่อนหน้า</div>';
+    }
+    tip.innerHTML = '<span class="ct-time">ประวัติการแก้ไข ('+history.length+' ครั้ง)</span>'+rows;
+
     var rect = el.getBoundingClientRect();
     tip.hidden = false;
     var left = Math.min(rect.left, window.innerWidth - tip.offsetWidth - 12);
@@ -3042,6 +3128,19 @@ svg.icon{width:18px;height:18px;display:block}
     if(!e.target.closest('.mr-name-wrap')) hideAllSuggests();
   });
 
+  // Capture phase (not bubble) so this runs before any in-panel click handler
+  // (e.g. "+เพิ่ม Slot") re-renders and detaches e.target from the live document —
+  // otherwise the detached target would fail every closest() check below and this
+  // would wrongly treat an inside click as "outside" and cancel the edit.
+  document.addEventListener('click', function(e){
+    if(!App.editingMerchantId) return;
+    if(e.target.closest('[data-edit]')) return;
+    if(e.target.closest('#mrEntryPanel')) return;
+    if(e.target.closest('.mr-entry.editing')) return;
+    if(e.target.closest('#confirmOverlay')) return;
+    resetMerchantForm();
+  }, true);
+
   document.getElementById('mrConfirm').addEventListener('click', function(){
     if(!App.currentServerId){ toast('เพิ่มเซิร์ฟเวอร์ก่อนบันทึก'); return; }
     var validRows = activeRows().filter(function(r){
@@ -3058,15 +3157,35 @@ svg.icon{width:18px;height:18px;display:block}
     var totalBaht = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?0:l.total); }, 0);
     var totalZeny = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?l.total:0); }, 0);
 
-    if(App.editingMerchantId){
+    function commitEdit(diffText){
       var entry = App.merchantLog.filter(function(e){ return e.id===App.editingMerchantId; })[0];
-      if(entry){ entry.serverId = App.currentServerId; entry.lines = lines; entry.totalBaht = totalBaht; entry.totalZeny = totalZeny; entry.type = App.merchantType; entry.category = App.merchantCategory; entry.editedAt = Date.now(); }
+      if(entry){
+        entry.serverId = App.currentServerId; entry.lines = lines; entry.totalBaht = totalBaht; entry.totalZeny = totalZeny; entry.type = App.merchantType; entry.category = App.merchantCategory;
+        if(diffText){
+          entry.editHistory = entry.editHistory || [];
+          entry.editHistory.push({ ts: Date.now(), diff: diffText });
+        }
+      }
       saveMerchantLog();
       resetMerchantForm();
       renderMerchantHistory();
       renderMerchantSummary();
       renderMrChart();
       toast('แก้ไขรายการแล้ว');
+    }
+
+    if(App.editingMerchantId){
+      var existing = App.merchantLog.filter(function(e){ return e.id===App.editingMerchantId; })[0];
+      if(existing){
+        var diff = mrEditDiffHtml(existing, { serverId:App.currentServerId, lines:lines, totalBaht:totalBaht, totalZeny:totalZeny });
+        if(diff){
+          showConfirm('ยืนยันบันทึกการแก้ไข?<span class="confirm-detail">'+diff+'</span>', function(){ commitEdit(diff); });
+        } else {
+          commitEdit(null);
+        }
+      } else {
+        commitEdit(null);
+      }
     } else {
       var newId = uid();
       App.merchantLog.push({ id:newId, ts:Date.now(), serverId:App.currentServerId, lines:lines, totalBaht:totalBaht, totalZeny:totalZeny, type:App.merchantType, category:App.merchantCategory });

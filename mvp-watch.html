@@ -740,13 +740,15 @@ svg.icon{width:18px;height:18px;display:block}
           <div class="panel panel-hero">
             <div class="panel-head">
               <div class="ticker-head-title">
-                <h2>รายรับ-ขาย</h2>
-                <div class="seg-toggle" id="mrChartCurrencyToggle" hidden>
-                  <button type="button" class="seg-btn active" data-currency="baht">บาท</button>
-                  <button type="button" class="seg-btn" data-currency="zeny">Zeny</button>
+                <h2>กำไรสุทธิ</h2>
+                <div class="seg-toggle" id="mrChartCategoryToggle">
+                  <button type="button" class="seg-btn active" data-categoryfilter="all">ทั้งหมด</button>
+                  <button type="button" class="seg-btn" data-categoryfilter="zeny">Zeny</button>
+                  <button type="button" class="seg-btn" data-categoryfilter="item">Item</button>
                 </div>
               </div>
               <div class="chart-controls">
+                <select class="chart-tf-select" id="mrChartServerSelect"></select>
                 <select class="chart-tf-select" id="mrChartTimeframeSelect">
                   <option value="1d">1 วัน</option>
                   <option value="3d">3 วัน</option>
@@ -759,6 +761,18 @@ svg.icon{width:18px;height:18px;display:block}
                   <option value="6m">6 เดือน</option>
                   <option value="1y">1 ปี</option>
                 </select>
+              </div>
+            </div>
+            <div class="farm-kpi-row">
+              <div class="farm-kpi-main">
+                <span class="farm-kpi-value" id="mrKpiValue">0 บ</span>
+                <span class="farm-kpi-period" id="mrKpiPeriod"></span>
+                <span class="farm-kpi-delta" id="mrKpiDelta" hidden></span>
+              </div>
+              <div class="farm-series-filter" id="mrSeriesFilter">
+                <div class="farm-series-chips" id="mrSeriesChips"></div>
+                <button type="button" class="farm-series-dropdown-btn" id="mrSeriesDropdownBtn">▾</button>
+                <div class="farm-series-dropdown" id="mrSeriesDropdown" hidden></div>
               </div>
             </div>
             <div class="chart-wrap" id="mrChartWrap">
@@ -1687,52 +1701,70 @@ svg.icon{width:18px;height:18px;display:block}
   var MR_CHART_SERIES_KEYS = ['sell','buy','profit'];
   var MR_CHART_SERIES_LABEL = { sell:'ขาย', buy:'รับ', profit:'กำไรสุทธิ' };
   var MR_CHART_SERIES_COLOR = { sell:'#3fbd75', buy:'#ef5a56', profit:'#5b8ef4' };
+  var MR_LOSS_COLOR = '#ef5a56';
   var hiddenMrChartSeries = { sell:false, buy:false, profit:false };
   var MR_CHART_TIMEFRAME_CONFIG = {
-    '1d':  { stepMs: 3600*1000,  count:24,  fmt:'time' },
-    '3d':  { stepMs: 86400*1000, count:3,   fmt:'date' },
-    '5d':  { stepMs: 86400*1000, count:5,   fmt:'date' },
-    '7d':  { stepMs: 86400*1000, count:7,   fmt:'date' },
-    '15d': { stepMs: 86400*1000, count:15,  fmt:'date' },
-    '1m':  { stepMs: 86400*1000, count:30,  fmt:'date' },
-    '2m':  { stepMs: 86400*1000, count:60,  fmt:'date' },
-    '3m':  { stepMs: 86400*1000, count:90,  fmt:'date' },
-    '6m':  { stepMs: 86400*1000, count:180, fmt:'date' },
-    '1y':  { stepMs: 86400*1000, count:365, fmt:'date' }
+    '1d':  { count:1,   label:'วันนี้' },
+    '3d':  { count:3,   label:'3 วันล่าสุด' },
+    '5d':  { count:5,   label:'5 วันล่าสุด' },
+    '7d':  { count:7,   label:'7 วันล่าสุด' },
+    '15d': { count:15,  label:'15 วันล่าสุด' },
+    '1m':  { count:30,  label:'1 เดือนล่าสุด' },
+    '2m':  { count:60,  label:'2 เดือนล่าสุด' },
+    '3m':  { count:90,  label:'3 เดือนล่าสุด' },
+    '6m':  { count:180, label:'6 เดือนล่าสุด' },
+    '1y':  { count:365, label:'1 ปีล่าสุด' }
   };
   var mrChartTimeframe = '7d';
-  var mrChartCurrency = 'baht';
+  var mrChartServerId = null;
+  var mrChartCategoryFilter = 'all';
   var mrChartGeom = null; // recomputed on each render; used by the hover handler
 
-  function mrChartBucketKey(ts, stepMs){ return Math.floor(ts/stepMs); }
+  // Local calendar-day key (matches farmBucketKey) — NOT epoch/UTC floor division, which
+  // misbuckets entries in UTC+ timezones (a local day mostly falls in the "next" UTC day).
+  function mrChartBucketKey(ts){ return new Date(ts).toDateString(); }
 
-  function mrChartGenerateBuckets(tf){
+  function mrChartGenerateBuckets(tf, endOffsetUnits){
+    endOffsetUnits = endOffsetUnits || 0;
     var cfg = MR_CHART_TIMEFRAME_CONFIG[tf] || MR_CHART_TIMEFRAME_CONFIG['7d'];
-    var now = Date.now();
+    var now = new Date();
     var buckets = [];
     for(var i=cfg.count-1;i>=0;i--){
-      var ts = now - i*cfg.stepMs;
-      var d = new Date(ts);
-      var label = cfg.fmt==='time' ? (pad2(d.getHours())+':00') : d.toLocaleDateString('th-TH',{day:'numeric',month:'short'});
-      buckets.push({ key:mrChartBucketKey(ts,cfg.stepMs), label:label, sellBaht:0, buyBaht:0, sellZeny:0, buyZeny:0 });
+      var idx = i + endOffsetUnits*cfg.count;
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate()-idx);
+      var label = d.toLocaleDateString('th-TH',{day:'numeric',month:'short'});
+      buckets.push({ key:mrChartBucketKey(d.getTime()), label:label, sell:0, buy:0 });
     }
     return buckets;
   }
 
-  function mrChartBuckets(tf){
-    var cfg = MR_CHART_TIMEFRAME_CONFIG[tf] || MR_CHART_TIMEFRAME_CONFIG['7d'];
-    var buckets = mrChartGenerateBuckets(tf);
+  function mrChartBuckets(tf, serverId, endOffsetUnits, categoryFilter){
+    var buckets = mrChartGenerateBuckets(tf, endOffsetUnits);
     var byKey = {};
     buckets.forEach(function(b){ byKey[b.key] = b; });
     App.merchantLog.forEach(function(e){
-      var b = byKey[mrChartBucketKey(e.ts, cfg.stepMs)];
+      if(e.serverId!==serverId) return;
+      if(categoryFilter && categoryFilter!=='all' && (e.category||'zeny')!==categoryFilter) return;
+      var b = byKey[mrChartBucketKey(e.ts)];
       if(!b) return;
       var t = entryTotals(e);
-      if(entryType(e)==='sell'){ b.sellBaht += t.baht; b.sellZeny += t.zeny; }
-      else { b.buyBaht += t.baht; b.buyZeny += t.zeny; }
+      if(entryType(e)==='sell'){ b.sell += t.baht; }
+      else { b.buy += t.baht; }
     });
-    buckets.forEach(function(b){ b.profitBaht = b.sellBaht-b.buyBaht; b.profitZeny = b.sellZeny-b.buyZeny; });
+    buckets.forEach(function(b){ b.profit = b.sell-b.buy; });
     return buckets;
+  }
+
+  function populateMrChartServerSelect(){
+    var sel = document.getElementById('mrChartServerSelect');
+    if(mrChartServerId==null || App.merchantServers.indexOf(mrChartServerId)===-1){
+      mrChartServerId = App.merchantServers.indexOf(App.currentServerId)!==-1 ? App.currentServerId : (App.merchantServers[0] || null);
+    }
+    sel.innerHTML = App.merchantServers.map(function(id){
+      var sv = serverRateById(id);
+      return '<option value="'+id+'">'+(sv?sv.name:id)+'</option>';
+    }).join('');
+    sel.value = mrChartServerId;
   }
 
   function niceStep(rough){
@@ -2241,19 +2273,16 @@ svg.icon{width:18px;height:18px;display:block}
 
   function renderMrChart(){
     hideMrChartHover();
-    var hasZeny = App.merchantLog.some(function(e){ return entryTotals(e).zeny>0; });
-    document.getElementById('mrChartCurrencyToggle').hidden = !hasZeny;
-    if(!hasZeny) mrChartCurrency = 'baht';
-    var curSuffix = mrChartCurrency==='zeny' ? 'Zeny' : 'Baht';
+    populateMrChartServerSelect();
     var svg = document.getElementById('mrChartSvg');
-    var buckets = mrChartBuckets(mrChartTimeframe);
+    var buckets = mrChartBuckets(mrChartTimeframe, mrChartServerId, 0, mrChartCategoryFilter);
     var series = MR_CHART_SERIES_KEYS.filter(function(s){ return !hiddenMrChartSeries[s]; });
     var W=640, H=220, padL=52, padR=8, padT=10, padB=22;
     var plotW = W-padL-padR, plotH = H-padT-padB;
     var n = buckets.length;
 
     var allVals = [0];
-    series.forEach(function(s){ buckets.forEach(function(b){ allVals.push(b[s+curSuffix]); }); });
+    series.forEach(function(s){ buckets.forEach(function(b){ allVals.push(b[s]); }); });
     var rawMin = Math.min.apply(null, allVals), rawMax = Math.max.apply(null, allVals);
     var step = niceStep((rawMax-rawMin)/4 || rawMax*0.1 || 1);
     var yMin = Math.floor(rawMin/step)*step;
@@ -2276,7 +2305,7 @@ svg.icon{width:18px;height:18px;display:block}
     for(var i=0;i<n;i+=everyN){
       parts.push('<text x="'+(xSlot(i)+slotW/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#8b8d98">'+buckets[i].label+'</text>');
     }
-    if(!App.merchantLog.length){
+    if(!App.merchantLog.some(function(e){ return e.serverId===mrChartServerId && (mrChartCategoryFilter==='all' || (e.category||'zeny')===mrChartCategoryFilter); })){
       parts.push('<text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" font-size="11" fill="#8b8d98">ยังไม่มีประวัติการซื้อขาย — เริ่มบันทึกรายการทางด้านล่าง</text>');
     } else {
       var groupPad = n<=1 ? 0.32 : 0.16;
@@ -2287,7 +2316,7 @@ svg.icon{width:18px;height:18px;display:block}
         var groupX = xSlot(i) + slotW*groupPad;
         series.forEach(function(s, si){
           var bx = groupX + si*(barW+barGap);
-          var v = b[s+curSuffix];
+          var v = b[s];
           var y1 = yAt(v), y2 = y0;
           var top = Math.min(y1,y2), h = Math.max(Math.abs(y1-y2), 1);
           parts.push('<rect x="'+bx.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+MR_CHART_SERIES_COLOR[s]+'"/>');
@@ -2301,22 +2330,63 @@ svg.icon{width:18px;height:18px;display:block}
     svg.setAttribute('viewBox','0 0 '+W+' '+H);
     svg.innerHTML = parts.join('');
 
-    mrChartGeom = { W:W, H:H, padL:padL, plotW:plotW, padT:padT, n:n, slotW:slotW, xSlot:xSlot, yAt:yAt, buckets:buckets, curSuffix:curSuffix };
-    renderMrChartLegend(buckets, curSuffix);
+    mrChartGeom = { W:W, H:H, padL:padL, plotW:plotW, padT:padT, n:n, slotW:slotW, xSlot:xSlot, yAt:yAt, buckets:buckets };
+    renderMrChartLegend(buckets);
+    renderMrSeriesFilter();
+    renderMrKpi();
   }
 
-  function renderMrChartLegend(buckets, curSuffix){
+  function renderMrChartLegend(buckets){
     var el = document.getElementById('mrChartLegend');
     var totals = { sell:0, buy:0, profit:0 };
-    buckets.forEach(function(b){ totals.sell+=b['sell'+curSuffix]; totals.buy+=b['buy'+curSuffix]; totals.profit+=b['profit'+curSuffix]; });
-    var unit = CURRENCY_UNIT_LABEL[mrChartCurrency];
+    buckets.forEach(function(b){ totals.sell+=b.sell; totals.buy+=b.buy; totals.profit+=b.profit; });
     var row = MR_CHART_SERIES_KEYS.map(function(s){
       var off = hiddenMrChartSeries[s];
       return '<button type="button" class="chart-legend-item chart-legend-dir'+(off?' off':'')+'" data-mr-chart-legend="'+s+'">'+
         '<span class="cl-dot" style="background:'+MR_CHART_SERIES_COLOR[s]+'"></span>'+MR_CHART_SERIES_LABEL[s]+
-        ' <b style="color:'+MR_CHART_SERIES_COLOR[s]+'">'+fmtNum(totals[s])+' '+unit+'</b></button>';
+        ' <b style="color:'+MR_CHART_SERIES_COLOR[s]+'">'+fmtNum(totals[s])+' บ</b></button>';
     }).join('');
     el.innerHTML = '<div class="chart-legend-row">'+row+'</div>';
+  }
+
+  function renderMrSeriesFilter(){
+    var shown = MR_CHART_SERIES_KEYS.filter(function(s){ return !hiddenMrChartSeries[s]; });
+    var hidden = MR_CHART_SERIES_KEYS.filter(function(s){ return hiddenMrChartSeries[s]; });
+    document.getElementById('mrSeriesChips').innerHTML = shown.map(function(s){
+      var color = MR_CHART_SERIES_COLOR[s];
+      return '<span class="farm-series-chip" style="background:color-mix(in srgb, '+color+' 20%, transparent)">'+
+        '<span class="cl-dot" style="background:'+color+'"></span>'+MR_CHART_SERIES_LABEL[s]+
+        '<button type="button" class="farm-series-chip-x" data-mr-legend-remove="'+s+'">✕</button></span>';
+    }).join('');
+    var dropdownBtn = document.getElementById('mrSeriesDropdownBtn');
+    dropdownBtn.hidden = !hidden.length;
+    var dropdown = document.getElementById('mrSeriesDropdown');
+    dropdown.innerHTML = hidden.map(function(s){
+      var color = MR_CHART_SERIES_COLOR[s];
+      return '<button type="button" class="farm-series-dropdown-item" data-mr-legend-add="'+s+'"><span class="cl-dot" style="background:'+color+'"></span>'+MR_CHART_SERIES_LABEL[s]+'</button>';
+    }).join('') || '<span class="farm-series-dropdown-empty">แสดงครบทุกรายการแล้ว</span>';
+  }
+
+  function renderMrKpi(){
+    var cfg = MR_CHART_TIMEFRAME_CONFIG[mrChartTimeframe] || MR_CHART_TIMEFRAME_CONFIG['7d'];
+    var cur = mrChartBuckets(mrChartTimeframe, mrChartServerId, 0, mrChartCategoryFilter);
+    var prev = mrChartBuckets(mrChartTimeframe, mrChartServerId, 1, mrChartCategoryFilter);
+    function sum(arr,k){ return arr.reduce(function(s,b){ return s+b[k]; }, 0); }
+    var curProfit = sum(cur,'profit');
+    var prevProfit = sum(prev,'profit');
+    var valueEl = document.getElementById('mrKpiValue');
+    valueEl.textContent = (curProfit<0?'-':'')+fmtNum(Math.abs(curProfit))+' บ';
+    valueEl.style.color = curProfit>=0 ? MR_CHART_SERIES_COLOR.profit : MR_LOSS_COLOR;
+    document.getElementById('mrKpiPeriod').textContent = '('+cfg.label+')';
+    var deltaEl = document.getElementById('mrKpiDelta');
+    if(prevProfit!==0){
+      var deltaPct = (curProfit-prevProfit)/Math.abs(prevProfit)*100;
+      deltaEl.hidden = false;
+      deltaEl.className = 'farm-kpi-delta '+(deltaPct>=0?'up':'down');
+      deltaEl.textContent = (deltaPct>=0?'▲ ':'▼ ')+Math.abs(deltaPct).toFixed(1)+'%';
+    } else {
+      deltaEl.hidden = true;
+    }
   }
 
   function handleMrChartHover(evt){
@@ -2336,8 +2406,8 @@ svg.icon{width:18px;height:18px;display:block}
     var series = MR_CHART_SERIES_KEYS.filter(function(s){ return !hiddenMrChartSeries[s]; });
     var rows = series.map(function(s){
       var color = MR_CHART_SERIES_COLOR[s];
-      var v = b[s+mrChartGeom.curSuffix];
-      return '<div class="ct-row"><span class="ct-key"><span class="ct-swatch" style="background:'+color+'"></span>'+MR_CHART_SERIES_LABEL[s]+'</span><span class="ct-val" style="color:'+color+'">'+fmtNum(v)+' '+CURRENCY_UNIT_LABEL[mrChartCurrency]+'</span></div>';
+      var v = b[s];
+      return '<div class="ct-row"><span class="ct-key"><span class="ct-swatch" style="background:'+color+'"></span>'+MR_CHART_SERIES_LABEL[s]+'</span><span class="ct-val" style="color:'+color+'">'+fmtNum(v)+' บ</span></div>';
     });
     var tip = document.getElementById('mrChartTooltip');
     tip.innerHTML = '<span class="ct-time">'+b.label+'</span>'+rows.join('');
@@ -2637,10 +2707,10 @@ svg.icon{width:18px;height:18px;display:block}
     sel.value = historyState.serverId;
   }
 
-  function renderMerchantHistory(){
-    populateHistoryServerFilter();
-    renderMerchantSummary();
-    var list = document.getElementById('mrHistoryList');
+  // Single source of truth for "which entries match the history panel's active filters" —
+  // used by both the paginated list and the summary tiles, so the tiles always total exactly
+  // what's shown in the list (server + หมวดหมู่ + ประเภท + ช่วงวันที่ all applied together).
+  function filteredMerchantEntries(){
     var entries = App.merchantLog.slice();
     if(historyState.serverId!=='all') entries = entries.filter(function(e){ return e.serverId===historyState.serverId; });
     if(historyState.categoryFilter!=='all') entries = entries.filter(function(e){ return (e.category||'zeny')===historyState.categoryFilter; });
@@ -2655,6 +2725,14 @@ svg.icon{width:18px;height:18px;display:block}
       var toTs = new Date(toStr+'T23:59:59.999').getTime();
       entries = entries.filter(function(e){ return e.ts<=toTs; });
     }
+    return entries;
+  }
+
+  function renderMerchantHistory(){
+    populateHistoryServerFilter();
+    renderMerchantSummary();
+    var list = document.getElementById('mrHistoryList');
+    var entries = filteredMerchantEntries();
     entries.sort(function(a,b){ return b.ts-a.ts; });
 
     var pag = document.getElementById('mrHistoryPagination');
@@ -2717,7 +2795,7 @@ svg.icon{width:18px;height:18px;display:block}
   }
 
   function renderMerchantSummary(){
-    var scoped = historyState.serverId==='all' ? App.merchantLog : App.merchantLog.filter(function(e){ return e.serverId===historyState.serverId; });
+    var scoped = filteredMerchantEntries();
     var buyBaht = scoped.filter(function(e){ return entryType(e)==='buy'; }).reduce(function(s,e){ return s+entryTotals(e).baht; }, 0);
     var sellBaht = scoped.filter(function(e){ return entryType(e)==='sell'; }).reduce(function(s,e){ return s+entryTotals(e).baht; }, 0);
     var buyZeny = scoped.filter(function(e){ return entryType(e)==='buy'; }).reduce(function(s,e){ return s+entryTotals(e).zeny; }, 0);
@@ -2982,6 +3060,7 @@ svg.icon{width:18px;height:18px;display:block}
     App.merchantServers.push(id);
     saveMerchantServers();
     selectMerchantServer(id);
+    renderMrChart();
   });
 
   document.getElementById('mrServerChips').addEventListener('click', function(e){
@@ -2994,6 +3073,7 @@ svg.icon{width:18px;height:18px;display:block}
       if(wasSelected) App.currentServerId = App.merchantServers[0] || null;
       saveCurrentServer();
       renderMerchantServers();
+      renderMrChart();
       return;
     }
     var chip = e.target.closest('[data-select-server]');
@@ -3878,11 +3958,15 @@ svg.icon{width:18px;height:18px;display:block}
     mrChartTimeframe = e.target.value;
     renderMrChart();
   });
-  document.getElementById('mrChartCurrencyToggle').addEventListener('click', function(e){
-    var btn = e.target.closest('[data-currency]');
+  document.getElementById('mrChartServerSelect').addEventListener('change', function(e){
+    mrChartServerId = e.target.value;
+    renderMrChart();
+  });
+  document.getElementById('mrChartCategoryToggle').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-categoryfilter]');
     if(!btn) return;
-    mrChartCurrency = btn.dataset.currency;
-    document.querySelectorAll('#mrChartCurrencyToggle .seg-btn').forEach(function(b){
+    mrChartCategoryFilter = btn.dataset.categoryfilter;
+    document.querySelectorAll('#mrChartCategoryToggle .seg-btn').forEach(function(b){
       b.classList.toggle('active', b===btn);
     });
     renderMrChart();
@@ -3892,6 +3976,27 @@ svg.icon{width:18px;height:18px;display:block}
     if(!btn) return;
     hiddenMrChartSeries[btn.dataset.mrChartLegend] = !hiddenMrChartSeries[btn.dataset.mrChartLegend];
     renderMrChart();
+  });
+  document.getElementById('mrSeriesChips').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-mr-legend-remove]');
+    if(!btn) return;
+    hiddenMrChartSeries[btn.dataset.mrLegendRemove] = true;
+    renderMrChart();
+  });
+  document.getElementById('mrSeriesDropdown').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-mr-legend-add]');
+    if(!btn) return;
+    hiddenMrChartSeries[btn.dataset.mrLegendAdd] = false;
+    renderMrChart();
+    document.getElementById('mrSeriesDropdown').hidden = true;
+  });
+  document.getElementById('mrSeriesDropdownBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    var dd = document.getElementById('mrSeriesDropdown');
+    dd.hidden = !dd.hidden;
+  });
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('#mrSeriesFilter')) document.getElementById('mrSeriesDropdown').hidden = true;
   });
   document.getElementById('mrChartSvg').addEventListener('mousemove', handleMrChartHover);
   document.getElementById('mrChartSvg').addEventListener('mouseleave', hideMrChartHover);

@@ -100,6 +100,8 @@ svg.icon{width:18px;height:18px;display:block}
 .btn-success:hover{filter:brightness(1.08)}
 .btn-ghost{background:var(--surface-2);border-color:var(--border);color:var(--text)}
 .btn-ghost:hover{background:var(--surface-hover)}
+#farmAddCostRowBtn,#farmAddRareItemBtn,#mrAddRowBtn,#postAnnouncementBtn{color:#7dd3fc;border-color:color-mix(in srgb, #7dd3fc 45%, var(--border));background:color-mix(in srgb, #7dd3fc 12%, var(--surface-2));box-shadow:none}
+#farmAddCostRowBtn:hover,#farmAddRareItemBtn:hover,#mrAddRowBtn:hover{background:color-mix(in srgb, #7dd3fc 20%, var(--surface-2))}
 .btn-block{width:100%}
 .btn:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .auth-error{color:var(--danger);font-size:.82rem;min-height:1.1em;margin:-.4rem 0 .6rem}
@@ -278,23 +280,44 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-kpi-period{font-size:.78rem;color:var(--text-dim)}
 .panel-farm-revenue .panel-head{flex-wrap:nowrap}
 .panel-farm-revenue .panel-head h2{white-space:nowrap;flex:none}
-#farmTimeframeToggle{max-width:100%;overflow-x:auto;flex-wrap:nowrap;flex:0 1 auto;min-width:0;scrollbar-width:thin}
-#farmTimeframeToggle .seg-btn{flex:none}
+.farm-revenue-title{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;min-width:0}
 #mrCategoryToggle{padding:.25rem}
 #mrCategoryToggle .seg-btn{font-size:.88rem;padding:.5rem 1.1rem}
 .farm-kpi-delta.up{background:color-mix(in srgb, var(--success) 18%, transparent);color:var(--success)}
 .farm-kpi-delta.down{background:color-mix(in srgb, var(--danger) 18%, transparent);color:var(--danger)}
 .farm-kpi-sub{font-size:.76rem;color:var(--text-dim);margin:0}
-.panel-farm-cost .panel-head{align-items:flex-start}
+.panel-farm-cost .panel-head{align-items:center}
 .farm-cost-items{display:flex;flex-direction:column;gap:.4rem}
-.farm-cost-row{display:grid;grid-template-columns:1fr .8fr .8fr .5fr auto;gap:.4rem;align-items:center}
-.farm-cost-row input{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.45rem .5rem;font-size:.8rem;width:100%}
-.farm-cost-line-total{font-size:.8rem;color:var(--text-dim);text-align:right;white-space:nowrap}
+.farm-cost-row{display:flex;align-items:center;gap:.4rem}
+.farm-cost-row .farm-cost-name{flex:1 1 auto;min-width:0}
+.farm-cost-row .farm-cost-qty{flex:0 0 48px;min-width:0}
+.farm-cost-row .farm-cost-price{flex:0 0 68px;min-width:0}
+.farm-cost-row .farm-cost-currency{flex:0 0 42px}
+.farm-cost-row .mr-row-remove{flex:0 0 auto}
+.farm-cost-row input,.farm-cost-row select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.45rem .5rem;font-size:.8rem}
+.farm-cost-row select{cursor:pointer;padding-left:.3rem;padding-right:.15rem}
+.farm-cost-row input[type="number"]::-webkit-outer-spin-button,
+.farm-cost-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.farm-cost-row input[type="number"]{-moz-appearance:textfield}
+.farm-exrate-row{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--text-dim);flex-wrap:wrap}
+.farm-exrate-row input{width:110px;flex:none;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.4rem .5rem;font-size:.82rem}
+.farm-exrate-row input.farm-exrate-invalid{border-color:var(--danger)}
+.farm-exrate-error{margin:-.3rem 0 .7rem;font-size:.72rem;color:var(--danger)}
+.farm-map-row{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--text-dim)}
+.farm-map-row input{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.4rem .5rem;font-size:.82rem}
 .farm-rare-heading{font-size:.76rem;color:var(--text-dim);margin-bottom:.1rem}
 .farm-rare-items{display:flex;flex-direction:column;gap:.4rem}
-.farm-rare-row{display:grid;grid-template-columns:1fr .8fr .8fr .6fr auto;gap:.4rem;align-items:center}
-.farm-rare-row input{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.45rem .5rem;font-size:.8rem;width:100%}
-.farm-rare-line-total{font-size:.8rem;color:var(--text-dim);text-align:right;white-space:nowrap}
+.farm-rare-row{display:flex;align-items:center;gap:.4rem}
+.farm-rare-row .farm-rare-name{flex:1 1 auto;min-width:0}
+.farm-rare-row .farm-rare-qty{flex:0 0 48px;min-width:0}
+.farm-rare-row .farm-rare-price{flex:0 0 68px;min-width:0}
+.farm-rare-row .farm-rare-currency{flex:0 0 42px}
+.farm-rare-row .mr-row-remove{flex:0 0 auto}
+.farm-rare-row input,.farm-rare-row select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.45rem .5rem;font-size:.8rem}
+.farm-rare-row select{cursor:pointer;padding-left:.3rem;padding-right:.15rem}
+.farm-rare-row input[type="number"]::-webkit-outer-spin-button,
+.farm-rare-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.farm-rare-row input[type="number"]{-moz-appearance:textfield}
 .farm-log-form{border-top:1px solid var(--border);padding-top:.8rem;display:flex;flex-direction:column;gap:.6rem}
 .farm-log-fields{display:grid;grid-template-columns:.45fr 1.55fr;gap:.5rem}
 .farm-log-fields-rare{grid-template-columns:1fr 1fr}
@@ -322,7 +345,7 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-hist-nav{display:flex;align-items:center;gap:.8rem}
 .farm-cost-hover{border-bottom:1px dashed var(--text-dim);cursor:help}
 .farm-profit-hover{border-bottom:1px dashed currentColor;cursor:help}
-.farm-cost-tooltip{position:fixed;top:auto;z-index:70;pointer-events:none;max-width:220px}
+.farm-cost-tooltip{position:fixed;top:auto;z-index:70;pointer-events:none;max-width:280px}
 .farm-hist-page-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.3rem .7rem;font-size:.75rem;cursor:pointer}
 .farm-hist-page-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
 .farm-hist-page-btn:disabled{opacity:.4;cursor:not-allowed}
@@ -595,7 +618,8 @@ svg.icon{width:18px;height:18px;display:block}
 .post-announce-note{font-size:.72rem;color:var(--text-dim);margin:.4rem 0 1.1rem;line-height:1.4}
 .ticker-post-group{position:relative;display:flex;align-items:stretch}
 .ticker-post-group .btn-sm{border-top-right-radius:0;border-bottom-right-radius:0}
-.ticker-post-caret{background:var(--gradient-btn);color:#fff;border:none;border-left:1px solid rgba(255,255,255,.25);border-top-right-radius:var(--radius-s);border-bottom-right-radius:var(--radius-s);padding:0 .5rem;cursor:pointer;font-size:.7rem}
+.ticker-post-caret{background:color-mix(in srgb, #7dd3fc 12%, var(--surface-2));color:#7dd3fc;border:1px solid color-mix(in srgb, #7dd3fc 45%, var(--border));border-top-right-radius:var(--radius-s);border-bottom-right-radius:var(--radius-s);padding:0 .5rem;cursor:pointer;font-size:.7rem}
+#postAnnouncementBtn:hover,.ticker-post-caret:hover{background:color-mix(in srgb, #7dd3fc 20%, var(--surface-2))}
 .ticker-post-menu{position:absolute;top:calc(100% + .4rem);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-s);box-shadow:var(--shadow);padding:.3rem;z-index:20;min-width:140px}
 .ticker-post-menu button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);padding:.5rem .6rem;font-size:.82rem;border-radius:var(--radius-s);cursor:pointer}
 .ticker-post-menu button:hover{background:var(--surface-2)}
@@ -636,18 +660,6 @@ svg.icon{width:18px;height:18px;display:block}
   .hero-line2{font-size:1.8rem}
   .home-grid{grid-template-columns:1fr}
   .home-controlbar{flex-wrap:wrap}
-  .farm-cost-row{grid-template-columns:1fr 1fr;grid-template-areas:"name name" "price qty" "total remove"}
-  .farm-cost-row .farm-cost-name{grid-area:name}
-  .farm-cost-row .farm-cost-price{grid-area:price}
-  .farm-cost-row .farm-cost-qty{grid-area:qty}
-  .farm-cost-row .farm-cost-line-total{grid-area:total}
-  .farm-cost-row .mr-row-remove{grid-area:remove;justify-self:end}
-  .farm-rare-row{grid-template-columns:1fr 1fr;grid-template-areas:"name name" "price qty" "total remove"}
-  .farm-rare-row .farm-rare-name{grid-area:name}
-  .farm-rare-row .farm-rare-price{grid-area:price}
-  .farm-rare-row .farm-rare-qty{grid-area:qty}
-  .farm-rare-row .farm-rare-line-total{grid-area:total}
-  .farm-rare-row .mr-row-remove{grid-area:remove;justify-self:end}
   .bc-row{grid-template-columns:24px 40px 1fr 44px 24px;grid-template-areas:"rank avatar main map close" "time time time time time" "input input btn btn btn";row-gap:.6rem}
   .bc-rank,.bc-dot{grid-area:rank}
   .bc-avatar{grid-area:avatar;width:40px;height:40px}
@@ -918,17 +930,25 @@ svg.icon{width:18px;height:18px;display:block}
         <div class="home-left">
           <div class="panel panel-farm-revenue">
             <div class="panel-head">
-              <h2>กำไรสุทธิ <span class="farm-revenue-server" id="farmRevenueServerTag"></span></h2>
-              <div class="seg-toggle" id="farmTimeframeToggle">
-                <button type="button" class="seg-btn" data-tf="1d">1 วัน</button>
-                <button type="button" class="seg-btn" data-tf="3d">3 วัน</button>
-                <button type="button" class="seg-btn" data-tf="5d">5 วัน</button>
-                <button type="button" class="seg-btn active" data-tf="7d">7 วัน</button>
-                <button type="button" class="seg-btn" data-tf="14d">14 วัน</button>
-                <button type="button" class="seg-btn" data-tf="1m">1 เดือน</button>
-                <button type="button" class="seg-btn" data-tf="3m">3 เดือน</button>
-                <button type="button" class="seg-btn" data-tf="6m">6 เดือน</button>
-                <button type="button" class="seg-btn" data-tf="1y">1 ปี</button>
+              <div class="farm-revenue-title">
+                <h2>กำไรสุทธิ <span class="farm-revenue-server" id="farmRevenueServerTag"></span></h2>
+                <div class="seg-toggle" id="farmUnitToggle">
+                  <button type="button" class="seg-btn active" data-unit="zeny">Zeny</button>
+                  <button type="button" class="seg-btn" data-unit="baht">บาท</button>
+                </div>
+              </div>
+              <div class="chart-controls">
+                <select class="chart-tf-select" id="farmTimeframeSelect">
+                  <option value="1d">1 วัน</option>
+                  <option value="3d">3 วัน</option>
+                  <option value="5d">5 วัน</option>
+                  <option value="7d" selected>7 วัน</option>
+                  <option value="14d">14 วัน</option>
+                  <option value="1m">1 เดือน</option>
+                  <option value="3m">3 เดือน</option>
+                  <option value="6m">6 เดือน</option>
+                  <option value="1y">1 ปี</option>
+                </select>
               </div>
             </div>
             <div class="farm-kpi-row">
@@ -968,7 +988,17 @@ svg.icon{width:18px;height:18px;display:block}
         <div class="panel panel-farm-cost">
           <div class="panel-head">
             <h2>ต้นทุนต่อกั้ม</h2>
+            <div class="farm-exrate-row">
+              <span>อัตราแลกเปลี่ยน 1 M =</span>
+              <input type="text" inputmode="numeric" id="farmExRateInput" class="mono" placeholder="เช่น 1,000">
+              <span>บาท</span>
+            </div>
           </div>
+          <div class="farm-map-row">
+            <span>Map</span>
+            <input type="text" id="farmMapInput" placeholder="เช่น มิด4, ย่อน5, ดันOGH">
+          </div>
+          <p class="farm-exrate-error" id="farmExRateError" hidden>กรุณาใส่อัตราแลกเปลี่ยนก่อนบันทึก</p>
           <div class="farm-cost-items" id="farmCostItems"></div>
           <button class="btn btn-ghost btn-block" id="farmAddCostRowBtn" type="button">+ เพิ่มรายการต้นทุน</button>
           <div class="mr-total">
@@ -976,7 +1006,7 @@ svg.icon{width:18px;height:18px;display:block}
             <span class="mr-total-value mono" id="farmCostTotal">0</span>
           </div>
           <div class="farm-log-form">
-            <label class="farm-rare-heading">ไอเทมหายาก (ไม่บังคับ) ใส่แค่ไอเทมไว้ก่อน มาแก้ไขใส่ราคาที่หลังได้</label>
+            <label class="farm-rare-heading">ไอเทมหายาก (ใส่รายการไว้) ขายแล้วค่อยแก้ไขใส่ราคาทีหลังได้</label>
             <div class="farm-rare-items" id="farmRareItems"></div>
             <button class="btn btn-ghost btn-block" id="farmAddRareItemBtn" type="button">+ เพิ่มรายการไอเทมหายาก</button>
             <div class="farm-log-divider"></div>
@@ -1091,6 +1121,16 @@ svg.icon{width:18px;height:18px;display:block}
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" id="confirmCancelBtn">ยกเลิก</button>
       <button type="button" class="btn btn-gradient" id="confirmOkBtn">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<div id="farmRateRequiredOverlay" hidden>
+  <div class="confirm-backdrop"></div>
+  <div class="confirm-box">
+    <p class="confirm-message">กรุณาใส่อัตราแลกเปลี่ยน "1 M = ???" ก่อนบันทึก</p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-gradient" id="farmRateRequiredOkBtn">ตกลง</button>
     </div>
   </div>
 </div>
@@ -1297,7 +1337,7 @@ svg.icon{width:18px;height:18px;display:block}
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       currentServer:'mvpwatch_currentserver_'+email,
       farmCostItems:'mvpwatch_farmcost_'+email, farmLog:'mvpwatch_farmlog_'+email, farmServer:'mvpwatch_farmserver_'+email,
-      farmOcHint:'mvpwatch_farmochint_'+email,
+      farmOcHint:'mvpwatch_farmochint_'+email, farmExRate:'mvpwatch_farmexrate_'+email, farmMapNames:'mvpwatch_farmmapnames_'+email,
       tickerServers:'mvpwatch_tickerservers_'+email, tickerSelectedServers:'mvpwatch_tickerselectedservers_'+email,
       rateAnnouncements:'mvpwatch_rateannouncements_'+email,
       rateAnnouncementsVer:'mvpwatch_rateannouncementsver_'+email,
@@ -1308,7 +1348,7 @@ svg.icon{width:18px;height:18px;display:block}
   var ZENY_LABEL = 'Zeny (1M)';
   var ZENY_LABEL_2 = 'Zeny (100k)';
   var ZENY_PINNED_LABELS = [ZENY_LABEL, ZENY_LABEL_2];
-  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[]}, editingMerchantId:null, currentServerId:null, itemRows:[], zenyRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[]}, editingMerchantId:null, currentServerId:null, itemRows:[], zenyRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -1367,6 +1407,8 @@ svg.icon{width:18px;height:18px;display:block}
     App.currentServerId = store(keys.currentServer, null);
     if(App.merchantServers.indexOf(App.currentServerId)===-1) App.currentServerId = App.merchantServers[0] || null;
     App.farmCostItems = store(keys.farmCostItems, {});
+    App.farmExchangeRates = store(keys.farmExRate, null) || {};
+    App.farmMapNames = store(keys.farmMapNames, null) || {};
     App.farmLog = store(keys.farmLog, []);
     App.farmServerId = store(keys.farmServer, null) || SERVER_RATES[0].id;
     App.tickerServers = store(keys.tickerServers, null) || DEFAULT_RATE_SLOTS.slice();
@@ -1449,6 +1491,8 @@ svg.icon{width:18px;height:18px;display:block}
   function saveFarmCostItems(){ persist(App.keys.farmCostItems, App.farmCostItems); }
   function saveFarmLog(){ persist(App.keys.farmLog, App.farmLog); }
   function saveFarmServer(){ persist(App.keys.farmServer, App.farmServerId); }
+  function saveFarmExchangeRates(){ persist(App.keys.farmExRate, App.farmExchangeRates); }
+  function saveFarmMapNames(){ persist(App.keys.farmMapNames, App.farmMapNames); }
 
   // ---------- audio ----------
   var actx = null;
@@ -1831,6 +1875,13 @@ svg.icon{width:18px;height:18px;display:block}
   var FARM_SERIES_COLOR = { earned:'#f2c94c', cost:'#ef5a56', profit:'#3fbd75', avgPerSession:'#c9a8f0' };
   var FARM_SERIES_LABEL = { earned:'ยอดรวม', cost:'ทุน', profit:'กำไร', avgPerSession:'เฉลี่ย/กั้ม' };
   var FARM_SERIES_KEYS = ['earned','cost','profit','avgPerSession'];
+
+  function farmBucketVal(b, key){
+    return farmChartUnit==='baht' ? (b[key+'Baht']||0) : (b[key]||0);
+  }
+  function farmUnitSuffix(){
+    return farmChartUnit==='baht' ? ' บ' : ' z';
+  }
   var FARM_TIMEFRAME_CONFIG = {
     '1d': { unit:'day', count:1, label:'วันนี้' },
     '3d': { unit:'day', count:3, label:'3 วันล่าสุด' },
@@ -1844,19 +1895,44 @@ svg.icon{width:18px;height:18px;display:block}
   };
   var hiddenFarmSeries = { earned:false, cost:false, profit:false, avgPerSession:false };
   var farmTimeframe = '7d';
+  var farmChartUnit = 'zeny';
   var farmChartGeom = null;
 
   function farmCostRows(serverId){
-    if(!App.farmCostItems[serverId]) App.farmCostItems[serverId] = [{ id:uid(), name:'', price:'', qty:'' }];
+    if(!App.farmCostItems[serverId]) App.farmCostItems[serverId] = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
     return App.farmCostItems[serverId];
   }
 
+  function farmExchangeRate(serverId){
+    var v = App.farmExchangeRates[serverId];
+    return v!=null && v!=='' ? parseFloat(v) : 0;
+  }
+
+  function farmZenyToBaht(zeny, rate){
+    return (zeny/1000000)*rate;
+  }
+  function farmBahtToZeny(baht, rate){
+    return rate>0 ? (baht/rate)*1000000 : 0;
+  }
+
+  function farmCostBreakdown(serverId){
+    var zenyTotal = 0, bahtTotal = 0, hasBaht = false;
+    farmCostRows(serverId).forEach(function(r){
+      var lineTotal = (parseFloat(r.price)||0)*(parseFloat(r.qty)||0);
+      if((r.currency||'zeny')==='baht'){ bahtTotal += lineTotal; hasBaht = true; }
+      else zenyTotal += lineTotal;
+    });
+    var rate = farmExchangeRate(serverId);
+    var bahtConverted = rate>0 ? (bahtTotal/rate)*1000000 : 0;
+    return { zenyTotal:zenyTotal, bahtTotal:bahtTotal, bahtConverted:bahtConverted, total:zenyTotal+bahtConverted, rate:rate, hasBaht:hasBaht };
+  }
+
   function farmCostTotal(serverId){
-    return farmCostRows(serverId).reduce(function(s,r){ return s + (parseFloat(r.price)||0)*(parseFloat(r.qty)||0); }, 0);
+    return farmCostBreakdown(serverId).total;
   }
 
   function farmSnapshotCostRows(serverId){
-    return farmCostRows(serverId).map(function(r){ return { id:r.id, name:r.name, price:r.price, qty:r.qty }; });
+    return farmCostRows(serverId).map(function(r){ return { id:r.id, name:r.name, price:r.price, qty:r.qty, currency:r.currency||'zeny' }; });
   }
 
   function populateFarmServerSelect(){
@@ -1865,20 +1941,41 @@ svg.icon{width:18px;height:18px;display:block}
     sel.value = App.farmServerId;
   }
 
+  function renderFarmExchangeRate(){
+    var input = document.getElementById('farmExRateInput');
+    var v = App.farmExchangeRates[App.farmServerId];
+    input.value = v!=null && v!=='' ? Number(v).toLocaleString('th-TH') : '';
+    input.classList.remove('farm-exrate-invalid');
+    document.getElementById('farmExRateError').hidden = true;
+  }
+
+  function renderFarmMapName(){
+    document.getElementById('farmMapInput').value = App.farmMapNames[App.farmServerId] || '';
+  }
+
+  function updateFarmCostSummary(){
+    var bd = farmCostBreakdown(App.farmServerId);
+    document.getElementById('farmCostTotal').textContent = fmtNum(bd.total)+' z';
+  }
+
   function renderFarmCostItems(){
     var rows = farmCostRows(App.farmServerId);
     var removable = rows.length > 1;
-    document.getElementById('farmCostItems').innerHTML = rows.map(function(r){
-      var lineTotal = (parseFloat(r.price)||0)*(parseFloat(r.qty)||0);
+    document.getElementById('farmCostItems').innerHTML = rows.map(function(r, rowIdx){
+      var currency = r.currency || 'zeny';
       return '<div class="farm-cost-row" data-row-id="'+r.id+'">'+
+        '<span class="mr-row-index">'+(rowIdx+1)+'.</span>'+
         '<input type="text" class="farm-cost-name" placeholder="วิง, เร่ง, กั้ม" value="'+(r.name||'').replace(/"/g,'&quot;')+'">'+
         '<input type="number" class="farm-cost-qty" placeholder="จำนวน" value="'+(r.qty===''||r.qty==null?'':r.qty)+'">'+
-        '<input type="number" class="farm-cost-price" placeholder="ราคา" value="'+(r.price===''||r.price==null?'':r.price)+'">'+
-        '<span class="farm-cost-line-total mono">'+fmtNum(lineTotal)+'</span>'+
+        '<input type="text" inputmode="numeric" class="farm-cost-price" placeholder="ราคา" value="'+(r.price===''||r.price==null?'':fmtNum(r.price))+'">'+
+        '<select class="farm-cost-currency">'+
+          '<option value="zeny"'+(currency==='zeny'?' selected':'')+'>Zeny</option>'+
+          '<option value="baht"'+(currency==='baht'?' selected':'')+'>บาท</option>'+
+        '</select>'+
         '<button type="button" class="mr-row-remove" data-remove-row="'+r.id+'"'+(removable?'':' disabled')+'>✕</button>'+
       '</div>';
     }).join('');
-    document.getElementById('farmCostTotal').textContent = fmtNum(farmCostTotal(App.farmServerId));
+    updateFarmCostSummary();
   }
 
   function farmRareItemsTotal(){
@@ -1888,13 +1985,17 @@ svg.icon{width:18px;height:18px;display:block}
   function renderFarmRareItems(){
     var rows = farmRareItemRows;
     var removable = rows.length > 1;
-    document.getElementById('farmRareItems').innerHTML = rows.map(function(r){
-      var lineTotal = (parseFloat(r.price)||0)*(parseFloat(r.qty)||1);
+    document.getElementById('farmRareItems').innerHTML = rows.map(function(r, rowIdx){
+      var currency = r.currency || 'zeny';
       return '<div class="farm-rare-row" data-row-id="'+r.id+'">'+
+        '<span class="mr-row-index">'+(rowIdx+1)+'.</span>'+
         '<input type="text" class="farm-rare-name" placeholder="Elu, Ori, Card" value="'+(r.name||'').replace(/"/g,'&quot;')+'">'+
         '<input type="number" class="farm-rare-qty" placeholder="จำนวน" value="'+(r.qty===''||r.qty==null?'':r.qty)+'" min="1">'+
         '<input type="text" inputmode="numeric" class="farm-rare-price" placeholder="ราคา" value="'+(r.price===''||r.price==null?'':fmtNum(r.price))+'">'+
-        '<span class="farm-rare-line-total mono">'+(r.price!==''&&r.price!=null?fmtNum(lineTotal)+' z':'0')+'</span>'+
+        '<select class="farm-rare-currency">'+
+          '<option value="zeny"'+(currency==='zeny'?' selected':'')+'>Zeny</option>'+
+          '<option value="baht"'+(currency==='baht'?' selected':'')+'>บาท</option>'+
+        '</select>'+
         '<button type="button" class="mr-row-remove" data-remove-rare-row="'+r.id+'"'+(removable?'':' disabled')+'>✕</button>'+
       '</div>';
     }).join('');
@@ -1936,7 +2037,7 @@ svg.icon{width:18px;height:18px;display:block}
         label = d.toLocaleDateString('th-TH',{day:'numeric',month:'short'});
       }
       var tooltipLabel = label+' '+farmBeShort(d);
-      buckets.push({ key:farmBucketKey(d.getTime(),unit), label:label, tooltipLabel:tooltipLabel, earned:0, cost:0, profit:0, count:0 });
+      buckets.push({ key:farmBucketKey(d.getTime(),unit), label:label, tooltipLabel:tooltipLabel, earned:0, cost:0, profit:0, count:0, earnedBaht:0, costBaht:0, profitBaht:0 });
     }
     return buckets;
   }
@@ -1948,9 +2049,18 @@ svg.icon{width:18px;height:18px;display:block}
     App.farmLog.forEach(function(e){
       if(e.serverId!==serverId) return;
       var b = byKey[farmBucketKey(e.ts, unit)];
-      if(b){ b.earned += e.earned; b.profit += e.profit; b.cost += e.cost; b.count += (e.count||1); }
+      if(!b) return;
+      b.earned += e.earned; b.profit += e.profit; b.cost += e.cost; b.count += (e.count||1);
+      if(e.exchangeRate>0){
+        b.earnedBaht += farmZenyToBaht(e.earned, e.exchangeRate);
+        b.profitBaht += farmZenyToBaht(e.profit, e.exchangeRate);
+        b.costBaht += farmZenyToBaht(e.cost, e.exchangeRate);
+      }
     });
-    buckets.forEach(function(b){ b.avgPerSession = b.count>0 ? b.profit/b.count : 0; });
+    buckets.forEach(function(b){
+      b.avgPerSession = b.count>0 ? b.profit/b.count : 0;
+      b.avgPerSessionBaht = b.count>0 ? b.profitBaht/b.count : 0;
+    });
     return buckets;
   }
 
@@ -1968,7 +2078,7 @@ svg.icon{width:18px;height:18px;display:block}
     var n = buckets.length;
 
     var allVals = [0];
-    series.forEach(function(s){ buckets.forEach(function(b){ allVals.push(b[s]); }); });
+    series.forEach(function(s){ buckets.forEach(function(b){ allVals.push(farmBucketVal(b,s)); }); });
     var rawMin = Math.min.apply(null, allVals), rawMax = Math.max.apply(null, allVals);
     var step = niceStep((rawMax-rawMin)/4 || rawMax*0.1 || 1);
     var yMin = Math.floor(rawMin/step)*step;
@@ -2002,7 +2112,7 @@ svg.icon{width:18px;height:18px;display:block}
         var groupX = xSlot(i) + slotW*groupPad;
         series.forEach(function(s, si){
           var bx = groupX + si*(barW+barGap);
-          var v = b[s];
+          var v = farmBucketVal(b,s);
           var y1 = yAt(v), y2 = y0;
           var top = Math.min(y1,y2), h = Math.max(Math.abs(y1-y2), 1);
           parts.push('<rect x="'+bx.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+FARM_SERIES_COLOR[s]+'"/>');
@@ -2042,18 +2152,24 @@ svg.icon{width:18px;height:18px;display:block}
 
   function renderFarmChartLegend(buckets){
     var el = document.getElementById('farmChartLegend');
-    var totals = { earned:0, cost:0, profit:0, count:0 };
-    buckets.forEach(function(b){ totals.earned+=b.earned; totals.cost+=b.cost; totals.profit+=b.profit; totals.count+=b.count; });
+    var totals = { earned:0, cost:0, profit:0, count:0, earnedBaht:0, costBaht:0, profitBaht:0 };
+    buckets.forEach(function(b){
+      totals.earned+=b.earned; totals.cost+=b.cost; totals.profit+=b.profit; totals.count+=b.count;
+      totals.earnedBaht+=b.earnedBaht; totals.costBaht+=b.costBaht; totals.profitBaht+=b.profitBaht;
+    });
     var displayVals = {
-      earned: totals.earned, cost: totals.cost, profit: totals.profit,
-      avgPerSession: totals.count>0 ? totals.profit/totals.count : 0
+      earned: farmChartUnit==='baht'?totals.earnedBaht:totals.earned,
+      cost: farmChartUnit==='baht'?totals.costBaht:totals.cost,
+      profit: farmChartUnit==='baht'?totals.profitBaht:totals.profit,
+      avgPerSession: totals.count>0 ? (farmChartUnit==='baht'?totals.profitBaht:totals.profit)/totals.count : 0
     };
+    var unit = farmUnitSuffix();
     var row = FARM_SERIES_KEYS.map(function(s){
       var off = hiddenFarmSeries[s];
       var countSuffix = s==='avgPerSession' ? ' <span style="color:var(--text-dim);font-weight:400">('+totals.count+' กั้ม)</span>' : '';
       return '<button type="button" class="chart-legend-item chart-legend-dir'+(off?' off':'')+'" data-farm-legend="'+s+'">'+
         '<span class="cl-dot" style="background:'+FARM_SERIES_COLOR[s]+'"></span>'+FARM_SERIES_LABEL[s]+
-        ' <b style="color:'+FARM_SERIES_COLOR[s]+'">'+fmtNum(displayVals[s])+' z</b>'+countSuffix+'</button>';
+        ' <b style="color:'+FARM_SERIES_COLOR[s]+'">'+fmtNum(displayVals[s])+unit+'</b>'+countSuffix+'</button>';
     }).join('');
     el.innerHTML = '<div class="chart-legend-row">'+row+'</div>';
   }
@@ -2063,10 +2179,12 @@ svg.icon{width:18px;height:18px;display:block}
     var cur = farmBuckets(App.farmServerId, cfg.unit, cfg.count, 0);
     var prev = farmBuckets(App.farmServerId, cfg.unit, cfg.count, 1);
     function sum(arr,k){ return arr.reduce(function(s,b){ return s+b[k]; }, 0); }
-    var curProfit = sum(cur,'profit');
-    var prevProfit = sum(prev,'profit');
+    var profitKey = farmChartUnit==='baht' ? 'profitBaht' : 'profit';
+    var unit = farmUnitSuffix();
+    var curProfit = sum(cur,profitKey);
+    var prevProfit = sum(prev,profitKey);
     var valueEl = document.getElementById('farmKpiValue');
-    valueEl.textContent = (curProfit<0?'-':'')+fmtNum(Math.abs(curProfit))+' z';
+    valueEl.textContent = (curProfit<0?'-':'')+fmtNum(Math.abs(curProfit))+unit;
     valueEl.style.color = curProfit>=0 ? FARM_SERIES_COLOR.profit : FARM_LOSS_COLOR;
     document.getElementById('farmKpiPeriod').textContent = '('+cfg.label+')';
     var deltaEl = document.getElementById('farmKpiDelta');
@@ -2082,7 +2200,7 @@ svg.icon{width:18px;height:18px;display:block}
     var avgLineEl = document.getElementById('farmKpiAvgLine');
     if(totalCount>0){
       var avgPerSession = curProfit/totalCount;
-      avgLineEl.textContent = 'เฉลี่ย/กั้ม: '+(avgPerSession<0?'-':'')+fmtNum(Math.abs(avgPerSession))+' z ('+totalCount+' กั้ม)';
+      avgLineEl.textContent = 'เฉลี่ย/กั้ม: '+(avgPerSession<0?'-':'')+fmtNum(Math.abs(avgPerSession))+unit+' ('+totalCount+' กั้ม)';
     } else {
       avgLineEl.textContent = '';
     }
@@ -2104,10 +2222,11 @@ svg.icon{width:18px;height:18px;display:block}
     var series = FARM_SERIES_KEYS.filter(function(s){ return !hiddenFarmSeries[s]; });
     var svgBits = ['<rect x="'+slotX.toFixed(1)+'" y="'+farmChartGeom.padT+'" width="'+farmChartGeom.slotW.toFixed(1)+'" height="'+(farmChartGeom.H-22-farmChartGeom.padT)+'" fill="rgba(255,255,255,0.05)"/>'];
     var rows = [];
+    var hoverUnit = farmUnitSuffix();
     series.forEach(function(s){
       var color = FARM_SERIES_COLOR[s];
-      var v = b[s];
-      rows.push('<div class="ct-row"><span class="ct-key"><span class="ct-swatch" style="background:'+color+'"></span>'+FARM_SERIES_LABEL[s]+'</span><span class="ct-val" style="color:'+color+'">'+fmtNum(v)+' z</span></div>');
+      var v = farmBucketVal(b,s);
+      rows.push('<div class="ct-row"><span class="ct-key"><span class="ct-swatch" style="background:'+color+'"></span>'+FARM_SERIES_LABEL[s]+'</span><span class="ct-val" style="color:'+color+'">'+fmtNum(v)+hoverUnit+'</span></div>');
     });
     if(b.count>0){
       rows.push('<div class="ct-row"><span class="ct-key">จำนวนกั้ม</span><span class="ct-val">'+b.count+' กั้ม</span></div>');
@@ -2133,7 +2252,7 @@ svg.icon{width:18px;height:18px;display:block}
   var editingFarmId = null;
   var farmEditCostBackup = null;
   var farmOcActive = false;
-  var farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'' }];
+  var farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
   var FARM_HISTORY_PAGE_SIZE = 5;
   var FARM_HISTORY_PAGE_SIZE_OPTIONS = [5,10,15,20,30];
 
@@ -2153,9 +2272,14 @@ svg.icon{width:18px;height:18px;display:block}
 
     var summaryCount = entries.reduce(function(s,e){ return s+(e.count||1); }, 0);
     var summaryProfit = entries.reduce(function(s,e){ return s+e.profit; }, 0);
+    var summaryHasRate = entries.some(function(e){ return e.exchangeRate>0; });
+    var summaryBaht = entries.reduce(function(s,e){
+      return s + (e.exchangeRate>0 ? farmZenyToBaht(e.profit, e.exchangeRate) : 0);
+    }, 0);
+    var summaryBahtText = summaryHasRate ? ' = '+(summaryProfit>=0?'+':'')+fmtNum(summaryBaht)+' บ' : '';
     var summaryEl = document.getElementById('farmHistorySummary');
     if(entries.length){
-      summaryEl.innerHTML = summaryCount+' กั้ม · กำไร <span style="color:'+(summaryProfit>=0?'var(--success)':'var(--danger)')+'">'+(summaryProfit>=0?'+':'')+fmtNum(summaryProfit)+' z</span>';
+      summaryEl.innerHTML = summaryCount+' กั้ม · กำไร <span style="color:'+(summaryProfit>=0?'var(--success)':'var(--danger)')+'">'+(summaryProfit>=0?'+':'')+fmtNum(summaryProfit)+' z'+summaryBahtText+'</span>';
     } else {
       summaryEl.textContent = '';
     }
@@ -2174,22 +2298,28 @@ svg.icon{width:18px;height:18px;display:block}
     list.innerHTML = pageRows.map(function(e){
       var pos = e.profit>=0;
       var count = e.count || 1;
+      var hasRate = e.exchangeRate>0;
+      var costBahtText = hasRate ? ' = '+fmtNum(farmZenyToBaht(e.cost, e.exchangeRate))+' บ' : '';
+      var profitBahtText = hasRate ? ' = '+(pos?'+':'')+fmtNum(farmZenyToBaht(e.profit, e.exchangeRate))+' บ' : '';
+      var earnedBahtText = hasRate ? ' = '+fmtNum(farmZenyToBaht(e.earned, e.exchangeRate))+' บ' : '';
+      var mapText = e.mapName ? ' · Map: '+escapeHtml(e.mapName) : '';
       var rareTag = (e.rareItems||[]).filter(function(r){ return r.name; }).map(function(r){
         var qtySuffix = r.qty>1 ? ' x'+r.qty : '';
+        var rareUnit = (r.currency||'zeny')==='baht' ? 'บ' : 'z';
         return r.price
-          ? '<span class="farm-rare-tag sold">🎁 '+r.name+qtySuffix+' +'+fmtNum(r.price*r.qty)+' z</span>'
+          ? '<span class="farm-rare-tag sold">🎁 '+r.name+qtySuffix+' +'+fmtNum(r.price*r.qty)+' '+rareUnit+'</span>'
           : '<span class="farm-rare-tag pending">🎁 '+r.name+qtySuffix+' (รอขาย)</span>';
       }).join('');
       return '<div class="mr-entry'+(e.id===editingFarmId?' editing':'')+'" data-farm-entry-id="'+e.id+'">'+
-        '<div class="mr-entry-top"><span>'+fmtDateTime(e.ts)+' · <span style="color:#c9a8f0">'+count+' กั้ม</span> · <span class="farm-cost-hover" data-farm-cost-id="'+e.id+'">ต้นทุน '+fmtNum(e.cost)+' z</span></span>'+
+        '<div class="mr-entry-top"><span>'+fmtDateTime(e.ts)+' · <span style="color:#c9a8f0">'+count+' กั้ม</span>'+mapText+' · <span class="farm-cost-hover" data-farm-cost-id="'+e.id+'">ต้นทุน '+fmtNum(e.cost)+' z'+costBahtText+'</span></span>'+
           '<span style="display:flex;align-items:center;gap:.6rem">'+
-            '<b class="'+(pos?'farm-profit-pos':'farm-profit-neg')+' farm-profit-hover" data-farm-profit-id="'+e.id+'">'+(pos?'+':'')+fmtNum(e.profit)+' z</b>'+
+            '<b class="'+(pos?'farm-profit-pos':'farm-profit-neg')+'"><span class="farm-profit-hover" data-farm-profit-id="'+e.id+'">'+(pos?'+':'')+fmtNum(e.profit)+' z</span>'+profitBahtText+'</b>'+
             '<span class="mr-entry-actions">'+
               '<button type="button" class="mr-edit" data-farm-edit="'+e.id+'" title="แก้ไข">✎</button>'+
               '<button type="button" class="mr-del" data-farm-del="'+e.id+'" title="ลบ">🗑</button>'+
             '</span>'+
           '</span></div>'+
-        '<div class="mr-entry-sub farm-entry-sub"><span>ฟามได้ '+fmtNum(e.earned)+' z</span>'+rareTag+'</div>'+
+        '<div class="mr-entry-sub farm-entry-sub"><span>ฟามได้ '+fmtNum(e.earned)+' z'+earnedBahtText+'</span>'+rareTag+'</div>'+
       '</div>';
     }).join('');
 
@@ -2219,8 +2349,22 @@ svg.icon{width:18px;height:18px;display:block}
       var count = entry.count || 1;
       var rows = entry.costItems.map(function(it){
         var price = parseFloat(it.price)||0, qty = parseFloat(it.qty)||0;
-        return '<div class="ct-row"><span class="ct-key">'+(it.name||'-')+'</span><span class="ct-val">'+fmtNum(price*qty)+' z</span></div>';
+        var lineTotal = price*qty;
+        var isBaht = (it.currency||'zeny')==='baht';
+        var valText;
+        if(isBaht){
+          valText = fmtNum(lineTotal)+' บ';
+          if(entry.exchangeRate>0){
+            valText += ' = '+fmtNum((lineTotal/entry.exchangeRate)*1000000)+' z';
+          }
+        } else {
+          valText = fmtNum(lineTotal)+' z';
+        }
+        return '<div class="ct-row"><span class="ct-key">'+(it.name||'-')+'</span><span class="ct-val">'+valText+'</span></div>';
       }).join('');
+      if(entry.exchangeRate){
+        rows += '<div class="ct-row"><span class="ct-key" style="color:var(--text-dim)">เรทที่ใช้ตอนนั้น</span><span class="ct-val" style="color:var(--text-dim)">1M = '+fmtNum(entry.exchangeRate)+'บ</span></div>';
+      }
       rows += '<div class="ct-row" style="border-top:1px dashed var(--border);margin-top:.3rem;padding-top:.3rem"><span class="ct-key">รวม/กั้ม × '+count+'</span><span class="ct-val">'+fmtNum(entry.cost)+' z</span></div>';
       tip.innerHTML = '<span class="ct-time">รายการต้นทุนที่ใช้</span>'+rows;
     }
@@ -2238,14 +2382,24 @@ svg.icon{width:18px;height:18px;display:block}
     if(!entry){
       tip.innerHTML = '<span class="ct-time">ที่มาของกำไร</span><div class="ct-row"><span class="ct-key">ไม่มีข้อมูลรายละเอียด</span></div>';
     } else {
+      var hasRate = entry.exchangeRate>0;
       var earnedBase = entry.earnedBase!=null ? entry.earnedBase : entry.earned;
-      var rows = '<div class="ct-row"><span class="ct-key">ฟามได้ (พื้นฐาน)</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z</span></div>';
+      function bahtSuffix(z){ return hasRate ? ' (= '+fmtNum(farmZenyToBaht(z, entry.exchangeRate))+' บ)' : ''; }
+      var rows = '<div class="ct-row"><span class="ct-key">ฟามได้ (พื้นฐาน)</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z'+bahtSuffix(earnedBase)+'</span></div>';
       (entry.rareItems||[]).filter(function(r){ return r.name && r.price; }).forEach(function(r){
-        rows += '<div class="ct-row"><span class="ct-key">🎁 '+r.name+(r.qty>1?' x'+r.qty:'')+'</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(r.price*r.qty)+' z</span></div>';
+        var rareTotal = r.price*r.qty;
+        var isRareBaht = (r.currency||'zeny')==='baht';
+        var rareValText = isRareBaht
+          ? '+'+fmtNum(rareTotal)+' บ'+(hasRate ? ' (= '+fmtNum(farmBahtToZeny(rareTotal, entry.exchangeRate))+' z)' : '')
+          : '+'+fmtNum(rareTotal)+' z'+bahtSuffix(rareTotal);
+        rows += '<div class="ct-row"><span class="ct-key">🎁 '+r.name+(r.qty>1?' x'+r.qty:'')+'</span><span class="ct-val" style="color:var(--success)">'+rareValText+'</span></div>';
       });
-      rows += '<div class="ct-row"><span class="ct-key">ต้นทุน</span><span class="ct-val" style="color:var(--danger)">-'+fmtNum(entry.cost)+' z</span></div>';
+      rows += '<div class="ct-row"><span class="ct-key">ต้นทุน</span><span class="ct-val" style="color:var(--danger)">-'+fmtNum(entry.cost)+' z'+bahtSuffix(entry.cost)+'</span></div>';
+      if(hasRate){
+        rows += '<div class="ct-row"><span class="ct-key" style="color:var(--text-dim)">เรทที่ใช้ตอนนั้น</span><span class="ct-val" style="color:var(--text-dim)">1M = '+fmtNum(entry.exchangeRate)+'บ</span></div>';
+      }
       var pos = entry.profit>=0;
-      rows += '<div class="ct-row" style="border-top:1px dashed var(--border);margin-top:.3rem;padding-top:.3rem"><span class="ct-key">กำไรสุทธิ</span><span class="ct-val" style="color:'+(pos?'var(--success)':'var(--danger)')+'">'+(pos?'+':'')+fmtNum(entry.profit)+' z</span></div>';
+      rows += '<div class="ct-row" style="border-top:1px dashed var(--border);margin-top:.3rem;padding-top:.3rem"><span class="ct-key">กำไรสุทธิ</span><span class="ct-val" style="color:'+(pos?'var(--success)':'var(--danger)')+'">'+(pos?'+':'')+fmtNum(entry.profit)+' z'+bahtSuffix(entry.profit)+'</span></div>';
       tip.innerHTML = '<span class="ct-time">ที่มาของกำไร</span>'+rows;
     }
     var rect = el.getBoundingClientRect();
@@ -2262,7 +2416,7 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('farmLogConfirm').textContent = 'บันทึก';
     document.getElementById('farmCountInput').value = '1';
     document.getElementById('farmEarnedInput').value = '';
-    farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'' }];
+    farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
     renderFarmRareItems();
     farmOcActive = false;
     document.getElementById('farmOcToggle').classList.remove('active');
@@ -2271,8 +2425,14 @@ svg.icon{width:18px;height:18px;display:block}
   function cancelFarmEdit(){
     if(farmEditCostBackup){
       App.farmCostItems[farmEditCostBackup.serverId] = farmEditCostBackup.rows;
+      App.farmExchangeRates[farmEditCostBackup.serverId] = farmEditCostBackup.exchangeRate;
+      App.farmMapNames[farmEditCostBackup.serverId] = farmEditCostBackup.mapName;
       saveFarmCostItems();
+      saveFarmExchangeRates();
+      saveFarmMapNames();
       renderFarmCostItems();
+      renderFarmExchangeRate();
+      renderFarmMapName();
     }
     resetFarmEditState();
   }
@@ -2283,19 +2443,27 @@ svg.icon{width:18px;height:18px;display:block}
     App.farmServerId = entry.serverId;
     saveFarmServer();
     document.getElementById('farmServerSelect').value = entry.serverId;
-    farmEditCostBackup = { serverId: entry.serverId, rows: farmSnapshotCostRows(entry.serverId) };
+    farmEditCostBackup = { serverId: entry.serverId, rows: farmSnapshotCostRows(entry.serverId), exchangeRate: App.farmExchangeRates[entry.serverId], mapName: App.farmMapNames[entry.serverId] };
     if(entry.costItems && entry.costItems.length){
       App.farmCostItems[entry.serverId] = entry.costItems.map(function(r){
-        return { id: r.id || uid(), name:r.name, price:r.price, qty:r.qty };
+        return { id: r.id || uid(), name:r.name, price:r.price, qty:r.qty, currency:r.currency||'zeny' };
       });
       saveFarmCostItems();
     }
+    if(entry.exchangeRate!=null){
+      App.farmExchangeRates[entry.serverId] = entry.exchangeRate;
+      saveFarmExchangeRates();
+    }
+    App.farmMapNames[entry.serverId] = entry.mapName || '';
+    saveFarmMapNames();
+    renderFarmExchangeRate();
+    renderFarmMapName();
     renderFarmCostItems();
     document.getElementById('farmCountInput').value = entry.count || 1;
     document.getElementById('farmEarnedInput').value = fmtNum(entry.earnedBase!=null ? entry.earnedBase : entry.earned);
     farmRareItemRows = (entry.rareItems && entry.rareItems.length)
-      ? entry.rareItems.map(function(r){ return { id: r.id || uid(), name:r.name, price:r.price, qty:r.qty }; })
-      : [{ id:uid(), name:'', price:'', qty:'' }];
+      ? entry.rareItems.map(function(r){ return { id: r.id || uid(), name:r.name, price:r.price, qty:r.qty, currency:r.currency||'zeny' }; })
+      : [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
     renderFarmRareItems();
     farmOcActive = !!entry.ocApplied;
     document.getElementById('farmOcToggle').classList.toggle('active', farmOcActive);
@@ -2311,6 +2479,8 @@ svg.icon{width:18px;height:18px;display:block}
 
   function renderFarmPage(){
     populateFarmServerSelect();
+    renderFarmExchangeRate();
+    renderFarmMapName();
     renderFarmCostItems();
     renderFarmRareItems();
     renderFarmChart();
@@ -2962,6 +3132,20 @@ svg.icon{width:18px;height:18px;display:block}
     backdrop.addEventListener('click', close);
   }
 
+  function showFarmRateRequiredPopup(){
+    var overlay = document.getElementById('farmRateRequiredOverlay');
+    overlay.hidden = false;
+    var okBtn = document.getElementById('farmRateRequiredOkBtn');
+    var backdrop = overlay.querySelector('.confirm-backdrop');
+    function close(){
+      overlay.hidden = true;
+      okBtn.removeEventListener('click', close);
+      backdrop.removeEventListener('click', close);
+    }
+    okBtn.addEventListener('click', close);
+    backdrop.addEventListener('click', close);
+  }
+
   // Requires the user to type what they changed before an edit can be saved —
   // replaces the old auto-computed diff. onConfirm receives the escaped note text.
   function showMrEditNotePopup(onConfirm){
@@ -3601,17 +3785,39 @@ svg.icon{width:18px;height:18px;display:block}
   document.getElementById('farmServerSelect').addEventListener('change', function(e){
     App.farmServerId = e.target.value;
     saveFarmServer();
+    renderFarmExchangeRate();
+    renderFarmMapName();
     renderFarmCostItems();
     renderFarmChart();
     farmHistoryPage = 0;
     renderFarmHistory();
   });
 
-  document.getElementById('farmTimeframeToggle').addEventListener('click', function(e){
-    var btn = e.target.closest('[data-tf]');
+  document.getElementById('farmExRateInput').addEventListener('input', function(){
+    var digits = this.value.replace(/[^\d]/g,'');
+    this.value = digits ? Number(digits).toLocaleString('th-TH') : '';
+    App.farmExchangeRates[App.farmServerId] = digits || '';
+    saveFarmExchangeRates();
+    this.classList.remove('farm-exrate-invalid');
+    document.getElementById('farmExRateError').hidden = true;
+    updateFarmCostSummary();
+  });
+
+  document.getElementById('farmMapInput').addEventListener('input', function(){
+    App.farmMapNames[App.farmServerId] = this.value;
+    saveFarmMapNames();
+  });
+
+  document.getElementById('farmTimeframeSelect').addEventListener('change', function(e){
+    farmTimeframe = e.target.value;
+    renderFarmChart();
+  });
+
+  document.getElementById('farmUnitToggle').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-unit]');
     if(!btn) return;
-    farmTimeframe = btn.dataset.tf;
-    document.querySelectorAll('#farmTimeframeToggle .seg-btn').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    farmChartUnit = btn.dataset.unit;
+    document.querySelectorAll('#farmUnitToggle .seg-btn').forEach(function(b){ b.classList.toggle('active', b===btn); });
     renderFarmChart();
   });
 
@@ -3676,12 +3882,25 @@ svg.icon{width:18px;height:18px;display:block}
     var r = farmCostRows(App.farmServerId).filter(function(x){ return x.id===row.dataset.rowId; })[0];
     if(!r) return;
     if(e.target.classList.contains('farm-cost-name')) r.name = e.target.value;
-    if(e.target.classList.contains('farm-cost-price')) r.price = e.target.value;
+    if(e.target.classList.contains('farm-cost-price')){
+      var digits = e.target.value.replace(/[^\d]/g,'');
+      r.price = digits;
+      e.target.value = digits ? Number(digits).toLocaleString('th-TH') : '';
+    }
     if(e.target.classList.contains('farm-cost-qty')) r.qty = e.target.value;
     saveFarmCostItems();
-    var lineTotal = (parseFloat(r.price)||0)*(parseFloat(r.qty)||0);
-    row.querySelector('.farm-cost-line-total').textContent = fmtNum(lineTotal);
-    document.getElementById('farmCostTotal').textContent = fmtNum(farmCostTotal(App.farmServerId));
+    updateFarmCostSummary();
+  });
+
+  document.getElementById('farmCostItems').addEventListener('change', function(e){
+    if(!e.target.classList.contains('farm-cost-currency')) return;
+    var row = e.target.closest('[data-row-id]');
+    if(!row) return;
+    var r = farmCostRows(App.farmServerId).filter(function(x){ return x.id===row.dataset.rowId; })[0];
+    if(!r) return;
+    r.currency = e.target.value;
+    saveFarmCostItems();
+    updateFarmCostSummary();
   });
 
   document.getElementById('farmCostItems').addEventListener('click', function(e){
@@ -3693,7 +3912,7 @@ svg.icon{width:18px;height:18px;display:block}
   });
 
   document.getElementById('farmAddCostRowBtn').addEventListener('click', function(){
-    farmCostRows(App.farmServerId).push({ id:uid(), name:'', price:'', qty:'' });
+    farmCostRows(App.farmServerId).push({ id:uid(), name:'', price:'', qty:'', currency:'zeny' });
     saveFarmCostItems();
     renderFarmCostItems();
   });
@@ -3710,20 +3929,27 @@ svg.icon{width:18px;height:18px;display:block}
       r.price = digits;
     }
     if(e.target.classList.contains('farm-rare-qty')) r.qty = e.target.value;
-    var lineTotal = (parseFloat(r.price)||0)*(parseFloat(r.qty)||1);
-    row.querySelector('.farm-rare-line-total').textContent = (r.price!==''&&r.price!=null) ? fmtNum(lineTotal)+' z' : '0';
+  });
+
+  document.getElementById('farmRareItems').addEventListener('change', function(e){
+    if(!e.target.classList.contains('farm-rare-currency')) return;
+    var row = e.target.closest('[data-row-id]');
+    if(!row) return;
+    var r = farmRareItemRows.filter(function(x){ return x.id===row.dataset.rowId; })[0];
+    if(!r) return;
+    r.currency = e.target.value;
   });
 
   document.getElementById('farmRareItems').addEventListener('click', function(e){
     var btn = e.target.closest('[data-remove-rare-row]');
     if(!btn || btn.disabled) return;
     farmRareItemRows = farmRareItemRows.filter(function(r){ return r.id!==btn.dataset.removeRareRow; });
-    if(!farmRareItemRows.length) farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'' }];
+    if(!farmRareItemRows.length) farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
     renderFarmRareItems();
   });
 
   document.getElementById('farmAddRareItemBtn').addEventListener('click', function(){
-    farmRareItemRows.push({ id:uid(), name:'', price:'', qty:'' });
+    farmRareItemRows.push({ id:uid(), name:'', price:'', qty:'', currency:'zeny' });
     renderFarmRareItems();
   });
 
@@ -3767,12 +3993,24 @@ svg.icon{width:18px;height:18px;display:block}
     var count = parseInt(countInput.value, 10) || 1;
     var val = parseFloat(earnedInput.value.replace(/,/g,''));
     if(!val || val<=0){ toast('กรอกยอดที่ฟามได้ก่อน'); return; }
+    var costBd = farmCostBreakdown(App.farmServerId);
+    if(!(costBd.rate>0)){
+      var exRateInput = document.getElementById('farmExRateInput');
+      exRateInput.classList.add('farm-exrate-invalid');
+      document.getElementById('farmExRateError').hidden = false;
+      exRateInput.focus();
+      showFarmRateRequiredPopup();
+      return;
+    }
     if(count<1) count = 1;
     var cost = farmCostTotal(App.farmServerId) * count;
     var rareItemsSnapshot = farmRareItemRows
       .filter(function(r){ return (r.name||'').trim() || (parseFloat(r.price)||0)>0; })
-      .map(function(r){ return { id:r.id, name:(r.name||'').trim(), price: r.price===''||r.price==null?null:parseFloat(r.price), qty: parseFloat(r.qty)||1 }; });
-    var rareTotal = rareItemsSnapshot.reduce(function(s,r){ return s + (r.price||0)*r.qty; }, 0);
+      .map(function(r){ return { id:r.id, name:(r.name||'').trim(), price: r.price===''||r.price==null?null:parseFloat(r.price), qty: parseFloat(r.qty)||1, currency: r.currency||'zeny' }; });
+    var rareTotal = rareItemsSnapshot.reduce(function(s,r){
+      var lineTotal = (r.price||0)*r.qty;
+      return s + (r.currency==='baht' ? farmBahtToZeny(lineTotal, costBd.rate) : lineTotal);
+    }, 0);
     var totalEarned = val + rareTotal;
 
     function commitFarmLog(){
@@ -3788,6 +4026,8 @@ svg.icon{width:18px;height:18px;display:block}
           entry.earned = totalEarned;
           entry.profit = totalEarned-cost;
           entry.costItems = farmSnapshotCostRows(App.farmServerId);
+          entry.exchangeRate = farmExchangeRate(App.farmServerId) || null;
+          entry.mapName = App.farmMapNames[App.farmServerId] || '';
         }
         saveFarmLog();
         resetFarmEditState();
@@ -3795,11 +4035,11 @@ svg.icon{width:18px;height:18px;display:block}
         renderFarmChart();
         toast('แก้ไขรายการแล้ว');
       } else {
-        App.farmLog.push({ id:uid(), ts:Date.now(), serverId:App.farmServerId, count:count, cost:cost, earnedBase:val, ocApplied:farmOcActive, rareItems: rareItemsSnapshot, earned:totalEarned, profit:totalEarned-cost, costItems: farmSnapshotCostRows(App.farmServerId) });
+        App.farmLog.push({ id:uid(), ts:Date.now(), serverId:App.farmServerId, count:count, cost:cost, earnedBase:val, ocApplied:farmOcActive, rareItems: rareItemsSnapshot, earned:totalEarned, profit:totalEarned-cost, costItems: farmSnapshotCostRows(App.farmServerId), exchangeRate: farmExchangeRate(App.farmServerId) || null, mapName: App.farmMapNames[App.farmServerId] || '' });
         saveFarmLog();
         earnedInput.value = '';
         countInput.value = '1';
-        farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'' }];
+        farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
         renderFarmRareItems();
         renderFarmHistory();
         renderFarmChart();

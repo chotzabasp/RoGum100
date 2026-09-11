@@ -378,6 +378,8 @@ svg.icon{width:18px;height:18px;display:block}
 .items-pending-date{font-size:.7rem;color:var(--text-dim);margin-top:.15rem}
 .items-detail-row{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.55rem .7rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
 .items-detail-row:last-child{margin-bottom:0}
+.items-detail-right{display:flex;align-items:baseline;gap:.6rem;flex:none}
+.items-detail-date{font-size:.7rem;color:var(--text-dim);white-space:nowrap}
 .items-money-confirm-detail{display:flex;flex-direction:column;gap:.3rem;font-size:.8rem;color:var(--text-dim);margin-bottom:.6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .7rem}
 .items-money-confirm-top{display:flex;justify-content:space-between;gap:.5rem}
 .items-money-confirm-breakdown{font-size:.78rem}
@@ -3945,10 +3947,15 @@ svg.icon{width:18px;height:18px;display:block}
     title.textContent = 'รายการItem ของ ระดับ '+tier;
     var items = warehouseStockFor(App.itemsServerId)[tier].slice().sort(function(a,b){ return b.ts-a.ts; });
     if(!items.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีไอเทมในคลังนี้</p>'; return; }
-    list.innerHTML = items.map(function(it){
+    var rows = [];
+    items.forEach(function(it){
       var unit = it.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
-      return '<div class="items-detail-row"><span>'+itemNameWithSlots(it.name, it.slots)+' <span style="color:var(--text-dim)">x'+fmtNum(it.qty)+'</span></span><span class="mono">'+fmtNum(it.total)+' '+unit+'</span></div>';
-    }).join('');
+      var pieces = Math.max(1, Math.round(parseFloat(it.qty)||1));
+      for(var i=0;i<pieces;i++){
+        rows.push('<div class="items-detail-row"><span>'+itemNameWithSlots(it.name, it.slots)+'</span><span class="items-detail-right"><span class="mono">'+fmtNum(it.price)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(it.ts)+'</span></span></div>');
+      }
+    });
+    list.innerHTML = rows.join('');
   }
 
   function renderItemsPage(){

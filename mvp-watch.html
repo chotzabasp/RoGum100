@@ -374,6 +374,7 @@ svg.icon{width:18px;height:18px;display:block}
 .items-pending-row-top{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
 .items-pending-name{font-weight:600;font-size:.85rem}
 .items-pending-amount{font-family:"JetBrains Mono";font-weight:700;font-size:.85rem;color:var(--accent)}
+.items-pending-breakdown{font-size:.74rem;color:var(--text-dim);margin-top:.2rem}
 .items-pending-date{font-size:.7rem;color:var(--text-dim);margin-top:.15rem}
 .items-detail-row{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.55rem .7rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
 .items-detail-row:last-child{margin-bottom:0}
@@ -881,6 +882,7 @@ svg.icon{width:18px;height:18px;display:block}
               </div>
             </div>
           </div>
+          <div class="farm-log-divider"></div>
 
           <div class="field">
             <label>เซิร์ฟเวอร์</label>
@@ -1028,6 +1030,7 @@ svg.icon{width:18px;height:18px;display:block}
               <span>บาท</span>
             </div>
           </div>
+          <div class="farm-log-divider"></div>
           <div class="farm-map-row">
             <span>Map</span>
             <input type="text" id="farmMapInput" placeholder="เช่น มิด4, ย่อน5, ดันOGH">
@@ -1169,6 +1172,7 @@ svg.icon{width:18px;height:18px;display:block}
             <h2>จำนวนรายการที่รอลงคลังทั้งหมด</h2>
             <select class="chart-tf-select" id="itemsServerSelect"></select>
           </div>
+          <div class="farm-log-divider"></div>
           <div id="itemsPendingList"></div>
         </div>
       </div>
@@ -3872,7 +3876,7 @@ svg.icon{width:18px;height:18px;display:block}
         pending.push({
           lineId: l.id, entryId: e.id, name: l.name, qty: l.qty, rate: l.rate,
           total: l.total!=null ? l.total : (l.rate*l.qty), currency: lineCurrency(l),
-          category: cat, ts: e.ts
+          category: cat, ts: e.ts, slots: l.slots
         });
       });
     });
@@ -3909,7 +3913,8 @@ svg.icon{width:18px;height:18px;display:block}
     list.innerHTML = pending.map(function(p){
       var unit = p.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
       return '<div class="items-pending-row" draggable="true" data-line-id="'+p.lineId+'">'+
-        '<div class="items-pending-row-top"><span class="items-pending-name">'+escapeHtml(p.name)+'</span><span class="items-pending-amount">'+fmtNum(p.total)+' '+unit+'</span></div>'+
+        '<div class="items-pending-row-top"><span class="items-pending-name">'+itemNameWithSlots(p.name, p.slots)+'</span><span class="items-pending-amount">'+fmtNum(p.total)+' '+unit+'</span></div>'+
+        '<div class="items-pending-breakdown">'+fmtNum(p.qty)+' x '+fmtNum(p.rate)+' = '+fmtNum(p.total)+' '+unit+'</div>'+
         '<div class="items-pending-date">'+fmtDateTime(p.ts)+'</div>'+
       '</div>';
     }).join('');
@@ -3937,7 +3942,7 @@ svg.icon{width:18px;height:18px;display:block}
     if(!items.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีไอเทมในคลังนี้</p>'; return; }
     list.innerHTML = items.map(function(it){
       var unit = it.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
-      return '<div class="items-detail-row"><span>'+escapeHtml(it.name)+' <span style="color:var(--text-dim)">x'+fmtNum(it.qty)+'</span></span><span class="mono">'+fmtNum(it.total)+' '+unit+'</span></div>';
+      return '<div class="items-detail-row"><span>'+itemNameWithSlots(it.name, it.slots)+' <span style="color:var(--text-dim)">x'+fmtNum(it.qty)+'</span></span><span class="mono">'+fmtNum(it.total)+' '+unit+'</span></div>';
     }).join('');
   }
 
@@ -3971,7 +3976,7 @@ svg.icon{width:18px;height:18px;display:block}
     } else {
       if(isMoney){ toast('ลากได้เฉพาะรายการ Item เท่านั้น'); return; }
       var w = warehouseStockFor(serverId);
-      w[warehouse].push({ id:uid(), lineId:item.lineId, name:item.name, qty:item.qty, price:item.rate, total:item.total, currency:item.currency, ts:item.ts });
+      w[warehouse].push({ id:uid(), lineId:item.lineId, name:item.name, qty:item.qty, price:item.rate, total:item.total, currency:item.currency, ts:item.ts, slots:item.slots });
       saveItemWarehouseStock();
       renderItemsPage();
       toast('ใส่คลัง Item ระดับ '+warehouse+' แล้ว');

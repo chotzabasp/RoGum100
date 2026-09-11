@@ -380,6 +380,8 @@ svg.icon{width:18px;height:18px;display:block}
 .items-detail-row:last-child{margin-bottom:0}
 .items-detail-right{display:flex;align-items:baseline;gap:.6rem;flex:none}
 .items-detail-date{font-size:.7rem;color:var(--text-dim);white-space:nowrap}
+.items-undo-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem;padding:.1rem .2rem;line-height:1}
+.items-undo-btn:hover{color:var(--accent)}
 .items-money-confirm-detail{display:flex;flex-direction:column;gap:.3rem;font-size:.8rem;color:var(--text-dim);margin-bottom:.6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .7rem}
 .items-money-confirm-top{display:flex;justify-content:space-between;gap:.5rem}
 .items-money-confirm-breakdown{font-size:.78rem}
@@ -3861,30 +3863,48 @@ svg.icon{width:18px;height:18px;display:block}
     return w;
   }
 
-  function stockedLineIdSet(serverId){
+  function stockedQtyByLineId(serverId){
+    var w = warehouseStockFor(serverId);
+    var counts = {};
+    ITEM_WAREHOUSE_TIERS.forEach(function(tier){
+      w[tier].forEach(function(item){ counts[item.lineId] = (counts[item.lineId]||0) + (parseFloat(item.qty)||0); });
+    });
+    return counts;
+  }
+  function stockedMoneyLineIdSet(serverId){
     var w = warehouseStockFor(serverId);
     var set = {};
-    ['A','B','S','M'].forEach(function(tier){
-      w[tier].forEach(function(item){ set[item.lineId] = true; });
-    });
+    w.M.forEach(function(item){ set[item.lineId] = true; });
     return set;
   }
 
   function itemsPendingList(serverId){
     if(!serverId) return [];
-    var stocked = stockedLineIdSet(serverId);
+    var claimedQty = stockedQtyByLineId(serverId);
+    var claimedMoney = stockedMoneyLineIdSet(serverId);
     var pending = [];
     App.merchantLog.forEach(function(e){
       if(e.serverId!==serverId || entryType(e)!=='buy') return;
       var cat = e.category || 'zeny';
       if(cat!=='zeny' && cat!=='item') return; // "อื่นๆ" is out of scope for the warehouse
       (e.lines||[]).forEach(function(l){
-        if(stocked[l.id]) return;
-        pending.push({
-          lineId: l.id, entryId: e.id, name: l.name, qty: l.qty, rate: l.rate,
-          total: l.total!=null ? l.total : (l.rate*l.qty), currency: lineCurrency(l),
-          category: cat, ts: e.ts, slots: l.slots
-        });
+        if(cat==='zeny'){
+          if(claimedMoney[l.id]) return;
+          pending.push({
+            lineId: l.id, entryId: e.id, name: l.name, qty: l.qty, rate: l.rate,
+            total: l.total!=null ? l.total : (l.rate*l.qty), currency: lineCurrency(l),
+            category: cat, ts: e.ts, slots: l.slots
+          });
+        } else {
+          var totalQty = parseFloat(l.qty)||0;
+          var remaining = totalQty - (claimedQty[l.id]||0);
+          if(remaining<=0) return;
+          pending.push({
+            lineId: l.id, entryId: e.id, name: l.name, qty: remaining, rate: l.rate,
+            total: l.rate*remaining, currency: lineCurrency(l),
+            category: cat, ts: e.ts, slots: l.slots
+          });
+        }
       });
     });
     pending.sort(function(a,b){ return b.ts-a.ts; });
@@ -3952,7 +3972,7 @@ svg.icon{width:18px;height:18px;display:block}
       var unit = it.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
       var pieces = Math.max(1, Math.round(parseFloat(it.qty)||1));
       for(var i=0;i<pieces;i++){
-        rows.push('<div class="items-detail-row"><span>'+itemNameWithSlots(it.name, it.slots)+'</span><span class="items-detail-right"><span class="mono">'+fmtNum(it.price)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(it.ts)+'</span></span></div>');
+        rows.push('<div class="items-detail-row"><span>'+itemNameWithSlots(it.name, it.slots)+'</span><span class="items-detail-right"><span class="mono">'+fmtNum(it.price)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(it.ts)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-id="'+it.id+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>');
       }
     });
     list.innerHTML = rows.join('');
@@ -3996,6 +4016,31 @@ svg.icon{width:18px;height:18px;display:block}
       toast('ใส่คลัง Item ระดับ '+warehouse+' แล้ว');
     }
   }
+
+  function undoWarehouseItem(tier, stockId){
+    var w = warehouseStockFor(App.itemsServerId);
+    var arr = w[tier];
+    var idx = -1;
+    for(var i=0;i<arr.length;i++){ if(arr[i].id===stockId){ idx = i; break; } }
+    if(idx===-1) return;
+    var it = arr[idx];
+    var qty = parseFloat(it.qty)||1;
+    if(qty<=1){
+      arr.splice(idx,1);
+    } else {
+      it.qty = qty-1;
+      it.total = (parseFloat(it.price)||0) * it.qty;
+    }
+    saveItemWarehouseStock();
+    renderItemsPage();
+    toast('ย้ายกลับไปที่รายการที่รอลงคลังแล้ว');
+  }
+
+  document.getElementById('itemsDetailList').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-undo-id]');
+    if(!btn) return;
+    undoWarehouseItem(btn.dataset.undoTier, btn.dataset.undoId);
+  });
 
   document.getElementById('itemsServerSelect').addEventListener('change', function(e){
     App.itemsServerId = e.target.value;

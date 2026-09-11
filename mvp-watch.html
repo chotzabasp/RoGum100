@@ -3984,7 +3984,7 @@ svg.icon{width:18px;height:18px;display:block}
       var g = groups[key];
       var unit = g.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
       var total = g.qty * (parseFloat(g.price)||0);
-      return '<div class="items-detail-row"><span>'+itemNameWithSlots(g.name, g.slots)+' <span>จำนวน '+fmtNum(g.qty)+' ea</span></span><span class="items-detail-right"><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>';
+      return '<div class="items-detail-row"><span>'+itemNameWithSlots(g.name, g.slots)+' <span>x'+fmtNum(g.qty)+' ea</span></span><span class="items-detail-right"><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>';
     }).join('');
   }
 

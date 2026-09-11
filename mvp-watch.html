@@ -361,6 +361,23 @@ svg.icon{width:18px;height:18px;display:block}
 .items-card-a-sub{min-height:180px}
 .items-card-b{min-height:260px}
 .items-card-c{min-height:660px}
+.items-money-total{font-size:1.3rem;font-weight:700;font-family:"JetBrains Mono";color:var(--success)}
+.items-tier-count{font-size:1.3rem;font-weight:700;font-family:"JetBrains Mono"}
+.items-tier-viewall{align-self:flex-start;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font-size:.78rem;font-weight:600}
+.items-tier-viewall:hover{text-decoration:underline}
+.items-dropzone{transition:border-color .15s,background .15s}
+.items-dropzone.items-drag-over{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 10%, var(--surface))}
+.items-pending-row{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.55rem .7rem;margin-bottom:.5rem;cursor:grab}
+.items-pending-row:active{cursor:grabbing}
+.items-pending-row.items-dragging{opacity:.4}
+.items-pending-row:last-child{margin-bottom:0}
+.items-pending-row-top{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.items-pending-name{font-weight:600;font-size:.85rem}
+.items-pending-amount{font-family:"JetBrains Mono";font-weight:700;font-size:.85rem;color:var(--accent)}
+.items-pending-date{font-size:.7rem;color:var(--text-dim);margin-top:.15rem}
+.items-detail-row{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.55rem .7rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.items-detail-row:last-child{margin-bottom:0}
+.items-money-confirm-detail{display:flex;justify-content:space-between;gap:.5rem;font-size:.8rem;color:var(--text-dim);margin-bottom:.6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .7rem}
 .panel-merchant-entry,.panel-farm-cost{position:sticky;top:1rem;min-height:0;max-height:calc(100vh - 2rem);overflow-y:auto}
 .field-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.5rem}
 .field-row label{margin:0}
@@ -1115,37 +1132,63 @@ svg.icon{width:18px;height:18px;display:block}
       <div class="topbar">
         <div>
           <h1>คลังไอเทม</h1>
-          <p class="sub">อยู่ระหว่างออกแบบ — ยังไม่มีข้อมูล</p>
+          <p class="sub">ลากรายการที่ซื้อมาแล้วไปเก็บไว้ในคลังแต่ละประเภท</p>
         </div>
       </div>
 
       <div class="home-grid">
         <div class="home-left">
           <div class="items-card-a-grid">
-            <div class="panel items-card-a-sub">
+            <div class="panel items-card-a-sub items-dropzone" id="itemsCardMoney" data-warehouse="M">
               <div class="panel-head"><h2>คลังเงิน M</h2></div>
+              <div class="items-money-total" id="itemsMoneyTotal">0 บ</div>
             </div>
-            <div class="panel items-card-a-sub">
+            <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierA" data-warehouse="A">
               <div class="panel-head"><h2>คลังItem ระดับ A</h2></div>
+              <div class="items-tier-count" id="itemsTierCountA">0 ชิ้น</div>
+              <button type="button" class="items-tier-viewall" data-view-tier="A">ดูItem ทั้งหมด</button>
             </div>
-            <div class="panel items-card-a-sub">
+            <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierB" data-warehouse="B">
               <div class="panel-head"><h2>คลังItem ระดับ B</h2></div>
+              <div class="items-tier-count" id="itemsTierCountB">0 ชิ้น</div>
+              <button type="button" class="items-tier-viewall" data-view-tier="B">ดูItem ทั้งหมด</button>
             </div>
-            <div class="panel items-card-a-sub">
+            <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierS" data-warehouse="S">
               <div class="panel-head"><h2>คลังItem ระดับ S</h2></div>
+              <div class="items-tier-count" id="itemsTierCountS">0 ชิ้น</div>
+              <button type="button" class="items-tier-viewall" data-view-tier="S">ดูItem ทั้งหมด</button>
             </div>
           </div>
           <div class="panel items-card-b">
-            <div class="panel-head"><h2>รายการItem ของ........</h2></div>
+            <div class="panel-head"><h2 id="itemsDetailTitle">รายการItem ของ........</h2></div>
+            <div id="itemsDetailList"><p class="mr-empty">กด "ดูItem ทั้งหมด" ที่คลังไอเทมด้านบนเพื่อดูรายการ</p></div>
           </div>
         </div>
         <div class="panel panel-side items-card-c">
           <div class="panel-head">
             <h2>จำนวนรายการที่รอลงคลังทั้งหมด</h2>
+            <select class="chart-tf-select" id="itemsServerSelect"></select>
           </div>
+          <div id="itemsPendingList"></div>
         </div>
       </div>
     </section>
+
+    <div id="itemsMoneyConfirmOverlay" hidden>
+      <div class="confirm-backdrop"></div>
+      <div class="confirm-box">
+        <p class="confirm-message">ยืนยันยอดที่จะใส่เข้า "คลังเงิน M"</p>
+        <div class="items-money-confirm-detail"><span id="itemsMoneyConfirmName"></span><span id="itemsMoneyConfirmDate"></span></div>
+        <div class="field">
+          <label>ยอดเงินที่จะใส่คลัง (บาท)</label>
+          <input type="text" inputmode="numeric" id="itemsMoneyConfirmInput" class="mono">
+        </div>
+        <div class="confirm-actions">
+          <button type="button" class="btn btn-ghost" id="itemsMoneyConfirmCancelBtn">ยกเลิก</button>
+          <button type="button" class="btn btn-gradient" id="itemsMoneyConfirmOkBtn">ยืนยัน</button>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -1401,6 +1444,7 @@ svg.icon{width:18px;height:18px;display:block}
       rateSlots:'mvpwatch_rateslots_'+email, rateSlotsVer:'mvpwatch_rateslotsver_'+email, merchantLog:'mvpwatch_merchantlog_'+email,
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
+      itemWarehouseStock:'mvpwatch_itemwarehousestock_'+email, itemsServer:'mvpwatch_itemsserver_'+email,
       currentServer:'mvpwatch_currentserver_'+email,
       farmCostItems:'mvpwatch_farmcost_'+email, farmLog:'mvpwatch_farmlog_'+email, farmServer:'mvpwatch_farmserver_'+email,
       farmOcHint:'mvpwatch_farmochint_'+email, farmExRate:'mvpwatch_farmexrate_'+email, farmMapNames:'mvpwatch_farmmapnames_'+email,
@@ -1414,7 +1458,7 @@ svg.icon{width:18px;height:18px;display:block}
   var ZENY_LABEL = 'Zeny (1M)';
   var ZENY_LABEL_2 = 'Zeny (100k)';
   var ZENY_PINNED_LABELS = [ZENY_LABEL, ZENY_LABEL_2];
-  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, editingMerchantId:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemsServerId:null, itemsSelectedTier:null, editingMerchantId:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -1458,6 +1502,11 @@ svg.icon{width:18px;height:18px;display:block}
         entry.editHistory = [{ ts: entry.editedAt, diff: null }];
         merchantLogNeedsIdFix = true;
       }
+      // every line needs a stable id so the คลังไอเทม warehouse can track which lines
+      // have already been dragged into a warehouse across edits/reloads
+      (entry.lines||[]).forEach(function(l){
+        if(!l.id){ l.id = uid(); merchantLogNeedsIdFix = true; }
+      });
     });
     if(merchantLogNeedsIdFix) persist(keys.merchantLog, App.merchantLog);
     App.merchantServers = store(keys.merchantServers, null) || SERVER_RATES.map(function(s){ return s.id; });
@@ -1471,6 +1520,8 @@ svg.icon{width:18px;height:18px;display:block}
       if(!App.merchantItems.other) App.merchantItems.other = [];
     }
     App.merchantExchangeRates = store(keys.merchantExRate, null) || {};
+    App.itemWarehouseStock = store(keys.itemWarehouseStock, null) || {};
+    App.itemsServerId = store(keys.itemsServer, null);
     App.editingMerchantId = null;
     App.currentServerId = store(keys.currentServer, null);
     if(App.merchantServers.indexOf(App.currentServerId)===-1) App.currentServerId = App.merchantServers[0] || null;
@@ -1554,6 +1605,8 @@ svg.icon{width:18px;height:18px;display:block}
   }
   function saveMerchantLog(){ persist(App.keys.merchantLog, App.merchantLog); }
   function saveMerchantExchangeRates(){ persist(App.keys.merchantExRate, App.merchantExchangeRates); }
+  function saveItemWarehouseStock(){ persist(App.keys.itemWarehouseStock, App.itemWarehouseStock); }
+  function saveItemsServer(){ persist(App.keys.itemsServer, App.itemsServerId); }
   function saveDB(){ persist(App.keys.db, App.db); }
   function saveActive(){ persist(App.keys.active, App.active); }
   function saveLog(){ persist(App.keys.log, App.log); }
@@ -2745,8 +2798,8 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('mrExRateError').hidden = true;
   }
 
-  function newItemRow(name, price, qty, currency, slots){
-    return { rid: uid(), name: name||'', price: price!=null?price:'', qty: qty!=null?qty:'', currency: currency==='zeny'?'zeny':'baht', slots: slots||[] };
+  function newItemRow(name, price, qty, currency, slots, lineId){
+    return { rid: uid(), lineId: lineId||null, name: name||'', price: price!=null?price:'', qty: qty!=null?qty:'', currency: currency==='zeny'?'zeny':'baht', slots: slots||[] };
   }
 
   function cleanDecimalInput(value){
@@ -3005,7 +3058,7 @@ svg.icon{width:18px;height:18px;display:block}
     var lines = entry.lines || [];
     var isZeny = lines.length===1 && ZENY_PINNED_LABELS.indexOf(lines[0].name)!==-1;
     var cat = entry.category || (isZeny ? 'zeny' : 'item');
-    var rows = lines.map(function(l){ return newItemRow(l.name, l.rate, l.qty, lineCurrency(l), l.slots ? l.slots.slice() : []); });
+    var rows = lines.map(function(l){ return newItemRow(l.name, l.rate, l.qty, lineCurrency(l), l.slots ? l.slots.slice() : [], l.id); });
     if(cat==='zeny') App.zenyRows = rows;
     else if(cat==='other') App.otherRows = rows;
     else App.itemRows = rows;
@@ -3621,7 +3674,7 @@ svg.icon{width:18px;height:18px;display:block}
       var name = r.name.trim(), rate = parseFloat(r.price), qty = parseFloat(r.qty), currency = lineCurrency(r);
       var slots = (r.slots || []).map(function(s){ return String(s||'').trim(); }).filter(function(s){ return s; });
       if(ZENY_PINNED_LABELS.indexOf(name)===-1 && App.merchantItems[App.merchantCategory].indexOf(name)===-1) App.merchantItems[App.merchantCategory].push(name);
-      return { name:name, rate:rate, qty:qty, currency:currency, total:rate*qty, slots:slots };
+      return { id: r.lineId||uid(), name:name, rate:rate, qty:qty, currency:currency, total:rate*qty, slots:slots };
     });
     var totalBaht = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?0:l.total); }, 0);
     var totalZeny = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?l.total:0); }, 0);
@@ -3782,6 +3835,211 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('mrHistoryToDate').max = todayStr;
   })();
 
+  // ---------- คลังไอเทม (item warehouse) ----------
+  // Pending items are computed on the fly from App.merchantLog (buy-type M/Item lines
+  // not yet claimed by a warehouse) rather than stored separately, so the source of
+  // truth for "what was bought" stays the merchant log; only the warehouse assignment
+  // (which tier a line's item/money ended up in) is persisted here.
+  var ITEM_WAREHOUSE_TIERS = ['A','B','S'];
+  var itemsPendingMoneyDrop = null;
+
+  function warehouseStockFor(serverId){
+    if(!App.itemWarehouseStock[serverId]) App.itemWarehouseStock[serverId] = { A:[], B:[], S:[], M:[] };
+    var w = App.itemWarehouseStock[serverId];
+    if(!w.A) w.A = []; if(!w.B) w.B = []; if(!w.S) w.S = []; if(!w.M) w.M = [];
+    return w;
+  }
+
+  function stockedLineIdSet(serverId){
+    var w = warehouseStockFor(serverId);
+    var set = {};
+    ['A','B','S','M'].forEach(function(tier){
+      w[tier].forEach(function(item){ set[item.lineId] = true; });
+    });
+    return set;
+  }
+
+  function itemsPendingList(serverId){
+    if(!serverId) return [];
+    var stocked = stockedLineIdSet(serverId);
+    var pending = [];
+    App.merchantLog.forEach(function(e){
+      if(e.serverId!==serverId || entryType(e)!=='buy') return;
+      var cat = e.category || 'zeny';
+      if(cat!=='zeny' && cat!=='item') return; // "อื่นๆ" is out of scope for the warehouse
+      (e.lines||[]).forEach(function(l){
+        if(stocked[l.id]) return;
+        pending.push({
+          lineId: l.id, entryId: e.id, name: l.name, qty: l.qty, rate: l.rate,
+          total: l.total!=null ? l.total : (l.rate*l.qty), currency: lineCurrency(l),
+          category: cat, ts: e.ts
+        });
+      });
+    });
+    pending.sort(function(a,b){ return b.ts-a.ts; });
+    return pending;
+  }
+
+  function warehouseTierCount(serverId, tier){
+    return warehouseStockFor(serverId)[tier].reduce(function(s,item){ return s + (parseFloat(item.qty)||0); }, 0);
+  }
+  function warehouseMoneyTotal(serverId){
+    return warehouseStockFor(serverId).M.reduce(function(s,item){ return s + (parseFloat(item.confirmedAmount)||0); }, 0);
+  }
+
+  function populateItemsServerSelect(){
+    var sel = document.getElementById('itemsServerSelect');
+    var ids = historyServerIds();
+    if(App.itemsServerId==null || ids.indexOf(App.itemsServerId)===-1){
+      App.itemsServerId = ids.indexOf(App.currentServerId)!==-1 ? App.currentServerId : (ids[0] || null);
+      saveItemsServer();
+    }
+    sel.innerHTML = ids.map(function(id){
+      var sv = serverRateById(id);
+      return '<option value="'+id+'">'+(sv?sv.name:id)+'</option>';
+    }).join('');
+    sel.value = App.itemsServerId;
+  }
+
+  function renderItemsPendingList(){
+    var list = document.getElementById('itemsPendingList');
+    if(!App.itemsServerId){ list.innerHTML = '<p class="mr-empty">ยังไม่มีเซิร์ฟเวอร์ที่มีรายการซื้อ-ขาย</p>'; return; }
+    var pending = itemsPendingList(App.itemsServerId);
+    if(!pending.length){ list.innerHTML = '<p class="mr-empty">ไม่มีรายการที่รอลงคลัง</p>'; return; }
+    list.innerHTML = pending.map(function(p){
+      var unit = p.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
+      return '<div class="items-pending-row" draggable="true" data-line-id="'+p.lineId+'">'+
+        '<div class="items-pending-row-top"><span class="items-pending-name">'+escapeHtml(p.name)+'</span><span class="items-pending-amount">'+fmtNum(p.total)+' '+unit+'</span></div>'+
+        '<div class="items-pending-date">'+fmtDateTime(p.ts)+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  function renderItemsWarehouseCards(){
+    var serverId = App.itemsServerId;
+    document.getElementById('itemsMoneyTotal').textContent = fmtNum(warehouseMoneyTotal(serverId)) + ' บ';
+    ITEM_WAREHOUSE_TIERS.forEach(function(tier){
+      document.getElementById('itemsTierCount'+tier).textContent = fmtNum(warehouseTierCount(serverId, tier)) + ' ชิ้น';
+    });
+  }
+
+  function renderItemsDetail(){
+    var title = document.getElementById('itemsDetailTitle');
+    var list = document.getElementById('itemsDetailList');
+    var tier = App.itemsSelectedTier;
+    if(!tier){
+      title.textContent = 'รายการItem ของ........';
+      list.innerHTML = '<p class="mr-empty">กด "ดูItem ทั้งหมด" ที่คลังไอเทมด้านบนเพื่อดูรายการ</p>';
+      return;
+    }
+    title.textContent = 'รายการItem ของ ระดับ '+tier;
+    var items = warehouseStockFor(App.itemsServerId)[tier].slice().sort(function(a,b){ return b.ts-a.ts; });
+    if(!items.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีไอเทมในคลังนี้</p>'; return; }
+    list.innerHTML = items.map(function(it){
+      var unit = it.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
+      return '<div class="items-detail-row"><span>'+escapeHtml(it.name)+' <span style="color:var(--text-dim)">x'+fmtNum(it.qty)+'</span></span><span class="mono">'+fmtNum(it.total)+' '+unit+'</span></div>';
+    }).join('');
+  }
+
+  function renderItemsPage(){
+    populateItemsServerSelect();
+    renderItemsPendingList();
+    renderItemsWarehouseCards();
+    renderItemsDetail();
+  }
+
+  function showItemsMoneyConfirmPopup(item){
+    itemsPendingMoneyDrop = item;
+    document.getElementById('itemsMoneyConfirmName').textContent = item.name;
+    document.getElementById('itemsMoneyConfirmDate').textContent = fmtDateTime(item.ts);
+    document.getElementById('itemsMoneyConfirmInput').value = formatDecimalDisplay(String(item.total));
+    document.getElementById('itemsMoneyConfirmOverlay').hidden = false;
+  }
+  function hideItemsMoneyConfirmPopup(){
+    document.getElementById('itemsMoneyConfirmOverlay').hidden = true;
+    itemsPendingMoneyDrop = null;
+  }
+
+  function handleItemsDrop(warehouse, lineId){
+    var serverId = App.itemsServerId;
+    var item = itemsPendingList(serverId).filter(function(p){ return p.lineId===lineId; })[0];
+    if(!item) return; // already claimed by another drop, or stale drag
+    var isMoney = item.category==='zeny';
+    if(warehouse==='M'){
+      if(!isMoney){ toast('ลากได้เฉพาะรายการจากหมวด M เท่านั้น'); return; }
+      showItemsMoneyConfirmPopup(item);
+    } else {
+      if(isMoney){ toast('ลากได้เฉพาะรายการ Item เท่านั้น'); return; }
+      var w = warehouseStockFor(serverId);
+      w[warehouse].push({ id:uid(), lineId:item.lineId, name:item.name, qty:item.qty, price:item.rate, total:item.total, currency:item.currency, ts:item.ts });
+      saveItemWarehouseStock();
+      renderItemsPage();
+      toast('ใส่คลัง Item ระดับ '+warehouse+' แล้ว');
+    }
+  }
+
+  document.getElementById('itemsServerSelect').addEventListener('change', function(e){
+    App.itemsServerId = e.target.value;
+    saveItemsServer();
+    App.itemsSelectedTier = null;
+    renderItemsPage();
+  });
+
+  document.querySelectorAll('[data-view-tier]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      App.itemsSelectedTier = btn.dataset.viewTier;
+      renderItemsDetail();
+    });
+  });
+
+  document.getElementById('itemsPendingList').addEventListener('dragstart', function(e){
+    var row = e.target.closest('.items-pending-row');
+    if(!row) return;
+    e.dataTransfer.setData('text/plain', row.dataset.lineId);
+    e.dataTransfer.effectAllowed = 'move';
+    row.classList.add('items-dragging');
+  });
+  document.getElementById('itemsPendingList').addEventListener('dragend', function(e){
+    var row = e.target.closest('.items-pending-row');
+    if(row) row.classList.remove('items-dragging');
+  });
+
+  document.querySelectorAll('.items-dropzone').forEach(function(zone){
+    zone.addEventListener('dragover', function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      zone.classList.add('items-drag-over');
+    });
+    zone.addEventListener('dragleave', function(){
+      zone.classList.remove('items-drag-over');
+    });
+    zone.addEventListener('drop', function(e){
+      e.preventDefault();
+      zone.classList.remove('items-drag-over');
+      var lineId = e.dataTransfer.getData('text/plain');
+      if(!lineId) return;
+      handleItemsDrop(zone.dataset.warehouse, lineId);
+    });
+  });
+
+  document.getElementById('itemsMoneyConfirmInput').addEventListener('input', function(){
+    this.value = formatDecimalDisplay(cleanDecimalInput(this.value));
+  });
+  document.getElementById('itemsMoneyConfirmCancelBtn').addEventListener('click', hideItemsMoneyConfirmPopup);
+  document.querySelector('#itemsMoneyConfirmOverlay .confirm-backdrop').addEventListener('click', hideItemsMoneyConfirmPopup);
+  document.getElementById('itemsMoneyConfirmOkBtn').addEventListener('click', function(){
+    if(!itemsPendingMoneyDrop) return;
+    var amount = parseFloat(document.getElementById('itemsMoneyConfirmInput').value.replace(/,/g,''));
+    if(!(amount>0)){ toast('กรุณาใส่ยอดเงินให้ถูกต้อง'); return; }
+    var item = itemsPendingMoneyDrop;
+    var w = warehouseStockFor(App.itemsServerId);
+    w.M.push({ id:uid(), lineId:item.lineId, name:item.name, confirmedAmount:amount, ts:item.ts });
+    saveItemWarehouseStock();
+    hideItemsMoneyConfirmPopup();
+    renderItemsPage();
+    toast('ใส่คลังเงิน M แล้ว');
+  });
+
   // ---------- page switching ----------
   function switchPage(page){
     document.getElementById('view-home').hidden = page !== 'home';
@@ -3789,6 +4047,7 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('view-timers').hidden = page !== 'timers';
     document.getElementById('view-items').hidden = page !== 'items';
     if(page==='farm') renderFarmPage();
+    if(page==='items') renderItemsPage();
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);
     });

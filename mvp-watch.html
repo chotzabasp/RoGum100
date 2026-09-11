@@ -357,6 +357,10 @@ svg.icon{width:18px;height:18px;display:block}
 .hf-group label{font-size:.62rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em}
 .hf-group select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.35rem .5rem;font-size:.74rem}
 .panel-side{min-height:100%}
+.items-card-a-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.items-card-a-sub{min-height:180px}
+.items-card-b{min-height:260px}
+.items-card-c{min-height:660px}
 .panel-merchant-entry,.panel-farm-cost{position:sticky;top:1rem;min-height:0;max-height:calc(100vh - 2rem);overflow-y:auto}
 .field-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.5rem}
 .field-row label{margin:0}
@@ -707,7 +711,7 @@ svg.icon{width:18px;height:18px;display:block}
     <button class="rail-btn active" data-page="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg><span class="tip">หน้าหลัก</span></button>
     <button class="rail-btn" data-page="farm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 9c0 0-6 0-6-5 5 0 6 3 6 5z"/><path d="M12 9c0 0 6 0 6-5-5 0-6 3-6 5z"/></svg><span class="tip">ยอดนักฟาม</span></button>
     <button class="rail-btn" data-page="timers"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="tip">จับเวลาบอส</span></button>
-    <button class="rail-btn" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="tip">คลังไอเทม (เร็วๆ นี้)</span></button>
+    <button class="rail-btn" data-page="items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="tip">คลังไอเทม</span></button>
     <button class="rail-btn" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10M11 19V5M18 19v-7"/></svg><span class="tip">สถิติเชิงลึก (เร็วๆ นี้)</span></button>
     <button class="rail-btn" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="tip">ตั้งค่ากิลด์ (เร็วๆ นี้)</span></button>
   </nav>
@@ -1104,6 +1108,43 @@ svg.icon{width:18px;height:18px;display:block}
     </div>
 
     <div class="roster" id="roster"></div>
+    </section>
+
+    <!-- ===================== ITEMS (คลังไอเทม) VIEW ===================== -->
+    <section id="view-items" hidden>
+      <div class="topbar">
+        <div>
+          <h1>คลังไอเทม</h1>
+          <p class="sub">อยู่ระหว่างออกแบบ — ยังไม่มีข้อมูล</p>
+        </div>
+      </div>
+
+      <div class="home-grid">
+        <div class="home-left">
+          <div class="items-card-a-grid">
+            <div class="panel items-card-a-sub">
+              <div class="panel-head"><h2>คลังเงิน M</h2></div>
+            </div>
+            <div class="panel items-card-a-sub">
+              <div class="panel-head"><h2>คลังItem ระดับ A</h2></div>
+            </div>
+            <div class="panel items-card-a-sub">
+              <div class="panel-head"><h2>คลังItem ระดับ B</h2></div>
+            </div>
+            <div class="panel items-card-a-sub">
+              <div class="panel-head"><h2>คลังItem ระดับ S</h2></div>
+            </div>
+          </div>
+          <div class="panel items-card-b">
+            <div class="panel-head"><h2>รายการItem ของ........</h2></div>
+          </div>
+        </div>
+        <div class="panel panel-side items-card-c">
+          <div class="panel-head">
+            <h2>จำนวนรายการที่รอลงคลังทั้งหมด</h2>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 </div>
@@ -3746,6 +3787,7 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('view-home').hidden = page !== 'home';
     document.getElementById('view-farm').hidden = page !== 'farm';
     document.getElementById('view-timers').hidden = page !== 'timers';
+    document.getElementById('view-items').hidden = page !== 'items';
     if(page==='farm') renderFarmPage();
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);

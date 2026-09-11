@@ -3965,17 +3965,27 @@ svg.icon{width:18px;height:18px;display:block}
       return;
     }
     title.textContent = 'รายการItem ของ ระดับ '+tier;
-    var items = warehouseStockFor(App.itemsServerId)[tier].slice().sort(function(a,b){ return b.ts-a.ts; });
+    var items = warehouseStockFor(App.itemsServerId)[tier];
     if(!items.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีไอเทมในคลังนี้</p>'; return; }
-    var rows = [];
+    var groups = {};
+    var order = [];
     items.forEach(function(it){
-      var unit = it.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
-      var pieces = Math.max(1, Math.round(parseFloat(it.qty)||1));
-      for(var i=0;i<pieces;i++){
-        rows.push('<div class="items-detail-row"><span>'+itemNameWithSlots(it.name, it.slots)+'</span><span class="items-detail-right"><span class="mono">'+fmtNum(it.price)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(it.ts)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-id="'+it.id+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>');
+      var key = it.name+'|'+JSON.stringify(it.slots||[])+'|'+it.price+'|'+it.currency;
+      if(!groups[key]){
+        groups[key] = { name: it.name, slots: it.slots, price: it.price, currency: it.currency, qty: 0, latestTs: it.ts, undoId: it.id };
+        order.push(key);
       }
+      var g = groups[key];
+      g.qty += Math.max(1, Math.round(parseFloat(it.qty)||1));
+      if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; }
     });
-    list.innerHTML = rows.join('');
+    order.sort(function(a,b){ return groups[b].latestTs - groups[a].latestTs; });
+    list.innerHTML = order.map(function(key){
+      var g = groups[key];
+      var unit = g.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
+      var total = g.qty * (parseFloat(g.price)||0);
+      return '<div class="items-detail-row"><span>'+itemNameWithSlots(g.name, g.slots)+' <span style="color:var(--text-dim)">x'+fmtNum(g.qty)+'</span></span><span class="items-detail-right"><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>';
+    }).join('');
   }
 
   function renderItemsPage(){

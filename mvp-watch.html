@@ -378,7 +378,9 @@ svg.icon{width:18px;height:18px;display:block}
 .items-pending-date{font-size:.7rem;color:var(--text-dim);margin-top:.15rem}
 .items-detail-row{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.55rem .7rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
 .items-detail-row:last-child{margin-bottom:0}
-.items-money-confirm-detail{display:flex;justify-content:space-between;gap:.5rem;font-size:.8rem;color:var(--text-dim);margin-bottom:.6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .7rem}
+.items-money-confirm-detail{display:flex;flex-direction:column;gap:.3rem;font-size:.8rem;color:var(--text-dim);margin-bottom:.6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .7rem}
+.items-money-confirm-top{display:flex;justify-content:space-between;gap:.5rem}
+.items-money-confirm-breakdown{font-size:.78rem}
 .panel-merchant-entry,.panel-farm-cost{position:sticky;top:1rem;min-height:0;max-height:calc(100vh - 2rem);overflow-y:auto}
 .field-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.5rem}
 .field-row label{margin:0}
@@ -1144,7 +1146,7 @@ svg.icon{width:18px;height:18px;display:block}
           <div class="items-card-a-grid">
             <div class="panel items-card-a-sub items-dropzone" id="itemsCardMoney" data-warehouse="M">
               <div class="panel-head"><h2>คลังเงิน M</h2></div>
-              <div class="items-money-total" id="itemsMoneyTotal">0 บ</div>
+              <div class="items-money-total" id="itemsMoneyTotal">0 z</div>
             </div>
             <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierA" data-warehouse="A">
               <div class="panel-head"><h2>คลังItem ระดับ A</h2></div>
@@ -1182,10 +1184,13 @@ svg.icon{width:18px;height:18px;display:block}
       <div class="confirm-backdrop"></div>
       <div class="confirm-box">
         <p class="confirm-message">ยืนยันยอดที่จะใส่เข้า "คลังเงิน M"</p>
-        <div class="items-money-confirm-detail"><span id="itemsMoneyConfirmName"></span><span id="itemsMoneyConfirmDate"></span></div>
+        <div class="items-money-confirm-detail">
+          <div class="items-money-confirm-top"><span id="itemsMoneyConfirmName"></span><span id="itemsMoneyConfirmDate"></span></div>
+          <div class="items-money-confirm-breakdown" id="itemsMoneyConfirmBreakdown"></div>
+        </div>
         <div class="field">
-          <label>ยอดเงินที่จะใส่คลัง (บาท)</label>
-          <input type="text" inputmode="numeric" id="itemsMoneyConfirmInput" class="mono">
+          <label>ยอดเงินที่จะใส่คลัง (Zeny)</label>
+          <input type="text" inputmode="numeric" id="itemsMoneyConfirmInput" class="mono" placeholder="กรอกยอด Zeny">
         </div>
         <div class="confirm-actions">
           <button type="button" class="btn btn-ghost" id="itemsMoneyConfirmCancelBtn">ยกเลิก</button>
@@ -3922,7 +3927,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   function renderItemsWarehouseCards(){
     var serverId = App.itemsServerId;
-    document.getElementById('itemsMoneyTotal').textContent = fmtNum(warehouseMoneyTotal(serverId)) + ' บ';
+    document.getElementById('itemsMoneyTotal').innerHTML = fmtNum(warehouseMoneyTotal(serverId)) + ' <span style="color:'+MR_ZENY_COLOR+'">z</span>';
     ITEM_WAREHOUSE_TIERS.forEach(function(tier){
       document.getElementById('itemsTierCount'+tier).textContent = fmtNum(warehouseTierCount(serverId, tier)) + ' ชิ้น';
     });
@@ -3955,9 +3960,11 @@ svg.icon{width:18px;height:18px;display:block}
 
   function showItemsMoneyConfirmPopup(item){
     itemsPendingMoneyDrop = item;
+    var unit = item.currency==='zeny' ? 'z' : 'บ';
     document.getElementById('itemsMoneyConfirmName').textContent = item.name;
     document.getElementById('itemsMoneyConfirmDate').textContent = fmtDateTime(item.ts);
-    document.getElementById('itemsMoneyConfirmInput').value = formatDecimalDisplay(String(item.total));
+    document.getElementById('itemsMoneyConfirmBreakdown').textContent = fmtNum(item.qty)+' x '+fmtNum(item.rate)+' = '+fmtNum(item.total)+' '+unit;
+    document.getElementById('itemsMoneyConfirmInput').value = '';
     document.getElementById('itemsMoneyConfirmOverlay').hidden = false;
   }
   function hideItemsMoneyConfirmPopup(){

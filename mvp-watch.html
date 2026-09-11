@@ -3894,7 +3894,7 @@ svg.icon{width:18px;height:18px;display:block}
           pending.push({
             lineId: l.id, entryId: e.id, name: l.name, qty: l.qty, rate: l.rate,
             total: l.total!=null ? l.total : (l.rate*l.qty), currency: lineCurrency(l),
-            category: cat, ts: e.ts, slots: l.slots
+            category: cat, ts: e.ts, slots: l.slots, exchangeRate: e.exchangeRate
           });
         } else {
           var totalQty = parseFloat(l.qty)||0;
@@ -3903,7 +3903,7 @@ svg.icon{width:18px;height:18px;display:block}
           pending.push({
             lineId: l.id, entryId: e.id, name: l.name, qty: remaining, rate: l.rate,
             total: l.rate*remaining, currency: lineCurrency(l),
-            category: cat, ts: e.ts, slots: l.slots
+            category: cat, ts: e.ts, slots: l.slots, exchangeRate: e.exchangeRate
           });
         }
       });
@@ -3939,10 +3939,15 @@ svg.icon{width:18px;height:18px;display:block}
     var pending = itemsPendingList(App.itemsServerId);
     if(!pending.length){ list.innerHTML = '<p class="mr-empty">ไม่มีรายการที่รอลงคลัง</p>'; return; }
     list.innerHTML = pending.map(function(p){
-      var unit = p.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
+      var isZeny = p.currency==='zeny';
+      var hasRate = isZeny && p.exchangeRate>0;
+      var dispRate = hasRate ? farmZenyToBaht(p.rate, p.exchangeRate) : p.rate;
+      var dispTotal = hasRate ? farmZenyToBaht(p.total, p.exchangeRate) : p.total;
+      var unit = (isZeny && !hasRate) ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
+      var zenyBadge = isZeny ? ' <span style="color:'+MR_ZENY_COLOR+'">z</span>' : '';
       return '<div class="items-pending-row" draggable="true" data-line-id="'+p.lineId+'">'+
-        '<div class="items-pending-row-top"><span class="items-pending-name">'+itemNameWithSlots(p.name, p.slots)+'</span><span class="items-pending-amount">'+fmtNum(p.total)+' '+unit+'</span></div>'+
-        '<div class="items-pending-breakdown">'+fmtNum(p.qty)+' x '+fmtNum(p.rate)+' = '+fmtNum(p.total)+' '+unit+'</div>'+
+        '<div class="items-pending-row-top"><span class="items-pending-name">'+itemNameWithSlots(p.name, p.slots)+zenyBadge+'</span><span class="items-pending-amount">'+fmtNum(dispTotal)+' '+unit+'</span></div>'+
+        '<div class="items-pending-breakdown">'+fmtNum(p.qty)+' x '+fmtNum(dispRate)+' = '+fmtNum(dispTotal)+' '+unit+'</div>'+
         '<div class="items-pending-date">'+fmtDateTime(p.ts)+'</div>'+
       '</div>';
     }).join('');

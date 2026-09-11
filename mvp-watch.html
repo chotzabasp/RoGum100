@@ -3978,19 +3978,24 @@ svg.icon{width:18px;height:18px;display:block}
     items.forEach(function(it){
       var key = it.name+'|'+JSON.stringify(it.slots||[])+'|'+it.price+'|'+it.currency;
       if(!groups[key]){
-        groups[key] = { name: it.name, slots: it.slots, price: it.price, currency: it.currency, qty: 0, latestTs: it.ts, undoId: it.id };
+        groups[key] = { name: it.name, slots: it.slots, price: it.price, currency: it.currency, qty: 0, latestTs: it.ts, undoId: it.id, exchangeRate: it.exchangeRate };
         order.push(key);
       }
       var g = groups[key];
       g.qty += Math.max(1, Math.round(parseFloat(it.qty)||1));
-      if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; }
+      if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; g.exchangeRate = it.exchangeRate; }
     });
     order.sort(function(a,b){ return groups[b].latestTs - groups[a].latestTs; });
     list.innerHTML = order.map(function(key, idx){
       var g = groups[key];
-      var unit = g.currency==='zeny' ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
-      var total = g.qty * (parseFloat(g.price)||0);
-      return '<div class="items-detail-row"><span>'+(idx+1)+'. '+itemNameWithSlots(g.name, g.slots)+' <span>x'+fmtNum(g.qty)+' ea</span></span><span class="items-detail-right"><span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(g.price)+' = </span><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>';
+      var isZeny = g.currency==='zeny';
+      var rate = g.exchangeRate>0 ? g.exchangeRate : merchantExchangeRate(App.itemsServerId);
+      var hasRate = isZeny && rate>0;
+      var dispPrice = hasRate ? farmZenyToBaht(g.price, rate) : g.price;
+      var total = g.qty * (parseFloat(dispPrice)||0);
+      var unit = (isZeny && !hasRate) ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
+      var zenyBadge = isZeny ? ' <span style="color:'+MR_ZENY_COLOR+'">z</span>' : '';
+      return '<div class="items-detail-row"><span>'+(idx+1)+'. '+itemNameWithSlots(g.name, g.slots)+zenyBadge+' <span>x'+fmtNum(g.qty)+' ea</span></span><span class="items-detail-right"><span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(dispPrice)+' = </span><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>';
     }).join('');
   }
 
@@ -4026,7 +4031,7 @@ svg.icon{width:18px;height:18px;display:block}
     } else {
       if(isMoney){ toast('ลากได้เฉพาะรายการ Item เท่านั้น'); return; }
       var w = warehouseStockFor(serverId);
-      w[warehouse].push({ id:uid(), lineId:item.lineId, name:item.name, qty:item.qty, price:item.rate, total:item.total, currency:item.currency, ts:item.ts, slots:item.slots });
+      w[warehouse].push({ id:uid(), lineId:item.lineId, name:item.name, qty:item.qty, price:item.rate, total:item.total, currency:item.currency, ts:item.ts, slots:item.slots, exchangeRate:item.exchangeRate });
       saveItemWarehouseStock();
       renderItemsPage();
       toast('ใส่คลัง Item ระดับ '+warehouse+' แล้ว');

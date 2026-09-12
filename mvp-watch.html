@@ -3995,12 +3995,13 @@ svg.icon{width:18px;height:18px;display:block}
         var amt = parseFloat(it.confirmedAmount)||0;
         var key = it.name+'|'+amt;
         if(!mgroups[key]){
-          mgroups[key] = { name: it.name, amount: amt, qty: 0, latestTs: it.ts, undoId: it.id, srcQty: it.srcQty, srcRate: it.srcRate, srcTotal: it.srcTotal, srcCurrency: it.srcCurrency };
+          mgroups[key] = { name: it.name, amount: amt, qty: 0, latestTs: it.ts, recordIds: [], srcQty: it.srcQty, srcRate: it.srcRate, srcTotal: it.srcTotal, srcCurrency: it.srcCurrency };
           morder.push(key);
         }
         var g = mgroups[key];
         g.qty += 1;
-        if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; g.srcQty = it.srcQty; g.srcRate = it.srcRate; g.srcTotal = it.srcTotal; g.srcCurrency = it.srcCurrency; }
+        g.recordIds.push(it.id);
+        if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.srcQty = it.srcQty; g.srcRate = it.srcRate; g.srcTotal = it.srcTotal; g.srcCurrency = it.srcCurrency; }
       });
       morder.sort(function(a,b){ return mgroups[b].latestTs - mgroups[a].latestTs; });
       var zenyUnit = '<span style="color:'+MR_ZENY_COLOR+'">z</span>';
@@ -4012,7 +4013,7 @@ svg.icon{width:18px;height:18px;display:block}
         var hasSrc = g.srcQty!=null && g.srcRate!=null && g.srcTotal!=null;
         var srcUnit = g.srcCurrency==='zeny' ? zenyUnit : 'บ';
         var srcLine = hasSrc ? '<div class="items-detail-source">ที่มา: '+fmtNum(g.srcQty)+' x '+fmtNum(g.srcRate)+' = '+fmtNum(g.srcTotal)+' '+srcUnit+'</div>' : '';
-        return '<div class="items-detail-row items-detail-row-money"><div class="items-detail-row-top"><span>'+(idx+1)+'. '+escapeHtml(g.name)+countBadge+'</span><span class="items-detail-right">'+breakdown+'<span class="mono">'+fmtNum(total)+' '+zenyUnit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="M" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>'+srcLine+'</div>';
+        return '<div class="items-detail-row items-detail-row-money"><div class="items-detail-row-top"><span>'+(idx+1)+'. '+escapeHtml(g.name)+countBadge+'</span><span class="items-detail-right">'+breakdown+'<span class="mono">'+fmtNum(total)+' '+zenyUnit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="M" data-undo-ids="'+g.recordIds.join(',')+'" title="ย้อนกลับไปที่รายการที่รอลงคลังทั้งหมด">↩</button></span></div>'+srcLine+'</div>';
       }).join('');
       return;
     }
@@ -4031,12 +4032,13 @@ svg.icon{width:18px;height:18px;display:block}
       var exchangeRate = found ? found.entry.exchangeRate : it.exchangeRate;
       var key = it.name+'|'+JSON.stringify(it.slots||[])+'|'+price+'|'+currency;
       if(!groups[key]){
-        groups[key] = { name: it.name, slots: it.slots, price: price, currency: currency, qty: 0, latestTs: it.ts, undoId: it.id, exchangeRate: exchangeRate };
+        groups[key] = { name: it.name, slots: it.slots, price: price, currency: currency, qty: 0, latestTs: it.ts, recordIds: [], exchangeRate: exchangeRate };
         order.push(key);
       }
       var g = groups[key];
       g.qty += Math.max(1, Math.round(parseFloat(it.qty)||1));
-      if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; g.exchangeRate = exchangeRate; }
+      g.recordIds.push(it.id);
+      if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.exchangeRate = exchangeRate; }
     });
     order.sort(function(a,b){ return groups[b].latestTs - groups[a].latestTs; });
     list.innerHTML = order.map(function(key, idx){
@@ -4048,7 +4050,7 @@ svg.icon{width:18px;height:18px;display:block}
       var total = g.qty * (parseFloat(dispPrice)||0);
       var unit = (isZeny && !hasRate) ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
       var zenyBadge = isZeny ? ' <span style="color:'+MR_ZENY_COLOR+'">z</span>' : '';
-      return '<div class="items-detail-row"><span>'+(idx+1)+'. '+itemNameWithSlots(g.name, g.slots)+zenyBadge+' <span>x'+fmtNum(g.qty)+' ea</span></span><span class="items-detail-right"><span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(dispPrice)+' = </span><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>';
+      return '<div class="items-detail-row"><span>'+(idx+1)+'. '+itemNameWithSlots(g.name, g.slots)+zenyBadge+' <span>x'+fmtNum(g.qty)+' ea</span></span><span class="items-detail-right"><span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(dispPrice)+' = </span><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-ids="'+g.recordIds.join(',')+'" title="ย้อนกลับไปที่รายการที่รอลงคลังทั้งหมด">↩</button></span></div>';
     }).join('');
   }
 
@@ -4091,29 +4093,22 @@ svg.icon{width:18px;height:18px;display:block}
     }
   }
 
-  function undoWarehouseItem(tier, stockId){
+  function undoWarehouseGroup(tier, ids){
     var w = warehouseStockFor(App.itemsServerId);
-    var arr = w[tier];
-    var idx = -1;
-    for(var i=0;i<arr.length;i++){ if(arr[i].id===stockId){ idx = i; break; } }
-    if(idx===-1) return;
-    var it = arr[idx];
-    var qty = parseFloat(it.qty)||1;
-    if(qty<=1){
-      arr.splice(idx,1);
-    } else {
-      it.qty = qty-1;
-      it.total = (parseFloat(it.price)||0) * it.qty;
-    }
+    var idSet = {};
+    ids.forEach(function(id){ idSet[id] = true; });
+    var before = w[tier].length;
+    w[tier] = w[tier].filter(function(it){ return !idSet[it.id]; });
+    if(w[tier].length===before) return;
     saveItemWarehouseStock();
     renderItemsPage();
-    toast('ย้ายกลับไปที่รายการที่รอลงคลังแล้ว');
+    toast('ย้ายกลับไปที่รายการที่รอลงคลังแล้วทั้งหมด');
   }
 
   document.getElementById('itemsDetailList').addEventListener('click', function(e){
-    var btn = e.target.closest('[data-undo-id]');
+    var btn = e.target.closest('[data-undo-ids]');
     if(!btn) return;
-    undoWarehouseItem(btn.dataset.undoTier, btn.dataset.undoId);
+    undoWarehouseGroup(btn.dataset.undoTier, btn.dataset.undoIds.split(','));
   });
 
   document.getElementById('itemsServerSelect').addEventListener('change', function(e){

@@ -3182,13 +3182,14 @@ svg.icon{width:18px;height:18px;display:block}
     if(historyState.page < 0) historyState.page = 0;
     var pageRows = entries.slice(historyState.page*MR_HISTORY_PAGE_SIZE, historyState.page*MR_HISTORY_PAGE_SIZE+MR_HISTORY_PAGE_SIZE);
 
-    list.innerHTML = pageRows.map(function(e){
+    list.innerHTML = pageRows.map(function(e, idx){
       var sv = serverRateById(e.serverId);
       var t = entryType(e);
       var lines = e.lines || [];
       var editedAttrs = (e.editHistory && e.editHistory.length) ? ' class="mr-edited-hover"' : '';
+      var rowNum = historyState.page*MR_HISTORY_PAGE_SIZE + idx + 1;
       return '<div class="mr-entry type-'+t+(e.id===App.editingMerchantId?' editing':'')+'" data-entry-id="'+e.id+'">'+
-        '<div class="mr-entry-top"><span>'+(sv?sv.name:e.serverId)+' · '+lines.length+' รายการ '+
+        '<div class="mr-entry-top"><span>'+rowNum+'. '+(sv?sv.name:e.serverId)+' · '+lines.length+' รายการ '+
           '<span class="mr-type-badge '+t+'">'+MR_TYPE_LABEL[t]+'</span></span>'+
           '<span style="display:flex;align-items:center;gap:.5rem">'+fmtEntryTotal(e)+
           '<span class="mr-entry-actions">'+

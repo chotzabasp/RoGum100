@@ -1162,26 +1162,26 @@ svg.icon{width:18px;height:18px;display:block}
                 <button type="button" class="items-tier-viewall" data-view-tier="M">ดูเงิน M ทั้งหมด</button>
               </div>
               <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierA" data-warehouse="A">
-                <div class="panel-head"><h2>คลังItem ระดับ A</h2></div>
+                <div class="panel-head"><h2>คลังItem A</h2></div>
                 <div class="items-tier-count" id="itemsTierCountA">0 ชิ้น</div>
                 <button type="button" class="items-tier-viewall" data-view-tier="A">ดูItem ทั้งหมด</button>
               </div>
             </div>
             <div class="items-card-a-row items-card-a-row-3">
               <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierB" data-warehouse="B">
-                <div class="panel-head"><h2>คลังItem ระดับ B</h2></div>
+                <div class="panel-head"><h2>คลังItem B</h2></div>
                 <div class="items-tier-count" id="itemsTierCountB">0 ชิ้น</div>
                 <button type="button" class="items-tier-viewall" data-view-tier="B">ดูItem ทั้งหมด</button>
               </div>
-              <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierS" data-warehouse="S">
-                <div class="panel-head"><h2>คลังItem ระดับ S</h2></div>
-                <div class="items-tier-count" id="itemsTierCountS">0 ชิ้น</div>
-                <button type="button" class="items-tier-viewall" data-view-tier="S">ดูItem ทั้งหมด</button>
-              </div>
               <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierC" data-warehouse="C">
-                <div class="panel-head"><h2>คลังItem ระดับ C</h2></div>
+                <div class="panel-head"><h2>คลังItem C</h2></div>
                 <div class="items-tier-count" id="itemsTierCountC">0 ชิ้น</div>
                 <button type="button" class="items-tier-viewall" data-view-tier="C">ดูItem ทั้งหมด</button>
+              </div>
+              <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierS" data-warehouse="S">
+                <div class="panel-head"><h2>คลังItem อื่นๆ</h2></div>
+                <div class="items-tier-count" id="itemsTierCountS">0 ชิ้น</div>
+                <button type="button" class="items-tier-viewall" data-view-tier="S">ดูItem ทั้งหมด</button>
               </div>
             </div>
           </div>
@@ -3876,8 +3876,11 @@ svg.icon{width:18px;height:18px;display:block}
   // not yet claimed by a warehouse) rather than stored separately, so the source of
   // truth for "what was bought" stays the merchant log; only the warehouse assignment
   // (which tier a line's item/money ended up in) is persisted here.
-  var ITEM_WAREHOUSE_TIERS = ['A','B','S','C'];
+  var ITEM_WAREHOUSE_TIERS = ['A','B','C','S'];
   var itemsPendingMoneyDrop = null;
+  // Warehouse "S" is displayed as "อื่นๆ" (its internal tier code stays 'S' so existing
+  // saved warehouse data keeps working without a migration).
+  function itemTierLabel(tier){ return tier==='S' ? 'อื่นๆ' : tier; }
 
   function warehouseStockFor(serverId){
     if(!App.itemWarehouseStock[serverId]) App.itemWarehouseStock[serverId] = { A:[], B:[], S:[], C:[], M:[] };
@@ -4035,7 +4038,7 @@ svg.icon{width:18px;height:18px;display:block}
       }).join('');
       return;
     }
-    title.textContent = 'รายการItem ของ ระดับ '+tier;
+    title.textContent = 'รายการItem ของ '+itemTierLabel(tier);
     var items = warehouseStockFor(App.itemsServerId)[tier];
     if(!items.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีไอเทมในคลังนี้</p>'; return; }
     var groups = {};
@@ -4107,7 +4110,7 @@ svg.icon{width:18px;height:18px;display:block}
       w[warehouse].push({ id:uid(), lineId:item.lineId, name:item.name, qty:item.qty, price:item.rate, total:item.total, currency:item.currency, ts:item.ts, slots:item.slots, exchangeRate:item.exchangeRate });
       saveItemWarehouseStock();
       renderItemsPage();
-      toast('ใส่คลัง Item ระดับ '+warehouse+' แล้ว');
+      toast('ใส่คลัง Item '+itemTierLabel(warehouse)+' แล้ว');
     }
   }
 

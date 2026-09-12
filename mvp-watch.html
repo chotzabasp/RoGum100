@@ -3959,9 +3959,8 @@ svg.icon{width:18px;height:18px;display:block}
       var dispRate = hasRate ? farmZenyToBaht(p.rate, p.exchangeRate) : p.rate;
       var dispTotal = hasRate ? farmZenyToBaht(p.total, p.exchangeRate) : p.total;
       var unit = (isZeny && !hasRate) ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
-      var zenyBadge = isZeny ? ' <span style="color:'+MR_ZENY_COLOR+'">z</span>' : '';
       return '<div class="items-pending-row" draggable="true" data-line-id="'+p.lineId+'">'+
-        '<div class="items-pending-row-top"><span class="items-pending-name">'+itemNameWithSlots(p.name, p.slots)+zenyBadge+'</span><span class="items-pending-amount">'+fmtNum(dispTotal)+' '+unit+'</span></div>'+
+        '<div class="items-pending-row-top"><span class="items-pending-name">'+itemNameWithSlots(p.name, p.slots)+'</span><span class="items-pending-amount">'+fmtNum(dispTotal)+' '+unit+'</span></div>'+
         '<div class="items-pending-breakdown">'+fmtNum(p.qty)+' x '+fmtNum(dispRate)+' = '+fmtNum(dispTotal)+' '+unit+'</div>'+
         '<div class="items-pending-date">'+fmtDateTime(p.ts)+'</div>'+
       '</div>';

@@ -357,7 +357,10 @@ svg.icon{width:18px;height:18px;display:block}
 .hf-group label{font-size:.62rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em}
 .hf-group select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.35rem .5rem;font-size:.74rem}
 .panel-side{min-height:100%}
-.items-card-a-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.items-card-a-grid{display:flex;flex-direction:column;gap:1rem}
+.items-card-a-row{display:grid;gap:1rem}
+.items-card-a-row-2{grid-template-columns:1fr 1fr}
+.items-card-a-row-3{grid-template-columns:1fr 1fr 1fr}
 .items-card-a-sub{min-height:180px}
 .items-card-b{min-height:260px}
 .items-card-c{min-height:660px}
@@ -1152,25 +1155,34 @@ svg.icon{width:18px;height:18px;display:block}
       <div class="home-grid">
         <div class="home-left">
           <div class="items-card-a-grid">
-            <div class="panel items-card-a-sub items-dropzone" id="itemsCardMoney" data-warehouse="M">
-              <div class="panel-head"><h2>คลังเงิน M</h2></div>
-              <div class="items-money-total" id="itemsMoneyTotal">0 z</div>
-              <button type="button" class="items-tier-viewall" data-view-tier="M">ดูเงิน M ทั้งหมด</button>
+            <div class="items-card-a-row items-card-a-row-2">
+              <div class="panel items-card-a-sub items-dropzone" id="itemsCardMoney" data-warehouse="M">
+                <div class="panel-head"><h2>คลังเงิน M</h2></div>
+                <div class="items-money-total" id="itemsMoneyTotal">0 z</div>
+                <button type="button" class="items-tier-viewall" data-view-tier="M">ดูเงิน M ทั้งหมด</button>
+              </div>
+              <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierA" data-warehouse="A">
+                <div class="panel-head"><h2>คลังItem ระดับ A</h2></div>
+                <div class="items-tier-count" id="itemsTierCountA">0 ชิ้น</div>
+                <button type="button" class="items-tier-viewall" data-view-tier="A">ดูItem ทั้งหมด</button>
+              </div>
             </div>
-            <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierA" data-warehouse="A">
-              <div class="panel-head"><h2>คลังItem ระดับ A</h2></div>
-              <div class="items-tier-count" id="itemsTierCountA">0 ชิ้น</div>
-              <button type="button" class="items-tier-viewall" data-view-tier="A">ดูItem ทั้งหมด</button>
-            </div>
-            <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierB" data-warehouse="B">
-              <div class="panel-head"><h2>คลังItem ระดับ B</h2></div>
-              <div class="items-tier-count" id="itemsTierCountB">0 ชิ้น</div>
-              <button type="button" class="items-tier-viewall" data-view-tier="B">ดูItem ทั้งหมด</button>
-            </div>
-            <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierS" data-warehouse="S">
-              <div class="panel-head"><h2>คลังItem ระดับ S</h2></div>
-              <div class="items-tier-count" id="itemsTierCountS">0 ชิ้น</div>
-              <button type="button" class="items-tier-viewall" data-view-tier="S">ดูItem ทั้งหมด</button>
+            <div class="items-card-a-row items-card-a-row-3">
+              <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierB" data-warehouse="B">
+                <div class="panel-head"><h2>คลังItem ระดับ B</h2></div>
+                <div class="items-tier-count" id="itemsTierCountB">0 ชิ้น</div>
+                <button type="button" class="items-tier-viewall" data-view-tier="B">ดูItem ทั้งหมด</button>
+              </div>
+              <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierS" data-warehouse="S">
+                <div class="panel-head"><h2>คลังItem ระดับ S</h2></div>
+                <div class="items-tier-count" id="itemsTierCountS">0 ชิ้น</div>
+                <button type="button" class="items-tier-viewall" data-view-tier="S">ดูItem ทั้งหมด</button>
+              </div>
+              <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierC" data-warehouse="C">
+                <div class="panel-head"><h2>คลังItem ระดับ C</h2></div>
+                <div class="items-tier-count" id="itemsTierCountC">0 ชิ้น</div>
+                <button type="button" class="items-tier-viewall" data-view-tier="C">ดูItem ทั้งหมด</button>
+              </div>
             </div>
           </div>
           <div class="panel items-card-b">
@@ -3864,13 +3876,13 @@ svg.icon{width:18px;height:18px;display:block}
   // not yet claimed by a warehouse) rather than stored separately, so the source of
   // truth for "what was bought" stays the merchant log; only the warehouse assignment
   // (which tier a line's item/money ended up in) is persisted here.
-  var ITEM_WAREHOUSE_TIERS = ['A','B','S'];
+  var ITEM_WAREHOUSE_TIERS = ['A','B','S','C'];
   var itemsPendingMoneyDrop = null;
 
   function warehouseStockFor(serverId){
-    if(!App.itemWarehouseStock[serverId]) App.itemWarehouseStock[serverId] = { A:[], B:[], S:[], M:[] };
+    if(!App.itemWarehouseStock[serverId]) App.itemWarehouseStock[serverId] = { A:[], B:[], S:[], C:[], M:[] };
     var w = App.itemWarehouseStock[serverId];
-    if(!w.A) w.A = []; if(!w.B) w.B = []; if(!w.S) w.S = []; if(!w.M) w.M = [];
+    if(!w.A) w.A = []; if(!w.B) w.B = []; if(!w.S) w.S = []; if(!w.C) w.C = []; if(!w.M) w.M = [];
     return w;
   }
 

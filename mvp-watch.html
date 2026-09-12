@@ -381,6 +381,9 @@ svg.icon{width:18px;height:18px;display:block}
 .items-detail-right{display:flex;align-items:baseline;gap:.6rem;flex:none}
 .items-detail-date{font-size:.7rem;color:var(--text-dim);white-space:nowrap}
 .items-detail-breakdown{font-size:.7rem;color:var(--text-dim);white-space:nowrap}
+.items-detail-row.items-detail-row-money{display:flex;flex-direction:column;align-items:stretch;gap:.3rem}
+.items-detail-row-top{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.items-detail-source{font-size:.7rem;color:var(--text-dim)}
 .items-undo-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem;padding:.1rem .2rem;line-height:1}
 .items-undo-btn:hover{color:var(--accent)}
 .items-money-confirm-detail{display:flex;flex-direction:column;gap:.3rem;font-size:.8rem;color:var(--text-dim);margin-bottom:.6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .7rem}
@@ -3981,12 +3984,12 @@ svg.icon{width:18px;height:18px;display:block}
         var amt = parseFloat(it.confirmedAmount)||0;
         var key = it.name+'|'+amt;
         if(!mgroups[key]){
-          mgroups[key] = { name: it.name, amount: amt, qty: 0, latestTs: it.ts, undoId: it.id };
+          mgroups[key] = { name: it.name, amount: amt, qty: 0, latestTs: it.ts, undoId: it.id, srcQty: it.srcQty, srcRate: it.srcRate, srcTotal: it.srcTotal, srcCurrency: it.srcCurrency };
           morder.push(key);
         }
         var g = mgroups[key];
         g.qty += 1;
-        if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; }
+        if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; g.srcQty = it.srcQty; g.srcRate = it.srcRate; g.srcTotal = it.srcTotal; g.srcCurrency = it.srcCurrency; }
       });
       morder.sort(function(a,b){ return mgroups[b].latestTs - mgroups[a].latestTs; });
       var zenyUnit = '<span style="color:'+MR_ZENY_COLOR+'">z</span>';
@@ -3995,7 +3998,10 @@ svg.icon{width:18px;height:18px;display:block}
         var total = g.qty * g.amount;
         var countBadge = g.qty>1 ? ' <span>x'+fmtNum(g.qty)+'</span>' : '';
         var breakdown = g.qty>1 ? '<span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(g.amount)+' = </span>' : '';
-        return '<div class="items-detail-row"><span>'+(idx+1)+'. '+escapeHtml(g.name)+countBadge+'</span><span class="items-detail-right">'+breakdown+'<span class="mono">'+fmtNum(total)+' '+zenyUnit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="M" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>';
+        var hasSrc = g.srcQty!=null && g.srcRate!=null && g.srcTotal!=null;
+        var srcUnit = g.srcCurrency==='zeny' ? zenyUnit : 'บ';
+        var srcLine = hasSrc ? '<div class="items-detail-source">ที่มา: '+fmtNum(g.srcQty)+' x '+fmtNum(g.srcRate)+' = '+fmtNum(g.srcTotal)+' '+srcUnit+'</div>' : '';
+        return '<div class="items-detail-row items-detail-row-money"><div class="items-detail-row-top"><span>'+(idx+1)+'. '+escapeHtml(g.name)+countBadge+'</span><span class="items-detail-right">'+breakdown+'<span class="mono">'+fmtNum(total)+' '+zenyUnit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="M" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>'+srcLine+'</div>';
       }).join('');
       return;
     }
@@ -4147,7 +4153,7 @@ svg.icon{width:18px;height:18px;display:block}
     if(!(amount>0)){ toast('กรุณาใส่ยอดเงินให้ถูกต้อง'); return; }
     var item = itemsPendingMoneyDrop;
     var w = warehouseStockFor(App.itemsServerId);
-    w.M.push({ id:uid(), lineId:item.lineId, name:item.name, confirmedAmount:amount, ts:item.ts });
+    w.M.push({ id:uid(), lineId:item.lineId, name:item.name, confirmedAmount:amount, ts:item.ts, srcQty:item.qty, srcRate:item.rate, srcTotal:item.total, srcCurrency:item.currency });
     saveItemWarehouseStock();
     hideItemsMoneyConfirmPopup();
     renderItemsPage();

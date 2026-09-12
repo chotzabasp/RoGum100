@@ -1152,6 +1152,7 @@ svg.icon{width:18px;height:18px;display:block}
             <div class="panel items-card-a-sub items-dropzone" id="itemsCardMoney" data-warehouse="M">
               <div class="panel-head"><h2>คลังเงิน M</h2></div>
               <div class="items-money-total" id="itemsMoneyTotal">0 z</div>
+              <button type="button" class="items-tier-viewall" data-view-tier="M">ดูเงิน M ทั้งหมด</button>
             </div>
             <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierA" data-warehouse="A">
               <div class="panel-head"><h2>คลังItem ระดับ A</h2></div>
@@ -3968,6 +3969,34 @@ svg.icon{width:18px;height:18px;display:block}
     if(!tier){
       title.textContent = 'รายการItem ของ........';
       list.innerHTML = '<p class="mr-empty">กด "ดูItem ทั้งหมด" ที่คลังไอเทมด้านบนเพื่อดูรายการ</p>';
+      return;
+    }
+    if(tier === 'M'){
+      title.textContent = 'รายการเงิน M ที่ลงคลังแล้ว';
+      var moneyItems = warehouseStockFor(App.itemsServerId).M;
+      if(!moneyItems.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีเงินในคลังนี้</p>'; return; }
+      var mgroups = {};
+      var morder = [];
+      moneyItems.forEach(function(it){
+        var amt = parseFloat(it.confirmedAmount)||0;
+        var key = it.name+'|'+amt;
+        if(!mgroups[key]){
+          mgroups[key] = { name: it.name, amount: amt, qty: 0, latestTs: it.ts, undoId: it.id };
+          morder.push(key);
+        }
+        var g = mgroups[key];
+        g.qty += 1;
+        if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; }
+      });
+      morder.sort(function(a,b){ return mgroups[b].latestTs - mgroups[a].latestTs; });
+      var zenyUnit = '<span style="color:'+MR_ZENY_COLOR+'">z</span>';
+      list.innerHTML = morder.map(function(key, idx){
+        var g = mgroups[key];
+        var total = g.qty * g.amount;
+        var countBadge = g.qty>1 ? ' <span>x'+fmtNum(g.qty)+'</span>' : '';
+        var breakdown = g.qty>1 ? '<span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(g.amount)+' = </span>' : '';
+        return '<div class="items-detail-row"><span>'+(idx+1)+'. '+escapeHtml(g.name)+countBadge+'</span><span class="items-detail-right">'+breakdown+'<span class="mono">'+fmtNum(total)+' '+zenyUnit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="M" data-undo-id="'+g.undoId+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button></span></div>';
+      }).join('');
       return;
     }
     title.textContent = 'รายการItem ของ ระดับ '+tier;

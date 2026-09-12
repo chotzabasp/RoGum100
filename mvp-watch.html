@@ -2852,9 +2852,8 @@ svg.icon{width:18px;height:18px;display:block}
   }
   function lineCurrency(l){ return l && l.currency==='zeny' ? 'zeny' : 'baht'; }
   var CURRENCY_UNIT_LABEL = { baht:'บ', zeny:'z' };
-  // Zeny gets its own color everywhere an amount is shown, so บาท vs Zeny never
-  // needs a second read — matches the gold already used for zeny on the farm page.
-  var MR_ZENY_COLOR = '#f2c94c';
+  // "z"/"(Zeny)" render in the normal text color everywhere, not a highlight color.
+  var MR_ZENY_COLOR = 'var(--text)';
   function fmtCurrencyAmount(amount, currency){
     var unit = CURRENCY_UNIT_LABEL[currency==='zeny'?'zeny':'baht'];
     if(currency==='zeny') unit = '<span style="color:'+MR_ZENY_COLOR+'">'+unit+'</span>';

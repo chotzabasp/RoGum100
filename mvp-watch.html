@@ -3186,7 +3186,7 @@ svg.icon{width:18px;height:18px;display:block}
         '<div class="mr-entry-lines">'+lines.map(function(l){
           var cat = e.category || 'zeny';
           var showZenyTag = (cat==='item' || cat==='other') && lineCurrency(l)==='zeny';
-          return '<div class="mr-line-row">'+itemNameWithSlots(l&&l.name||'', l&&l.slots)+(showZenyTag?zenyNameTag():'')+
+          return '<div class="mr-line-row"><span>'+itemNameWithSlots(l&&l.name||'', l&&l.slots)+(showZenyTag?zenyNameTag():'')+'</span>'+
             '<span>'+fmtNum(l&&l.qty)+' x '+fmtNum(l&&l.rate)+' = '+fmtCurrencyAmount(l&&l.total, lineCurrency(l))+'</span>'+
           '</div>';
         }).join('')+'</div>'+

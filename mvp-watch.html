@@ -3868,6 +3868,17 @@ svg.icon{width:18px;height:18px;display:block}
     return w;
   }
 
+  function findMerchantLineById(lineId){
+    for(var i=0;i<App.merchantLog.length;i++){
+      var e = App.merchantLog[i];
+      var lines = e.lines||[];
+      for(var j=0;j<lines.length;j++){
+        if(lines[j].id===lineId) return { entry:e, line:lines[j] };
+      }
+    }
+    return null;
+  }
+
   function stockedQtyByLineId(serverId){
     var w = warehouseStockFor(serverId);
     var counts = {};
@@ -4011,14 +4022,21 @@ svg.icon{width:18px;height:18px;display:block}
     var groups = {};
     var order = [];
     items.forEach(function(it){
-      var key = it.name+'|'+JSON.stringify(it.slots||[])+'|'+it.price+'|'+it.currency;
+      // Price/currency/exchange-rate are re-read live from the merchant log on every
+      // render (falling back to the snapshot if the source line was since deleted) so
+      // an edited price in history is reflected here without re-dropping the item.
+      var found = findMerchantLineById(it.lineId);
+      var price = found ? found.line.rate : it.price;
+      var currency = found ? lineCurrency(found.line) : it.currency;
+      var exchangeRate = found ? found.entry.exchangeRate : it.exchangeRate;
+      var key = it.name+'|'+JSON.stringify(it.slots||[])+'|'+price+'|'+currency;
       if(!groups[key]){
-        groups[key] = { name: it.name, slots: it.slots, price: it.price, currency: it.currency, qty: 0, latestTs: it.ts, undoId: it.id, exchangeRate: it.exchangeRate };
+        groups[key] = { name: it.name, slots: it.slots, price: price, currency: currency, qty: 0, latestTs: it.ts, undoId: it.id, exchangeRate: exchangeRate };
         order.push(key);
       }
       var g = groups[key];
       g.qty += Math.max(1, Math.round(parseFloat(it.qty)||1));
-      if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; g.exchangeRate = it.exchangeRate; }
+      if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.undoId = it.id; g.exchangeRate = exchangeRate; }
     });
     order.sort(function(a,b){ return groups[b].latestTs - groups[a].latestTs; });
     list.innerHTML = order.map(function(key, idx){

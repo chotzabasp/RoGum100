@@ -2860,6 +2860,11 @@ svg.icon{width:18px;height:18px;display:block}
     if(currency==='zeny') unit = '<span style="color:'+MR_ZENY_COLOR+'">'+unit+'</span>';
     return fmtNum(amount)+' '+unit;
   }
+  // "(Zeny)" tag shown after an item's name wherever it was bought/sold using Zeny as
+  // the payment currency (Item/อื่นๆ lines only — M lines already mean Zeny itself).
+  function zenyNameTag(){
+    return ' <span style="color:'+MR_ZENY_COLOR+'">(Zeny)</span>';
+  }
   function entryTotals(e){
     // entries saved before per-line currency existed only ever had baht amounts
     if(e.totalBaht==null && e.totalZeny==null) return { baht: e.total||0, zeny: 0 };
@@ -3180,7 +3185,9 @@ svg.icon{width:18px;height:18px;display:block}
             '<button type="button" class="mr-del" data-del="'+e.id+'" title="ลบ">🗑</button>'+
           '</span></span></div>'+
         '<div class="mr-entry-lines">'+lines.map(function(l){
-          return '<div class="mr-line-row">'+itemNameWithSlots(l&&l.name||'', l&&l.slots)+
+          var cat = e.category || 'zeny';
+          var showZenyTag = (cat==='item' || cat==='other') && lineCurrency(l)==='zeny';
+          return '<div class="mr-line-row">'+itemNameWithSlots(l&&l.name||'', l&&l.slots)+(showZenyTag?zenyNameTag():'')+
             '<span>'+fmtNum(l&&l.qty)+' x '+fmtNum(l&&l.rate)+' = '+fmtCurrencyAmount(l&&l.total, lineCurrency(l))+'</span>'+
           '</div>';
         }).join('')+'</div>'+
@@ -3959,8 +3966,9 @@ svg.icon{width:18px;height:18px;display:block}
       var dispRate = hasRate ? farmZenyToBaht(p.rate, p.exchangeRate) : p.rate;
       var dispTotal = hasRate ? farmZenyToBaht(p.total, p.exchangeRate) : p.total;
       var unit = (isZeny && !hasRate) ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
+      var showZenyTag = p.category==='item' && isZeny;
       return '<div class="items-pending-row" draggable="true" data-line-id="'+p.lineId+'">'+
-        '<div class="items-pending-row-top"><span class="items-pending-name">'+itemNameWithSlots(p.name, p.slots)+'</span><span class="items-pending-amount">'+fmtNum(dispTotal)+' '+unit+'</span></div>'+
+        '<div class="items-pending-row-top"><span class="items-pending-name">'+itemNameWithSlots(p.name, p.slots)+(showZenyTag?zenyNameTag():'')+'</span><span class="items-pending-amount">'+fmtNum(dispTotal)+' '+unit+'</span></div>'+
         '<div class="items-pending-breakdown">'+fmtNum(p.qty)+' x '+fmtNum(dispRate)+' = '+fmtNum(dispTotal)+' '+unit+'</div>'+
         '<div class="items-pending-date">'+fmtDateTime(p.ts)+'</div>'+
       '</div>';
@@ -4048,7 +4056,7 @@ svg.icon{width:18px;height:18px;display:block}
       var dispPrice = hasRate ? farmZenyToBaht(g.price, rate) : g.price;
       var total = g.qty * (parseFloat(dispPrice)||0);
       var unit = (isZeny && !hasRate) ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
-      var zenyBadge = isZeny ? ' <span style="color:'+MR_ZENY_COLOR+'">z</span>' : '';
+      var zenyBadge = isZeny ? zenyNameTag() : '';
       return '<div class="items-detail-row"><span>'+(idx+1)+'. '+itemNameWithSlots(g.name, g.slots)+zenyBadge+' <span>x'+fmtNum(g.qty)+' ea</span></span><span class="items-detail-right"><span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(dispPrice)+' = </span><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-ids="'+g.recordIds.join(',')+'" title="ย้อนกลับไปที่รายการที่รอลงคลังทั้งหมด">↩</button></span></div>';
     }).join('');
   }

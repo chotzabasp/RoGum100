@@ -2866,10 +2866,12 @@ svg.icon{width:18px;height:18px;display:block}
     saveCurrentServer();
     renderMerchantServers();
     renderMrExchangeRate();
-    // A stock pick belongs to the server it was picked under — drop it on server switch
-    // rather than risk selling something from the wrong server's warehouse.
+    // A stock pick belongs to the server it was picked under — drop it (fromStock too,
+    // not just the picked batch) on server switch rather than risk selling something
+    // from the wrong server's warehouse, or leaving a stale flag that caps qty against
+    // a pool the row no longer actually points at.
     [App.zenyRows, App.itemRows, App.otherRows].forEach(function(rows){
-      (rows||[]).forEach(function(row){ if(row.fromStock){ row.stockGroupKey = null; row.stockGroup = null; } });
+      (rows||[]).forEach(function(row){ if(row.fromStock){ row.fromStock = false; row.stockGroupKey = null; row.stockGroup = null; } });
     });
     renderItemRows();
   }
@@ -3444,8 +3446,15 @@ svg.icon{width:18px;height:18px;display:block}
     document.querySelectorAll('.mr-type-btn').forEach(function(b){
       b.classList.toggle('active', b.dataset.type===type);
     });
-    // Selling-from-warehouse UI only shows for "ขาย" — re-render so it appears/disappears.
-    if(changed) renderItemRows();
+    if(changed){
+      // "จากคลัง" only makes sense for "ขาย" — switching away from it must drop the
+      // flag too, not just the picked batch, or a leftover fromStock=true silently caps
+      // qty against warehouse stock on a plain "ซื้อ" row where that never applies.
+      [App.zenyRows, App.itemRows, App.otherRows].forEach(function(rows){
+        (rows||[]).forEach(function(row){ if(row.fromStock){ row.fromStock = false; row.stockGroupKey = null; row.stockGroup = null; } });
+      });
+      renderItemRows();
+    }
   }
 
   function renderAll(){

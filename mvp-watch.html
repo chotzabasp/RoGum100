@@ -417,7 +417,15 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-item-row-main .mr-row-qty{grid-area:qty}
 .mr-item-row-main .mr-row-remove{grid-area:remove;justify-self:end}
 .mr-item-row input,.mr-item-row select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.45rem .5rem;font-size:.82rem;width:100%}
+.mr-item-row input:disabled,.mr-item-row select:disabled{opacity:.65;cursor:not-allowed}
 .mr-row-currency{cursor:pointer}
+.mr-sell-source{display:flex;flex-direction:column;gap:.35rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem;margin-bottom:.1rem}
+.mr-sell-source-toggle{display:flex;gap:.4rem}
+.mr-sell-source-btn{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);border-radius:var(--radius-s);padding:.35rem .5rem;font-size:.76rem;cursor:pointer}
+.mr-sell-source-btn.active{background:color-mix(in srgb, var(--accent) 20%, transparent);border-color:var(--accent);color:var(--accent);font-weight:600}
+.mr-stock-select{font-size:.78rem}
+.mr-stock-info{font-size:.74rem;color:var(--text-dim)}
+.mr-slot-section-locked{color:var(--text-dim);font-size:.76rem;padding:.1rem .2rem}
 .mr-slot-section{display:flex;flex-direction:column;gap:.3rem;padding-left:.2rem}
 .mr-slot-row{display:flex;gap:.4rem;align-items:center}
 .mr-slot-row input{flex:1;font-size:.76rem}
@@ -638,6 +646,7 @@ svg.icon{width:18px;height:18px;display:block}
 #confirmOverlay .confirm-box{z-index:91}
 .confirm-message{margin:0 0 1.1rem;font-size:.88rem;color:var(--text);text-align:center;line-height:1.5}
 .confirm-detail{display:block;margin-top:.4rem;font-size:.74rem;color:var(--text-dim)}
+.confirm-warehouse-note{margin-top:.5rem;font-size:.74rem;color:var(--warning, #f2c94c)}
 #mrEditNoteOverlay .confirm-message{margin-bottom:.4rem}
 .mr-edit-note-hint{margin:0 0 1rem;font-size:.72rem;color:var(--text-dim);text-align:center;line-height:1.45}
 .mr-edit-note-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.6rem .7rem;font-size:.85rem;margin-bottom:.4rem}
@@ -1479,6 +1488,7 @@ svg.icon{width:18px;height:18px;display:block}
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
       itemWarehouseStock:'mvpwatch_itemwarehousestock_'+email, itemsServer:'mvpwatch_itemsserver_'+email,
+      itemLineClaimedQty:'mvpwatch_itemlineclaimedqty_'+email,
       currentServer:'mvpwatch_currentserver_'+email,
       farmCostItems:'mvpwatch_farmcost_'+email, farmLog:'mvpwatch_farmlog_'+email, farmServer:'mvpwatch_farmserver_'+email,
       farmOcHint:'mvpwatch_farmochint_'+email, farmExRate:'mvpwatch_farmexrate_'+email, farmMapNames:'mvpwatch_farmmapnames_'+email,
@@ -1492,7 +1502,7 @@ svg.icon{width:18px;height:18px;display:block}
   var ZENY_LABEL = 'Zeny (1M)';
   var ZENY_LABEL_2 = 'Zeny (100k)';
   var ZENY_PINNED_LABELS = [ZENY_LABEL, ZENY_LABEL_2];
-  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemsServerId:null, itemsSelectedTier:null, editingMerchantId:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, editingMerchantId:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -1555,6 +1565,29 @@ svg.icon{width:18px;height:18px;display:block}
     }
     App.merchantExchangeRates = store(keys.merchantExRate, null) || {};
     App.itemWarehouseStock = store(keys.itemWarehouseStock, null) || {};
+    // Tracks, per server+purchase-line, how much has EVER been dropped into a
+    // warehouse tier (increases on drop, decreases only on explicit "undo → back to
+    // pending"). This is deliberately separate from live stock qty so that a later
+    // SALE deduction — which reduces a record's qty in place — never makes the
+    // pending list think the purchase was never warehoused. `null` (key never saved)
+    // means a pre-upgrade install: bootstrap it once from whatever is currently
+    // sitting in the warehouse so existing users' pending lists don't jump.
+    var claimedQtyLoaded = store(keys.itemLineClaimedQty, null);
+    if(claimedQtyLoaded == null){
+      claimedQtyLoaded = {};
+      Object.keys(App.itemWarehouseStock).forEach(function(serverId){
+        var w = App.itemWarehouseStock[serverId] || {};
+        ITEM_WAREHOUSE_TIERS.forEach(function(tier){
+          (w[tier]||[]).forEach(function(it){
+            if(!it.lineId) return;
+            if(!claimedQtyLoaded[serverId]) claimedQtyLoaded[serverId] = {};
+            claimedQtyLoaded[serverId][it.lineId] = (claimedQtyLoaded[serverId][it.lineId]||0) + (parseFloat(it.qty)||0);
+          });
+        });
+      });
+      persist(keys.itemLineClaimedQty, claimedQtyLoaded);
+    }
+    App.itemLineClaimedQty = claimedQtyLoaded;
     App.itemsServerId = store(keys.itemsServer, null);
     App.editingMerchantId = null;
     App.currentServerId = store(keys.currentServer, null);
@@ -1640,6 +1673,17 @@ svg.icon{width:18px;height:18px;display:block}
   function saveMerchantLog(){ persist(App.keys.merchantLog, App.merchantLog); }
   function saveMerchantExchangeRates(){ persist(App.keys.merchantExRate, App.merchantExchangeRates); }
   function saveItemWarehouseStock(){ persist(App.keys.itemWarehouseStock, App.itemWarehouseStock); }
+  function saveItemLineClaimedQty(){ persist(App.keys.itemLineClaimedQty, App.itemLineClaimedQty); }
+  // delta>0 when a line is dropped into a warehouse tier, delta<0 when explicitly
+  // undone back to pending. Selling from stock (or restoring a sale) never calls this
+  // — that only moves physical qty, it doesn't change what's "claimed" off pending.
+  function addClaimedQty(serverId, lineId, delta){
+    if(!lineId || !delta) return;
+    if(!App.itemLineClaimedQty[serverId]) App.itemLineClaimedQty[serverId] = {};
+    var next = (App.itemLineClaimedQty[serverId][lineId]||0) + delta;
+    if(next <= 0.0000001) delete App.itemLineClaimedQty[serverId][lineId];
+    else App.itemLineClaimedQty[serverId][lineId] = next;
+  }
   function saveItemsServer(){ persist(App.keys.itemsServer, App.itemsServerId); }
   function saveDB(){ persist(App.keys.db, App.db); }
   function saveActive(){ persist(App.keys.active, App.active); }
@@ -2822,6 +2866,12 @@ svg.icon{width:18px;height:18px;display:block}
     saveCurrentServer();
     renderMerchantServers();
     renderMrExchangeRate();
+    // A stock pick belongs to the server it was picked under — drop it on server switch
+    // rather than risk selling something from the wrong server's warehouse.
+    [App.zenyRows, App.itemRows, App.otherRows].forEach(function(rows){
+      (rows||[]).forEach(function(row){ if(row.fromStock){ row.stockGroupKey = null; row.stockGroup = null; } });
+    });
+    renderItemRows();
   }
 
   function renderMrExchangeRate(){
@@ -2833,7 +2883,8 @@ svg.icon{width:18px;height:18px;display:block}
   }
 
   function newItemRow(name, price, qty, currency, slots, lineId){
-    return { rid: uid(), lineId: lineId||null, name: name||'', price: price!=null?price:'', qty: qty!=null?qty:'', currency: currency==='zeny'?'zeny':'baht', slots: slots||[] };
+    return { rid: uid(), lineId: lineId||null, name: name||'', price: price!=null?price:'', qty: qty!=null?qty:'', currency: currency==='zeny'?'zeny':'baht', slots: slots||[],
+      fromStock:false, stockGroupKey:null, stockGroup:null };
   }
 
   function cleanDecimalInput(value){
@@ -2929,10 +2980,14 @@ svg.icon{width:18px;height:18px;display:block}
     if(isZenyTab) rows.forEach(function(row){ row.currency = 'baht'; });
     var removable = rows.length > 1;
     var showSlots = App.merchantCategory === 'item';
+    var sellFromStockAvailable = App.merchantType==='sell' && (isZenyTab || App.merchantCategory==='item') && App.currentServerId;
+    var stockGroups = sellFromStockAvailable ? sellableGroupsFor(App.currentServerId, App.merchantCategory) : [];
     root.innerHTML = rows.map(function(row, rowIdx){
       var slots = row.slots || [];
+      var fromStock = sellFromStockAvailable && row.fromStock;
+      var lockFields = fromStock && row.stockGroupKey;
       var slotsHtml = '';
-      if(showSlots){
+      if(showSlots && !lockFields){
         slotsHtml = '<div class="mr-slot-section">'+
           slots.map(function(slot, idx){
             return '<div class="mr-slot-row">'+
@@ -2942,20 +2997,46 @@ svg.icon{width:18px;height:18px;display:block}
           }).join('')+
           '<button type="button" class="mr-slot-add">+ เพิ่ม Slot</button>'+
         '</div>';
+      } else if(lockFields && slots.length){
+        var lockedSlotParts = [];
+        slots.forEach(function(s){ String(s).split(',').forEach(function(p){ p=p.trim(); if(p) lockedSlotParts.push(p); }); });
+        slotsHtml = lockedSlotParts.length ? '<div class="mr-slot-section mr-slot-section-locked">Slot: '+escapeHtml(lockedSlotParts.join(' | '))+'</div>' : '';
       }
       var currencyOptionsHtml = isZenyTab
         ? '<option value="baht" selected>บาท</option>'
         : '<option value="baht"'+(row.currency!=='zeny'?' selected':'')+'>บาท</option>'+
           '<option value="zeny"'+(row.currency==='zeny'?' selected':'')+'>Zeny</option>';
+      var sellSourceHtml = '';
+      if(sellFromStockAvailable){
+        var manualActive = !row.fromStock;
+        sellSourceHtml = '<div class="mr-sell-source">'+
+          '<div class="mr-sell-source-toggle">'+
+            '<button type="button" class="mr-sell-source-btn'+(manualActive?' active':'')+'" data-sell-source="manual" data-row-id="'+row.rid+'">กรอกเอง</button>'+
+            '<button type="button" class="mr-sell-source-btn'+(!manualActive?' active':'')+'" data-sell-source="stock" data-row-id="'+row.rid+'">ขายจากคลัง</button>'+
+          '</div>';
+        if(row.fromStock){
+          var opts = '<option value="">— เลือกรายการในคลัง —</option>'+stockGroups.map(function(g){
+            var unit = g.currency==='zeny' ? 'z' : 'บ';
+            var label = (isZenyTab ? '' : '['+itemTierLabel(g.tier)+'] ') + g.name + (g.slots&&g.slots.length ? ' : '+g.slots.join(' | ') : '') + ' — คงเหลือ '+fmtNum(g.qty)+(isZenyTab?' z':' ชิ้น')+' (ราคาซื้อ '+fmtNum(g.price)+' '+unit+')';
+            return '<option value="'+escapeHtml(g.key)+'"'+(row.stockGroupKey===g.key?' selected':'')+'>'+escapeHtml(label)+'</option>';
+          }).join('');
+          sellSourceHtml += '<select class="mr-stock-select" data-row-id="'+row.rid+'">'+opts+'</select>';
+          if(row.stockGroupKey && row.stockGroup){
+            sellSourceHtml += '<div class="mr-stock-info">คงเหลือในคลัง: '+fmtNum(row.stockGroup.qty)+(isZenyTab?' z':' ชิ้น')+'</div>';
+          }
+        }
+        sellSourceHtml += '</div>';
+      }
       return '<div class="mr-item-row" data-row-id="'+row.rid+'">'+
+        sellSourceHtml+
         '<div class="mr-item-row-main">'+
           '<div class="mr-name-wrap">'+
             '<span class="mr-row-index">'+(rowIdx+1)+'.</span>'+
-            '<input type="text" class="mr-row-name" autocomplete="off" placeholder="'+(App.merchantCategory==='zeny'?'ตัวอย่าง : Zeny (1M), Zeny (100k)':App.merchantCategory==='other'?'เช่น : AirTime, สุ่มกาชา, เติมบัตร, จ้างปั้นตัว, อื่นๆ':'เช่น : +5 มัพ (ถ้ามีออฟ+เพิ่มSlot), C.โซฮี, อื่นๆ')+'" value="'+row.name.replace(/"/g,'&quot;')+'">'+
+            '<input type="text" class="mr-row-name" autocomplete="off" '+(lockFields?'disabled':'')+' placeholder="'+(App.merchantCategory==='zeny'?'ตัวอย่าง : Zeny (1M), Zeny (100k)':App.merchantCategory==='other'?'เช่น : AirTime, สุ่มกาชา, เติมบัตร, จ้างปั้นตัว, อื่นๆ':'เช่น : +5 มัพ (ถ้ามีออฟ+เพิ่มSlot), C.โซฮี, อื่นๆ')+'" value="'+row.name.replace(/"/g,'&quot;')+'">'+
             '<div class="mr-item-suggest" hidden></div>'+
           '</div>'+
           '<input type="text" inputmode="decimal" class="mr-row-price" placeholder="ราคา" value="'+formatDecimalDisplay(row.price)+'">'+
-          '<select class="mr-row-currency">'+currencyOptionsHtml+'</select>'+
+          '<select class="mr-row-currency" '+(lockFields?'disabled':'')+'>'+currencyOptionsHtml+'</select>'+
           '<input type="text" inputmode="decimal" class="mr-row-qty" placeholder="จำนวน" value="'+formatDecimalDisplay(row.qty)+'">'+
           '<button type="button" class="mr-row-remove" data-remove-row="'+row.rid+'" '+(removable?'':'disabled')+'>✕</button>'+
         '</div>'+
@@ -3059,10 +3140,14 @@ svg.icon{width:18px;height:18px;display:block}
   }
 
   var mrEditExRateBackup = null;
+  var mrEditWarehouseBackup = null;
+  var mrEditWarehouseServerId = null;
 
   function resetMerchantForm(){
     App.editingMerchantId = null;
     mrEditExRateBackup = null;
+    mrEditWarehouseBackup = null;
+    mrEditWarehouseServerId = null;
     document.getElementById('mrCancelEdit').hidden = true;
     document.getElementById('mrConfirm').textContent = 'ยืนยันและบันทึก';
     document.getElementById('mrEntryPanel').classList.remove('mr-entry-editing');
@@ -3077,6 +3162,11 @@ svg.icon{width:18px;height:18px;display:block}
       App.merchantExchangeRates[mrEditExRateBackup.serverId] = mrEditExRateBackup.rate;
       saveMerchantExchangeRates();
       mrEditExRateBackup = null;
+    }
+    if(mrEditWarehouseBackup && mrEditWarehouseBackup.length){
+      var serverId = mrEditWarehouseServerId;
+      mrEditWarehouseBackup.forEach(function(entry){ reapplyWarehouseSale(serverId, entry.tier, entry.restoredRecords, entry.amount); });
+      saveItemWarehouseStock();
     }
     resetMerchantForm();
   }
@@ -3097,6 +3187,30 @@ svg.icon{width:18px;height:18px;display:block}
     var isZeny = lines.length===1 && ZENY_PINNED_LABELS.indexOf(lines[0].name)!==-1;
     var cat = entry.category || (isZeny ? 'zeny' : 'item');
     var rows = lines.map(function(l){ return newItemRow(l.name, l.rate, l.qty, lineCurrency(l), l.slots ? l.slots.slice() : [], l.id); });
+
+    // Lines that were sold straight from the warehouse get their stock given back for
+    // the duration of the edit (so remaining/qty shown reflects "if I don't resave
+    // this"); cancelling the edit re-deducts the same amounts via mrEditWarehouseBackup.
+    mrEditWarehouseBackup = [];
+    mrEditWarehouseServerId = entry.serverId;
+    var restoredAny = false;
+    lines.forEach(function(l, idx){
+      if(!l.warehouseSale) return;
+      var restoredRecords = restoreWarehouseStock(entry.serverId, l.warehouseSale);
+      mrEditWarehouseBackup.push({ tier: l.warehouseSale.tier, amount: l.warehouseSale.amount, restoredRecords: restoredRecords });
+      restoredAny = true;
+      var g = matchSellableGroup(entry.serverId, l.warehouseSale);
+      if(g){
+        rows[idx].fromStock = true;
+        rows[idx].stockGroupKey = g.key;
+        rows[idx].stockGroup = g;
+      }
+    });
+    if(restoredAny){
+      saveItemWarehouseStock();
+      toast('รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกแก้ไขหรือลบจะถูกคืนกลับเข้าคลัง');
+    }
+
     if(cat==='zeny') App.zenyRows = rows;
     else if(cat==='other') App.otherRows = rows;
     else App.itemRows = rows;
@@ -3318,10 +3432,13 @@ svg.icon{width:18px;height:18px;display:block}
   }
 
   function setMerchantType(type){
+    var changed = App.merchantType !== type;
     App.merchantType = type;
     document.querySelectorAll('.mr-type-btn').forEach(function(b){
       b.classList.toggle('active', b.dataset.type===type);
     });
+    // Selling-from-warehouse UI only shows for "ขาย" — re-render so it appears/disappears.
+    if(changed) renderItemRows();
   }
 
   function renderAll(){
@@ -3624,6 +3741,16 @@ svg.icon{width:18px;height:18px;display:block}
       var slotIdx = parseInt(rmSlot.dataset.removeSlot, 10);
       row.slots = (row.slots || []).filter(function(s, i){ return i !== slotIdx; });
       renderItemRows();
+      return;
+    }
+    var sourceBtn = e.target.closest('[data-sell-source]');
+    if(sourceBtn){
+      var wantStock = sourceBtn.dataset.sellSource === 'stock';
+      if(row.fromStock !== wantStock){
+        row.fromStock = wantStock;
+        if(!wantStock){ row.stockGroupKey = null; row.stockGroup = null; }
+        renderItemRows();
+      }
     }
   });
 
@@ -3640,6 +3767,16 @@ svg.icon{width:18px;height:18px;display:block}
     }
     if(e.target.classList.contains('mr-row-qty')){
       var qtyRaw = cleanDecimalInput(e.target.value);
+      if(row.fromStock && row.stockGroup){
+        // "จำนวน" for M lines is in M-units (millions of Zeny) while the warehouse pool
+        // is tracked in raw Zeny, so the cap needs the same conversion as the deduction.
+        var isZenyRow = App.merchantCategory === 'zeny';
+        var maxAllowed = isZenyRow ? row.stockGroup.qty/1000000 : row.stockGroup.qty;
+        if(parseFloat(qtyRaw) > maxAllowed){
+          qtyRaw = String(maxAllowed);
+          toast('มีในคลังแค่ '+fmtNum(maxAllowed)+(isZenyRow?' M':' ชิ้น'));
+        }
+      }
       e.target.value = formatDecimalDisplay(qtyRaw);
       row.qty = qtyRaw;
     }
@@ -3648,6 +3785,27 @@ svg.icon{width:18px;height:18px;display:block}
       var idx = parseInt(e.target.dataset.slotIdx, 10);
       row.slots = row.slots || [];
       row.slots[idx] = e.target.value;
+    }
+    if(e.target.classList.contains('mr-stock-select')){
+      var groupKey = e.target.value;
+      if(!groupKey){
+        row.stockGroupKey = null; row.stockGroup = null;
+      } else {
+        var group = findSellableGroup(App.currentServerId, App.merchantCategory, groupKey);
+        row.stockGroupKey = groupKey;
+        row.stockGroup = group;
+        if(group){
+          row.name = group.name;
+          row.price = group.price;
+          // M lines are always priced in baht regardless of what currency the Zeny
+          // was originally bought with — only Item lines carry the currency over.
+          if(App.merchantCategory !== 'zeny') row.currency = group.currency;
+          row.slots = (group.slots||[]).slice();
+          row.qty = '';
+        }
+      }
+      renderItemRows();
+      return;
     }
     updateMerchantTotal();
   });
@@ -3711,22 +3869,53 @@ svg.icon{width:18px;height:18px;display:block}
       return r.name.trim() && (parseFloat(r.price)>0) && (parseFloat(r.qty)>0);
     });
     if(!validRows.length){ toast('กรอกชื่อรายการ ราคา และจำนวนอย่างน้อย 1 แถว'); return; }
+    var isZenyForm = App.merchantCategory === 'zeny';
+    var stockPlans = []; // deferred until after validation — nothing is deducted yet here
     var lines = validRows.map(function(r){
       var name = r.name.trim(), rate = parseFloat(r.price), qty = parseFloat(r.qty), currency = lineCurrency(r);
       var slots = (r.slots || []).map(function(s){ return String(s||'').trim(); }).filter(function(s){ return s; });
       if(ZENY_PINNED_LABELS.indexOf(name)===-1 && App.merchantItems[App.merchantCategory].indexOf(name)===-1) App.merchantItems[App.merchantCategory].push(name);
-      return { id: r.lineId||uid(), name:name, rate:rate, qty:qty, currency:currency, total:rate*qty, slots:slots };
+      var line = { id: r.lineId||uid(), name:name, rate:rate, qty:qty, currency:currency, total:rate*qty, slots:slots };
+      if(App.merchantType==='sell' && r.fromStock && r.stockGroupKey && r.stockGroup){
+        stockPlans.push({ row:r, line:line, tier:r.stockGroup.tier, records:r.stockGroup.records, rawAmount: isZenyForm ? qty*1000000 : qty });
+      }
+      return line;
     });
-    var totalBaht = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?0:l.total); }, 0);
-    var totalZeny = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?l.total:0); }, 0);
     var exRate = merchantExchangeRate(App.currentServerId);
-    if(totalZeny>0 && !(exRate>0)){
+    var totalZenyPreview = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?l.total:0); }, 0);
+    if(totalZenyPreview>0 && !(exRate>0)){
       document.getElementById('mrExRateInput').classList.add('farm-exrate-invalid');
       document.getElementById('mrExRateError').hidden = false;
       showMrRateRequiredPopup();
       return;
     }
     saveMerchantItems();
+
+    // Validation passed — now it's safe to actually touch the warehouse.
+    if(stockPlans.length){
+      stockPlans.forEach(function(plan){
+        var result = deductWarehouseStock(App.currentServerId, plan.tier, plan.records, plan.rawAmount);
+        var taken = result.taken;
+        if(taken<=0) return;
+        if(taken < plan.rawAmount){
+          var newQty = isZenyForm ? taken/1000000 : taken;
+          plan.line.qty = newQty;
+          plan.line.total = plan.line.rate * newQty;
+          toast('คลังมีไม่พอ ปรับจำนวน "'+plan.line.name+'" เหลือ '+fmtNum(newQty));
+        }
+        plan.line.warehouseSale = { tier: plan.tier, amount: taken, name: plan.line.name, price: plan.line.rate, currency: plan.line.currency, slots: plan.line.slots,
+          sourceLines: result.breakdown.map(function(b){ return { lineId:b.lineId, amount:b.amount }; }) };
+        // The sale is committed now — unlink the row from the (now stale) stock group
+        // it was picked from, so a lingering form doesn't show yesterday's "remaining".
+        plan.row.fromStock = false;
+        plan.row.stockGroupKey = null;
+        plan.row.stockGroup = null;
+      });
+      saveItemWarehouseStock();
+      renderItemRows();
+    }
+    var totalBaht = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?0:l.total); }, 0);
+    var totalZeny = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?l.total:0); }, 0);
 
     function commitEdit(diffText){
       var entry = App.merchantLog.filter(function(e){ return e.id===App.editingMerchantId; })[0];
@@ -3789,8 +3978,18 @@ svg.icon{width:18px;height:18px;display:block}
     if(delBtn){
       var id = delBtn.dataset.del;
       var entry = App.merchantLog.filter(function(x){ return x.id===id; })[0];
+      var hasWarehouseSale = !!entry && (entry.lines||[]).some(function(l){ return l.warehouseSale; });
       var detail = entry ? '<span class="confirm-detail">'+mrEntrySummaryHtml(entry)+'</span>' : '';
-      showConfirm('ยืนยันลบรายการนี้?'+detail, function(){
+      var warnHtml = hasWarehouseSale ? '<p class="confirm-warehouse-note">รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกลบจะถูกคืนกลับเข้าคลัง</p>' : '';
+      showConfirm('ยืนยันลบรายการนี้?'+detail+warnHtml, function(){
+        // If this entry is mid-edit, its warehouse stock is already sitting restored
+        // (startEditMerchantEntry did that) — don't restore it a second time.
+        if(hasWarehouseSale && App.editingMerchantId!==id){
+          (entry.lines||[]).forEach(function(l){
+            if(l.warehouseSale) restoreWarehouseStock(entry.serverId, l.warehouseSale);
+          });
+          saveItemWarehouseStock();
+        }
         App.merchantLog = App.merchantLog.filter(function(e){ return e.id!==id; });
         saveMerchantLog();
         if(App.editingMerchantId===id) resetMerchantForm();
@@ -3905,13 +4104,139 @@ svg.icon{width:18px;height:18px;display:block}
     return null;
   }
 
-  function stockedQtyByLineId(serverId){
-    var w = warehouseStockFor(serverId);
-    var counts = {};
+  // ---------- sell-from-warehouse (used by the "ขาย" merchant form) ----------
+  // Groups current warehouse stock into pickable lots, same grouping rules as the
+  // คลังไอเทม detail view (live price, name+slots+price+currency identity for items;
+  // name-only pool for M since Zeny is fungible regardless of the rate it came in at).
+  function sellableItemGroups(serverId){
+    var groups = {}, order = [];
     ITEM_WAREHOUSE_TIERS.forEach(function(tier){
-      w[tier].forEach(function(item){ counts[item.lineId] = (counts[item.lineId]||0) + (parseFloat(item.qty)||0); });
+      warehouseStockFor(serverId)[tier].forEach(function(it){
+        var found = findMerchantLineById(it.lineId);
+        var price = found ? found.line.rate : it.price;
+        var currency = found ? lineCurrency(found.line) : it.currency;
+        var key = tier+'|'+it.name+'|'+JSON.stringify(it.slots||[])+'|'+price+'|'+currency;
+        if(!groups[key]){
+          groups[key] = { key:key, tier:tier, name:it.name, slots:(it.slots||[]).slice(), price:price, currency:currency, qty:0, records:[] };
+          order.push(key);
+        }
+        var qty = Math.max(1, Math.round(parseFloat(it.qty)||1));
+        groups[key].qty += qty;
+        groups[key].records.push({ id: it.id, qty: qty, ts: it.ts });
+      });
     });
-    return counts;
+    order.forEach(function(key){ groups[key].records.sort(function(a,b){ return a.ts-b.ts; }); });
+    return order.map(function(key){ return groups[key]; });
+  }
+  function sellableMoneyGroups(serverId){
+    var groups = {}, order = [];
+    warehouseStockFor(serverId).M.forEach(function(it){
+      var key = it.name;
+      if(!groups[key]){
+        groups[key] = { key:key, tier:'M', name:it.name, price:it.srcRate, currency:it.srcCurrency||'baht', qty:0, records:[], latestTs:it.ts };
+        order.push(key);
+      }
+      var g = groups[key];
+      var amt = parseFloat(it.confirmedAmount)||0;
+      g.qty += amt;
+      g.records.push({ id: it.id, qty: amt, ts: it.ts });
+      if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.price = it.srcRate; g.currency = it.srcCurrency||'baht'; }
+    });
+    order.forEach(function(key){ groups[key].records.sort(function(a,b){ return a.ts-b.ts; }); });
+    return order.map(function(key){ return groups[key]; });
+  }
+  function sellableGroupsFor(serverId, category){
+    return category==='zeny' ? sellableMoneyGroups(serverId) : sellableItemGroups(serverId);
+  }
+  function findSellableGroup(serverId, category, key){
+    return sellableGroupsFor(serverId, category).filter(function(g){ return g.key===key; })[0] || null;
+  }
+
+  // Deducts `amountNeeded` from a group's underlying records (oldest first), mutating
+  // the real warehouse arrays. Returns how much was actually taken (may be less than
+  // asked if the warehouse changed since the group was read).
+  // Returns { taken, breakdown } — breakdown lists which original purchase line(s)
+  // each consumed unit came from, so a later restore can put it back under the SAME
+  // lineId (otherwise the purchase would look "never warehoused" again and reappear
+  // in the pending list even though it was legitimately bought → warehoused → sold).
+  function deductWarehouseStock(serverId, tier, records, amountNeeded){
+    var w = warehouseStockFor(serverId);
+    var arr = tier==='M' ? w.M : w[tier];
+    var remaining = amountNeeded;
+    var breakdown = [];
+    for(var i=0;i<records.length && remaining>0.0000001;i++){
+      var idx = -1;
+      for(var j=0;j<arr.length;j++){ if(arr[j].id===records[i].id){ idx=j; break; } }
+      if(idx===-1) continue;
+      var it = arr[idx];
+      var available = tier==='M' ? (parseFloat(it.confirmedAmount)||0) : Math.max(1, Math.round(parseFloat(it.qty)||1));
+      var take = Math.min(available, remaining);
+      if(take<=0) continue;
+      breakdown.push({ id: it.id, lineId: it.lineId, amount: take });
+      var left = available - take;
+      if(left<=0.0000001){
+        arr.splice(idx,1);
+      } else if(tier==='M'){
+        it.confirmedAmount = left;
+      } else {
+        it.qty = left;
+        it.total = (parseFloat(it.price)||0) * left;
+      }
+      remaining -= take;
+    }
+    return { taken: amountNeeded - remaining, breakdown: breakdown };
+  }
+  // Pushes a fresh stock record back in (used to undo a sale on edit/delete). Doesn't
+  // try to restore the exact original record — the stock is fungible within a group.
+  // Returns the freshly-created record ids (with their lineId/amount) so a caller that
+  // needs to precisely undo this exact restore later (cancelling an edit) can target
+  // just these records instead of a generic FIFO pass that might eat into unrelated,
+  // never-sold stock that happens to share the same name/price identity.
+  function restoreWarehouseStock(serverId, sale){
+    var w = warehouseStockFor(serverId);
+    // Restore under the ORIGINAL purchase line's id whenever we recorded one, so the
+    // pending-list math (which keys off lineId) still sees these units as claimed —
+    // otherwise the original purchase would wrongly reappear as "not yet warehoused".
+    var sourceLines = sale.sourceLines && sale.sourceLines.length ? sale.sourceLines : [{ lineId:null, amount:sale.amount }];
+    var created = [];
+    sourceLines.forEach(function(sl){
+      if(!(sl.amount>0)) return;
+      var id = uid();
+      if(sale.tier==='M'){
+        w.M.push({ id:id, lineId: sl.lineId||uid(), name:sale.name, confirmedAmount:sl.amount, ts:Date.now(),
+          srcQty:sale.srcQty, srcRate:sale.srcRate, srcTotal:sale.srcTotal, srcCurrency:sale.srcCurrency });
+      } else {
+        w[sale.tier].push({ id:id, lineId: sl.lineId||uid(), name:sale.name, qty:sl.amount, price:sale.price,
+          total:(parseFloat(sale.price)||0)*sl.amount, currency:sale.currency, ts:Date.now(), slots:(sale.slots||[]).slice() });
+      }
+      created.push({ id:id, qty:sl.amount });
+    });
+    return created;
+  }
+  // Finds the current sellable group matching a stored sale's identity (tier/name/
+  // price/currency/slots for items, name only for M — Zeny is fungible).
+  function matchSellableGroup(serverId, sale){
+    var category = sale.tier==='M' ? 'zeny' : 'item';
+    var groups = sellableGroupsFor(serverId, category);
+    return groups.filter(function(x){
+      if(sale.tier==='M') return x.name===sale.name;
+      return x.tier===sale.tier && x.name===sale.name && x.currency===sale.currency && Math.abs((x.price||0)-(sale.price||0))<0.0000001 && JSON.stringify(x.slots||[])===JSON.stringify(sale.slots||[]);
+    })[0] || null;
+  }
+  // Undoes a specific restoreWarehouseStock call (used when a warehouse-linked edit is
+  // cancelled) by deducting from the EXACT records that restore just created — never a
+  // generic FIFO pass, which could otherwise eat into other, never-sold stock that
+  // happens to share the same name/price identity.
+  function reapplyWarehouseSale(serverId, tier, restoredRecords, amount){
+    deductWarehouseStock(serverId, tier, restoredRecords, amount);
+  }
+
+  // "How much of each purchase line is off the pending list" — NOT the same as "how
+  // much currently sits in the warehouse right now" (a sale reduces the latter but a
+  // legitimately-sold line must never come back as pending, so this reads the
+  // separately-tracked claimed-qty ledger instead of summing live stock qty).
+  function stockedQtyByLineId(serverId){
+    return App.itemLineClaimedQty[serverId] ? Object.assign({}, App.itemLineClaimedQty[serverId]) : {};
   }
   function stockedMoneyLineIdSet(serverId){
     var w = warehouseStockFor(serverId);
@@ -4113,7 +4438,9 @@ svg.icon{width:18px;height:18px;display:block}
       if(isMoney){ toast('ลากได้เฉพาะรายการ Item เท่านั้น'); return; }
       var w = warehouseStockFor(serverId);
       w[warehouse].push({ id:uid(), lineId:item.lineId, name:item.name, qty:item.qty, price:item.rate, total:item.total, currency:item.currency, ts:item.ts, slots:item.slots, exchangeRate:item.exchangeRate });
+      addClaimedQty(serverId, item.lineId, parseFloat(item.qty)||0);
       saveItemWarehouseStock();
+      saveItemLineClaimedQty();
       renderItemsPage();
       toast('ใส่คลัง Item '+itemTierLabel(warehouse)+' แล้ว');
     }
@@ -4123,9 +4450,17 @@ svg.icon{width:18px;height:18px;display:block}
     var w = warehouseStockFor(App.itemsServerId);
     var idSet = {};
     ids.forEach(function(id){ idSet[id] = true; });
-    var before = w[tier].length;
+    var removed = w[tier].filter(function(it){ return idSet[it.id]; });
+    if(!removed.length) return;
     w[tier] = w[tier].filter(function(it){ return !idSet[it.id]; });
-    if(w[tier].length===before) return;
+    if(tier!=='M'){
+      // This is the one legitimate way claimed-qty ever goes back down — the user
+      // explicitly said "put this back in the pending list", as opposed to a sale
+      // (which keeps it claimed; it left the warehouse because it was sold, not
+      // because it needs re-warehousing).
+      removed.forEach(function(it){ addClaimedQty(App.itemsServerId, it.lineId, -(parseFloat(it.qty)||0)); });
+      saveItemLineClaimedQty();
+    }
     saveItemWarehouseStock();
     renderItemsPage();
     toast('ย้ายกลับไปที่รายการที่รอลงคลังแล้วทั้งหมด');

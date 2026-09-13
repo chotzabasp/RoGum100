@@ -396,6 +396,8 @@ svg.icon{width:18px;height:18px;display:block}
 .money-ledger-stat{display:flex;flex-direction:column;gap:.15rem;flex:1;min-width:110px}
 .money-ledger-stat-label{font-size:.66rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em}
 .money-ledger-stat-value{font-size:1rem;font-weight:700;font-family:"JetBrains Mono"}
+.money-ledger-reset-btn{flex:0 0 auto;align-self:center;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:999px;padding:.3rem .7rem;font-size:.68rem;cursor:pointer}
+.money-ledger-reset-btn:hover{border-color:var(--danger);color:var(--danger)}
 .money-ledger-row{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.55rem .7rem;margin-bottom:.5rem}
 .money-ledger-row:last-child{margin-bottom:0}
 .money-ledger-row-top{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
@@ -1735,6 +1737,18 @@ svg.icon{width:18px;height:18px;display:block}
       balance: warehouseMoneyTotal(serverId), note: note||'', recordIds: recordIds||null
     });
     saveItemMoneyLedger();
+  }
+  // Full wipe of one server's M warehouse + its ledger — an explicit, irreversible
+  // "start clean" action (confirmed in its own dialog before this ever runs), for
+  // clearing out stray test/demo balances rather than trying to sell or undo them away.
+  function resetMoneyWarehouse(serverId){
+    warehouseStockFor(serverId).M = [];
+    saveItemWarehouseStock();
+    App.itemMoneyLedger[serverId] = [];
+    saveItemMoneyLedger();
+    renderItemsPage();
+    renderItemRows();
+    toast('ล้างข้อมูลคลังเงิน M แล้ว');
   }
   function saveItemsServer(){ persist(App.keys.itemsServer, App.itemsServerId); }
   function saveDB(){ persist(App.keys.db, App.db); }
@@ -4479,6 +4493,7 @@ svg.icon{width:18px;height:18px;display:block}
       '<div class="money-ledger-stat"><span class="money-ledger-stat-label">คงเหลือ</span><span class="money-ledger-stat-value">'+fmtNum(agg.qty)+' '+zenyUnit+'</span></div>'+
       '<div class="money-ledger-stat"><span class="money-ledger-stat-label">ราคาเฉลี่ย</span><span class="money-ledger-stat-value">'+fmtNum(agg.price)+' บาท/M</span></div>'+
       '<div class="money-ledger-stat"><span class="money-ledger-stat-label">มูลค่ารวม</span><span class="money-ledger-stat-value">'+fmtNum(agg.qty/1000000*agg.price)+' บาท</span></div>'+
+      '<button type="button" class="money-ledger-reset-btn" data-reset-money title="ล้างยอดและประวัติคลังเงิน M ของเซิร์ฟเวอร์นี้ทั้งหมด">ล้างข้อมูลคลัง M</button>'+
     '</div>';
     var list = document.getElementById('itemsDetailList');
     var ledger = (App.itemMoneyLedger[serverId]||[]).slice().sort(function(a,b){ return b.ts-a.ts; });
@@ -4629,6 +4644,15 @@ svg.icon{width:18px;height:18px;display:block}
   }
 
   document.getElementById('itemsDetailList').addEventListener('click', function(e){
+    var resetBtn = e.target.closest('[data-reset-money]');
+    if(resetBtn){
+      var serverId = App.itemsServerId;
+      var sv = serverRateById(serverId);
+      showConfirm('ล้างข้อมูลคลังเงิน M ของ '+(sv?sv.name:serverId)+' ทั้งหมด?<span class="confirm-detail">ยอดคงเหลือและประวัติทุกรายการจะถูกลบถาวร กู้คืนไม่ได้</span>', function(){
+        resetMoneyWarehouse(serverId);
+      });
+      return;
+    }
     var btn = e.target.closest('[data-undo-ids]');
     if(!btn) return;
     undoWarehouseGroup(btn.dataset.undoTier, btn.dataset.undoIds.split(','));

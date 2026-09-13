@@ -417,6 +417,7 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-item-row-main .mr-row-remove{grid-area:remove;justify-self:end}
 .mr-item-row input,.mr-item-row select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.45rem .5rem;font-size:.82rem;width:100%}
 .mr-item-row input:disabled,.mr-item-row select:disabled{opacity:.65;cursor:not-allowed}
+.mr-item-row input[readonly]{background:var(--surface);color:var(--text-dim);cursor:default}
 .mr-row-currency{cursor:pointer}
 .mr-sell-source{display:flex;flex-direction:column;gap:.35rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.25rem;margin-bottom:.1rem}
 .mr-sell-source-toggle{display:flex;gap:.4rem}
@@ -1514,9 +1515,10 @@ svg.icon{width:18px;height:18px;display:block}
     };
   };
 
-  var ZENY_LABEL = 'Zeny (1M)';
-  var ZENY_LABEL_2 = 'Zeny (100k)';
-  var ZENY_PINNED_LABELS = [ZENY_LABEL, ZENY_LABEL_2];
+  // M only ever means "Zeny counted in units of 1,000,000" — the name is fixed and the
+  // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
+  // or accidentally entered in some other unit.
+  var ZENY_LABEL = 'Zeny (หน่วย:M)';
   var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
@@ -2924,6 +2926,8 @@ svg.icon{width:18px;height:18px;display:block}
   }
 
   function defaultRowCurrency(){ return 'baht'; }
+  // A fresh M row always carries the fixed, locked name — never blank, never user-typed.
+  function newZenyRow(){ return newItemRow(ZENY_LABEL, null, null, 'baht'); }
   function activeRows(){
     if(App.merchantCategory==='zeny') return App.zenyRows;
     if(App.merchantCategory==='other') return App.otherRows;
@@ -2970,8 +2974,8 @@ svg.icon{width:18px;height:18px;display:block}
   }
 
   function itemNameChoices(){
-    var list = App.merchantItems[App.merchantCategory] || [];
-    return App.merchantCategory==='zeny' ? ZENY_PINNED_LABELS.concat(list) : list;
+    if(App.merchantCategory==='zeny') return []; // M's name is fixed — no suggestions to offer
+    return App.merchantItems[App.merchantCategory] || [];
   }
 
   function itemNameWithSlots(name, slots){
@@ -3052,8 +3056,10 @@ svg.icon{width:18px;height:18px;display:block}
         '<div class="mr-item-row-main">'+
           '<div class="mr-name-wrap">'+
             '<span class="mr-row-index">'+(rowIdx+1)+'.</span>'+
-            '<input type="text" class="mr-row-name" autocomplete="off" placeholder="'+(App.merchantCategory==='zeny'?'ตัวอย่าง : Zeny (1M), Zeny (100k)':App.merchantCategory==='other'?'เช่น : AirTime, สุ่มกาชา, เติมบัตร, จ้างปั้นตัว, อื่นๆ':'เช่น : +5 มัพ (ถ้ามีออฟ+เพิ่มSlot), C.โซฮี, อื่นๆ')+'" value="'+row.name.replace(/"/g,'&quot;')+'">'+
-            '<div class="mr-item-suggest" hidden></div>'+
+            (isZenyTab
+              ? '<input type="text" class="mr-row-name" autocomplete="off" readonly value="'+ZENY_LABEL+'">'
+              : '<input type="text" class="mr-row-name" autocomplete="off" placeholder="'+(App.merchantCategory==='other'?'เช่น : AirTime, สุ่มกาชา, เติมบัตร, จ้างปั้นตัว, อื่นๆ':'เช่น : +5 มัพ (ถ้ามีออฟ+เพิ่มSlot), C.โซฮี, อื่นๆ')+'" value="'+row.name.replace(/"/g,'&quot;')+'">'+
+                '<div class="mr-item-suggest" hidden></div>')+
           '</div>'+
           '<input type="text" inputmode="decimal" class="mr-row-price" placeholder="ราคา" value="'+formatDecimalDisplay(row.price)+'">'+
           '<select class="mr-row-currency" '+(lockFields?'disabled':'')+'>'+currencyOptionsHtml+'</select>'+
@@ -3124,9 +3130,8 @@ svg.icon{width:18px;height:18px;display:block}
       box.innerHTML = '<p class="mr-suggest-empty">ไม่มีชื่อที่บันทึกไว้</p>';
     } else {
       box.innerHTML = matches.map(function(n){
-        var removable = ZENY_PINNED_LABELS.indexOf(n)===-1;
         return '<div class="mr-suggest-row" data-pick="'+n.replace(/"/g,'&quot;')+'"><span>'+n+'</span>'+
-          (removable ? '<button type="button" class="chip-x" data-remove-name="'+n.replace(/"/g,'&quot;')+'">✕</button>' : '')+
+          '<button type="button" class="chip-x" data-remove-name="'+n.replace(/"/g,'&quot;')+'">✕</button>'+
         '</div>';
       }).join('');
     }
@@ -3156,6 +3161,8 @@ svg.icon{width:18px;height:18px;display:block}
     });
     document.getElementById('mrImageField').hidden = cat==='zeny';
     document.getElementById('mrExRateField').hidden = cat==='zeny';
+    // M is always exactly one fixed row — no "+เพิ่มรายการ" to add more of it.
+    document.getElementById('mrAddRowBtn').hidden = cat==='zeny';
     renderItemRows();
   }
 
@@ -3562,7 +3569,7 @@ svg.icon{width:18px;height:18px;display:block}
     renderUser(); renderStats(); renderRoster(); renderRateChips(); renderTickerServerChips();
     renderMerchantServers();
     renderMrExchangeRate();
-    App.zenyRows = [newItemRow(null, null, null, 'baht')];
+    App.zenyRows = [newZenyRow()];
     App.itemRows = [newItemRow(null, null, null, 'baht')];
     App.otherRows = [newItemRow(null, null, null, 'baht')];
     setMerchantType('buy');
@@ -3837,7 +3844,7 @@ svg.icon{width:18px;height:18px;display:block}
     if(!rowEl) return;
     var row = activeRows().filter(function(r){ return r.rid === rowEl.dataset.rowId; })[0];
     if(!row) return;
-    if(e.target.classList.contains('mr-row-name')){ row.name = e.target.value; renderNameSuggest(rowEl); }
+    if(e.target.classList.contains('mr-row-name') && App.merchantCategory!=='zeny'){ row.name = e.target.value; renderNameSuggest(rowEl); }
     if(e.target.classList.contains('mr-row-price')){
       var priceRaw = cleanDecimalInput(e.target.value);
       e.target.value = formatDecimalDisplay(priceRaw);
@@ -3890,6 +3897,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   document.getElementById('mrItemRows').addEventListener('focusin', function(e){
     if(!e.target.classList.contains('mr-row-name')) return;
+    if(App.merchantCategory==='zeny') return; // name field is fixed/readonly — nothing to suggest
     hideAllSuggests();
     renderNameSuggest(e.target.closest('.mr-item-row'));
   });
@@ -3936,7 +3944,7 @@ svg.icon{width:18px;height:18px;display:block}
     var lines = validRows.map(function(r){
       var name = r.name.trim(), rate = parseFloat(r.price), qty = parseFloat(r.qty), currency = lineCurrency(r);
       var slots = (r.slots || []).map(function(s){ return String(s||'').trim(); }).filter(function(s){ return s; });
-      if(ZENY_PINNED_LABELS.indexOf(name)===-1 && App.merchantItems[App.merchantCategory].indexOf(name)===-1) App.merchantItems[App.merchantCategory].push(name);
+      if(App.merchantCategory!=='zeny' && App.merchantItems[App.merchantCategory].indexOf(name)===-1) App.merchantItems[App.merchantCategory].push(name);
       var line = { id: r.lineId||uid(), name:name, rate:rate, qty:qty, currency:currency, total:rate*qty, slots:slots };
       if(App.merchantType==='sell' && r.fromStock && r.stockGroupKey){
         // Stock can have grown/shrunk since the row was set to "from stock" (a
@@ -4000,7 +4008,7 @@ svg.icon{width:18px;height:18px;display:block}
     // Clear the entered rows after a successful save — keep the current
     // เซิร์ฟเวอร์/ประเภท/หมวดหมู่ selection, just don't leave stale text sitting
     // in the fields for the next entry.
-    setActiveRows([newItemRow(null, null, null, defaultRowCurrency())]);
+    setActiveRows(App.merchantCategory==='zeny' ? [newZenyRow()] : [newItemRow(null, null, null, defaultRowCurrency())]);
     renderItemRows();
   });
 

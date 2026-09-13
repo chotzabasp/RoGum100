@@ -2981,7 +2981,7 @@ svg.icon{width:18px;height:18px;display:block}
     var removable = rows.length > 1;
     var showSlots = App.merchantCategory === 'item';
     var sellFromStockAvailable = App.merchantType==='sell' && (isZenyTab || App.merchantCategory==='item') && App.currentServerId;
-    var stockGroups = sellFromStockAvailable ? sellableGroupsFor(App.currentServerId, App.merchantCategory) : [];
+    var stockGroups = sellFromStockAvailable ? (isZenyTab ? [sellableMoneyAggregate(App.currentServerId)] : sellableGroupsFor(App.currentServerId, App.merchantCategory)) : [];
     root.innerHTML = rows.map(function(row, rowIdx){
       var slots = row.slots || [];
       var fromStock = sellFromStockAvailable && row.fromStock;
@@ -3014,15 +3014,19 @@ svg.icon{width:18px;height:18px;display:block}
             '<button type="button" class="mr-sell-source-btn'+(manualActive?' active':'')+'" data-sell-source="manual" data-row-id="'+row.rid+'">กรอกเอง</button>'+
             '<button type="button" class="mr-sell-source-btn'+(!manualActive?' active':'')+'" data-sell-source="stock" data-row-id="'+row.rid+'">'+(isZenyTab?'ขาย M จากคลัง':'ขาย Item จากคลัง')+'</button>'+
           '</div>';
-        if(row.fromStock){
+        if(row.fromStock && isZenyTab){
+          // Money is fungible — no batch to pick, just show the pooled total.
+          var agg = row.stockGroup || stockGroups[0];
+          sellSourceHtml += '<div class="mr-stock-info">ยอดเงิน M ในคลังทั้งหมด: '+fmtNum((agg?agg.qty:0)/1000000)+' M</div>';
+        } else if(row.fromStock){
           var opts = '<option value="">— เลือกรายการในคลัง —</option>'+stockGroups.map(function(g){
             var unit = g.currency==='zeny' ? 'z' : 'บ';
-            var label = (isZenyTab ? '' : '['+itemTierLabel(g.tier)+'] ') + g.name + (g.slots&&g.slots.length ? ' : '+g.slots.join(' | ') : '') + ' — คงเหลือ '+fmtNum(g.qty)+(isZenyTab?' z':' ชิ้น')+' (ราคาซื้อ '+fmtNum(g.price)+' '+unit+')';
+            var label = '['+itemTierLabel(g.tier)+'] ' + g.name + (g.slots&&g.slots.length ? ' : '+g.slots.join(' | ') : '') + ' — คงเหลือ '+fmtNum(g.qty)+' ชิ้น (ราคาซื้อ '+fmtNum(g.price)+' '+unit+')';
             return '<option value="'+escapeHtml(g.key)+'"'+(row.stockGroupKey===g.key?' selected':'')+'>'+escapeHtml(label)+'</option>';
           }).join('');
           sellSourceHtml += '<select class="mr-stock-select" data-row-id="'+row.rid+'">'+opts+'</select>';
           if(row.stockGroupKey && row.stockGroup){
-            sellSourceHtml += '<div class="mr-stock-info">คงเหลือในคลัง: '+fmtNum(row.stockGroup.qty)+(isZenyTab?' z':' ชิ้น')+'</div>';
+            sellSourceHtml += '<div class="mr-stock-info">คงเหลือในคลัง: '+fmtNum(row.stockGroup.qty)+' ชิ้น</div>';
           }
         }
         sellSourceHtml += '</div>';
@@ -3747,7 +3751,20 @@ svg.icon{width:18px;height:18px;display:block}
       var wantStock = sourceBtn.dataset.sellSource === 'stock';
       if(row.fromStock !== wantStock){
         row.fromStock = wantStock;
-        if(!wantStock){ row.stockGroupKey = null; row.stockGroup = null; }
+        if(!wantStock){
+          row.stockGroupKey = null; row.stockGroup = null;
+        } else if(App.merchantCategory==='zeny'){
+          // Money has no batches to pick — attach the pooled total right away.
+          var agg = sellableMoneyAggregate(App.currentServerId);
+          row.stockGroupKey = agg.key;
+          row.stockGroup = agg;
+          row.name = agg.name;
+          row.price = agg.price;
+          row.currency = 'baht';
+          row.qty = '';
+        } else {
+          row.stockGroupKey = null; row.stockGroup = null;
+        }
         renderItemRows();
       }
     }
@@ -4143,6 +4160,28 @@ svg.icon{width:18px;height:18px;display:block}
     });
     order.forEach(function(key){ groups[key].records.sort(function(a,b){ return a.ts-b.ts; }); });
     return order.map(function(key){ return groups[key]; });
+  }
+  // M money is fungible — unlike items, the batch it was bought in doesn't matter to a
+  // buyer, so instead of forcing the user to sell one named batch (1M, 2M, 500k...) at a
+  // time, pool all of it into a single sellable group. Deduction still walks the pooled
+  // records oldest-first (deductWarehouseStock), so a sale can span multiple batches.
+  function sellableMoneyAggregate(serverId){
+    var records = [];
+    var totalQty = 0, weightedRateSum = 0;
+    var currencyQty = {};
+    warehouseStockFor(serverId).M.forEach(function(it){
+      var amt = parseFloat(it.confirmedAmount)||0;
+      if(amt<=0) return;
+      records.push({ id: it.id, qty: amt, ts: it.ts });
+      totalQty += amt;
+      weightedRateSum += (parseFloat(it.srcRate)||0) * amt;
+      var cur = it.srcCurrency||'baht';
+      currencyQty[cur] = (currencyQty[cur]||0) + amt;
+    });
+    records.sort(function(a,b){ return a.ts-b.ts; });
+    var currency = 'baht', bestQty = -1;
+    Object.keys(currencyQty).forEach(function(c){ if(currencyQty[c]>bestQty){ bestQty=currencyQty[c]; currency=c; } });
+    return { key:'ALL_M', tier:'M', name:'Zeny', price: totalQty>0 ? weightedRateSum/totalQty : 0, currency:currency, qty:totalQty, records:records };
   }
   function sellableGroupsFor(serverId, category){
     return category==='zeny' ? sellableMoneyGroups(serverId) : sellableItemGroups(serverId);

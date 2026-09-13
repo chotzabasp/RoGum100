@@ -3682,8 +3682,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   document.getElementById('mrAddRowBtn').addEventListener('click', function(){
     var rows = activeRows();
-    var carryPrice = (App.merchantCategory==='zeny' && rows.length) ? rows[rows.length-1].price : null;
-    rows.push(newItemRow(null, carryPrice, null, defaultRowCurrency()));
+    rows.push(newItemRow(null, null, null, defaultRowCurrency()));
     renderItemRows();
   });
 

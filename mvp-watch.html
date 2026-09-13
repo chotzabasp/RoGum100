@@ -3012,7 +3012,7 @@ svg.icon{width:18px;height:18px;display:block}
         sellSourceHtml = '<div class="mr-sell-source">'+
           '<div class="mr-sell-source-toggle">'+
             '<button type="button" class="mr-sell-source-btn'+(manualActive?' active':'')+'" data-sell-source="manual" data-row-id="'+row.rid+'">กรอกเอง</button>'+
-            '<button type="button" class="mr-sell-source-btn'+(!manualActive?' active':'')+'" data-sell-source="stock" data-row-id="'+row.rid+'">'+(isZenyTab?'ขาย M จากคลัง':'ขายจากคลัง')+'</button>'+
+            '<button type="button" class="mr-sell-source-btn'+(!manualActive?' active':'')+'" data-sell-source="stock" data-row-id="'+row.rid+'">'+(isZenyTab?'ขาย M จากคลัง':'ขาย Item จากคลัง')+'</button>'+
           '</div>';
         if(row.fromStock){
           var opts = '<option value="">— เลือกรายการในคลัง —</option>'+stockGroups.map(function(g){

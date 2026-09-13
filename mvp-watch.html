@@ -505,7 +505,18 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-it-cell.profit b.profit-pos{color:var(--accent)}
 .mr-it-cell.profit b.profit-neg{color:var(--danger)}
 .mr-it-cell.profit.none b{color:var(--text-dim);font-weight:500}
-.mr-ic-body{grid-column:1 / -1;border-top:1px dashed var(--border);padding-top:.4rem;margin-top:.1rem}
+.mr-ic-body{grid-column:1 / -1;border-top:1px dashed var(--border);padding-top:.4rem;margin-top:.1rem;display:flex;flex-direction:column;gap:.35rem}
+/* Per-day accordion inside an expanded item card (keeps a long-lived item like M from
+   dumping its entire transaction history as one giant flat list). */
+.mr-ic-day-head{display:flex;align-items:center;gap:.5rem;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-s);padding:.35rem .6rem;cursor:pointer;font-size:.74rem;font-weight:600;color:var(--text);text-align:left;font-family:inherit}
+.mr-ic-day-head:hover{border-color:var(--text-dim)}
+.mr-ic-day-head:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mr-ic-day.open .mr-ic-day-head .mr-ic-chev{transform:rotate(90deg)}
+.mr-ic-day-count{color:var(--text-dim);font-size:.68rem;font-weight:500}
+.mr-ic-day-tot{margin-left:auto;font-family:"JetBrains Mono";font-weight:600;font-size:.68rem;white-space:nowrap}
+.mr-ic-day-tot .sell{color:var(--success)}
+.mr-ic-day-tot .buy{color:var(--danger)}
+.mr-ic-day .mr-tx-list{margin-top:.3rem}
 .mr-it-group{display:flex;align-items:center;gap:.5rem;margin-top:.5rem;padding:.4rem .6rem;font-size:.74rem;font-weight:600;color:var(--text-dim);background:none;border:1px dashed var(--border);border-radius:var(--radius-s);cursor:pointer;width:100%;text-align:left;font-family:inherit}
 .mr-it-group:hover{color:var(--text);border-color:var(--text-dim)}
 .mr-it-group-profit{margin-left:auto;font-family:"JetBrains Mono";font-weight:700;font-size:.72rem}
@@ -3173,7 +3184,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   var MR_HISTORY_DAY_STEP = 30; // rows revealed per "แสดงเพิ่ม" click in the ตามวัน view
   var MR_HISTORY_RANGE_DAYS = { 'today':1, '7d':7, '30d':30, '90d':90, 'all':null };
-  var historyState = { serverId:'all', view:'item', range:'all', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{}, soldOutOpen:null };
+  var historyState = { serverId:'all', view:'item', range:'all', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{}, expandedDays:{}, soldOutOpen:null };
 
   function mrDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 
@@ -3353,7 +3364,7 @@ svg.icon{width:18px;height:18px;display:block}
     var serverTag = opts.showServer ? ' '+historyServerTag(e.serverId) : '';
     var main = opts.showName
       ? itemNameWithSlots(l.name||'', l.slots)+(showZenyTag?zenyNameTag():'')+serverTag
-      : '<span class="'+edited.trim()+'">'+fmtDateTime(e.ts)+'</span>'+serverTag;
+      : '<span class="'+edited.trim()+'">'+(opts.timeOnly?fmtTimeShort(e.ts):fmtDateTime(e.ts))+'</span>'+serverTag;
     var totalHtml = fmtCurrencyAmount(l.total, lineCurrency(l));
     if(isZeny && e.exchangeRate>0) totalHtml += ' <small class="mr-rate-hover">≈ '+fmtNum(farmZenyToBaht(parseFloat(l.total)||0, e.exchangeRate))+' บ</small>';
     return '<div class="mr-tx type-'+t.type+'" data-entry-id="'+e.id+'">'+
@@ -3364,6 +3375,40 @@ svg.icon{width:18px;height:18px;display:block}
       (opts.showTime ? '<span class="mr-tx-time'+edited+'">'+fmtTimeShort(e.ts)+'</span>' : '')+
       '<button type="button" class="mr-del" data-del="'+e.id+'" title="ลบรายการนี้">🗑</button>'+
     '</div>';
+  }
+
+  // The tx list inside an expanded item card is grouped by day (its own mini "ตามวัน"),
+  // each day collapsible — an item like M can span dozens of transactions over weeks, and
+  // a flat list of all of them makes the card unreadably long. The most recent day starts
+  // open; older days start collapsed but can be expanded on demand.
+  function historyTxGroupedByDayHtml(g){
+    var order = [], byDay = {};
+    g.tx.forEach(function(t){
+      var k = mrDateStr(new Date(t.entry.ts));
+      if(!byDay[k]){ byDay[k] = { ts:t.entry.ts, rows:[], buy:0, sell:0 }; order.push(k); }
+      byDay[k].rows.push(t);
+      byDay[k][t.type] += lineBahtValue(t.entry, t.line);
+    });
+    return order.map(function(dayKey, idx){
+      var d = byDay[dayKey];
+      var dayGroupKey = g.key+'|'+dayKey;
+      var open = historyState.expandedDays[dayGroupKey];
+      if(open===undefined) open = (idx===0); // most recent day defaults open
+      var tot = [];
+      if(d.sell) tot.push('<span class="sell">ขาย '+fmtNum(d.sell)+' บ</span>');
+      if(d.buy) tot.push('<span class="buy">ซื้อ '+fmtNum(d.buy)+' บ</span>');
+      return '<div class="mr-ic-day'+(open?' open':'')+'" data-day-key="'+encodeURIComponent(dayGroupKey)+'">'+
+        '<button type="button" class="mr-ic-day-head" aria-expanded="'+(open?'true':'false')+'">'+
+          '<span class="mr-ic-chev">▸</span>'+
+          '<span>'+historyDayLabel(d.ts)+'</span>'+
+          '<span class="mr-ic-day-count">'+d.rows.length+' รายการ</span>'+
+          '<span class="mr-ic-day-tot">'+tot.join(' · ')+'</span>'+
+        '</button>'+
+        '<div class="mr-tx-list"'+(open?'':' hidden')+'>'+
+          d.rows.map(function(t){ return historyTxRowHtml(t, { showName:false, showTime:false, showServer:false, timeOnly:true }); }).join('')+
+        '</div>'+
+      '</div>';
+    }).join('');
   }
 
   function historyItemRowHtml(g, showServer){
@@ -3394,9 +3439,7 @@ svg.icon{width:18px;height:18px;display:block}
       '<span class="mr-it-cell sell"><i>ขายไป</i><b>'+fmtNum(g.sellQty)+' '+unit+'</b><small>'+fmtNum(g.sellBaht)+' บ</small>'+avgLine(g.sellBaht, g.sellQty, unit)+'</span>'+
       '<span class="mr-it-cell left'+(left>0?'':' zero')+'"><i>เหลือ</i><b>'+fmtNum(left)+' '+unit+'</b><small>'+leftSub+'</small>'+(left>0?avgLine(g.leftCost, left, unit):'')+'</span>'+
       profitCell+
-      '<div class="mr-ic-body"'+(open?'':' hidden')+'><div class="mr-tx-list">'+
-        g.tx.map(function(t){ return historyTxRowHtml(t, { showName:false, showTime:false, showServer:false }); }).join('')+
-      '</div></div>'+
+      '<div class="mr-ic-body"'+(open?'':' hidden')+'>'+historyTxGroupedByDayHtml(g)+'</div>'+
     '</div>';
   }
 
@@ -3482,6 +3525,13 @@ svg.icon{width:18px;height:18px;display:block}
       card.classList.add('open');
       card.querySelector('.mr-ic-body').hidden = false;
       card.querySelector('.mr-ic-head').setAttribute('aria-expanded', 'true');
+    }
+    var dayEl = el.closest('.mr-ic-day');
+    if(dayEl && !dayEl.classList.contains('open')){
+      historyState.expandedDays[decodeURIComponent(dayEl.dataset.dayKey)] = true;
+      dayEl.classList.add('open');
+      dayEl.querySelector('.mr-tx-list').hidden = false;
+      dayEl.querySelector('.mr-ic-day-head').setAttribute('aria-expanded', 'true');
     }
     return el;
   }
@@ -4133,6 +4183,17 @@ svg.icon{width:18px;height:18px;display:block}
       card.classList.toggle('open', open);
       card.querySelector('.mr-ic-body').hidden = !open;
       head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      return;
+    }
+    var dayHead = e.target.closest('.mr-ic-day-head');
+    if(dayHead){
+      var dayEl = dayHead.closest('.mr-ic-day');
+      var dayKey = decodeURIComponent(dayEl.dataset.dayKey);
+      var dayOpen = !dayEl.classList.contains('open');
+      historyState.expandedDays[dayKey] = dayOpen;
+      dayEl.classList.toggle('open', dayOpen);
+      dayEl.querySelector('.mr-tx-list').hidden = !dayOpen;
+      dayHead.setAttribute('aria-expanded', dayOpen ? 'true' : 'false');
       return;
     }
     if(e.target.closest('#mrItSoldToggle')){

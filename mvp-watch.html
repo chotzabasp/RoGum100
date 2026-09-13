@@ -3008,11 +3008,9 @@ svg.icon{width:18px;height:18px;display:block}
           '<option value="zeny"'+(row.currency==='zeny'?' selected':'')+'>Zeny</option>';
       var sellSourceHtml = '';
       if(sellFromStockAvailable){
-        var manualActive = !row.fromStock;
         sellSourceHtml = '<div class="mr-sell-source">'+
           '<div class="mr-sell-source-toggle">'+
-            '<button type="button" class="mr-sell-source-btn'+(manualActive?' active':'')+'" data-sell-source="manual" data-row-id="'+row.rid+'">กรอกเอง</button>'+
-            '<button type="button" class="mr-sell-source-btn'+(!manualActive?' active':'')+'" data-sell-source="stock" data-row-id="'+row.rid+'">'+(isZenyTab?'ขาย M จากคลัง':'ขาย Item จากคลัง')+'</button>'+
+            '<button type="button" class="mr-sell-source-btn'+(row.fromStock?' active':'')+'" data-sell-source-toggle data-row-id="'+row.rid+'">'+(isZenyTab?'ขาย M จากคลัง':'ขาย Item จากคลัง')+'</button>'+
           '</div>';
         if(row.fromStock && isZenyTab){
           // Money is fungible — no batch to pick. Always read the live pool (never the
@@ -3749,26 +3747,24 @@ svg.icon{width:18px;height:18px;display:block}
       renderItemRows();
       return;
     }
-    var sourceBtn = e.target.closest('[data-sell-source]');
+    var sourceBtn = e.target.closest('[data-sell-source-toggle]');
     if(sourceBtn){
-      var wantStock = sourceBtn.dataset.sellSource === 'stock';
-      if(row.fromStock !== wantStock){
-        row.fromStock = wantStock;
-        if(!wantStock){
-          row.stockGroupKey = null; row.stockGroup = null;
-        } else if(App.merchantCategory==='zeny'){
-          // Money has no batches to pick — attach the pooled total right away.
-          var agg = sellableMoneyAggregate(App.currentServerId);
-          row.stockGroupKey = agg.key;
-          row.stockGroup = agg;
-          row.name = agg.name;
-          row.currency = 'baht';
-          row.qty = '';
-        } else {
-          row.stockGroupKey = null; row.stockGroup = null;
-        }
-        renderItemRows();
+      var wantStock = !row.fromStock;
+      row.fromStock = wantStock;
+      if(!wantStock){
+        row.stockGroupKey = null; row.stockGroup = null;
+      } else if(App.merchantCategory==='zeny'){
+        // Money has no batches to pick — attach the pooled total right away.
+        var agg = sellableMoneyAggregate(App.currentServerId);
+        row.stockGroupKey = agg.key;
+        row.stockGroup = agg;
+        row.name = agg.name;
+        row.currency = 'baht';
+        row.qty = '';
+      } else {
+        row.stockGroupKey = null; row.stockGroup = null;
       }
+      renderItemRows();
     }
   });
 

@@ -4009,8 +4009,21 @@ svg.icon{width:18px;height:18px;display:block}
       var id = delBtn.dataset.del;
       var entry = App.merchantLog.filter(function(x){ return x.id===id; })[0];
       var hasWarehouseSale = !!entry && (entry.lines||[]).some(function(l){ return l.warehouseSale; });
+      // A buy entry that's already been dragged into the warehouse is now separate,
+      // independent stock (possibly already partly sold from) — deleting the purchase
+      // log must NOT silently pull that stock back out from under it. Just warn, so the
+      // user isn't left wondering why the warehouse card didn't change after deleting.
+      var hasWarehousedBuy = false;
+      if(entry && entryType(entry)==='buy' && (entry.category==='zeny' || entry.category==='item')){
+        var claimedMoneySet = entry.category==='zeny' ? stockedMoneyLineIdSet(entry.serverId) : null;
+        var claimedQtyMap = entry.category==='item' ? stockedQtyByLineId(entry.serverId) : null;
+        hasWarehousedBuy = (entry.lines||[]).some(function(l){
+          return entry.category==='zeny' ? !!claimedMoneySet[l.id] : (claimedQtyMap[l.id]||0) > 0;
+        });
+      }
       var detail = entry ? '<span class="confirm-detail">'+mrEntrySummaryHtml(entry)+'</span>' : '';
-      var warnHtml = hasWarehouseSale ? '<p class="confirm-warehouse-note">รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกลบจะถูกคืนกลับเข้าคลัง</p>' : '';
+      var warnHtml = hasWarehouseSale ? '<p class="confirm-warehouse-note">รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกลบจะถูกคืนกลับเข้าคลัง</p>'
+        : hasWarehousedBuy ? '<p class="confirm-warehouse-note">รายการนี้ถูกลงคลังไปแล้ว — ลบที่นี่จะไม่ดึงของออกจากคลัง ถ้าต้องการนำออก ให้กดปุ่ม ↩ ที่รายการในคลังก่อน</p>' : '';
       showConfirm('ยืนยันลบรายการนี้?'+detail+warnHtml, function(){
         // If this entry is mid-edit, its warehouse stock is already sitting restored
         // (startEditMerchantEntry did that) — don't restore it a second time.

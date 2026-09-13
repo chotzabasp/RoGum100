@@ -3223,7 +3223,7 @@ svg.icon{width:18px;height:18px;display:block}
     renderMerchantHistory();
   }
 
-  var MR_TYPE_LABEL = { buy:'รับ', sell:'ขาย' };
+  var MR_TYPE_LABEL = { buy:'ซื้อ', sell:'ขาย' };
   function entryType(e){ return e.type === 'sell' ? 'sell' : 'buy'; }
 
   var MR_HISTORY_PAGE_SIZE_OPTIONS = [5,10,15,20,30];
@@ -3290,7 +3290,7 @@ svg.icon{width:18px;height:18px;display:block}
 
     var pag = document.getElementById('mrHistoryPagination');
     if(!entries.length){
-      list.innerHTML = '<p class="mr-empty">ยังไม่มีประวัติการรับ</p>';
+      list.innerHTML = '<p class="mr-empty">ยังไม่มีประวัติการซื้อ-ขาย</p>';
       pag.innerHTML = '';
       return;
     }

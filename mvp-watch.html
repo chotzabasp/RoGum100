@@ -473,6 +473,12 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-summary-value.sell{color:var(--success)}
 .mr-summary-value.profit-pos{color:var(--accent)}
 .mr-summary-value.profit-neg{color:var(--danger)}
+.mr-item-summary-table{display:flex;flex-direction:column;gap:.35rem;overflow-x:auto}
+.mr-item-summary-row{display:grid;grid-template-columns:1.4fr 1fr 1fr .8fr 1fr 1fr;gap:.5rem;align-items:center;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .7rem;font-size:.78rem;white-space:nowrap}
+.mr-item-summary-row.mr-item-summary-head{background:transparent;border:none;padding:0 .7rem;font-size:.66rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em}
+.mr-item-summary-sub{color:var(--text-dim);font-size:.7rem}
+.mr-item-summary-row .profit-pos{color:var(--accent);font-weight:700}
+.mr-item-summary-row .profit-neg{color:var(--danger);font-weight:700}
 .mr-mock-tag{
   font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
   background:color-mix(in srgb, var(--warn) 20%, transparent);color:var(--warn);
@@ -870,6 +876,13 @@ svg.icon{width:18px;height:18px;display:block}
                     <button type="button" class="seg-btn" data-typefilter="sell">ขาย</button>
                   </div>
                 </div>
+                <div class="hf-group">
+                  <label>มุมมอง</label>
+                  <div class="seg-toggle" id="historyViewToggle">
+                    <button type="button" class="seg-btn active" data-historyview="list">รายการ</button>
+                    <button type="button" class="seg-btn" data-historyview="summary">สรุปตามไอเทม</button>
+                  </div>
+                </div>
                 <div class="hf-group hf-group-right">
                   <label>ช่วงวันที่</label>
                   <div class="farm-history-daterange">
@@ -881,6 +894,7 @@ svg.icon{width:18px;height:18px;display:block}
               </div>
               <div id="mrHistoryList"></div>
               <div class="farm-history-pagination" id="mrHistoryPagination"></div>
+              <div id="mrItemSummaryList" hidden></div>
             </div>
           </div>
         </div>
@@ -3099,7 +3113,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   var MR_HISTORY_PAGE_SIZE_OPTIONS = [5,10,15,20,30];
   var MR_HISTORY_PAGE_SIZE = 5;
-  var historyState = { serverId:'all', categoryFilter:'all', typeFilter:'all', page:0 };
+  var historyState = { serverId:'all', categoryFilter:'all', typeFilter:'all', page:0, view:'list' };
 
   function mrDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 
@@ -3152,9 +3166,73 @@ svg.icon{width:18px;height:18px;display:block}
     return entries;
   }
 
+  // Groups the currently filtered entries by item name(+slots) so "ซื้อมาเท่าไหร่,
+  // ขายไปเท่าไหร่, เหลือกี่อัน, กำไรเท่าไหร่" reads at a glance instead of having to
+  // mentally match up separate buy/sell rows in the chronological list. Cost of goods
+  // sold uses the weighted-average buy cost for that item, so profit reflects only what
+  // was actually sold — unsold stock is never counted as a "loss".
+  function computeMerchantItemSummary(){
+    var scoped = filteredMerchantEntries();
+    var groups = {}, order = [];
+    scoped.forEach(function(e){
+      var isBuy = entryType(e)==='buy';
+      (e.lines||[]).forEach(function(l){
+        var slots = l.slots || [];
+        var key = l.name+'|'+JSON.stringify(slots);
+        if(!groups[key]){
+          groups[key] = { name:l.name, slots:slots, buyQty:0, buyBaht:0, sellQty:0, sellBaht:0 };
+          order.push(key);
+        }
+        var g = groups[key];
+        var qty = parseFloat(l.qty)||0;
+        var total = parseFloat(l.total)||0;
+        var lineBaht = lineCurrency(l)==='zeny'
+          ? (e.exchangeRate>0 ? farmZenyToBaht(total, e.exchangeRate) : 0)
+          : total;
+        if(isBuy){ g.buyQty += qty; g.buyBaht += lineBaht; }
+        else { g.sellQty += qty; g.sellBaht += lineBaht; }
+      });
+    });
+    return order.map(function(key){
+      var g = groups[key];
+      var avgCost = g.buyQty>0 ? g.buyBaht/g.buyQty : 0;
+      var cogs = avgCost * g.sellQty;
+      g.remaining = g.buyQty - g.sellQty;
+      g.avgCost = avgCost;
+      g.profit = g.sellBaht - cogs;
+      return g;
+    }).sort(function(a,b){ return b.buyBaht+b.sellBaht - (a.buyBaht+a.sellBaht); });
+  }
+
+  function renderMerchantItemSummary(){
+    var list = document.getElementById('mrItemSummaryList');
+    var groups = computeMerchantItemSummary();
+    if(!groups.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีประวัติการซื้อ-ขาย</p>'; return; }
+    list.innerHTML = '<div class="mr-item-summary-table">'+
+      '<div class="mr-item-summary-row mr-item-summary-head">'+
+        '<span>รายการ</span><span>ซื้อมา</span><span>ขายไป</span><span>คงเหลือ</span><span>ทุนเฉลี่ย</span><span>กำไรที่รับรู้แล้ว</span>'+
+      '</div>'+
+      groups.map(function(g){
+        var profitClass = g.profit>=0 ? 'profit-pos' : 'profit-neg';
+        return '<div class="mr-item-summary-row">'+
+          '<span>'+itemNameWithSlots(g.name, g.slots)+'</span>'+
+          '<span>'+fmtNum(g.buyQty)+' ชิ้น<br><span class="mr-item-summary-sub">'+fmtNum(g.buyBaht)+' บ</span></span>'+
+          '<span>'+fmtNum(g.sellQty)+' ชิ้น<br><span class="mr-item-summary-sub">'+fmtNum(g.sellBaht)+' บ</span></span>'+
+          '<span>'+fmtNum(g.remaining)+' ชิ้น</span>'+
+          '<span>'+fmtNum(g.avgCost)+' บ/ชิ้น</span>'+
+          '<span class="'+profitClass+'">'+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</span>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }
+
   function renderMerchantHistory(){
     populateHistoryServerFilter();
     renderMerchantSummary();
+    document.getElementById('mrHistoryList').hidden = historyState.view==='summary';
+    document.getElementById('mrHistoryPagination').hidden = historyState.view==='summary';
+    document.getElementById('mrItemSummaryList').hidden = historyState.view!=='summary';
+    if(historyState.view==='summary'){ renderMerchantItemSummary(); return; }
     var list = document.getElementById('mrHistoryList');
     var entries = filteredMerchantEntries();
     entries.sort(function(a,b){ return b.ts-a.ts; });
@@ -3884,6 +3962,16 @@ svg.icon{width:18px;height:18px;display:block}
     historyState.typeFilter = btn.dataset.typefilter;
     historyState.page = 0;
     document.querySelectorAll('#historyTypeToggle .seg-btn').forEach(function(b){
+      b.classList.toggle('active', b===btn);
+    });
+    renderMerchantHistory();
+  });
+
+  document.getElementById('historyViewToggle').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-historyview]');
+    if(!btn) return;
+    historyState.view = btn.dataset.historyview;
+    document.querySelectorAll('#historyViewToggle .seg-btn').forEach(function(b){
       b.classList.toggle('active', b===btn);
     });
     renderMerchantHistory();

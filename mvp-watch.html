@@ -392,6 +392,16 @@ svg.icon{width:18px;height:18px;display:block}
 .items-detail-source{font-size:.7rem;color:var(--text-dim)}
 .items-undo-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem;padding:.1rem .2rem;line-height:1}
 .items-undo-btn:hover{color:var(--accent)}
+.money-ledger-summary{display:flex;gap:.6rem;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-m);padding:.7rem .9rem;margin-bottom:.8rem}
+.money-ledger-stat{display:flex;flex-direction:column;gap:.15rem;flex:1;min-width:110px}
+.money-ledger-stat-label{font-size:.66rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em}
+.money-ledger-stat-value{font-size:1rem;font-weight:700;font-family:"JetBrains Mono"}
+.money-ledger-row{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.55rem .7rem;margin-bottom:.5rem}
+.money-ledger-row:last-child{margin-bottom:0}
+.money-ledger-row-top{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.money-ledger-amount{font-weight:700;font-family:"JetBrains Mono"}
+.money-ledger-note{font-size:.72rem;color:var(--text-dim);margin-top:.2rem}
+.money-ledger-sub{display:flex;justify-content:space-between;gap:.5rem;font-size:.7rem;color:var(--text-dim);margin-top:.3rem}
 .items-money-confirm-detail{display:flex;flex-direction:column;gap:.3rem;font-size:.8rem;color:var(--text-dim);margin-bottom:.6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .7rem}
 .items-money-confirm-top{display:flex;justify-content:space-between;gap:.5rem}
 .items-money-confirm-breakdown{font-size:.78rem}
@@ -1489,6 +1499,7 @@ svg.icon{width:18px;height:18px;display:block}
       merchantExRate:'mvpwatch_merchantexrate_'+email,
       itemWarehouseStock:'mvpwatch_itemwarehousestock_'+email, itemsServer:'mvpwatch_itemsserver_'+email,
       itemLineClaimedQty:'mvpwatch_itemlineclaimedqty_'+email,
+      itemMoneyLedger:'mvpwatch_itemmoneyledger_'+email,
       currentServer:'mvpwatch_currentserver_'+email,
       farmCostItems:'mvpwatch_farmcost_'+email, farmLog:'mvpwatch_farmlog_'+email, farmServer:'mvpwatch_farmserver_'+email,
       farmOcHint:'mvpwatch_farmochint_'+email, farmExRate:'mvpwatch_farmexrate_'+email, farmMapNames:'mvpwatch_farmmapnames_'+email,
@@ -1502,7 +1513,7 @@ svg.icon{width:18px;height:18px;display:block}
   var ZENY_LABEL = 'Zeny (1M)';
   var ZENY_LABEL_2 = 'Zeny (100k)';
   var ZENY_PINNED_LABELS = [ZENY_LABEL, ZENY_LABEL_2];
-  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, editingMerchantId:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemMoneyLedger:{}, itemsServerId:null, itemsSelectedTier:null, editingMerchantId:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -1588,6 +1599,33 @@ svg.icon{width:18px;height:18px;display:block}
       persist(keys.itemLineClaimedQty, claimedQtyLoaded);
     }
     App.itemLineClaimedQty = claimedQtyLoaded;
+    // Persistent, append-only history of every M deposit/sale/undo — separate from the
+    // live warehouseStock.M array (which mutates/splices records as they're sold down),
+    // so the "คลังเงิน M" ledger view can show a real timeline that never loses a batch
+    // just because it's since been fully sold. `null` means a pre-upgrade install:
+    // bootstrap one "ยอดยกมา" (opening balance) row per server from whatever money is
+    // currently sitting in the warehouse, so existing balances don't appear from nowhere.
+    var moneyLedgerLoaded = store(keys.itemMoneyLedger, null);
+    if(moneyLedgerLoaded == null){
+      moneyLedgerLoaded = {};
+      Object.keys(App.itemWarehouseStock).forEach(function(serverId){
+        var mRecords = (App.itemWarehouseStock[serverId] || {}).M || [];
+        var total = 0, weightedSum = 0, earliestTs = Date.now();
+        mRecords.forEach(function(it){
+          var amt = parseFloat(it.confirmedAmount)||0;
+          total += amt;
+          weightedSum += (parseFloat(it.srcRate)||0) * amt;
+          if(it.ts < earliestTs) earliestTs = it.ts;
+        });
+        if(total<=0) return;
+        moneyLedgerLoaded[serverId] = [{
+          id: uid(), ts: earliestTs, type:'opening', amount: total, rate: weightedSum/total, currency:'baht',
+          balance: total, note:'ยอดยกมา', recordIds: null
+        }];
+      });
+      persist(keys.itemMoneyLedger, moneyLedgerLoaded);
+    }
+    App.itemMoneyLedger = moneyLedgerLoaded;
     App.itemsServerId = store(keys.itemsServer, null);
     App.editingMerchantId = null;
     App.currentServerId = store(keys.currentServer, null);
@@ -1683,6 +1721,20 @@ svg.icon{width:18px;height:18px;display:block}
     var next = (App.itemLineClaimedQty[serverId][lineId]||0) + delta;
     if(next <= 0.0000001) delete App.itemLineClaimedQty[serverId][lineId];
     else App.itemLineClaimedQty[serverId][lineId] = next;
+  }
+
+  function saveItemMoneyLedger(){ persist(App.keys.itemMoneyLedger, App.itemMoneyLedger); }
+  // Appends one immutable row to the "คลังเงิน M" ledger — call this AFTER the actual
+  // warehouseStock.M mutation, so `balance` snapshots the true post-transaction total.
+  // amount is signed (+ deposit/restore, - sale/undo); recordIds (deposits only) lets
+  // the ledger's own ↩ button target the exact records this deposit created.
+  function pushMoneyLedgerEntry(serverId, type, amount, rate, currency, note, recordIds){
+    if(!App.itemMoneyLedger[serverId]) App.itemMoneyLedger[serverId] = [];
+    App.itemMoneyLedger[serverId].push({
+      id: uid(), ts: Date.now(), type: type, amount: amount, rate: rate||0, currency: currency||'baht',
+      balance: warehouseMoneyTotal(serverId), note: note||'', recordIds: recordIds||null
+    });
+    saveItemMoneyLedger();
   }
   function saveItemsServer(){ persist(App.keys.itemsServer, App.itemsServerId); }
   function saveDB(){ persist(App.keys.db, App.db); }
@@ -3943,6 +3995,7 @@ svg.icon{width:18px;height:18px;display:block}
               ? { lineId:b.lineId, amount:b.amount, srcRate:b.srcRate, srcCurrency:b.srcCurrency }
               : { lineId:b.lineId, amount:b.amount };
           }) };
+        if(plan.isMoney) pushMoneyLedgerEntry(App.currentServerId, 'sale', -taken, plan.line.rate, plan.line.currency, plan.line.name);
         // The sale is committed now — unlink the row from the (now stale) stock group
         // it was picked from, so a lingering form doesn't show yesterday's "remaining".
         plan.row.fromStock = false;
@@ -4038,7 +4091,9 @@ svg.icon{width:18px;height:18px;display:block}
         // (startEditMerchantEntry did that) — don't restore it a second time.
         if(hasWarehouseSale && App.editingMerchantId!==id){
           (entry.lines||[]).forEach(function(l){
-            if(l.warehouseSale) restoreWarehouseStock(entry.serverId, l.warehouseSale);
+            if(!l.warehouseSale) return;
+            restoreWarehouseStock(entry.serverId, l.warehouseSale);
+            if(l.warehouseSale.tier==='M') pushMoneyLedgerEntry(entry.serverId, 'restore', l.warehouseSale.amount, l.warehouseSale.price, l.warehouseSale.currency, 'คืนจากการลบรายการขาย "'+l.warehouseSale.name+'"');
           });
           saveItemWarehouseStock();
           renderItemRows();
@@ -4411,6 +4466,50 @@ svg.icon{width:18px;height:18px;display:block}
     });
   }
 
+  // "คลังเงิน M" as a bank-style ledger: a running total + average cost up top, then a
+  // chronological timeline of every deposit/sale/undo with the balance right after it —
+  // instead of grouping live batches by name+amount, which used to fragment into
+  // confusing extra rows the moment a batch was partially sold, and lost the row
+  // entirely once a batch was fully sold out.
+  function renderMoneyLedger(){
+    var serverId = App.itemsServerId;
+    var agg = sellableMoneyAggregate(serverId);
+    var zenyUnit = '<span style="color:'+MR_ZENY_COLOR+'">z</span>';
+    var headerHtml = '<div class="money-ledger-summary">'+
+      '<div class="money-ledger-stat"><span class="money-ledger-stat-label">คงเหลือ</span><span class="money-ledger-stat-value">'+fmtNum(agg.qty)+' '+zenyUnit+'</span></div>'+
+      '<div class="money-ledger-stat"><span class="money-ledger-stat-label">ราคาเฉลี่ย</span><span class="money-ledger-stat-value">'+fmtNum(agg.price)+' บาท/M</span></div>'+
+      '<div class="money-ledger-stat"><span class="money-ledger-stat-label">มูลค่ารวม</span><span class="money-ledger-stat-value">'+fmtNum(agg.qty/1000000*agg.price)+' บาท</span></div>'+
+    '</div>';
+    var list = document.getElementById('itemsDetailList');
+    var ledger = (App.itemMoneyLedger[serverId]||[]).slice().sort(function(a,b){ return b.ts-a.ts; });
+    if(!ledger.length){ list.innerHTML = headerHtml + '<p class="mr-empty">ยังไม่มีรายการเคลื่อนไหว</p>'; return; }
+    var liveM = warehouseStockFor(serverId).M;
+    var rowsHtml = ledger.map(function(e){
+      var isPos = e.amount >= 0;
+      var absAmt = Math.abs(e.amount);
+      var sign = isPos ? '+' : '−';
+      var colorVar = isPos ? 'var(--success)' : 'var(--danger)';
+      var rateLabel = e.type==='sale' ? 'ขายที่ ' : e.type==='deposit' ? 'ซื้อที่ ' : '';
+      var rateText = (e.rate && rateLabel) ? ' ('+rateLabel+fmtNum(e.rate)+' บาท)' : '';
+      var noteText = e.note ? '<div class="money-ledger-note">'+escapeHtml(e.note)+'</div>' : '';
+      // Only offer ↩ while the deposit this row created still has stock left — once a
+      // sale has fully consumed it (record spliced out), there's nothing left to undo.
+      var canUndo = e.type==='deposit' && e.recordIds && e.recordIds.length && e.recordIds.some(function(id){
+        return liveM.some(function(it){ return it.id===id; });
+      });
+      var undoBtn = canUndo ? '<button type="button" class="items-undo-btn" data-undo-tier="M" data-undo-ids="'+e.recordIds.join(',')+'" title="ย้อนกลับไปที่รายการที่รอลงคลัง">↩</button>' : '';
+      return '<div class="money-ledger-row">'+
+        '<div class="money-ledger-row-top">'+
+          '<span class="money-ledger-amount" style="color:'+colorVar+'">'+sign+fmtNum(absAmt)+' '+zenyUnit+rateText+'</span>'+
+          undoBtn+
+        '</div>'+
+        noteText+
+        '<div class="money-ledger-sub"><span>คงเหลือ '+fmtNum(e.balance)+' '+zenyUnit+'</span><span>'+fmtDateTime(e.ts)+'</span></div>'+
+      '</div>';
+    }).join('');
+    list.innerHTML = headerHtml + rowsHtml;
+  }
+
   function renderItemsDetail(){
     var title = document.getElementById('itemsDetailTitle');
     var list = document.getElementById('itemsDetailList');
@@ -4421,35 +4520,8 @@ svg.icon{width:18px;height:18px;display:block}
       return;
     }
     if(tier === 'M'){
-      title.textContent = 'รายการเงิน M ที่ลงคลังแล้ว';
-      var moneyItems = warehouseStockFor(App.itemsServerId).M;
-      if(!moneyItems.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีเงินในคลังนี้</p>'; return; }
-      var mgroups = {};
-      var morder = [];
-      moneyItems.forEach(function(it){
-        var amt = parseFloat(it.confirmedAmount)||0;
-        var key = it.name+'|'+amt;
-        if(!mgroups[key]){
-          mgroups[key] = { name: it.name, amount: amt, qty: 0, latestTs: it.ts, recordIds: [], srcQty: it.srcQty, srcRate: it.srcRate, srcTotal: it.srcTotal, srcCurrency: it.srcCurrency };
-          morder.push(key);
-        }
-        var g = mgroups[key];
-        g.qty += 1;
-        g.recordIds.push(it.id);
-        if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.srcQty = it.srcQty; g.srcRate = it.srcRate; g.srcTotal = it.srcTotal; g.srcCurrency = it.srcCurrency; }
-      });
-      morder.sort(function(a,b){ return mgroups[b].latestTs - mgroups[a].latestTs; });
-      var zenyUnit = '<span style="color:'+MR_ZENY_COLOR+'">z</span>';
-      list.innerHTML = morder.map(function(key, idx){
-        var g = mgroups[key];
-        var total = g.qty * g.amount;
-        var countBadge = g.qty>1 ? ' <span>x'+fmtNum(g.qty)+'</span>' : '';
-        var breakdown = g.qty>1 ? '<span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(g.amount)+' = </span>' : '';
-        var hasSrc = g.srcQty!=null && g.srcRate!=null && g.srcTotal!=null;
-        var srcUnit = g.srcCurrency==='zeny' ? zenyUnit : 'บ';
-        var srcLine = hasSrc ? '<div class="items-detail-source">ที่มา: '+fmtNum(g.srcQty)+' x '+fmtNum(g.srcRate)+' = '+fmtNum(g.srcTotal)+' '+srcUnit+'</div>' : '';
-        return '<div class="items-detail-row items-detail-row-money"><div class="items-detail-row-top"><span>'+(idx+1)+'. '+escapeHtml(g.name)+countBadge+'</span><span class="items-detail-right">'+breakdown+'<span class="mono">'+fmtNum(total)+' '+zenyUnit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="M" data-undo-ids="'+g.recordIds.join(',')+'" title="ย้อนกลับไปที่รายการที่รอลงคลังทั้งหมด">↩</button></span></div>'+srcLine+'</div>';
-      }).join('');
+      title.textContent = 'คลังเงิน M';
+      renderMoneyLedger();
       return;
     }
     title.textContent = 'รายการItem ของ '+itemTierLabel(tier);
@@ -4547,6 +4619,10 @@ svg.icon{width:18px;height:18px;display:block}
       saveItemLineClaimedQty();
     }
     saveItemWarehouseStock();
+    if(tier==='M'){
+      var totalUndone = removed.reduce(function(s,it){ return s+(parseFloat(it.confirmedAmount)||0); }, 0);
+      pushMoneyLedgerEntry(App.itemsServerId, 'undo', -totalUndone, null, 'baht', 'ย้อนกลับไปที่รอลงคลัง');
+    }
     renderItemsPage();
     renderItemRows();
     toast('ย้ายกลับไปที่รายการที่รอลงคลังแล้วทั้งหมด');
@@ -4613,8 +4689,10 @@ svg.icon{width:18px;height:18px;display:block}
     if(!(amount>0)){ toast('กรุณาใส่ยอดเงินให้ถูกต้อง'); return; }
     var item = itemsPendingMoneyDrop;
     var w = warehouseStockFor(App.itemsServerId);
-    w.M.push({ id:uid(), lineId:item.lineId, name:item.name, confirmedAmount:amount, ts:item.ts, srcQty:item.qty, srcRate:item.rate, srcTotal:item.total, srcCurrency:item.currency });
+    var depositId = uid();
+    w.M.push({ id:depositId, lineId:item.lineId, name:item.name, confirmedAmount:amount, ts:item.ts, srcQty:item.qty, srcRate:item.rate, srcTotal:item.total, srcCurrency:item.currency });
     saveItemWarehouseStock();
+    pushMoneyLedgerEntry(App.itemsServerId, 'deposit', amount, item.rate, item.currency, item.name, [depositId]);
     hideItemsMoneyConfirmPopup();
     renderItemsPage();
     renderItemRows();

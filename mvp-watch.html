@@ -448,8 +448,6 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-entry-actions button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.85rem;padding:.1rem .2rem}
 .mr-entry-actions button:hover{color:var(--accent)}
 .mr-entry-actions button.mr-del:hover{color:var(--danger)}
-.mr-entry.editing{border-color:var(--danger);box-shadow:0 0 0 1px rgba(239,90,86,.35)}
-.panel-merchant-entry.mr-entry-editing{border-color:var(--danger);box-shadow:0 0 0 1px rgba(239,90,86,.35)}
 .panel-farm-cost.mr-entry-editing{border-color:var(--danger);box-shadow:0 0 0 1px rgba(239,90,86,.35)}
 .mr-entry.just-saved{animation:mr-flash 1.1s ease}
 @keyframes mr-flash{
@@ -642,11 +640,6 @@ svg.icon{width:18px;height:18px;display:block}
 .confirm-message{margin:0 0 1.1rem;font-size:.88rem;color:var(--text);text-align:center;line-height:1.5}
 .confirm-detail{display:block;margin-top:.4rem;font-size:.74rem;color:var(--text-dim)}
 .confirm-warehouse-note{margin-top:.5rem;font-size:.74rem;color:var(--warning, #f2c94c)}
-#mrEditNoteOverlay .confirm-message{margin-bottom:.4rem}
-.mr-edit-note-hint{margin:0 0 1rem;font-size:.72rem;color:var(--text-dim);text-align:center;line-height:1.45}
-.mr-edit-note-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.6rem .7rem;font-size:.85rem;margin-bottom:.4rem}
-.mr-edit-note-input.mr-edit-note-invalid{border-color:var(--danger)}
-.mr-edit-note-error{margin:-.1rem 0 .9rem;font-size:.74rem;color:var(--danger);text-align:center}
 .farm-oc-hint-box{width:min(500px,90vw)}
 .farm-oc-hint-message{text-align:left;white-space:nowrap}
 @media (max-width:560px){ .farm-oc-hint-message{white-space:normal} }
@@ -961,7 +954,6 @@ svg.icon{width:18px;height:18px;display:block}
           </div>
           <div class="mr-confirm-row">
             <button class="btn btn-gradient btn-block" id="mrConfirm">ยืนยันและบันทึก</button>
-            <button class="btn btn-ghost" id="mrCancelEdit" hidden type="button">ยกเลิก</button>
           </div>
         </div>
       </div>
@@ -1258,20 +1250,6 @@ svg.icon{width:18px;height:18px;display:block}
   </div>
 </div>
 
-<div id="mrEditNoteOverlay" hidden>
-  <div class="confirm-backdrop"></div>
-  <div class="confirm-box">
-    <p class="confirm-message">ระบุรายละเอียดการแก้ไข</p>
-    <p class="mr-edit-note-hint">เช่น "ใส่ราคาขายผิดจาก 1200 เป็น 1500"</p>
-    <input type="text" id="mrEditNoteInput" class="mr-edit-note-input" placeholder="พิมพ์รายละเอียดที่แก้ไข...">
-    <p class="mr-edit-note-error" id="mrEditNoteError" hidden>กรุณาระบุรายละเอียดการแก้ไขก่อนบันทึก</p>
-    <div class="confirm-actions">
-      <button type="button" class="btn btn-gradient" id="mrEditNoteSaveBtn">บันทึก</button>
-      <button type="button" class="btn btn-ghost" id="mrEditNoteCancelBtn">ยกเลิก</button>
-    </div>
-  </div>
-</div>
-
 <div id="farmOcHintOverlay" hidden>
   <div class="confirm-backdrop"></div>
   <div class="confirm-box farm-oc-hint-box">
@@ -1474,7 +1452,7 @@ svg.icon{width:18px;height:18px;display:block}
   var ZENY_LABEL = 'Zeny (1M)';
   var ZENY_LABEL_2 = 'Zeny (100k)';
   var ZENY_PINNED_LABELS = [ZENY_LABEL, ZENY_LABEL_2];
-  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, editingMerchantId:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, db:[], active:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -1561,7 +1539,6 @@ svg.icon{width:18px;height:18px;display:block}
     }
     App.itemLineClaimedQty = claimedQtyLoaded;
     App.itemsServerId = store(keys.itemsServer, null);
-    App.editingMerchantId = null;
     App.currentServerId = store(keys.currentServer, null);
     if(App.merchantServers.indexOf(App.currentServerId)===-1) App.currentServerId = App.merchantServers[0] || null;
     App.farmCostItems = store(keys.farmCostItems, {});
@@ -3117,90 +3094,6 @@ svg.icon{width:18px;height:18px;display:block}
     renderItemRows();
   }
 
-  var mrEditExRateBackup = null;
-  var mrEditWarehouseBackup = null;
-  var mrEditWarehouseServerId = null;
-
-  function resetMerchantForm(){
-    App.editingMerchantId = null;
-    mrEditExRateBackup = null;
-    mrEditWarehouseBackup = null;
-    mrEditWarehouseServerId = null;
-    document.getElementById('mrCancelEdit').hidden = true;
-    document.getElementById('mrConfirm').textContent = 'ยืนยันและบันทึก';
-    document.getElementById('mrEntryPanel').classList.remove('mr-entry-editing');
-    setActiveRows([newItemRow(null, null, null, defaultRowCurrency())]);
-    setMerchantCategory('zeny');
-    renderMrExchangeRate();
-    renderMerchantHistory();
-  }
-
-  function cancelMerchantEdit(){
-    if(mrEditExRateBackup){
-      App.merchantExchangeRates[mrEditExRateBackup.serverId] = mrEditExRateBackup.rate;
-      saveMerchantExchangeRates();
-      mrEditExRateBackup = null;
-    }
-    if(mrEditWarehouseBackup && mrEditWarehouseBackup.length){
-      var serverId = mrEditWarehouseServerId;
-      mrEditWarehouseBackup.forEach(function(entry){ reapplyWarehouseSale(serverId, entry.tier, entry.restoredRecords, entry.amount); });
-      saveItemWarehouseStock();
-    }
-    resetMerchantForm();
-  }
-
-  function startEditMerchantEntry(id){
-    var entry = App.merchantLog.filter(function(e){ return e.id===id; })[0];
-    if(!entry) return;
-    if(App.merchantServers.indexOf(entry.serverId)===-1){
-      App.merchantServers.push(entry.serverId); saveMerchantServers();
-    }
-    App.currentServerId = entry.serverId;
-    saveCurrentServer();
-    renderMerchantServers();
-    mrEditExRateBackup = { serverId: entry.serverId, rate: App.merchantExchangeRates[entry.serverId] };
-    if(entry.exchangeRate!=null) App.merchantExchangeRates[entry.serverId] = entry.exchangeRate;
-    renderMrExchangeRate();
-    var lines = entry.lines || [];
-    var isZeny = lines.length===1 && ZENY_PINNED_LABELS.indexOf(lines[0].name)!==-1;
-    var cat = entry.category || (isZeny ? 'zeny' : 'item');
-    var rows = lines.map(function(l){ return newItemRow(l.name, l.rate, l.qty, lineCurrency(l), l.slots ? l.slots.slice() : [], l.id); });
-
-    // Lines that were sold straight from the warehouse get their stock given back for
-    // the duration of the edit (so remaining/qty shown reflects "if I don't resave
-    // this"); cancelling the edit re-deducts the same amounts via mrEditWarehouseBackup.
-    mrEditWarehouseBackup = [];
-    mrEditWarehouseServerId = entry.serverId;
-    var restoredAny = false;
-    lines.forEach(function(l, idx){
-      if(!l.warehouseSale) return;
-      var restoredRecords = restoreWarehouseStock(entry.serverId, l.warehouseSale);
-      mrEditWarehouseBackup.push({ tier: l.warehouseSale.tier, amount: l.warehouseSale.amount, restoredRecords: restoredRecords });
-      restoredAny = true;
-      var g = matchSellableGroup(entry.serverId, l.warehouseSale);
-      if(g){
-        rows[idx].fromStock = true;
-        rows[idx].stockGroupKey = g.key;
-        rows[idx].stockGroup = g;
-      }
-    });
-    if(restoredAny){
-      saveItemWarehouseStock();
-      toast('รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกแก้ไขหรือลบจะถูกคืนกลับเข้าคลัง');
-    }
-
-    if(cat==='zeny') App.zenyRows = rows;
-    else if(cat==='other') App.otherRows = rows;
-    else App.itemRows = rows;
-    setMerchantCategory(cat);
-    setMerchantType(entryType(entry));
-    App.editingMerchantId = id;
-    document.getElementById('mrCancelEdit').hidden = false;
-    document.getElementById('mrConfirm').textContent = 'บันทึกการแก้ไข';
-    document.getElementById('mrEntryPanel').classList.add('mr-entry-editing');
-    renderMerchantHistory();
-  }
-
   var MR_TYPE_LABEL = { buy:'ซื้อ', sell:'ขาย' };
   function entryType(e){ return e.type === 'sell' ? 'sell' : 'buy'; }
 
@@ -3284,7 +3177,7 @@ svg.icon{width:18px;height:18px;display:block}
       var lines = e.lines || [];
       var editedAttrs = (e.editHistory && e.editHistory.length) ? ' class="mr-edited-hover"' : '';
       var rowNum = historyState.page*MR_HISTORY_PAGE_SIZE + idx + 1;
-      return '<div class="mr-entry type-'+t+(e.id===App.editingMerchantId?' editing':'')+'" data-entry-id="'+e.id+'">'+
+      return '<div class="mr-entry type-'+t+'" data-entry-id="'+e.id+'">'+
         '<div class="mr-entry-top"><span>'+rowNum+'. '+(sv?sv.name:e.serverId)+' · '+lines.length+' รายการ '+
           '<span class="mr-type-badge '+t+'">'+MR_TYPE_LABEL[t]+'</span></span>'+
           '<span style="display:flex;align-items:center;gap:.5rem">'+fmtEntryTotal(e)+
@@ -3492,45 +3385,6 @@ svg.icon{width:18px;height:18px;display:block}
     }
     okBtn.addEventListener('click', close);
     backdrop.addEventListener('click', close);
-  }
-
-  // Requires the user to type what they changed before an edit can be saved —
-  // replaces the old auto-computed diff. onConfirm receives the escaped note text.
-  function showMrEditNotePopup(onConfirm){
-    var overlay = document.getElementById('mrEditNoteOverlay');
-    var input = document.getElementById('mrEditNoteInput');
-    var errorEl = document.getElementById('mrEditNoteError');
-    var saveBtn = document.getElementById('mrEditNoteSaveBtn');
-    var cancelBtn = document.getElementById('mrEditNoteCancelBtn');
-    var backdrop = overlay.querySelector('.confirm-backdrop');
-    input.value = '';
-    errorEl.hidden = true;
-    input.classList.remove('mr-edit-note-invalid');
-    overlay.hidden = false;
-    input.focus();
-    function close(){
-      overlay.hidden = true;
-      saveBtn.removeEventListener('click', onSave);
-      cancelBtn.removeEventListener('click', close);
-      backdrop.removeEventListener('click', close);
-      input.removeEventListener('keydown', onKeydown);
-    }
-    function onSave(){
-      var note = input.value.trim();
-      if(!note){
-        errorEl.hidden = false;
-        input.classList.add('mr-edit-note-invalid');
-        input.focus();
-        return;
-      }
-      close();
-      onConfirm(escapeHtml(note));
-    }
-    function onKeydown(e){ if(e.key==='Enter') onSave(); }
-    saveBtn.addEventListener('click', onSave);
-    cancelBtn.addEventListener('click', close);
-    backdrop.addEventListener('click', close);
-    input.addEventListener('keydown', onKeydown);
   }
 
   function showFarmOcHint(){
@@ -3831,21 +3685,6 @@ svg.icon{width:18px;height:18px;display:block}
     if(!e.target.closest('.mr-name-wrap')) hideAllSuggests();
   });
 
-  // Capture phase (not bubble) so this runs before any in-panel click handler
-  // (e.g. "+เพิ่ม Slot") re-renders and detaches e.target from the live document —
-  // otherwise the detached target would fail every closest() check below and this
-  // would wrongly treat an inside click as "outside" and cancel the edit.
-  document.addEventListener('click', function(e){
-    if(!App.editingMerchantId) return;
-    if(e.target.closest('[data-edit]')) return;
-    if(e.target.closest('#mrEntryPanel')) return;
-    if(e.target.closest('.mr-entry.editing')) return;
-    if(e.target.closest('#confirmOverlay')) return;
-    if(e.target.closest('#mrEditNoteOverlay')) return;
-    if(e.target.closest('#mrRateRequiredOverlay')) return;
-    cancelMerchantEdit();
-  }, true);
-
   document.getElementById('mrConfirm').addEventListener('click', function(){
     if(!App.currentServerId){ toast('เพิ่มเซิร์ฟเวอร์ก่อนบันทึก'); return; }
     var validRows = activeRows().filter(function(r){
@@ -3902,55 +3741,27 @@ svg.icon{width:18px;height:18px;display:block}
     var totalBaht = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?0:l.total); }, 0);
     var totalZeny = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?l.total:0); }, 0);
 
-    function commitEdit(diffText){
-      var entry = App.merchantLog.filter(function(e){ return e.id===App.editingMerchantId; })[0];
-      if(entry){
-        entry.serverId = App.currentServerId; entry.lines = lines; entry.totalBaht = totalBaht; entry.totalZeny = totalZeny; entry.exchangeRate = exRate>0 ? exRate : null; entry.type = App.merchantType; entry.category = App.merchantCategory;
-        if(diffText){
-          entry.editHistory = entry.editHistory || [];
-          entry.editHistory.push({ ts: Date.now(), diff: diffText });
-        }
-      }
-      saveMerchantLog();
-      resetMerchantForm();
-      renderMerchantHistory();
-      renderMerchantSummary();
-      renderMrChart();
-      toast('แก้ไขรายการแล้ว');
+    var newId = uid();
+    App.merchantLog.push({ id:newId, ts:Date.now(), serverId:App.currentServerId, lines:lines, totalBaht:totalBaht, totalZeny:totalZeny, exchangeRate: exRate>0 ? exRate : null, type:App.merchantType, category:App.merchantCategory });
+    saveMerchantLog();
+    historyState.page = 0;
+    renderMerchantHistory();
+    renderMerchantSummary();
+    renderMrChart();
+    var isWarehouseBuy = App.merchantType==='buy' && (App.merchantCategory==='zeny' || App.merchantCategory==='item');
+    toast(isWarehouseBuy ? 'รายการซื้อถูกส่งไปคลังไอเทมแล้ว' : 'บันทึก '+lines.length+' รายการแล้ว');
+    var newEntryEl = document.querySelector('[data-entry-id="'+newId+'"]');
+    if(newEntryEl){
+      newEntryEl.scrollIntoView({block:'nearest'});
+      newEntryEl.classList.add('just-saved');
+      setTimeout(function(){ newEntryEl.classList.remove('just-saved'); }, 1100);
     }
-
-    if(App.editingMerchantId){
-      var existing = App.merchantLog.filter(function(e){ return e.id===App.editingMerchantId; })[0];
-      if(existing){
-        showMrEditNotePopup(function(note){ commitEdit(note); });
-      } else {
-        commitEdit(null);
-      }
-    } else {
-      var newId = uid();
-      App.merchantLog.push({ id:newId, ts:Date.now(), serverId:App.currentServerId, lines:lines, totalBaht:totalBaht, totalZeny:totalZeny, exchangeRate: exRate>0 ? exRate : null, type:App.merchantType, category:App.merchantCategory });
-      saveMerchantLog();
-      historyState.page = 0;
-      renderMerchantHistory();
-      renderMerchantSummary();
-      renderMrChart();
-      var isWarehouseBuy = App.merchantType==='buy' && (App.merchantCategory==='zeny' || App.merchantCategory==='item');
-      toast(isWarehouseBuy ? 'รายการซื้อถูกส่งไปคลังไอเทมแล้ว' : 'บันทึก '+lines.length+' รายการแล้ว');
-      var newEntryEl = document.querySelector('[data-entry-id="'+newId+'"]');
-      if(newEntryEl){
-        newEntryEl.scrollIntoView({block:'nearest'});
-        newEntryEl.classList.add('just-saved');
-        setTimeout(function(){ newEntryEl.classList.remove('just-saved'); }, 1100);
-      }
-      // Clear the entered rows after a successful save — keep the current
-      // เซิร์ฟเวอร์/ประเภท/หมวดหมู่ selection, just don't leave stale text sitting
-      // in the fields for the next entry.
-      setActiveRows([newItemRow(null, null, null, defaultRowCurrency())]);
-      renderItemRows();
-    }
+    // Clear the entered rows after a successful save — keep the current
+    // เซิร์ฟเวอร์/ประเภท/หมวดหมู่ selection, just don't leave stale text sitting
+    // in the fields for the next entry.
+    setActiveRows([newItemRow(null, null, null, defaultRowCurrency())]);
+    renderItemRows();
   });
-
-  document.getElementById('mrCancelEdit').addEventListener('click', cancelMerchantEdit);
 
   document.getElementById('mrTypeToggle').addEventListener('click', function(e){
     var btn = e.target.closest('[data-type]');
@@ -3963,9 +3774,7 @@ svg.icon{width:18px;height:18px;display:block}
   });
 
   document.getElementById('mrHistoryList').addEventListener('click', function(e){
-    var editBtn = e.target.closest('[data-edit]');
     var delBtn = e.target.closest('[data-del]');
-    if(editBtn){ startEditMerchantEntry(editBtn.dataset.edit); return; }
     if(delBtn){
       var id = delBtn.dataset.del;
       var entry = App.merchantLog.filter(function(x){ return x.id===id; })[0];
@@ -3992,9 +3801,7 @@ svg.icon{width:18px;height:18px;display:block}
       var warnHtml = hasWarehouseSale ? '<p class="confirm-warehouse-note">รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกลบจะถูกคืนกลับเข้าคลัง</p>'
         : hasWarehousedBuy ? '<p class="confirm-warehouse-note">รายการนี้ถูกลงคลังไปแล้ว — ลบรายการนี้จะดึงจำนวนที่ยังอยู่ในคลังออกไปด้วย (ส่วนที่ถูกขายออกไปแล้วจะไม่ถูกแตะ)</p>' : '';
       showConfirm('ยืนยันลบรายการนี้?'+detail+warnHtml, function(){
-        // If this entry is mid-edit, its warehouse stock is already sitting restored
-        // (startEditMerchantEntry did that) — don't restore it a second time.
-        if(hasWarehouseSale && App.editingMerchantId!==id){
+        if(hasWarehouseSale){
           (entry.lines||[]).forEach(function(l){
             if(l.warehouseSale) restoreWarehouseStock(entry.serverId, l.warehouseSale);
           });
@@ -4014,7 +3821,6 @@ svg.icon{width:18px;height:18px;display:block}
         }
         App.merchantLog = App.merchantLog.filter(function(e){ return e.id!==id; });
         saveMerchantLog();
-        if(App.editingMerchantId===id) resetMerchantForm();
         renderMerchantHistory();
         renderMerchantSummary();
         renderMrChart();
@@ -4211,22 +4017,6 @@ svg.icon{width:18px;height:18px;display:block}
     });
     return created;
   }
-  // Finds the current sellable group matching a stored sale's identity (tier/name/
-  // price/currency/slots).
-  function matchSellableGroup(serverId, sale){
-    var groups = sellableGroupsFor(serverId, 'item');
-    return groups.filter(function(x){
-      return x.tier===sale.tier && x.name===sale.name && x.currency===sale.currency && Math.abs((x.price||0)-(sale.price||0))<0.0000001 && JSON.stringify(x.slots||[])===JSON.stringify(sale.slots||[]);
-    })[0] || null;
-  }
-  // Undoes a specific restoreWarehouseStock call (used when a warehouse-linked edit is
-  // cancelled) by deducting from the EXACT records that restore just created — never a
-  // generic FIFO pass, which could otherwise eat into other, never-sold stock that
-  // happens to share the same name/price identity.
-  function reapplyWarehouseSale(serverId, tier, restoredRecords, amount){
-    deductWarehouseStock(serverId, tier, restoredRecords, amount);
-  }
-
   // "How much of each purchase line is off the pending list" — NOT the same as "how
   // much currently sits in the warehouse right now" (a sale reduces the latter but a
   // legitimately-sold line must never come back as pending, so this reads the
@@ -4887,15 +4677,16 @@ svg.icon{width:18px;height:18px;display:block}
 
   document.getElementById('farmCancelEdit').addEventListener('click', cancelFarmEdit);
 
-  // Capture phase (see the matching merchant-edit listener above for why) —
-  // clicking anywhere outside the farm-cost panel / the history row being edited
-  // while an edit is in progress cancels it, mirroring the main page's behavior.
+  // Capture phase, not bubble — so this runs before an in-panel click handler
+  // (e.g. "+เพิ่ม Slot") re-renders and detaches e.target from the live document,
+  // which would otherwise fail every closest() check below and wrongly treat an
+  // inside click as "outside". Clicking anywhere outside the farm-cost panel / the
+  // history row being edited while an edit is in progress cancels it.
   document.addEventListener('click', function(e){
     if(!editingFarmId) return;
     if(e.target.closest('[data-farm-edit]')) return;
     if(e.target.closest('[data-farm-del]')) return;
     if(e.target.closest('.panel-farm-cost')) return;
-    if(e.target.closest('.mr-entry.editing')) return;
     if(e.target.closest('#confirmOverlay')) return;
     if(e.target.closest('#farmRateRequiredOverlay')) return;
     if(e.target.closest('#farmOcHintOverlay')) return;

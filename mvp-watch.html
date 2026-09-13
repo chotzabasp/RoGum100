@@ -3011,7 +3011,7 @@ svg.icon{width:18px;height:18px;display:block}
         var manualActive = !row.fromStock;
         sellSourceHtml = '<div class="mr-sell-source">'+
           '<div class="mr-sell-source-toggle">'+
-            '<button type="button" class="mr-sell-source-btn'+(manualActive?' active':'')+'" data-sell-source="manual" data-row-id="'+row.rid+'">กรอกเอง</button>'+
+            '<button type="button" class="mr-sell-source-btn'+(manualActive?' active':'')+'" data-sell-source="manual" data-row-id="'+row.rid+'">'+(isZenyTab?'ขาย M คนละส่วนจากคลัง':'กรอกเอง')+'</button>'+
             '<button type="button" class="mr-sell-source-btn'+(!manualActive?' active':'')+'" data-sell-source="stock" data-row-id="'+row.rid+'">'+(isZenyTab?'ขาย M จากคลัง':'ขาย Item จากคลัง')+'</button>'+
           '</div>';
         if(row.fromStock && isZenyTab){

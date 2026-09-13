@@ -490,6 +490,7 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-it-cell i{display:none}
 .mr-it-cell b{font-family:"JetBrains Mono";font-size:.8rem;font-weight:700;white-space:nowrap}
 .mr-it-cell small{font-size:.66rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mr-it-cell small.mr-it-avg{color:var(--text);opacity:.75}
 .mr-it-cell.buy b{color:var(--danger)}
 .mr-it-cell.sell b{color:var(--success)}
 .mr-it-cell.left b{color:var(--warn)}
@@ -3339,6 +3340,10 @@ svg.icon{width:18px;height:18px;display:block}
     var open = !!historyState.expanded[g.key];
     var leftSub = over>0 ? 'ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit
                 : (left>0 ? 'ทุนค้าง ~'+fmtNum(Math.round(g.leftCost))+' บ' : (g.buyQty>0 ? 'ขายหมดแล้ว' : '—'));
+    // "เฉลี่ย X บ/หน่วย" under a cell — lets ซื้อมา vs ขายไป price-per-unit be compared at a glance.
+    var avgLine = function(baht, qty, u){
+      return qty>0 ? '<small class="mr-it-avg">เฉลี่ย '+fmtNum(baht/qty)+' บ/'+u+'</small>' : '';
+    };
     var profitCell = g.sellQty<=0
       ? '<span class="mr-it-cell profit none"><i>กำไร</i><b>—</b><small>ยังไม่ได้ขาย</small></span>'
       : '<span class="mr-it-cell profit"><i>กำไร</i><b class="'+(g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</b>'+
@@ -3351,9 +3356,9 @@ svg.icon{width:18px;height:18px;display:block}
           '<span class="mr-it-tags">'+historyCategoryTag(g.category)+(showServer?historyServerTag(g.serverId):'')+'</span>'+
         '</span>'+
       '</button>'+
-      '<span class="mr-it-cell buy"><i>ซื้อมา</i><b>'+fmtNum(g.buyQty)+' '+unit+'</b><small>'+fmtNum(g.buyBaht)+' บ</small></span>'+
-      '<span class="mr-it-cell sell"><i>ขายไป</i><b>'+fmtNum(g.sellQty)+' '+unit+'</b><small>'+fmtNum(g.sellBaht)+' บ</small></span>'+
-      '<span class="mr-it-cell left'+(left>0?'':' zero')+'"><i>เหลือ</i><b>'+fmtNum(left)+' '+unit+'</b><small>'+leftSub+'</small></span>'+
+      '<span class="mr-it-cell buy"><i>ซื้อมา</i><b>'+fmtNum(g.buyQty)+' '+unit+'</b><small>'+fmtNum(g.buyBaht)+' บ</small>'+avgLine(g.buyBaht, g.buyQty, unit)+'</span>'+
+      '<span class="mr-it-cell sell"><i>ขายไป</i><b>'+fmtNum(g.sellQty)+' '+unit+'</b><small>'+fmtNum(g.sellBaht)+' บ</small>'+avgLine(g.sellBaht, g.sellQty, unit)+'</span>'+
+      '<span class="mr-it-cell left'+(left>0?'':' zero')+'"><i>เหลือ</i><b>'+fmtNum(left)+' '+unit+'</b><small>'+leftSub+'</small>'+(left>0?avgLine(g.leftCost, left, unit):'')+'</span>'+
       profitCell+
       '<div class="mr-ic-body"'+(open?'':' hidden')+'><div class="mr-tx-list">'+
         g.tx.map(function(t){ return historyTxRowHtml(t, { showName:false, showTime:false, showServer:false }); }).join('')+

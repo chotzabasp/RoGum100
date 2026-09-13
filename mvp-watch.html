@@ -3219,19 +3219,26 @@ svg.icon{width:18px;height:18px;display:block}
     if(!historyState.search) return true;
     return String(l && l.name || '').toLowerCase().indexOf(historyState.search)!==-1;
   }
-  function filteredMerchantEntries(){
+  // `opts.ignoreRange` skips the ช่วงเวลา filter (server + ค้นหา still apply) — used to
+  // pull an item's full buy/sell history for accurate cost/remaining math even when only
+  // one side of a trade (say, a sale made today of stock bought last week) falls inside
+  // the currently selected range.
+  function filteredMerchantEntries(opts){
+    opts = opts || {};
     var entries = App.merchantLog.slice();
     if(historyState.serverId!=='all') entries = entries.filter(function(e){ return e.serverId===historyState.serverId; });
-    var startTs = historyRangeStartTs();
-    if(startTs!=null) entries = entries.filter(function(e){ return e.ts>=startTs; });
+    if(!opts.ignoreRange){
+      var startTs = historyRangeStartTs();
+      if(startTs!=null) entries = entries.filter(function(e){ return e.ts>=startTs; });
+    }
     if(historyState.search) entries = entries.filter(function(e){ return (e.lines||[]).some(historyLineMatches); });
     return entries;
   }
   // Every (entry, line) pair that passes the filters, newest first — the unit both
   // views render. A record saved with several lines shows as one row per line.
-  function historyScopedLines(){
+  function historyScopedLines(opts){
     var out = [];
-    filteredMerchantEntries().forEach(function(e){
+    filteredMerchantEntries(opts).forEach(function(e){
       var t = entryType(e);
       (e.lines||[]).forEach(function(l){ if(historyLineMatches(l)) out.push({ entry:e, line:l, type:t }); });
     });
@@ -3269,12 +3276,24 @@ svg.icon{width:18px;height:18px;display:block}
   // mentally match up separate buy/sell rows. Cost of goods sold is FIFO (see below), so
   // profit reflects only what was actually sold — unsold stock is never counted as a
   // "loss". Each group also carries its own transaction rows (tx).
+  //
+  // The ช่วงเวลา filter only decides which items are LISTED (touched at all within the
+  // range) — once an item qualifies, its numbers and tx list are built from its whole
+  // history, ignoring the range. Otherwise an item bought last week and sold today under
+  // "วันนี้" would show as bought-from-nowhere (0 ซื้อมา, "ขายเกินที่ซื้อ") and overstate
+  // profit, because the purchase itself falls outside the window.
   function computeHistoryItemGroups(){
-    var groups = {}, order = [];
+    var activeKeys = {};
     historyScopedLines().forEach(function(t){
+      var e = t.entry, l = t.line;
+      activeKeys[e.serverId+'|'+(e.category||'zeny')+'|'+l.name+'|'+JSON.stringify(l.slots||[])] = true;
+    });
+    var groups = {}, order = [];
+    historyScopedLines({ ignoreRange:true }).forEach(function(t){
       var e = t.entry, l = t.line;
       var slots = l.slots || [];
       var key = e.serverId+'|'+(e.category||'zeny')+'|'+l.name+'|'+JSON.stringify(slots);
+      if(!activeKeys[key]) return; // not touched within the selected range — don't list it
       if(!groups[key]){
         groups[key] = { key:key, name:l.name, slots:slots, category:e.category||'zeny', serverId:e.serverId,
                         buyQty:0, buyBaht:0, sellQty:0, sellBaht:0, lastTs:0, tx:[] };

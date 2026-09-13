@@ -4085,21 +4085,28 @@ svg.icon{width:18px;height:18px;display:block}
       var id = delBtn.dataset.del;
       var entry = App.merchantLog.filter(function(x){ return x.id===id; })[0];
       var hasWarehouseSale = !!entry && (entry.lines||[]).some(function(l){ return l.warehouseSale; });
-      // A buy entry that's already been dragged into the warehouse is now separate,
-      // independent stock (possibly already partly sold from) — deleting the purchase
-      // log must NOT silently pull that stock back out from under it. Just warn, so the
-      // user isn't left wondering why the warehouse card didn't change after deleting.
-      var hasWarehousedBuy = false;
+      // A buy entry that's already been dragged into the warehouse: deleting the purchase
+      // record should also pull whatever of it is STILL sitting in the warehouse (only
+      // "still" — a portion already sold from stock elsewhere is untouched, same as ↩).
+      // Once the purchase itself is gone there's no home for it to go back to "pending"
+      // under, so this removes it outright rather than routing it there.
+      var warehousedLines = [];
       if(entry && entryType(entry)==='buy' && (entry.category==='zeny' || entry.category==='item')){
-        var claimedMoneySet = entry.category==='zeny' ? stockedMoneyLineIdSet(entry.serverId) : null;
-        var claimedQtyMap = entry.category==='item' ? stockedQtyByLineId(entry.serverId) : null;
-        hasWarehousedBuy = (entry.lines||[]).some(function(l){
-          return entry.category==='zeny' ? !!claimedMoneySet[l.id] : (claimedQtyMap[l.id]||0) > 0;
+        var w0 = warehouseStockFor(entry.serverId);
+        var tiers0 = entry.category==='zeny' ? ['M'] : ITEM_WAREHOUSE_TIERS;
+        (entry.lines||[]).forEach(function(l){
+          tiers0.forEach(function(tier){
+            var matched = w0[tier].filter(function(it){ return it.lineId===l.id; });
+            if(!matched.length) return;
+            var amt = matched.reduce(function(s,it){ return s + (tier==='M' ? (parseFloat(it.confirmedAmount)||0) : (parseFloat(it.qty)||0)); }, 0);
+            warehousedLines.push({ line:l, tier:tier, amount:amt });
+          });
         });
       }
+      var hasWarehousedBuy = warehousedLines.length>0;
       var detail = entry ? '<span class="confirm-detail">'+mrEntrySummaryHtml(entry)+'</span>' : '';
       var warnHtml = hasWarehouseSale ? '<p class="confirm-warehouse-note">รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกลบจะถูกคืนกลับเข้าคลัง</p>'
-        : hasWarehousedBuy ? '<p class="confirm-warehouse-note">รายการนี้ถูกลงคลังไปแล้ว — ลบที่นี่จะไม่ดึงของออกจากคลัง ถ้าต้องการนำออก ให้กดปุ่ม ↩ ที่รายการในคลังก่อน</p>' : '';
+        : hasWarehousedBuy ? '<p class="confirm-warehouse-note">รายการนี้ถูกลงคลังไปแล้ว — ลบรายการนี้จะดึงจำนวนที่ยังอยู่ในคลังออกไปด้วย (ส่วนที่ถูกขายออกไปแล้วจะไม่ถูกแตะ)</p>' : '';
       showConfirm('ยืนยันลบรายการนี้?'+detail+warnHtml, function(){
         // If this entry is mid-edit, its warehouse stock is already sitting restored
         // (startEditMerchantEntry did that) — don't restore it a second time.
@@ -4110,6 +4117,21 @@ svg.icon{width:18px;height:18px;display:block}
             if(l.warehouseSale.tier==='M') pushMoneyLedgerEntry(entry.serverId, 'restore', l.warehouseSale.amount, l.warehouseSale.price, l.warehouseSale.currency, 'คืนจากการลบรายการขาย "'+l.warehouseSale.name+'"');
           });
           saveItemWarehouseStock();
+          renderItemRows();
+        }
+        if(warehousedLines.length){
+          var w1 = warehouseStockFor(entry.serverId);
+          warehousedLines.forEach(function(wl){
+            w1[wl.tier] = w1[wl.tier].filter(function(it){ return it.lineId!==wl.line.id; });
+            if(wl.tier==='M'){
+              pushMoneyLedgerEntry(entry.serverId, 'undo', -wl.amount, null, 'baht', 'ลบพร้อมรายการซื้อ "'+wl.line.name+'"');
+            } else {
+              addClaimedQty(entry.serverId, wl.line.id, -wl.amount);
+            }
+          });
+          saveItemWarehouseStock();
+          saveItemLineClaimedQty();
+          renderItemsPage();
           renderItemRows();
         }
         App.merchantLog = App.merchantLog.filter(function(e){ return e.id!==id; });

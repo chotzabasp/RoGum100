@@ -776,6 +776,11 @@ svg.icon{width:18px;height:18px;display:block}
 
 .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);background:var(--text);color:var(--bg);padding:.7rem 1.1rem;border-radius:999px;font-size:.85rem;text-align:center;max-width:min(90vw,360px);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+/* A small pill anchored right above the specific field it's warning about (e.g. the
+   จำนวน input when a sell-from-stock qty is capped) — separate from the general toast,
+   which stays centered for everything else. */
+.mr-field-tip{position:fixed;z-index:65;background:var(--text);color:var(--bg);padding:.45rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.35);opacity:0;transform:translateY(4px);transition:opacity .15s ease, transform .15s ease;pointer-events:none}
+.mr-field-tip.show{opacity:1;transform:translateY(0)}
 
 @media (max-width: 760px){
   #appScreen{grid-template-columns:1fr}
@@ -1293,6 +1298,7 @@ svg.icon{width:18px;height:18px;display:block}
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="mr-field-tip" id="mrFieldTip" hidden></div>
 <div class="chart-tooltip farm-cost-tooltip" id="farmCostTooltip" hidden></div>
 <div class="chart-tooltip farm-cost-tooltip" id="mrEditedTooltip" hidden></div>
 <div class="chart-tooltip farm-cost-tooltip" id="mrRateTooltip" hidden></div>
@@ -3659,6 +3665,30 @@ svg.icon{width:18px;height:18px;display:block}
     toast._t = setTimeout(function(){ el.classList.remove('show'); }, 2200);
   }
 
+  // A short-lived pill anchored right above `el` — for warnings tied to one specific
+  // field (e.g. "มีในคลังแค่ N ชิ้น" on the จำนวน input) where the general centered toast
+  // would be too far from what the user is actually looking at.
+  function showFieldTip(el, msg){
+    var tip = document.getElementById('mrFieldTip');
+    tip.textContent = msg;
+    tip.hidden = false;
+    tip.classList.remove('show');
+    var rect = el.getBoundingClientRect();
+    requestAnimationFrame(function(){
+      var tipRect = tip.getBoundingClientRect();
+      var left = rect.left + rect.width/2 - tipRect.width/2;
+      left = Math.max(6, Math.min(left, window.innerWidth - tipRect.width - 6));
+      tip.style.left = left+'px';
+      tip.style.top = Math.max(6, rect.top - tipRect.height - 8)+'px';
+      tip.classList.add('show');
+    });
+    clearTimeout(showFieldTip._t);
+    showFieldTip._t = setTimeout(function(){
+      tip.classList.remove('show');
+      setTimeout(function(){ tip.hidden = true; }, 160);
+    }, 1800);
+  }
+
   function showConfirm(message, onConfirm){
     var overlay = document.getElementById('confirmOverlay');
     document.getElementById('confirmMessage').innerHTML = message;
@@ -3930,7 +3960,7 @@ svg.icon{width:18px;height:18px;display:block}
         var maxAllowed = liveGroup ? liveGroup.qty : 0;
         if(parseFloat(qtyRaw) > maxAllowed){
           qtyRaw = String(maxAllowed);
-          toast('มีในคลังแค่ '+fmtNum(maxAllowed)+' ชิ้น');
+          showFieldTip(e.target, 'มีในคลังแค่ '+fmtNum(maxAllowed)+' ชิ้น');
         }
       }
       e.target.value = formatDecimalDisplay(qtyRaw);

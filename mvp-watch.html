@@ -473,12 +473,37 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-summary-value.sell{color:var(--success)}
 .mr-summary-value.profit-pos{color:var(--accent)}
 .mr-summary-value.profit-neg{color:var(--danger)}
-.mr-item-summary-table{display:flex;flex-direction:column;gap:.35rem;overflow-x:auto}
-.mr-item-summary-row{display:grid;grid-template-columns:1.4fr 1fr 1fr .8fr 1fr 1fr;gap:.5rem;align-items:center;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .7rem;font-size:.78rem;white-space:nowrap}
-.mr-item-summary-row.mr-item-summary-head{background:transparent;border:none;padding:0 .7rem;font-size:.66rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em}
-.mr-item-summary-sub{color:var(--text-dim);font-size:.7rem}
-.mr-item-summary-row .profit-pos{color:var(--accent);font-weight:700}
-.mr-item-summary-row .profit-neg{color:var(--danger);font-weight:700}
+/* เทียบซื้อ-ขาย: การ์ดต่อไอเทม — แถบสัดส่วนขายแล้ว/เหลือ + 3 ช่อง ซื้อมา/ขายไป/เหลือ */
+.mr-cmp-list{display:flex;flex-direction:column;gap:.5rem}
+.mr-cmp-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-m);padding:.65rem .8rem;display:flex;flex-direction:column;gap:.45rem}
+.mr-cmp-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
+.mr-cmp-head .mr-cmp-name{font-size:.9rem;font-weight:700;min-width:0}
+.mr-cmp-profit{font-size:.74rem;font-weight:700;font-family:"JetBrains Mono";white-space:nowrap;padding:.15rem .55rem;border-radius:999px;border:1px solid var(--border);background:var(--surface)}
+.mr-cmp-profit.profit-pos{color:var(--accent)}
+.mr-cmp-profit.profit-neg{color:var(--danger)}
+.mr-cmp-profit.profit-none{color:var(--text-dim);font-weight:500}
+.mr-cmp-barrow{display:flex;align-items:center;gap:.6rem}
+.mr-cmp-bar{flex:1;height:10px;border-radius:999px;background:var(--surface);border:1px solid var(--border);overflow:hidden;display:flex}
+.mr-cmp-bar .sold{height:100%;background:var(--success);border-radius:999px 0 0 999px}
+.mr-cmp-bar .sold.full{border-radius:999px}
+.mr-cmp-bar .left{height:100%;flex:1;background:var(--warn);opacity:.55}
+.mr-cmp-barrow small{font-size:.68rem;color:var(--text-dim);white-space:nowrap;font-family:"JetBrains Mono"}
+.mr-cmp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.mr-cmp-stat{display:flex;flex-direction:column;gap:.1rem;padding:.4rem .55rem;border-radius:var(--radius-s);background:var(--surface);border-left:3px solid var(--border);min-width:0}
+.mr-cmp-stat small{font-size:.64rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em}
+.mr-cmp-stat b{font-size:.95rem;font-family:"JetBrains Mono";font-weight:700;white-space:nowrap}
+.mr-cmp-stat em{font-style:normal;font-size:.7rem;color:var(--text-dim);white-space:nowrap}
+.mr-cmp-stat.buy{border-left-color:var(--danger)}
+.mr-cmp-stat.buy b{color:var(--danger)}
+.mr-cmp-stat.sell{border-left-color:var(--success)}
+.mr-cmp-stat.sell b{color:var(--success)}
+.mr-cmp-stat.left{border-left-color:var(--warn)}
+.mr-cmp-stat.left b{color:var(--warn)}
+@media (max-width:480px){
+  .mr-cmp-stats{gap:.35rem}
+  .mr-cmp-stat{padding:.35rem .45rem}
+  .mr-cmp-stat b{font-size:.85rem}
+}
 .mr-mock-tag{
   font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
   background:color-mix(in srgb, var(--warn) 20%, transparent);color:var(--warn);
@@ -880,7 +905,7 @@ svg.icon{width:18px;height:18px;display:block}
                   <label>มุมมอง</label>
                   <div class="seg-toggle" id="historyViewToggle">
                     <button type="button" class="seg-btn active" data-historyview="list">รายการ</button>
-                    <button type="button" class="seg-btn" data-historyview="summary">สรุปตามไอเทม</button>
+                    <button type="button" class="seg-btn" data-historyview="summary">เทียบซื้อ-ขาย</button>
                   </div>
                 </div>
                 <div class="hf-group hf-group-right">
@@ -3178,9 +3203,9 @@ svg.icon{width:18px;height:18px;display:block}
       var isBuy = entryType(e)==='buy';
       (e.lines||[]).forEach(function(l){
         var slots = l.slots || [];
-        var key = l.name+'|'+JSON.stringify(slots);
+        var key = (e.category||'')+'|'+l.name+'|'+JSON.stringify(slots);
         if(!groups[key]){
-          groups[key] = { name:l.name, slots:slots, buyQty:0, buyBaht:0, sellQty:0, sellBaht:0 };
+          groups[key] = { name:l.name, slots:slots, category:e.category, buyQty:0, buyBaht:0, sellQty:0, sellBaht:0 };
           order.push(key);
         }
         var g = groups[key];
@@ -3208,19 +3233,33 @@ svg.icon{width:18px;height:18px;display:block}
     var list = document.getElementById('mrItemSummaryList');
     var groups = computeMerchantItemSummary();
     if(!groups.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีประวัติการซื้อ-ขาย</p>'; return; }
-    list.innerHTML = '<div class="mr-item-summary-table">'+
-      '<div class="mr-item-summary-row mr-item-summary-head">'+
-        '<span>รายการ</span><span>ซื้อมา</span><span>ขายไป</span><span>คงเหลือ</span><span>ทุนเฉลี่ย</span><span>กำไรที่รับรู้แล้ว</span>'+
-      '</div>'+
+    list.innerHTML = '<div class="mr-cmp-list">'+
       groups.map(function(g){
-        var profitClass = g.profit>=0 ? 'profit-pos' : 'profit-neg';
-        return '<div class="mr-item-summary-row">'+
-          '<span>'+itemNameWithSlots(g.name, g.slots)+'</span>'+
-          '<span>'+fmtNum(g.buyQty)+' ชิ้น<br><span class="mr-item-summary-sub">'+fmtNum(g.buyBaht)+' บ</span></span>'+
-          '<span>'+fmtNum(g.sellQty)+' ชิ้น<br><span class="mr-item-summary-sub">'+fmtNum(g.sellBaht)+' บ</span></span>'+
-          '<span>'+fmtNum(g.remaining)+' ชิ้น</span>'+
-          '<span>'+fmtNum(g.avgCost)+' บ/ชิ้น</span>'+
-          '<span class="'+profitClass+'">'+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</span>'+
+        // หน่วย: หมวด M นับเป็น "M", ที่เหลือนับเป็น "ชิ้น"
+        var unit = g.category==='zeny' ? 'M' : 'ชิ้น';
+        var over = g.remaining<0 ? -g.remaining : 0;        // ขายเกินกว่าที่บันทึกซื้อไว้
+        var left = g.remaining>0 ? g.remaining : 0;
+        var pct = g.buyQty>0 ? Math.min(100, Math.round(g.sellQty/g.buyQty*100)) : (g.sellQty>0 ? 100 : 0);
+        var leftCost = left>0 ? g.avgCost*left : 0;
+
+        var profitHtml;
+        if(g.sellQty<=0) profitHtml = '<span class="mr-cmp-profit profit-none">ยังไม่ได้ขาย</span>';
+        else profitHtml = '<span class="mr-cmp-profit '+(g.profit>=0?'profit-pos':'profit-neg')+'">กำไร '+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</span>';
+
+        var leftSub = over>0 ? 'ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit
+                    : (left>0 ? 'ทุนค้าง ~'+fmtNum(leftCost)+' บ' : 'ขายหมดแล้ว');
+
+        return '<div class="mr-cmp-card">'+
+          '<div class="mr-cmp-head"><span class="mr-cmp-name">'+itemNameWithSlots(g.name, g.slots)+'</span>'+profitHtml+'</div>'+
+          '<div class="mr-cmp-barrow">'+
+            '<div class="mr-cmp-bar"><span class="sold'+(pct>=100?' full':'')+'" style="width:'+pct+'%"></span>'+(pct<100?'<span class="left"></span>':'')+'</div>'+
+            '<small>ขายแล้ว '+pct+'%</small>'+
+          '</div>'+
+          '<div class="mr-cmp-stats">'+
+            '<div class="mr-cmp-stat buy"><small>ซื้อมา</small><b>'+fmtNum(g.buyQty)+' '+unit+'</b><em>'+fmtNum(g.buyBaht)+' บ</em></div>'+
+            '<div class="mr-cmp-stat sell"><small>ขายไป</small><b>'+fmtNum(g.sellQty)+' '+unit+'</b><em>'+fmtNum(g.sellBaht)+' บ</em></div>'+
+            '<div class="mr-cmp-stat left"><small>เหลือ</small><b>'+fmtNum(left)+' '+unit+'</b><em>'+leftSub+'</em></div>'+
+          '</div>'+
         '</div>';
       }).join('')+
     '</div>';

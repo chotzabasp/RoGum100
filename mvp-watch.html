@@ -351,9 +351,7 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-hist-page-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
 .farm-hist-page-btn:disabled{opacity:.4;cursor:not-allowed}
 .farm-hist-page-info{font-size:.75rem;color:var(--text-dim)}
-.history-filters{display:flex;flex-wrap:wrap;gap:.7rem;align-items:flex-end;margin-bottom:.6rem}
 .hf-group{display:flex;flex-direction:column;gap:.3rem}
-.hf-group-right{margin-left:auto}
 .hf-group label{font-size:.62rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em}
 .hf-group select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.35rem .5rem;font-size:.74rem}
 .panel-side{min-height:100%}
@@ -476,8 +474,7 @@ svg.icon{width:18px;height:18px;display:block}
 /* เทียบซื้อ-ขาย: การ์ดต่อไอเทม — แถบสัดส่วนขายแล้ว/เหลือ + 3 ช่อง ซื้อมา/ขายไป/เหลือ */
 .mr-cmp-list{display:flex;flex-direction:column;gap:.5rem}
 .mr-cmp-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-m);padding:.65rem .8rem;display:flex;flex-direction:column;gap:.45rem}
-.mr-cmp-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
-.mr-cmp-head .mr-cmp-name{font-size:.9rem;font-weight:700;min-width:0}
+.mr-cmp-name{font-size:.9rem;font-weight:700;min-width:0}
 .mr-cmp-profit{font-size:.74rem;font-weight:700;font-family:"JetBrains Mono";white-space:nowrap;padding:.15rem .55rem;border-radius:999px;border:1px solid var(--border);background:var(--surface)}
 .mr-cmp-profit.profit-pos{color:var(--accent)}
 .mr-cmp-profit.profit-neg{color:var(--danger)}
@@ -503,6 +500,46 @@ svg.icon{width:18px;height:18px;display:block}
   .mr-cmp-stats{gap:.35rem}
   .mr-cmp-stat{padding:.35rem .45rem}
   .mr-cmp-stat b{font-size:.85rem}
+}
+/* ประวัติ: control bar + item cards (expandable) + day groups + transaction rows */
+.mr-hist-bar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-bottom:.7rem}
+.mr-hist-search{flex:1;min-width:140px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:.38rem .8rem;font-size:.78rem;font-family:inherit}
+.mr-hist-search:focus{outline:none;border-color:var(--accent)}
+.mr-hist-bar .chart-tf-select{padding:.35rem .5rem;font-size:.74rem}
+.mr-cat-tag{font-size:.6rem;font-weight:700;padding:.08rem .4rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);white-space:nowrap}
+.mr-ic-head{display:flex;align-items:center;gap:.45rem;width:100%;background:none;border:none;color:var(--text);cursor:pointer;padding:0;text-align:left;font:inherit;min-width:0}
+.mr-ic-head:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.mr-ic-chev{color:var(--text-dim);font-size:.7rem;transition:transform .15s;flex:none}
+.mr-ic.open .mr-ic-chev{transform:rotate(90deg)}
+.mr-ic-count{color:var(--text-dim);font-size:.7rem;white-space:nowrap}
+.mr-ic-head .mr-cmp-profit{margin-left:auto}
+.mr-ic-body{border-top:1px dashed var(--border);padding-top:.45rem}
+.mr-tx-list{display:flex;flex-direction:column;gap:.25rem}
+.mr-tx{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto auto;align-items:center;gap:.6rem;padding:.35rem .55rem;border-radius:var(--radius-s);background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);font-size:.76rem}
+.mr-tx.type-buy{border-left-color:var(--danger)}
+.mr-tx.type-sell{border-left-color:var(--success)}
+.mr-tx-main{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mr-tx-calc{color:var(--text-dim);font-family:"JetBrains Mono";font-size:.7rem;white-space:nowrap}
+.mr-tx-total{font-family:"JetBrains Mono";font-weight:700;white-space:nowrap}
+.mr-tx-total small{font-weight:500;color:var(--text-dim);font-size:.66rem}
+.mr-tx.type-buy .mr-tx-total{color:var(--danger)}
+.mr-tx.type-sell .mr-tx-total{color:var(--success)}
+.mr-tx-time{color:var(--text-dim);font-size:.68rem;white-space:nowrap;font-family:"JetBrains Mono"}
+.mr-tx .mr-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.8rem;padding:0 .1rem;line-height:1}
+.mr-tx .mr-del:hover{color:var(--danger)}
+.mr-tx.just-saved{animation:mr-flash 1.1s ease}
+@media (prefers-reduced-motion: reduce){ .mr-tx.just-saved{animation:none} }
+.mr-day{display:flex;flex-direction:column;gap:.25rem}
+.mr-day+.mr-day{margin-top:.45rem}
+.mr-day-head{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;padding:0 .2rem .15rem;font-size:.76rem;font-weight:700}
+.mr-day-tot{font-weight:500;font-size:.68rem;color:var(--text-dim);font-family:"JetBrains Mono";white-space:nowrap}
+.mr-day-tot .sell{color:var(--success)}
+.mr-day-tot .buy{color:var(--danger)}
+.mr-more-btn{align-self:center;margin-top:.4rem}
+@media (max-width:600px){
+  .mr-tx{grid-template-columns:auto minmax(0,1fr) auto auto;row-gap:.15rem}
+  .mr-tx-calc{grid-column:2;grid-row:2}
+  .mr-tx-time{grid-column:3 / span 2;grid-row:2;justify-self:end}
 }
 .mr-mock-tag{
   font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
@@ -883,43 +920,23 @@ svg.icon{width:18px;height:18px;display:block}
 
             <div class="mr-history">
               <div class="mr-summary" id="mrSummary"></div>
-              <div class="history-filters">
-                <div class="hf-group">
-                  <label>หมวดหมู่</label>
-                  <div class="seg-toggle" id="historyCategoryToggle">
-                    <button type="button" class="seg-btn active" data-categoryfilter="all">ทั้งหมด</button>
-                    <button type="button" class="seg-btn" data-categoryfilter="zeny">M</button>
-                    <button type="button" class="seg-btn" data-categoryfilter="item">Item</button>
-                    <button type="button" class="seg-btn" data-categoryfilter="other">อื่นๆ</button>
-                  </div>
+              <!-- One control row: how to look (ตามไอเทม / ตามวัน), a search box, a time range.
+                   หมวดหมู่ shows as a tag on each item, ซื้อ/ขาย as a colored badge on each row,
+                   so neither needs its own filter toggle. -->
+              <div class="mr-hist-bar">
+                <div class="seg-toggle" id="historyViewToggle">
+                  <button type="button" class="seg-btn active" data-historyview="item">ตามไอเทม</button>
+                  <button type="button" class="seg-btn" data-historyview="day">ตามวัน</button>
                 </div>
-                <div class="hf-group">
-                  <label>ประเภท</label>
-                  <div class="seg-toggle" id="historyTypeToggle">
-                    <button type="button" class="seg-btn active" data-typefilter="all">ทั้งหมด</button>
-                    <button type="button" class="seg-btn" data-typefilter="buy">ซื้อ</button>
-                    <button type="button" class="seg-btn" data-typefilter="sell">ขาย</button>
-                  </div>
-                </div>
-                <div class="hf-group">
-                  <label>มุมมอง</label>
-                  <div class="seg-toggle" id="historyViewToggle">
-                    <button type="button" class="seg-btn active" data-historyview="list">รายการ</button>
-                    <button type="button" class="seg-btn" data-historyview="summary">เทียบซื้อ-ขาย</button>
-                  </div>
-                </div>
-                <div class="hf-group hf-group-right">
-                  <label>ช่วงวันที่</label>
-                  <div class="farm-history-daterange">
-                    <input type="date" id="mrHistoryFromDate">
-                    <span>-</span>
-                    <input type="date" id="mrHistoryToDate">
-                  </div>
-                </div>
+                <input type="search" class="mr-hist-search" id="mrHistorySearch" placeholder="ค้นหาไอเทม…" autocomplete="off">
+                <select class="chart-tf-select" id="mrHistoryRange">
+                  <option value="7d">7 วันล่าสุด</option>
+                  <option value="30d">30 วันล่าสุด</option>
+                  <option value="90d">3 เดือนล่าสุด</option>
+                  <option value="all" selected>ทั้งหมด</option>
+                </select>
               </div>
               <div id="mrHistoryList"></div>
-              <div class="farm-history-pagination" id="mrHistoryPagination"></div>
-              <div id="mrItemSummaryList" hidden></div>
             </div>
           </div>
         </div>
@@ -3136,9 +3153,9 @@ svg.icon{width:18px;height:18px;display:block}
   var MR_TYPE_LABEL = { buy:'ซื้อ', sell:'ขาย' };
   function entryType(e){ return e.type === 'sell' ? 'sell' : 'buy'; }
 
-  var MR_HISTORY_PAGE_SIZE_OPTIONS = [5,10,15,20,30];
-  var MR_HISTORY_PAGE_SIZE = 5;
-  var historyState = { serverId:'all', categoryFilter:'all', typeFilter:'all', page:0, view:'list' };
+  var MR_HISTORY_DAY_STEP = 30; // rows revealed per "แสดงเพิ่ม" click in the ตามวัน view
+  var MR_HISTORY_RANGE_DAYS = { '7d':7, '30d':30, '90d':90, 'all':null };
+  var historyState = { serverId:'all', view:'item', range:'all', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{} };
 
   function mrDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 
@@ -3170,69 +3187,125 @@ svg.icon{width:18px;height:18px;display:block}
     tag.innerHTML = tagNames.map(function(n){ return '<span class="farm-revenue-server">'+n+'</span>'; }).join('');
   }
 
-  // Single source of truth for "which entries match the history panel's active filters" —
-  // used by both the paginated list and the summary tiles, so the tiles always total exactly
-  // what's shown in the list (server + หมวดหมู่ + ประเภท + ช่วงวันที่ all applied together).
+  // Single source of truth for "which entries match the history panel's active filters"
+  // (server + ช่วงเวลา + ค้นหา). Both views and the summary tiles are built from this, so
+  // the tiles always total exactly what's on screen.
+  function historyRangeStartTs(){
+    var days = MR_HISTORY_RANGE_DAYS[historyState.range];
+    if(!days) return null;
+    var d = new Date(); d.setHours(0,0,0,0);
+    d.setDate(d.getDate()-(days-1));
+    return d.getTime();
+  }
+  function historyLineMatches(l){
+    if(!historyState.search) return true;
+    return String(l && l.name || '').toLowerCase().indexOf(historyState.search)!==-1;
+  }
   function filteredMerchantEntries(){
     var entries = App.merchantLog.slice();
     if(historyState.serverId!=='all') entries = entries.filter(function(e){ return e.serverId===historyState.serverId; });
-    if(historyState.categoryFilter!=='all') entries = entries.filter(function(e){ return (e.category||'zeny')===historyState.categoryFilter; });
-    if(historyState.typeFilter!=='all') entries = entries.filter(function(e){ return entryType(e)===historyState.typeFilter; });
-    var fromStr = document.getElementById('mrHistoryFromDate').value;
-    var toStr = document.getElementById('mrHistoryToDate').value;
-    if(fromStr){
-      var fromTs = new Date(fromStr+'T00:00:00').getTime();
-      entries = entries.filter(function(e){ return e.ts>=fromTs; });
-    }
-    if(toStr){
-      var toTs = new Date(toStr+'T23:59:59.999').getTime();
-      entries = entries.filter(function(e){ return e.ts<=toTs; });
-    }
+    var startTs = historyRangeStartTs();
+    if(startTs!=null) entries = entries.filter(function(e){ return e.ts>=startTs; });
+    if(historyState.search) entries = entries.filter(function(e){ return (e.lines||[]).some(historyLineMatches); });
     return entries;
   }
+  // Every (entry, line) pair that passes the filters, newest first — the unit both
+  // views render. A record saved with several lines shows as one row per line.
+  function historyScopedLines(){
+    var out = [];
+    filteredMerchantEntries().forEach(function(e){
+      var t = entryType(e);
+      (e.lines||[]).forEach(function(l){ if(historyLineMatches(l)) out.push({ entry:e, line:l, type:t }); });
+    });
+    out.sort(function(a,b){ return b.entry.ts-a.entry.ts; });
+    return out;
+  }
+  function lineBahtValue(e, l){
+    var total = parseFloat(l.total)||0;
+    if(lineCurrency(l)!=='zeny') return total;
+    return e.exchangeRate>0 ? farmZenyToBaht(total, e.exchangeRate) : 0;
+  }
+  var MR_CATEGORY_LABEL = { zeny:'M', item:'Item', other:'อื่นๆ' };
+  function historyCategoryTag(cat){ return '<span class="mr-cat-tag">'+(MR_CATEGORY_LABEL[cat]||MR_CATEGORY_LABEL.zeny)+'</span>'; }
+  function historyServerTag(serverId){ var sv = serverRateById(serverId); return '<span class="mr-cat-tag">'+(sv?sv.name:serverId)+'</span>'; }
+  function historyEscape(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtTimeShort(ts){ return new Date(ts).toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'}); }
+  function historyDayLabel(ts){
+    var d = new Date(ts);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var day = new Date(d); day.setHours(0,0,0,0);
+    var diff = Math.round((today-day)/86400000);
+    var text = d.toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'});
+    if(diff===0) return 'วันนี้ · '+text;
+    if(diff===1) return 'เมื่อวาน · '+text;
+    return text;
+  }
+  function historyEmptyHtml(){
+    if(!App.merchantLog.length) return '<p class="mr-empty">ยังไม่มีประวัติการซื้อ-ขาย</p>';
+    if(historyState.search) return '<p class="mr-empty">ไม่พบไอเทมชื่อ "'+historyEscape(historyState.search)+'"</p>';
+    return '<p class="mr-empty">ไม่มีรายการในช่วงเวลานี้</p>';
+  }
 
-  // Groups the currently filtered entries by item name(+slots) so "ซื้อมาเท่าไหร่,
+  // Groups the filtered lines by server+category+item name(+slots) so "ซื้อมาเท่าไหร่,
   // ขายไปเท่าไหร่, เหลือกี่อัน, กำไรเท่าไหร่" reads at a glance instead of having to
-  // mentally match up separate buy/sell rows in the chronological list. Cost of goods
-  // sold uses the weighted-average buy cost for that item, so profit reflects only what
-  // was actually sold — unsold stock is never counted as a "loss".
-  function computeMerchantItemSummary(){
-    var scoped = filteredMerchantEntries();
+  // mentally match up separate buy/sell rows. Cost of goods sold uses the weighted-average
+  // buy cost for that item, so profit reflects only what was actually sold — unsold stock
+  // is never counted as a "loss". Each group also carries its own transaction rows (tx).
+  function computeHistoryItemGroups(){
     var groups = {}, order = [];
-    scoped.forEach(function(e){
-      var isBuy = entryType(e)==='buy';
-      (e.lines||[]).forEach(function(l){
-        var slots = l.slots || [];
-        var key = (e.category||'')+'|'+l.name+'|'+JSON.stringify(slots);
-        if(!groups[key]){
-          groups[key] = { name:l.name, slots:slots, category:e.category, buyQty:0, buyBaht:0, sellQty:0, sellBaht:0 };
-          order.push(key);
-        }
-        var g = groups[key];
-        var qty = parseFloat(l.qty)||0;
-        var total = parseFloat(l.total)||0;
-        var lineBaht = lineCurrency(l)==='zeny'
-          ? (e.exchangeRate>0 ? farmZenyToBaht(total, e.exchangeRate) : 0)
-          : total;
-        if(isBuy){ g.buyQty += qty; g.buyBaht += lineBaht; }
-        else { g.sellQty += qty; g.sellBaht += lineBaht; }
-      });
+    historyScopedLines().forEach(function(t){
+      var e = t.entry, l = t.line;
+      var slots = l.slots || [];
+      var key = e.serverId+'|'+(e.category||'zeny')+'|'+l.name+'|'+JSON.stringify(slots);
+      if(!groups[key]){
+        groups[key] = { key:key, name:l.name, slots:slots, category:e.category||'zeny', serverId:e.serverId,
+                        buyQty:0, buyBaht:0, sellQty:0, sellBaht:0, lastTs:0, tx:[] };
+        order.push(key);
+      }
+      var g = groups[key];
+      var qty = parseFloat(l.qty)||0, baht = lineBahtValue(e, l);
+      if(t.type==='buy'){ g.buyQty += qty; g.buyBaht += baht; }
+      else { g.sellQty += qty; g.sellBaht += baht; }
+      if(e.ts>g.lastTs) g.lastTs = e.ts;
+      g.tx.push(t);
     });
     return order.map(function(key){
       var g = groups[key];
-      var avgCost = g.buyQty>0 ? g.buyBaht/g.buyQty : 0;
-      var cogs = avgCost * g.sellQty;
+      g.avgCost = g.buyQty>0 ? g.buyBaht/g.buyQty : 0;
       g.remaining = g.buyQty - g.sellQty;
-      g.avgCost = avgCost;
-      g.profit = g.sellBaht - cogs;
+      g.profit = g.sellBaht - g.avgCost*g.sellQty;
       return g;
-    }).sort(function(a,b){ return b.buyBaht+b.sellBaht - (a.buyBaht+a.sellBaht); });
+    }).sort(function(a,b){ return b.lastTs-a.lastTs; });
   }
 
-  function renderMerchantItemSummary(){
-    var list = document.getElementById('mrItemSummaryList');
-    var groups = computeMerchantItemSummary();
-    if(!groups.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีประวัติการซื้อ-ขาย</p>'; return; }
+  // One transaction row. opts.showName → item name in the main cell (ตามวัน view);
+  // otherwise the date goes there (ตามไอเทม view, where the card already names the item).
+  function historyTxRowHtml(t, opts){
+    var e = t.entry, l = t.line;
+    var cat = e.category || 'zeny';
+    var isZeny = lineCurrency(l)==='zeny';
+    var showZenyTag = (cat==='item' || cat==='other') && isZeny;
+    var edited = (e.editHistory && e.editHistory.length) ? ' mr-edited-hover' : '';
+    var serverTag = opts.showServer ? ' '+historyServerTag(e.serverId) : '';
+    var main = opts.showName
+      ? itemNameWithSlots(l.name||'', l.slots)+(showZenyTag?zenyNameTag():'')+serverTag
+      : '<span class="'+edited.trim()+'">'+fmtDateTime(e.ts)+'</span>'+serverTag;
+    var totalHtml = fmtCurrencyAmount(l.total, lineCurrency(l));
+    if(isZeny && e.exchangeRate>0) totalHtml += ' <small class="mr-rate-hover">≈ '+fmtNum(farmZenyToBaht(parseFloat(l.total)||0, e.exchangeRate))+' บ</small>';
+    return '<div class="mr-tx type-'+t.type+'" data-entry-id="'+e.id+'">'+
+      '<span class="mr-type-badge '+t.type+'">'+MR_TYPE_LABEL[t.type]+'</span>'+
+      '<span class="mr-tx-main">'+main+'</span>'+
+      '<span class="mr-tx-calc">'+fmtNum(l.qty)+' × '+fmtNum(l.rate)+'</span>'+
+      '<span class="mr-tx-total">'+totalHtml+'</span>'+
+      (opts.showTime ? '<span class="mr-tx-time'+edited+'">'+fmtTimeShort(e.ts)+'</span>' : '')+
+      '<button type="button" class="mr-del" data-del="'+e.id+'" title="ลบรายการนี้">🗑</button>'+
+    '</div>';
+  }
+
+  function renderHistoryItemView(list){
+    var groups = computeHistoryItemGroups();
+    if(!groups.length){ list.innerHTML = historyEmptyHtml(); return; }
+    var showServer = historyState.serverId==='all';
     list.innerHTML = '<div class="mr-cmp-list">'+
       groups.map(function(g){
         // หน่วย: หมวด M นับเป็น "M", ที่เหลือนับเป็น "ชิ้น"
@@ -3241,6 +3314,7 @@ svg.icon{width:18px;height:18px;display:block}
         var left = g.remaining>0 ? g.remaining : 0;
         var pct = g.buyQty>0 ? Math.min(100, Math.round(g.sellQty/g.buyQty*100)) : (g.sellQty>0 ? 100 : 0);
         var leftCost = left>0 ? g.avgCost*left : 0;
+        var open = !!historyState.expanded[g.key];
 
         var profitHtml;
         if(g.sellQty<=0) profitHtml = '<span class="mr-cmp-profit profit-none">ยังไม่ได้ขาย</span>';
@@ -3249,8 +3323,14 @@ svg.icon{width:18px;height:18px;display:block}
         var leftSub = over>0 ? 'ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit
                     : (left>0 ? 'ทุนค้าง ~'+fmtNum(leftCost)+' บ' : 'ขายหมดแล้ว');
 
-        return '<div class="mr-cmp-card">'+
-          '<div class="mr-cmp-head"><span class="mr-cmp-name">'+itemNameWithSlots(g.name, g.slots)+'</span>'+profitHtml+'</div>'+
+        return '<div class="mr-cmp-card mr-ic'+(open?' open':'')+'" data-key="'+encodeURIComponent(g.key)+'">'+
+          '<button type="button" class="mr-ic-head" aria-expanded="'+(open?'true':'false')+'" title="กดเพื่อดูรายการซื้อ-ขายของไอเทมนี้">'+
+            '<span class="mr-ic-chev">▸</span>'+
+            '<span class="mr-cmp-name">'+itemNameWithSlots(g.name, g.slots)+'</span>'+
+            historyCategoryTag(g.category)+(showServer?historyServerTag(g.serverId):'')+
+            '<span class="mr-ic-count">'+g.tx.length+' รายการ</span>'+
+            profitHtml+
+          '</button>'+
           '<div class="mr-cmp-barrow">'+
             '<div class="mr-cmp-bar"><span class="sold'+(pct>=100?' full':'')+'" style="width:'+pct+'%"></span>'+(pct<100?'<span class="left"></span>':'')+'</div>'+
             '<small>ขายแล้ว '+pct+'%</small>'+
@@ -3260,72 +3340,67 @@ svg.icon{width:18px;height:18px;display:block}
             '<div class="mr-cmp-stat sell"><small>ขายไป</small><b>'+fmtNum(g.sellQty)+' '+unit+'</b><em>'+fmtNum(g.sellBaht)+' บ</em></div>'+
             '<div class="mr-cmp-stat left"><small>เหลือ</small><b>'+fmtNum(left)+' '+unit+'</b><em>'+leftSub+'</em></div>'+
           '</div>'+
+          '<div class="mr-ic-body"'+(open?'':' hidden')+'><div class="mr-tx-list">'+
+            g.tx.map(function(t){ return historyTxRowHtml(t, { showName:false, showTime:false, showServer:false }); }).join('')+
+          '</div></div>'+
         '</div>';
       }).join('')+
     '</div>';
   }
 
+  function renderHistoryDayView(list){
+    var rows = historyScopedLines();
+    if(!rows.length){ list.innerHTML = historyEmptyHtml(); return; }
+    var shown = rows.slice(0, historyState.dayLimit);
+    var showServer = historyState.serverId==='all';
+    var days = [], byDay = {};
+    shown.forEach(function(t){
+      var k = mrDateStr(new Date(t.entry.ts));
+      if(!byDay[k]){ byDay[k] = { ts:t.entry.ts, rows:[], buy:0, sell:0 }; days.push(k); }
+      byDay[k].rows.push(t);
+    });
+    // Day totals cover the whole day, not just the rows revealed so far.
+    rows.forEach(function(t){
+      var k = mrDateStr(new Date(t.entry.ts));
+      if(byDay[k]) byDay[k][t.type] += lineBahtValue(t.entry, t.line);
+    });
+    var html = days.map(function(k){
+      var d = byDay[k];
+      var tot = [];
+      if(d.sell) tot.push('<span class="sell">ขาย '+fmtNum(d.sell)+' บ</span>');
+      if(d.buy) tot.push('<span class="buy">ซื้อ '+fmtNum(d.buy)+' บ</span>');
+      return '<div class="mr-day">'+
+        '<div class="mr-day-head"><span>'+historyDayLabel(d.ts)+'</span><span class="mr-day-tot">'+tot.join(' · ')+'</span></div>'+
+        d.rows.map(function(t){ return historyTxRowHtml(t, { showName:true, showTime:true, showServer:showServer }); }).join('')+
+      '</div>';
+    }).join('');
+    if(rows.length > shown.length){
+      html += '<button type="button" class="farm-hist-page-btn mr-more-btn" id="mrHistMore">แสดงเพิ่ม (เหลืออีก '+(rows.length-shown.length)+' รายการ)</button>';
+    }
+    list.innerHTML = html;
+  }
+
   function renderMerchantHistory(){
     populateHistoryServerFilter();
     renderMerchantSummary();
-    document.getElementById('mrHistoryList').hidden = historyState.view==='summary';
-    document.getElementById('mrHistoryPagination').hidden = historyState.view==='summary';
-    document.getElementById('mrItemSummaryList').hidden = historyState.view!=='summary';
-    if(historyState.view==='summary'){ renderMerchantItemSummary(); return; }
     var list = document.getElementById('mrHistoryList');
-    var entries = filteredMerchantEntries();
-    entries.sort(function(a,b){ return b.ts-a.ts; });
+    if(historyState.view==='day') renderHistoryDayView(list);
+    else renderHistoryItemView(list);
+  }
 
-    var pag = document.getElementById('mrHistoryPagination');
-    if(!entries.length){
-      list.innerHTML = '<p class="mr-empty">ยังไม่มีประวัติการซื้อ-ขาย</p>';
-      pag.innerHTML = '';
-      return;
+  // Finds a just-saved entry's row and, in the ตามไอเทม view, opens the card it sits in so
+  // the "just saved" flash is actually visible. Returns the row (or null if filtered out).
+  function revealHistoryEntry(id){
+    var el = document.querySelector('[data-entry-id="'+id+'"]');
+    if(!el) return null;
+    var card = el.closest('.mr-ic');
+    if(card && !card.classList.contains('open')){
+      historyState.expanded[decodeURIComponent(card.dataset.key)] = true;
+      card.classList.add('open');
+      card.querySelector('.mr-ic-body').hidden = false;
+      card.querySelector('.mr-ic-head').setAttribute('aria-expanded', 'true');
     }
-
-    var totalPages = Math.max(1, Math.ceil(entries.length/MR_HISTORY_PAGE_SIZE));
-    if(historyState.page > totalPages-1) historyState.page = totalPages-1;
-    if(historyState.page < 0) historyState.page = 0;
-    var pageRows = entries.slice(historyState.page*MR_HISTORY_PAGE_SIZE, historyState.page*MR_HISTORY_PAGE_SIZE+MR_HISTORY_PAGE_SIZE);
-
-    list.innerHTML = pageRows.map(function(e, idx){
-      var sv = serverRateById(e.serverId);
-      var t = entryType(e);
-      var lines = e.lines || [];
-      var editedAttrs = (e.editHistory && e.editHistory.length) ? ' class="mr-edited-hover"' : '';
-      var rowNum = historyState.page*MR_HISTORY_PAGE_SIZE + idx + 1;
-      return '<div class="mr-entry type-'+t+'" data-entry-id="'+e.id+'">'+
-        '<div class="mr-entry-top"><span>'+rowNum+'. '+(sv?sv.name:e.serverId)+' · '+lines.length+' รายการ '+
-          '<span class="mr-type-badge '+t+'">'+MR_TYPE_LABEL[t]+'</span></span>'+
-          '<span style="display:flex;align-items:center;gap:.5rem">'+fmtEntryTotal(e)+
-          '<span class="mr-entry-actions">'+
-            '<button type="button" class="mr-del" data-del="'+e.id+'" title="ลบ">🗑</button>'+
-          '</span></span></div>'+
-        '<div class="mr-entry-lines">'+lines.map(function(l){
-          var cat = e.category || 'zeny';
-          var showZenyTag = (cat==='item' || cat==='other') && lineCurrency(l)==='zeny';
-          return '<div class="mr-line-row"><span>'+itemNameWithSlots(l&&l.name||'', l&&l.slots)+(showZenyTag?zenyNameTag():'')+'</span>'+
-            '<span>'+fmtNum(l&&l.qty)+' x '+fmtNum(l&&l.rate)+' = '+fmtCurrencyAmount(l&&l.total, lineCurrency(l))+'</span>'+
-          '</div>';
-        }).join('')+'</div>'+
-        '<div class="mr-entry-sub" style="justify-content:flex-end"><span'+editedAttrs+'>'+fmtDateTime(e.ts)+'</span></div>'+
-      '</div>';
-    }).join('');
-
-    var sizeSelectHtml = '<div class="farm-hist-size"><label for="mrHistPageSize">แสดง</label><select id="mrHistPageSize">'+
-      MR_HISTORY_PAGE_SIZE_OPTIONS.map(function(n){ return '<option value="'+n+'"'+(n===MR_HISTORY_PAGE_SIZE?' selected':'')+'>'+n+'</option>'; }).join('')+
-      '</select><span>รายการ</span></div>';
-
-    if(totalPages>1){
-      pag.innerHTML = sizeSelectHtml+
-        '<div class="farm-hist-nav">'+
-        '<button type="button" class="farm-hist-page-btn" id="mrHistPrev"'+(historyState.page===0?' disabled':'')+'>‹ ก่อนหน้า</button>'+
-        '<span class="farm-hist-page-info">หน้า '+(historyState.page+1)+' / '+totalPages+'</span>'+
-        '<button type="button" class="farm-hist-page-btn" id="mrHistNext"'+(historyState.page>=totalPages-1?' disabled':'')+'>ถัดไป ›</button>'+
-        '</div>';
-    } else {
-      pag.innerHTML = sizeSelectHtml;
-    }
+    return el;
   }
 
   function summaryTilesHtml(buyTotal, sellTotal, unit){
@@ -3337,21 +3412,14 @@ svg.icon{width:18px;height:18px;display:block}
     '</div>';
   }
 
-  // Zeny lines are converted to their baht equivalent (via each entry's snapshotted
-  // exchange rate) and folded straight into the baht totals — the summary now always
-  // shows one baht-only figure instead of a separate, currency-native Zeny block.
-  function entrySummaryBaht(e){
-    var t = entryTotals(e);
-    var zenyBaht = (t.zeny>0 && e.exchangeRate>0) ? farmZenyToBaht(t.zeny, e.exchangeRate) : 0;
-    return t.baht + zenyBaht;
-  }
-
   function renderMerchantSummary(){
-    var scoped = filteredMerchantEntries();
-    var buys = scoped.filter(function(e){ return entryType(e)==='buy'; });
-    var sells = scoped.filter(function(e){ return entryType(e)==='sell'; });
-    var buyBaht = buys.reduce(function(s,e){ return s+entrySummaryBaht(e); }, 0);
-    var sellBaht = sells.reduce(function(s,e){ return s+entrySummaryBaht(e); }, 0);
+    // Summed per line (not per record) so a search that hides some lines of a multi-line
+    // record leaves the tiles matching exactly the rows on screen.
+    var buyBaht = 0, sellBaht = 0;
+    historyScopedLines().forEach(function(t){
+      var v = lineBahtValue(t.entry, t.line);
+      if(t.type==='buy') buyBaht += v; else sellBaht += v;
+    });
     document.getElementById('mrSummary').innerHTML = summaryTilesHtml(buyBaht, sellBaht, 'บ');
   }
 
@@ -3370,7 +3438,7 @@ svg.icon{width:18px;height:18px;display:block}
   var MR_EDIT_HISTORY_TOOLTIP_LIMIT = 5;
 
   function showMrEditedTooltip(el){
-    var entryEl = el.closest('.mr-entry');
+    var entryEl = el.closest('[data-entry-id]');
     var entry = entryEl ? App.merchantLog.filter(function(x){ return x.id===entryEl.dataset.entryId; })[0] : null;
     var history = (entry && entry.editHistory ? entry.editHistory.slice() : []).reverse();
     var tip = document.getElementById('mrEditedTooltip');
@@ -3401,7 +3469,7 @@ svg.icon{width:18px;height:18px;display:block}
   }
 
   function showMrRateTooltip(el){
-    var entryEl = el.closest('.mr-entry');
+    var entryEl = el.closest('[data-entry-id]');
     var entry = entryEl ? App.merchantLog.filter(function(x){ return x.id===entryEl.dataset.entryId; })[0] : null;
     var tip = document.getElementById('mrRateTooltip');
     if(!entry || !(entry.exchangeRate>0)){ tip.hidden = true; return; }
@@ -3861,13 +3929,12 @@ svg.icon{width:18px;height:18px;display:block}
     var newId = uid();
     App.merchantLog.push({ id:newId, ts:Date.now(), serverId:App.currentServerId, lines:lines, totalBaht:totalBaht, totalZeny:totalZeny, exchangeRate: exRate>0 ? exRate : null, type:App.merchantType, category:App.merchantCategory });
     saveMerchantLog();
-    historyState.page = 0;
     renderMerchantHistory();
     renderMerchantSummary();
     renderMrChart();
     var isWarehouseBuy = App.merchantType==='buy' && (App.merchantCategory==='zeny' || App.merchantCategory==='item');
     toast(isWarehouseBuy ? 'รายการซื้อถูกส่งไปคลังไอเทมแล้ว' : 'บันทึก '+lines.length+' รายการแล้ว');
-    var newEntryEl = document.querySelector('[data-entry-id="'+newId+'"]');
+    var newEntryEl = revealHistoryEntry(newId);
     if(newEntryEl){
       newEntryEl.scrollIntoView({block:'nearest'});
       newEntryEl.classList.add('just-saved');
@@ -3915,8 +3982,12 @@ svg.icon{width:18px;height:18px;display:block}
       }
       var hasWarehousedBuy = warehousedLines.length>0;
       var detail = entry ? '<span class="confirm-detail">'+mrEntrySummaryHtml(entry)+'</span>' : '';
-      var warnHtml = hasWarehouseSale ? '<p class="confirm-warehouse-note">รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกลบจะถูกคืนกลับเข้าคลัง</p>'
-        : hasWarehousedBuy ? '<p class="confirm-warehouse-note">รายการนี้ถูกลงคลังไปแล้ว — ลบรายการนี้จะดึงจำนวนที่ยังอยู่ในคลังออกไปด้วย (ส่วนที่ถูกขายออกไปแล้วจะไม่ถูกแตะ)</p>' : '';
+      // Rows are shown per item line, but a save can bundle several lines into one
+      // record — deleting removes the whole record, so say so when that's the case.
+      var multiNote = (entry && (entry.lines||[]).length>1)
+        ? '<p class="confirm-warehouse-note">รายการนี้บันทึกรวมกัน '+entry.lines.length+' รายการในครั้งเดียว — จะถูกลบทั้งหมดพร้อมกัน</p>' : '';
+      var warnHtml = multiNote + (hasWarehouseSale ? '<p class="confirm-warehouse-note">รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกลบจะถูกคืนกลับเข้าคลัง</p>'
+        : hasWarehousedBuy ? '<p class="confirm-warehouse-note">รายการนี้ถูกลงคลังไปแล้ว — ลบรายการนี้จะดึงจำนวนที่ยังอยู่ในคลังออกไปด้วย (ส่วนที่ถูกขายออกไปแล้วจะไม่ถูกแตะ)</p>' : '');
       showConfirm('ยืนยันลบรายการนี้?'+detail+warnHtml, function(){
         if(hasWarehouseSale){
           (entry.lines||[]).forEach(function(l){
@@ -3959,14 +4030,23 @@ svg.icon{width:18px;height:18px;display:block}
     if(rateEl) hideMrRateTooltip();
   });
 
-  document.getElementById('mrHistoryPagination').addEventListener('click', function(e){
-    if(e.target.closest('#mrHistPrev')){ historyState.page--; renderMerchantHistory(); return; }
-    if(e.target.closest('#mrHistNext')){ historyState.page++; renderMerchantHistory(); return; }
-  });
-  document.getElementById('mrHistoryPagination').addEventListener('change', function(e){
-    if(e.target.id==='mrHistPageSize'){
-      MR_HISTORY_PAGE_SIZE = parseInt(e.target.value, 10) || 5;
-      historyState.page = 0;
+  // Expand/collapse an item card, or reveal more rows in the ตามวัน view. The delete
+  // button is handled by the listener above, so it's skipped here.
+  document.getElementById('mrHistoryList').addEventListener('click', function(e){
+    if(e.target.closest('[data-del]')) return;
+    var head = e.target.closest('.mr-ic-head');
+    if(head){
+      var card = head.closest('.mr-ic');
+      var key = decodeURIComponent(card.dataset.key);
+      var open = !historyState.expanded[key];
+      historyState.expanded[key] = open;
+      card.classList.toggle('open', open);
+      card.querySelector('.mr-ic-body').hidden = !open;
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      return;
+    }
+    if(e.target.closest('#mrHistMore')){
+      historyState.dayLimit += MR_HISTORY_DAY_STEP;
       renderMerchantHistory();
     }
   });
@@ -3974,7 +4054,7 @@ svg.icon{width:18px;height:18px;display:block}
   function onHistoryServerFilterChange(e){
     try{
       historyState.serverId = e.target.value;
-      historyState.page = 0;
+      historyState.dayLimit = MR_HISTORY_DAY_STEP;
       renderMerchantHistory();
     }catch(err){
       console.error('historyServerFilter change failed', err);
@@ -3984,51 +4064,28 @@ svg.icon{width:18px;height:18px;display:block}
   document.getElementById('historyServerFilter').addEventListener('change', onHistoryServerFilterChange);
   document.getElementById('historyServerFilter').addEventListener('input', onHistoryServerFilterChange);
 
-  document.getElementById('historyCategoryToggle').addEventListener('click', function(e){
-    var btn = e.target.closest('[data-categoryfilter]');
-    if(!btn) return;
-    historyState.categoryFilter = btn.dataset.categoryfilter;
-    historyState.page = 0;
-    document.querySelectorAll('#historyCategoryToggle .seg-btn').forEach(function(b){
-      b.classList.toggle('active', b===btn);
-    });
-    renderMerchantHistory();
-  });
-
-  document.getElementById('historyTypeToggle').addEventListener('click', function(e){
-    var btn = e.target.closest('[data-typefilter]');
-    if(!btn) return;
-    historyState.typeFilter = btn.dataset.typefilter;
-    historyState.page = 0;
-    document.querySelectorAll('#historyTypeToggle .seg-btn').forEach(function(b){
-      b.classList.toggle('active', b===btn);
-    });
-    renderMerchantHistory();
-  });
-
   document.getElementById('historyViewToggle').addEventListener('click', function(e){
     var btn = e.target.closest('[data-historyview]');
     if(!btn) return;
     historyState.view = btn.dataset.historyview;
+    historyState.dayLimit = MR_HISTORY_DAY_STEP;
     document.querySelectorAll('#historyViewToggle .seg-btn').forEach(function(b){
       b.classList.toggle('active', b===btn);
     });
     renderMerchantHistory();
   });
 
-  document.getElementById('mrHistoryFromDate').addEventListener('change', function(){
-    historyState.page = 0;
+  document.getElementById('mrHistorySearch').addEventListener('input', function(e){
+    historyState.search = e.target.value.trim().toLowerCase();
+    historyState.dayLimit = MR_HISTORY_DAY_STEP;
     renderMerchantHistory();
   });
-  document.getElementById('mrHistoryToDate').addEventListener('change', function(){
-    historyState.page = 0;
+
+  document.getElementById('mrHistoryRange').addEventListener('change', function(e){
+    historyState.range = e.target.value;
+    historyState.dayLimit = MR_HISTORY_DAY_STEP;
     renderMerchantHistory();
   });
-  (function(){
-    var todayStr = mrDateStr(new Date());
-    document.getElementById('mrHistoryFromDate').max = todayStr;
-    document.getElementById('mrHistoryToDate').max = todayStr;
-  })();
 
   // ---------- คลังไอเทม (item warehouse) ----------
   // Pending items are computed on the fly from App.merchantLog (buy-type M/Item lines

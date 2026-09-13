@@ -3015,8 +3015,9 @@ svg.icon{width:18px;height:18px;display:block}
             '<button type="button" class="mr-sell-source-btn'+(!manualActive?' active':'')+'" data-sell-source="stock" data-row-id="'+row.rid+'">'+(isZenyTab?'ขาย M จากคลัง':'ขาย Item จากคลัง')+'</button>'+
           '</div>';
         if(row.fromStock && isZenyTab){
-          // Money is fungible — no batch to pick, just show the pooled total.
-          var agg = row.stockGroup || stockGroups[0];
+          // Money is fungible — no batch to pick. Always read the live pool (never the
+          // row's own cached snapshot) so a drop/undo elsewhere reflects here immediately.
+          var agg = stockGroups[0];
           sellSourceHtml += '<div class="mr-stock-info">ยอดเงิน M ในคลังทั้งหมด: '+fmtNum((agg?agg.qty:0)/1000000)+' M (ราคาเฉลี่ย '+fmtNum(agg?agg.price:0)+' บาท)</div>';
         } else if(row.fromStock){
           var opts = '<option value="">— เลือกรายการในคลัง —</option>'+stockGroups.map(function(g){
@@ -3781,11 +3782,14 @@ svg.icon{width:18px;height:18px;display:block}
     }
     if(e.target.classList.contains('mr-row-qty')){
       var qtyRaw = cleanDecimalInput(e.target.value);
-      if(row.fromStock && row.stockGroup){
+      if(row.fromStock && row.stockGroupKey){
         // "จำนวน" for M lines is in M-units (millions of Zeny) while the warehouse pool
         // is tracked in raw Zeny, so the cap needs the same conversion as the deduction.
+        // The M pool is fungible and can change from elsewhere (drops/undo on another
+        // page), so read it fresh here instead of the row's own stale snapshot.
         var isZenyRow = App.merchantCategory === 'zeny';
-        var maxAllowed = isZenyRow ? row.stockGroup.qty/1000000 : row.stockGroup.qty;
+        var liveGroup = isZenyRow ? sellableMoneyAggregate(App.currentServerId) : row.stockGroup;
+        var maxAllowed = isZenyRow ? liveGroup.qty/1000000 : liveGroup.qty;
         if(parseFloat(qtyRaw) > maxAllowed){
           qtyRaw = String(maxAllowed);
           toast('มีในคลังแค่ '+fmtNum(maxAllowed)+(isZenyRow?' M':' ชิ้น'));
@@ -3890,8 +3894,12 @@ svg.icon{width:18px;height:18px;display:block}
       var slots = (r.slots || []).map(function(s){ return String(s||'').trim(); }).filter(function(s){ return s; });
       if(ZENY_PINNED_LABELS.indexOf(name)===-1 && App.merchantItems[App.merchantCategory].indexOf(name)===-1) App.merchantItems[App.merchantCategory].push(name);
       var line = { id: r.lineId||uid(), name:name, rate:rate, qty:qty, currency:currency, total:rate*qty, slots:slots };
-      if(App.merchantType==='sell' && r.fromStock && r.stockGroupKey && r.stockGroup){
-        stockPlans.push({ row:r, line:line, tier:r.stockGroup.tier, records:r.stockGroup.records, rawAmount: isZenyForm ? qty*1000000 : qty });
+      if(App.merchantType==='sell' && r.fromStock && r.stockGroupKey){
+        // The M pool is fungible and can have grown/shrunk since the row was set to
+        // "from stock" (a drop/undo elsewhere updates the same pool) — read it fresh
+        // here so the sale deducts against the current stock, not a stale snapshot.
+        var liveGroup = isZenyForm ? sellableMoneyAggregate(App.currentServerId) : r.stockGroup;
+        if(liveGroup) stockPlans.push({ row:r, line:line, tier:liveGroup.tier, records:liveGroup.records, rawAmount: isZenyForm ? qty*1000000 : qty });
       }
       return line;
     });
@@ -4478,6 +4486,7 @@ svg.icon{width:18px;height:18px;display:block}
       saveItemWarehouseStock();
       saveItemLineClaimedQty();
       renderItemsPage();
+      renderItemRows();
       toast('ใส่คลัง Item '+itemTierLabel(warehouse)+' แล้ว');
     }
   }
@@ -4499,6 +4508,7 @@ svg.icon{width:18px;height:18px;display:block}
     }
     saveItemWarehouseStock();
     renderItemsPage();
+    renderItemRows();
     toast('ย้ายกลับไปที่รายการที่รอลงคลังแล้วทั้งหมด');
   }
 
@@ -4567,6 +4577,7 @@ svg.icon{width:18px;height:18px;display:block}
     saveItemWarehouseStock();
     hideItemsMoneyConfirmPopup();
     renderItemsPage();
+    renderItemRows();
     toast('ใส่คลังเงิน M แล้ว');
   });
 

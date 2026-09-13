@@ -2927,7 +2927,8 @@ svg.icon{width:18px;height:18px;display:block}
 
   function defaultRowCurrency(){ return 'baht'; }
   // A fresh M row always carries the fixed, locked name — never blank, never user-typed.
-  function newZenyRow(){ return newItemRow(ZENY_LABEL, null, null, 'baht'); }
+  // `price` is optional — passed in when carrying the last-used ราคา (เรท) forward after a save.
+  function newZenyRow(price){ return newItemRow(ZENY_LABEL, price!=null&&price!=='' ? price : null, null, 'baht'); }
   function activeRows(){
     if(App.merchantCategory==='zeny') return App.zenyRows;
     if(App.merchantCategory==='other') return App.otherRows;
@@ -4007,8 +4008,11 @@ svg.icon{width:18px;height:18px;display:block}
     }
     // Clear the entered rows after a successful save — keep the current
     // เซิร์ฟเวอร์/ประเภท/หมวดหมู่ selection, just don't leave stale text sitting
-    // in the fields for the next entry.
-    setActiveRows(App.merchantCategory==='zeny' ? [newZenyRow()] : [newItemRow(null, null, null, defaultRowCurrency())]);
+    // in the fields for the next entry. M is the one exception: its ราคา (the M↔baht
+    // rate) usually stays the same across several buys/sells in a row, so it's carried
+    // forward — only จำนวน clears, since that's what actually changes each time.
+    var keepZenyPrice = App.merchantCategory==='zeny' ? activeRows()[0].price : null;
+    setActiveRows(App.merchantCategory==='zeny' ? [newZenyRow(keepZenyPrice)] : [newItemRow(null, null, null, defaultRowCurrency())]);
     renderItemRows();
   });
 

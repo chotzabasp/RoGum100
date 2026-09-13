@@ -3978,7 +3978,8 @@ svg.icon{width:18px;height:18px;display:block}
       renderMerchantHistory();
       renderMerchantSummary();
       renderMrChart();
-      toast('บันทึก '+lines.length+' รายการแล้ว');
+      var isWarehouseBuy = App.merchantType==='buy' && (App.merchantCategory==='zeny' || App.merchantCategory==='item');
+      toast(isWarehouseBuy ? 'รายการซื้อถูกส่งไปคลังไอเทมแล้ว' : 'บันทึก '+lines.length+' รายการแล้ว');
       var newEntryEl = document.querySelector('[data-entry-id="'+newId+'"]');
       if(newEntryEl){
         newEntryEl.scrollIntoView({block:'nearest'});

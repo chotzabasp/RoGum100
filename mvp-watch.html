@@ -3250,9 +3250,9 @@ svg.icon{width:18px;height:18px;display:block}
 
   // Groups the filtered lines by server+category+item name(+slots) so "ซื้อมาเท่าไหร่,
   // ขายไปเท่าไหร่, เหลือกี่อัน, กำไรเท่าไหร่" reads at a glance instead of having to
-  // mentally match up separate buy/sell rows. Cost of goods sold uses the weighted-average
-  // buy cost for that item, so profit reflects only what was actually sold — unsold stock
-  // is never counted as a "loss". Each group also carries its own transaction rows (tx).
+  // mentally match up separate buy/sell rows. Cost of goods sold is FIFO (see below), so
+  // profit reflects only what was actually sold — unsold stock is never counted as a
+  // "loss". Each group also carries its own transaction rows (tx).
   function computeHistoryItemGroups(){
     var groups = {}, order = [];
     historyScopedLines().forEach(function(t){
@@ -3273,9 +3273,36 @@ svg.icon{width:18px;height:18px;display:block}
     });
     return order.map(function(key){
       var g = groups[key];
-      g.avgCost = g.buyQty>0 ? g.buyBaht/g.buyQty : 0;
+      // FIFO (ซื้อก่อน-ขายก่อน): each sale consumes the oldest unsold lots, so what's
+      // left on hand is the most recently bought stock at its own price — not an average
+      // blended with lots that were already sold. A sale made before its purchase was
+      // logged runs a deficit that the next purchase covers first, keeping เหลือ =
+      // ซื้อมา − ขายไป.
+      var lots = [], deficit = 0, cogs = 0;
+      g.tx.slice().reverse().forEach(function(t){            // g.tx is newest-first
+        var qty = parseFloat(t.line.qty)||0;
+        if(qty<=0) return;
+        if(t.type==='buy'){
+          var unitCost = lineBahtValue(t.entry, t.line)/qty;
+          if(deficit>0){
+            var cover = Math.min(qty, deficit);
+            cogs += cover*unitCost; deficit -= cover; qty -= cover;
+          }
+          if(qty>0) lots.push({ qty:qty, unitCost:unitCost });
+        } else {
+          var need = qty;
+          while(need>0 && lots.length){
+            var lot = lots[0];
+            var take = Math.min(need, lot.qty);
+            cogs += take*lot.unitCost; lot.qty -= take; need -= take;
+            if(lot.qty<=0) lots.shift();
+          }
+          deficit += need;
+        }
+      });
       g.remaining = g.buyQty - g.sellQty;
-      g.profit = g.sellBaht - g.avgCost*g.sellQty;
+      g.leftCost = lots.reduce(function(s,lot){ return s+lot.qty*lot.unitCost; }, 0);
+      g.profit = g.sellBaht - cogs;
       return g;
     }).sort(function(a,b){ return b.lastTs-a.lastTs; });
   }
@@ -3311,7 +3338,7 @@ svg.icon{width:18px;height:18px;display:block}
     var left = g.remaining>0 ? g.remaining : 0;
     var open = !!historyState.expanded[g.key];
     var leftSub = over>0 ? 'ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit
-                : (left>0 ? 'ทุนค้าง ~'+fmtNum(Math.round(g.avgCost*left))+' บ' : (g.buyQty>0 ? 'ขายหมดแล้ว' : '—'));
+                : (left>0 ? 'ทุนค้าง ~'+fmtNum(Math.round(g.leftCost))+' บ' : (g.buyQty>0 ? 'ขายหมดแล้ว' : '—'));
     var profitCell = g.sellQty<=0
       ? '<span class="mr-it-cell profit none"><i>กำไร</i><b>—</b><small>ยังไม่ได้ขาย</small></span>'
       : '<span class="mr-it-cell profit"><i>กำไร</i><b class="'+(g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</b>'+

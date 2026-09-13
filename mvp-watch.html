@@ -3040,7 +3040,7 @@ svg.icon{width:18px;height:18px;display:block}
         '<div class="mr-item-row-main">'+
           '<div class="mr-name-wrap">'+
             '<span class="mr-row-index">'+(rowIdx+1)+'.</span>'+
-            '<input type="text" class="mr-row-name" autocomplete="off" '+(lockFields?'disabled':'')+' placeholder="'+(App.merchantCategory==='zeny'?'ตัวอย่าง : Zeny (1M), Zeny (100k)':App.merchantCategory==='other'?'เช่น : AirTime, สุ่มกาชา, เติมบัตร, จ้างปั้นตัว, อื่นๆ':'เช่น : +5 มัพ (ถ้ามีออฟ+เพิ่มSlot), C.โซฮี, อื่นๆ')+'" value="'+row.name.replace(/"/g,'&quot;')+'">'+
+            '<input type="text" class="mr-row-name" autocomplete="off" placeholder="'+(App.merchantCategory==='zeny'?'ตัวอย่าง : Zeny (1M), Zeny (100k)':App.merchantCategory==='other'?'เช่น : AirTime, สุ่มกาชา, เติมบัตร, จ้างปั้นตัว, อื่นๆ':'เช่น : +5 มัพ (ถ้ามีออฟ+เพิ่มSlot), C.โซฮี, อื่นๆ')+'" value="'+row.name.replace(/"/g,'&quot;')+'">'+
             '<div class="mr-item-suggest" hidden></div>'+
           '</div>'+
           '<input type="text" inputmode="decimal" class="mr-row-price" placeholder="ราคา" value="'+formatDecimalDisplay(row.price)+'">'+

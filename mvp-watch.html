@@ -3026,8 +3026,11 @@ svg.icon{width:18px;height:18px;display:block}
             return '<option value="'+escapeHtml(g.key)+'"'+(row.stockGroupKey===g.key?' selected':'')+'>'+escapeHtml(label)+'</option>';
           }).join('');
           sellSourceHtml += '<select class="mr-stock-select" data-row-id="'+row.rid+'">'+opts+'</select>';
-          if(row.stockGroupKey && row.stockGroup){
-            sellSourceHtml += '<div class="mr-stock-info">คงเหลือในคลัง: '+fmtNum(row.stockGroup.qty)+' ชิ้น</div>';
+          if(row.stockGroupKey){
+            // Read the live group (not the row's own cached snapshot) so a restore/undo
+            // elsewhere that touches this same batch shows up here immediately.
+            var liveItemGroup = stockGroups.filter(function(g){ return g.key===row.stockGroupKey; })[0];
+            if(liveItemGroup) sellSourceHtml += '<div class="mr-stock-info">คงเหลือในคลัง: '+fmtNum(liveItemGroup.qty)+' ชิ้น</div>';
           }
         }
         sellSourceHtml += '</div>';
@@ -3785,11 +3788,11 @@ svg.icon{width:18px;height:18px;display:block}
       if(row.fromStock && row.stockGroupKey){
         // "จำนวน" for M lines is in M-units (millions of Zeny) while the warehouse pool
         // is tracked in raw Zeny, so the cap needs the same conversion as the deduction.
-        // The M pool is fungible and can change from elsewhere (drops/undo on another
-        // page), so read it fresh here instead of the row's own stale snapshot.
+        // Stock can change from elsewhere (drops/undo/delete-restore on another page),
+        // so read it fresh here instead of the row's own stale snapshot.
         var isZenyRow = App.merchantCategory === 'zeny';
-        var liveGroup = isZenyRow ? sellableMoneyAggregate(App.currentServerId) : row.stockGroup;
-        var maxAllowed = isZenyRow ? liveGroup.qty/1000000 : liveGroup.qty;
+        var liveGroup = isZenyRow ? sellableMoneyAggregate(App.currentServerId) : findSellableGroup(App.currentServerId, App.merchantCategory, row.stockGroupKey);
+        var maxAllowed = liveGroup ? (isZenyRow ? liveGroup.qty/1000000 : liveGroup.qty) : 0;
         if(parseFloat(qtyRaw) > maxAllowed){
           qtyRaw = String(maxAllowed);
           toast('มีในคลังแค่ '+fmtNum(maxAllowed)+(isZenyRow?' M':' ชิ้น'));
@@ -3895,11 +3898,11 @@ svg.icon{width:18px;height:18px;display:block}
       if(ZENY_PINNED_LABELS.indexOf(name)===-1 && App.merchantItems[App.merchantCategory].indexOf(name)===-1) App.merchantItems[App.merchantCategory].push(name);
       var line = { id: r.lineId||uid(), name:name, rate:rate, qty:qty, currency:currency, total:rate*qty, slots:slots };
       if(App.merchantType==='sell' && r.fromStock && r.stockGroupKey){
-        // The M pool is fungible and can have grown/shrunk since the row was set to
-        // "from stock" (a drop/undo elsewhere updates the same pool) — read it fresh
-        // here so the sale deducts against the current stock, not a stale snapshot.
-        var liveGroup = isZenyForm ? sellableMoneyAggregate(App.currentServerId) : r.stockGroup;
-        if(liveGroup) stockPlans.push({ row:r, line:line, tier:liveGroup.tier, records:liveGroup.records, rawAmount: isZenyForm ? qty*1000000 : qty });
+        // Stock can have grown/shrunk since the row was set to "from stock" (a
+        // drop/undo/delete-restore elsewhere touches the same pool/batch) — read it
+        // fresh here so the sale deducts against the current stock, not a stale snapshot.
+        var liveGroup = isZenyForm ? sellableMoneyAggregate(App.currentServerId) : findSellableGroup(App.currentServerId, App.merchantCategory, r.stockGroupKey);
+        if(liveGroup) stockPlans.push({ row:r, line:line, tier:liveGroup.tier, records:liveGroup.records, rawAmount: isZenyForm ? qty*1000000 : qty, isMoney: isZenyForm });
       }
       return line;
     });
@@ -3926,7 +3929,11 @@ svg.icon{width:18px;height:18px;display:block}
           toast('คลังมีไม่พอ ปรับจำนวน "'+plan.line.name+'" เหลือ '+fmtNum(newQty));
         }
         plan.line.warehouseSale = { tier: plan.tier, amount: taken, name: plan.line.name, price: plan.line.rate, currency: plan.line.currency, slots: plan.line.slots,
-          sourceLines: result.breakdown.map(function(b){ return { lineId:b.lineId, amount:b.amount }; }) };
+          sourceLines: result.breakdown.map(function(b){
+            return plan.isMoney
+              ? { lineId:b.lineId, amount:b.amount, srcRate:b.srcRate, srcCurrency:b.srcCurrency }
+              : { lineId:b.lineId, amount:b.amount };
+          }) };
         // The sale is committed now — unlink the row from the (now stale) stock group
         // it was picked from, so a lingering form doesn't show yesterday's "remaining".
         plan.row.fromStock = false;
@@ -4011,6 +4018,7 @@ svg.icon{width:18px;height:18px;display:block}
             if(l.warehouseSale) restoreWarehouseStock(entry.serverId, l.warehouseSale);
           });
           saveItemWarehouseStock();
+          renderItemRows();
         }
         App.merchantLog = App.merchantLog.filter(function(e){ return e.id!==id; });
         saveMerchantLog();
@@ -4216,7 +4224,10 @@ svg.icon{width:18px;height:18px;display:block}
       var available = tier==='M' ? (parseFloat(it.confirmedAmount)||0) : Math.max(1, Math.round(parseFloat(it.qty)||1));
       var take = Math.min(available, remaining);
       if(take<=0) continue;
-      breakdown.push({ id: it.id, lineId: it.lineId, amount: take });
+      // Carry the source record's own cost basis along so a later restore (edit/delete)
+      // can rebuild it accurately — a sale spanning several batches must not flatten
+      // their different purchase rates into one shared value.
+      breakdown.push({ id: it.id, lineId: it.lineId, amount: take, srcRate: it.srcRate, srcCurrency: it.srcCurrency });
       var left = available - take;
       if(left<=0.0000001){
         arr.splice(idx,1);
@@ -4247,8 +4258,14 @@ svg.icon{width:18px;height:18px;display:block}
       if(!(sl.amount>0)) return;
       var id = uid();
       if(sale.tier==='M'){
+        // Each sourceLine carries its OWN original cost basis (a sale can span several
+        // batches bought at different rates) — restore it there, not a shared sale-level
+        // value, or the weighted-average price of the whole pool would be corrupted.
+        // srcQty/srcTotal (the cosmetic "ที่มา: x × y" breakdown) can't be reconstructed
+        // exactly post-sale, so they're left unset — only the rate (what pricing math
+        // actually needs) is carried through.
         w.M.push({ id:id, lineId: sl.lineId||uid(), name:sale.name, confirmedAmount:sl.amount, ts:Date.now(),
-          srcQty:sale.srcQty, srcRate:sale.srcRate, srcTotal:sale.srcTotal, srcCurrency:sale.srcCurrency });
+          srcRate:sl.srcRate, srcCurrency:sl.srcCurrency||sale.currency });
       } else {
         w[sale.tier].push({ id:id, lineId: sl.lineId||uid(), name:sale.name, qty:sl.amount, price:sale.price,
           total:(parseFloat(sale.price)||0)*sl.amount, currency:sale.currency, ts:Date.now(), slots:(sale.slots||[]).slice() });

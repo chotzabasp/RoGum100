@@ -3017,7 +3017,7 @@ svg.icon{width:18px;height:18px;display:block}
         if(row.fromStock && isZenyTab){
           // Money is fungible — no batch to pick, just show the pooled total.
           var agg = row.stockGroup || stockGroups[0];
-          sellSourceHtml += '<div class="mr-stock-info">ยอดเงิน M ในคลังทั้งหมด: '+fmtNum((agg?agg.qty:0)/1000000)+' M</div>';
+          sellSourceHtml += '<div class="mr-stock-info">ยอดเงิน M ในคลังทั้งหมด: '+fmtNum((agg?agg.qty:0)/1000000)+' M (ราคาเฉลี่ยถ่วงน้ำหนักตามสัดส่วนที่ซื้อมาแต่ละครั้ง)</div>';
         } else if(row.fromStock){
           var opts = '<option value="">— เลือกรายการในคลัง —</option>'+stockGroups.map(function(g){
             var unit = g.currency==='zeny' ? 'z' : 'บ';

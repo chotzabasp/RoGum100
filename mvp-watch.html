@@ -940,6 +940,7 @@ svg.icon{width:18px;height:18px;display:block}
                 </div>
                 <input type="search" class="mr-hist-search" id="mrHistorySearch" placeholder="ค้นหาไอเทม…" autocomplete="off">
                 <select class="chart-tf-select" id="mrHistoryRange">
+                  <option value="today">วันนี้</option>
                   <option value="7d">7 วันล่าสุด</option>
                   <option value="30d">30 วันล่าสุด</option>
                   <option value="90d">3 เดือนล่าสุด</option>
@@ -3171,7 +3172,7 @@ svg.icon{width:18px;height:18px;display:block}
   function entryType(e){ return e.type === 'sell' ? 'sell' : 'buy'; }
 
   var MR_HISTORY_DAY_STEP = 30; // rows revealed per "แสดงเพิ่ม" click in the ตามวัน view
-  var MR_HISTORY_RANGE_DAYS = { '7d':7, '30d':30, '90d':90, 'all':null };
+  var MR_HISTORY_RANGE_DAYS = { 'today':1, '7d':7, '30d':30, '90d':90, 'all':null };
   var historyState = { serverId:'all', view:'item', range:'all', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{}, soldOutOpen:null };
 
   function mrDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }

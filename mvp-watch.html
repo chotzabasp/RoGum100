@@ -1393,6 +1393,32 @@ svg.icon{width:18px;height:18px;display:block}
   var fmtDateTime = function(ts){ return new Date(ts).toLocaleString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); };
   var fmtClock = function(ts){ return new Date(ts).toLocaleTimeString('th-TH', {hour12:false}); };
 
+  // Parses "the clock time the boss died" from the นาที field, accepting either
+  // "14.35" (hour.minute — minute taken literally, so ".5" means :05) or a bare "1435"/
+  // "935" (HHMM/HMM, last 2 digits are minutes). Returns a timestamp for today at that
+  // time, rolled back one day if it would otherwise land in the future (a boss can't die
+  // later than "now") — or null if the text doesn't parse into a valid time at all.
+  function parseDeathTimeInput(raw){
+    raw = String(raw||'').trim();
+    if(!raw) return null;
+    var hh, mm;
+    if(raw.indexOf('.')!==-1 || raw.indexOf(':')!==-1){
+      var parts = raw.split(/[.:]/);
+      if(parts.length!==2 || !/^\d+$/.test(parts[0]) || !/^\d+$/.test(parts[1])) return null;
+      hh = parseInt(parts[0], 10); mm = parseInt(parts[1], 10);
+    } else if(/^\d{3,4}$/.test(raw)){
+      hh = parseInt(raw.slice(0, raw.length-2), 10);
+      mm = parseInt(raw.slice(-2), 10);
+    } else {
+      return null;
+    }
+    if(!(hh>=0 && hh<=23) || !(mm>=0 && mm<=59)) return null;
+    var d = new Date();
+    d.setHours(hh, mm, 0, 0);
+    if(d.getTime() > Date.now()) d.setDate(d.getDate()-1);
+    return d.getTime();
+  }
+
   function fmtDuration(ms){
     var neg = ms < 0;
     ms = Math.abs(ms);
@@ -1819,7 +1845,7 @@ svg.icon{width:18px;height:18px;display:block}
           '<div class="bc-main"><div class="bc-title">'+boss.name+'</div><div class="bc-sub">'+metaLine+'</div>'+killedByHtml+'</div>'+
           '<div class="bc-map" data-map>'+mapSVG(boss.map)+(act && act.marker ? '<div class="bc-pin" style="left:'+act.marker.x+'%;top:'+act.marker.y+'%"></div>' : '')+'</div>'+
           '<div class="bc-time-block">'+timeHtml+subHtml+delayHtml+'</div>'+
-          '<input class="bc-input" type="number" min="1" placeholder="นาที" data-minutes title="ระบุนาทีเองถ้าไม่ใช้ค่าเริ่มต้น">'+
+          '<input class="bc-input" type="text" inputmode="decimal" placeholder="นาที" data-minutes title="ระบุเวลาที่บอสตายจริง เช่น 14.35 หรือ 1435 (ถ้าไม่ตรงกับตอนนี้)">'+
           '<button class="btn btn-success bc-kill-btn" data-action="kill">ตายแล้ว</button>'+
           '<button class="bc-close" data-action="remove" title="เอาออกจากรายการ">'+
             '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>'+
@@ -5211,17 +5237,24 @@ svg.icon{width:18px;height:18px;display:block}
       var accs = Auth.accounts();
       var acc = accs[App.session.email];
       var minutesInput = card.querySelector('[data-minutes]');
-      var customMinutes = minutesInput ? parseFloat(minutesInput.value) : NaN;
-      var minutesToUse = (customMinutes > 0) ? customMinutes : boss.minutes;
+      var rawTimeInput = minutesInput ? minutesInput.value.trim() : '';
+      // Empty field = died right now (unchanged default). A non-empty field must parse
+      // into a valid time — เช่น 14.35 หรือ 1435 — or the kill doesn't get recorded with
+      // wrong data; the field gets a small warning instead of silently using "now".
+      var deathTs = rawTimeInput ? parseDeathTimeInput(rawTimeInput) : Date.now();
+      if(deathTs==null){
+        showFieldTip(minutesInput, 'รูปแบบเวลาไม่ถูกต้อง เช่น 14.35 หรือ 1435');
+        return;
+      }
       var items = App.pendingItems[bossId] || [];
 
-      App.log.push({ ts: Date.now(), bossName: boss.name, items: items.slice() });
+      App.log.push({ ts: deathTs, bossName: boss.name, items: items.slice() });
       saveLog();
 
       App.active[bossId] = {
-        targetTime: Date.now() + minutesToUse*60000,
+        targetTime: deathTs + boss.minutes*60000,
         marker: null,
-        adjusted: customMinutes > 0,
+        adjusted: !!rawTimeInput,
         startedBy: acc ? acc.name : null
       };
       delete App.pendingItems[bossId];
@@ -5231,22 +5264,25 @@ svg.icon{width:18px;height:18px;display:block}
     }
   });
 
-  // ---------- inline minute override (Enter to apply while active) ----------
+  // ---------- inline death-time correction (Enter to apply while active) ----------
   document.getElementById('roster').addEventListener('keydown', function(e){
     if(e.key!=='Enter') return;
     var input = e.target.closest('[data-minutes]');
     if(!input) return;
     var card = input.closest('.boss-card');
     var bossId = card.dataset.boss;
+    var boss = App.db.filter(function(b){ return b.id===bossId; })[0];
     var act = App.active[bossId];
-    var mins = parseFloat(input.value);
-    if(act && mins > 0){
-      act.targetTime = Date.now() + mins*60000;
-      act.adjusted = true;
-      fired.warn[bossId] = false; fired.crit[bossId] = false;
-      saveActive(); renderRoster();
-      toast('ปรับเวลาแล้ว');
-    }
+    if(!act || !boss) return;
+    var raw = input.value.trim();
+    if(!raw) return;
+    var deathTs = parseDeathTimeInput(raw);
+    if(deathTs==null){ showFieldTip(input, 'รูปแบบเวลาไม่ถูกต้อง เช่น 14.35 หรือ 1435'); return; }
+    act.targetTime = deathTs + boss.minutes*60000;
+    act.adjusted = true;
+    fired.warn[bossId] = false; fired.crit[bossId] = false;
+    saveActive(); renderRoster();
+    toast('ปรับเวลาแล้ว');
   });
 
   // ---------- history panel ----------

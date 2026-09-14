@@ -1737,7 +1737,7 @@ svg.icon{width:18px;height:18px;display:block}
     App.farmExchangeRates = store(keys.farmExRate, null) || {};
     App.farmMapNames = store(keys.farmMapNames, null) || {};
     App.farmLog = store(keys.farmLog, []);
-    App.farmServerId = store(keys.farmServer, null) || SERVER_RATES[0].id;
+    App.farmServerId = store(keys.farmServer, null) || (SERVER_RATES[0] && SERVER_RATES[0].id) || null;
     App.tickerServers = store(keys.tickerServers, null) || defaultRateSlots();
     App.tickerSelectedServers = store(keys.tickerSelectedServers, null) || App.tickerServers.slice();
     App.tickerSelectedServers = App.tickerSelectedServers.filter(function(id){ return App.tickerServers.indexOf(id)!==-1; });
@@ -2080,6 +2080,7 @@ svg.icon{width:18px;height:18px;display:block}
   function renderRateChips(){
     var root = document.getElementById('rateChips');
     var removable = App.rateSlots.length > 1;
+    if(!SERVER_RATES.length){ root.innerHTML = '<p class="empty-note">ยังไม่มีเซิร์ฟเวอร์ในระบบ</p>'; return; }
     var cards = App.rateSlots.map(function(serverId, i){
       var sv = serverRateById(serverId) || SERVER_RATES[0];
       var options = SERVER_RATES.map(function(s){
@@ -4031,7 +4032,7 @@ svg.icon{width:18px;height:18px;display:block}
   document.getElementById('rateChips').addEventListener('click', function(e){
     var addBtn = e.target.closest('#addRateChipBtn');
     if(addBtn){
-      if(App.rateSlots.length >= MAX_RATE_CHIP_SLOTS) return;
+      if(App.rateSlots.length >= MAX_RATE_CHIP_SLOTS || !SERVER_RATES.length) return;
       var used = App.rateSlots;
       var next = SERVER_RATES.filter(function(s){ return used.indexOf(s.id)===-1; })[0] || SERVER_RATES[0];
       App.rateSlots.push(next.id);

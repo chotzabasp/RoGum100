@@ -1569,7 +1569,55 @@ svg.icon{width:18px;height:18px;display:block}
     { id:'moonlight', name:'Moonlight Flower', glyph:'🌙', map:'cave', loc:'gef_dun00', minutes:60,
       items:['Moonlight Flower Card','Scarlet Rose'] },
     { id:'doppel', name:'Doppelganger', glyph:'🗡️', map:'grid', loc:'prt_church', minutes:60,
-      items:['Doppelganger Card','Old Violet Box'] }
+      items:['Doppelganger Card','Old Violet Box'] },
+    { id:'phreeoni', name:'Phreeoni', glyph:'🪱', map:'field', loc:'moc_fild15', minutes:120,
+      items:['Phreeoni Card','Big Ribbon'] },
+    { id:'hatii', name:'Hatii', glyph:'🐺', map:'field', loc:'xmas_fild01', minutes:120,
+      items:['Hatii Card','Stunner'] },
+    { id:'stormyknight', name:'Stormy Knight', glyph:'🛡️', map:'grid', loc:'xmas_dun02', minutes:60,
+      items:['Stormy Knight Card','Alarm Mask'] },
+    { id:'taogunka', name:'Tao Gunka', glyph:'🐂', map:'cave', loc:'beach_dun2', minutes:300,
+      items:['Tao Gunka Card','Horrendous Mouth'] },
+    { id:'dracula', name:'Dracula', glyph:'🧛', map:'cave', loc:'gef_dun02', minutes:60,
+      items:['Dracula Card','Blood Sucker'] },
+    { id:'pharaoh', name:'Pharaoh', glyph:'👑', map:'cave', loc:'in_sphinx5', minutes:60,
+      items:['Pharaoh Card','Sunglasses'] },
+    { id:'turtlegeneral', name:'Turtle General', glyph:'🐢', map:'field', loc:'tur_dun04', minutes:60,
+      items:['Turtle General Card','Tortoise Shell'] },
+    { id:'atroce', name:'Atroce', glyph:'🐗', map:'field', loc:'ra_fild02', minutes:240,
+      items:['Atroce Card','Feather Beret'] },
+    { id:'mistress', name:'Mistress', glyph:'🐱', map:'field', loc:'mjolnir_04', minutes:120,
+      items:['Mistress Card','Cat Ear Beret'] },
+    { id:'drake', name:'Drake', glyph:'🐉', map:'grid', loc:'treasure02', minutes:120,
+      items:['Drake Card','Fin Helm'] },
+    { id:'ladytanee', name:'Lady Tanee', glyph:'🌺', map:'cave', loc:'ayo_dun02', minutes:420,
+      items:['Lady Tanee Card','Alluring Petals'] },
+    { id:'egnigemcenia', name:'Egnigem Cenia', glyph:'🤖', map:'grid', loc:'lhz_dun02', minutes:120,
+      items:['Egnigem Cenia Card','Metal Heart'] },
+    { id:'kield01', name:'Kiel-D-01', glyph:'🛰️', map:'grid', loc:'kh_dun02', minutes:120,
+      items:['Kiel-D-01 Card','Vali'] },
+    { id:'samuraispecter', name:'Samurai Specter', glyph:'👻', map:'cave', loc:'ama_dun03', minutes:91,
+      items:['Samurai Specter Card','Fox Hat'] },
+    { id:'orchero', name:'Orc Hero', glyph:'👺', map:'field', loc:'gef_fild12', minutes:60,
+      items:['Orc Hero Card','Bloody Iron Ball'] },
+    { id:'darklord', name:'Dark Lord', glyph:'😈', map:'field', loc:'gl_chyard', minutes:60,
+      items:['Dark Lord Card','Bloody Rune'] },
+    { id:'fallenbishop', name:'Fallen Bishop', glyph:'🕯️', map:'grid', loc:'abbey02', minutes:120,
+      items:['Fallen Bishop Card','Fallen Bishop Miter'] },
+    { id:'beelzebub', name:'Beelzebub', glyph:'🪰', map:'grid', loc:'abbey03', minutes:720,
+      items:['Beelzebub Card','Dark Rosary'] },
+    { id:'ifrit', name:'Ifrit', glyph:'🔥', map:'cave', loc:'thor_v03', minutes:660,
+      items:['Ifrit Card','Flame Heart'] },
+    { id:'randgris', name:'Valkyrie Randgris', glyph:'👼', map:'grid', loc:'odin_tem03', minutes:480,
+      items:['Valkyrie Randgris Card','Valkyrie Shield'] },
+    { id:'detardeurus', name:'Detardeurus', glyph:'🕷️', map:'cave', loc:'abyss_03', minutes:180,
+      items:['Detardeurus Card','Abyss Ring'] },
+    { id:'rsx0806', name:'RSX-0806', glyph:'⚙️', map:'cave', loc:'mine_dun02', minutes:125,
+      items:['RSX-0806 Card','Mineral Ore'] },
+    { id:'tendrilrion', name:'Tendrilrion', glyph:'🌿', map:'field', loc:'spl_fild03', minutes:60,
+      items:['Tendrilrion Card','Vine Whip'] },
+    { id:'hardrockmammoth', name:'Hardrock Mammoth', glyph:'🦣', map:'field', loc:'man_fild03', minutes:240,
+      items:['Hardrock Mammoth Card','Mammoth Tusk'] }
   ];
   var STARTER_IDS = ['baphomet','orclord','osiris','amonra'];
 
@@ -1949,7 +1997,7 @@ svg.icon{width:18px;height:18px;display:block}
         subHtml = '<div class="bc-time-sub">ยังไม่ได้ฆ่า</div>';
       }
       var killedByHtml = (act && act.startedBy) ? '<div class="bc-killedby">🏹 ฆ่าโดย '+act.startedBy+'</div>' : '';
-      var metaLine = 'เกิดใหม่ทุก '+boss.minutes+' นาที' + (act ? ' • เกิดเวลา '+fmtClock(act.targetTime) : '');
+      var metaLine = 'เกิดใหม่ทุก '+boss.minutes+' นาที • '+boss.loc + (act ? ' • เกิดเวลา '+fmtClock(act.targetTime) : '');
 
       return '<div class="boss-card'+(st==='critical'?' state-critical':'')+'" data-boss="'+boss.id+'">'+
         '<div class="bc-row">'+
@@ -5401,7 +5449,7 @@ svg.icon{width:18px;height:18px;display:block}
       var already = App.db.some(function(d){ return d.id===b.id; });
       return '<div class="search-result-row'+(already?' added':'')+'" data-catalog-id="'+b.id+'">'+
         '<div class="search-result-avatar">'+b.glyph+'</div>'+
-        '<div class="search-result-main"><div class="search-result-title">'+b.name+'</div><div class="search-result-sub">เกิดใหม่ทุก '+b.minutes+' นาที</div></div>'+
+        '<div class="search-result-main"><div class="search-result-title">'+b.name+'</div><div class="search-result-sub">เกิดใหม่ทุก '+b.minutes+' นาที • '+b.loc+'</div></div>'+
         '<div class="search-result-action">'+(already?'เพิ่มแล้ว ✓':'+ เพิ่ม')+'</div>'+
       '</div>';
     }).join('');

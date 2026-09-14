@@ -711,7 +711,8 @@ svg.icon{width:18px;height:18px;display:block}
 .bc-time.state-overdue{color:var(--success)}
 .bc-time.idle{color:var(--text-dim)}
 .bc-time-sub{font-size:.68rem;color:var(--text-dim);margin-top:.1rem}
-.bc-delay-pill{font-size:.62rem;font-weight:700;padding:.1rem .4rem;border-radius:999px;background:color-mix(in srgb, var(--warn) 22%, transparent);color:var(--warn);margin-top:.25rem;display:inline-flex;align-items:center;gap:.2rem;white-space:nowrap}
+.bc-delay-pill{font-size:.62rem;font-weight:700;padding:.1rem .4rem;border-radius:999px;background:color-mix(in srgb, var(--warn) 22%, transparent);color:var(--warn);margin-top:.25rem;display:inline-flex;align-items:center;gap:.2rem;white-space:nowrap;border:none;cursor:pointer}
+.bc-delay-pill:hover{background:color-mix(in srgb, var(--warn) 34%, transparent)}
 .bc-input{width:90px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.45rem .55rem;font-size:.82rem;text-align:center}
 .bc-kill-btn{padding:.5rem .9rem}
 
@@ -1937,7 +1938,7 @@ svg.icon{width:18px;height:18px;display:block}
         var approxMin = Math.max(0, Math.ceil(remaining/60000));
         subHtml = '<div class="bc-time-sub" data-sub>'+(remaining>0 ? 'อีก ~'+approxMin+' นาที' : 'เลยเวลาโดยประมาณ')+'</div>';
         if(act.adjusted){
-          delayHtml = '<div class="bc-delay-pill">⏱ เดลย์เวลา</div>';
+          delayHtml = '<button type="button" class="bc-delay-pill" data-action="clear-time" title="ล้างเวลาที่จับอยู่ กลับไปเป็นยังไม่ได้ฆ่า">⏱ เคลียร์เวลา</button>';
         }
       } else {
         timeHtml = '<div class="bc-time idle">—</div>';
@@ -5494,6 +5495,13 @@ svg.icon{width:18px;height:18px;display:block}
       fired.warn[bossId] = false; fired.crit[bossId] = false;
       saveActive(); renderRoster(); renderStats();
       toast('บันทึกการฆ่า '+boss.name+' แล้ว — เริ่มจับเวลารอบใหม่');
+    } else if(action==='clear-time'){
+      // ล้างเวลาที่จับอยู่ทั้งหมด กลับไปเป็น "ยังไม่ได้ฆ่า" — ไม่ใช่แค่เอาส่วนที่ปรับ
+      // เวลาออก แต่เลิกจับเวลารอบนี้ทั้งรอบ (เผื่อกดผิดหรืออยากเริ่มนับใหม่)
+      delete App.active[bossId];
+      fired.warn[bossId] = false; fired.crit[bossId] = false;
+      saveActive(); renderRoster(); renderStats();
+      toast('เคลียร์เวลาของ '+boss.name+' แล้ว');
     }
   });
 

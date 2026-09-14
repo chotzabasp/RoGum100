@@ -5142,7 +5142,7 @@ svg.icon{width:18px;height:18px;display:block}
         var name = (r.profiles && r.profiles.display_name) || 'ไม่ทราบชื่อ';
         return '<div class="admin-topup-row party-member-row">'+
           '<div class="admin-topup-main"><div class="admin-topup-user">'+name+'</div></div>'+
-          '<div class="admin-topup-actions"><button type="button" class="btn btn-ghost" data-remove-member="'+r.member_id+'">เอาออก</button></div>'+
+          '<div class="admin-topup-actions"><button type="button" class="btn btn-ghost btn-sm" data-remove-member="'+r.member_id+'">เอาออก</button></div>'+
         '</div>';
       }).join('');
     });
@@ -5161,7 +5161,7 @@ svg.icon{width:18px;height:18px;display:block}
           '<div class="admin-topup-actions">'+
             (viewing
               ? '<span class="membership-pill ok">กำลังดูอยู่</span>'
-              : '<button type="button" class="btn btn-primary" data-view-party="'+m.hostId+'">ดูข้อมูลปาร์ตี้นี้</button>')+
+              : '<button type="button" class="btn btn-primary btn-sm" data-view-party="'+m.hostId+'">ดูข้อมูลปาร์ตี้นี้</button>')+
           '</div>'+
         '</div>';
       }).join('');

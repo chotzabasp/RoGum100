@@ -636,18 +636,10 @@ svg.icon{width:18px;height:18px;display:block}
   padding:.65rem 1rem;font-size:.84rem;margin-bottom:1.1rem;color:var(--text-dim);
 }
 .intro-banner button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem}
-.party-mode-banner{
-  display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-left:3px solid var(--grad-b);
-  border-radius:var(--radius-m);
-  padding:.65rem 1rem;font-size:.84rem;margin-bottom:1.1rem;color:var(--text-dim);
-}
-.party-mode-banner b{color:var(--text)}
 .party-panel{margin-bottom:1.1rem}
-.party-panel-controls{display:flex;align-items:center;gap:.7rem}
-.party-panel-summary{font-size:.78rem;color:var(--text-dim)}
+.party-panel.viewing-party{border-left:3px solid var(--grad-b)}
+.party-panel-controls{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;min-width:0}
+.party-panel-summary{font-size:.78rem;color:var(--text-dim);min-width:0;overflow-wrap:anywhere}
 .party-member-row{padding:.55rem .8rem;gap:.6rem}
 .party-member-row .admin-topup-user{font-size:.84rem;font-weight:600}
 .party-panel-body{display:flex;flex-direction:column;gap:.9rem}
@@ -1269,11 +1261,6 @@ svg.icon{width:18px;height:18px;display:block}
     <div class="intro-banner" id="introBanner" hidden>
       <span>นี่คือข้อมูลตัวอย่างสำหรับทดลองใช้งาน — แก้ไขหรือลบได้ตามต้องการ</span>
       <button id="introClose" aria-label="ปิด">✕</button>
-    </div>
-
-    <div class="party-mode-banner" id="partyModeBanner" hidden>
-      <span>กำลังดูปาร์ตี้ของ <b id="partyModeHostName">-</b></span>
-      <button type="button" class="btn btn-ghost btn-sm" id="partyModeExitBtn">กลับไปดูของตัวเอง</button>
     </div>
 
     <div class="panel party-panel" id="partyPanel">
@@ -1925,24 +1912,18 @@ svg.icon{width:18px;height:18px;display:block}
       });
     });
   }
-  function renderPartyModeBanner(){
-    var banner = document.getElementById('partyModeBanner');
-    banner.hidden = !App.viewingHostId;
-    if(App.viewingHostId) document.getElementById('partyModeHostName').textContent = App.viewingHostName || '-';
-  }
   function switchToPersonalView(){
     App.viewingHostId = null;
     App.viewingHostName = null;
     persist(App.keys.viewingHost, null);
-    loadUserBosses().then(function(){ renderRoster(); renderStats(); renderPartyModeBanner(); renderPartyPanel(); });
+    loadUserBosses().then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
   }
   function switchToPartyView(hostId, hostName){
     App.viewingHostId = hostId;
     App.viewingHostName = hostName;
     persist(App.keys.viewingHost, hostId);
-    loadUserBosses().then(function(){ renderRoster(); renderStats(); renderPartyModeBanner(); switchPage('timers'); });
+    loadUserBosses().then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); switchPage('timers'); });
   }
-  document.getElementById('partyModeExitBtn').addEventListener('click', switchToPersonalView);
 
   function supaAddBoss(bossId){
     return supa.from('user_bosses').insert({ user_id: activeOwnerId(), boss_id: bossId });
@@ -4102,7 +4083,7 @@ svg.icon{width:18px;height:18px;display:block}
       var seen = store(App.keys.intro, true);
       document.getElementById('introBanner').hidden = !!seen;
       renderAll();
-      renderPartyModeBanner();
+      updatePartyPanelSummary();
       // เปิดกลับมาที่หน้าเดิมที่ค้างไว้ตอน refresh แทนที่จะเด้งไปหน้าแรกเสมอ
       var validPages = ['home','farm','timers','items','pricing','admin'];
       var lastPage = store(App.keys.lastPage, 'home');
@@ -5123,8 +5104,10 @@ svg.icon{width:18px;height:18px;display:block}
   // ---------- การ์ด "ปาร์ตี้" บนหน้าจับเวลาบอส (พับได้) ----------
   var partyPanelHostCount = 0, partyPanelMemberCount = 0;
   function updatePartyPanelSummary(){
+    var prefix = App.viewingHostId ? ('กำลังดูปาร์ตี้ของ '+(App.viewingHostName||'-')+' · ') : '';
     document.getElementById('partyPanelSummary').textContent =
-      'ปาร์ตี้ของฉัน '+partyPanelHostCount+' คน · เข้าร่วม '+partyPanelMemberCount+' ปาร์ตี้';
+      prefix+'ปาร์ตี้ของฉัน '+partyPanelHostCount+' คน · เข้าร่วม '+partyPanelMemberCount+' ปาร์ตี้';
+    document.getElementById('partyPanel').classList.toggle('viewing-party', !!App.viewingHostId);
   }
   function renderPartyPanel(){
     var listEl = document.getElementById('myPartyList');
@@ -5162,6 +5145,7 @@ svg.icon{width:18px;height:18px;display:block}
             (viewing
               ? '<span class="membership-pill ok">กำลังดูอยู่</span>'
               : '<button type="button" class="btn btn-primary btn-sm" data-view-party="'+m.hostId+'">ดูข้อมูลปาร์ตี้นี้</button>')+
+            '<button type="button" class="btn btn-ghost btn-sm" data-leave-party="'+m.hostId+'">ออกจากปาร์ตี้</button>'+
           '</div>'+
         '</div>';
       }).join('');
@@ -5187,11 +5171,25 @@ svg.icon{width:18px;height:18px;display:block}
   });
 
   document.getElementById('myMembershipList').addEventListener('click', function(e){
-    var btn = e.target.closest('[data-view-party]');
-    if(!btn) return;
-    var hostId = btn.dataset.viewParty;
-    var m = App.myMemberships.filter(function(x){ return x.hostId===hostId; })[0];
-    switchToPartyView(hostId, m ? m.hostName : '-');
+    var viewBtn = e.target.closest('[data-view-party]');
+    if(viewBtn){
+      var hostId = viewBtn.dataset.viewParty;
+      var m = App.myMemberships.filter(function(x){ return x.hostId===hostId; })[0];
+      switchToPartyView(hostId, m ? m.hostName : '-');
+      return;
+    }
+    var leaveBtn = e.target.closest('[data-leave-party]');
+    if(leaveBtn){
+      var leaveHostId = leaveBtn.dataset.leaveParty;
+      var lm = App.myMemberships.filter(function(x){ return x.hostId===leaveHostId; })[0];
+      showConfirm('ออกจากปาร์ตี้ของ '+(lm?lm.hostName:'-')+'? สล็อตนี้จะเสียไปเลย หัวปาร์ตี้ต้องจ่าย 20 แต้มใหม่ถ้าจะเพิ่มคุณกลับเข้าปาร์ตี้อีกครั้ง', function(){
+        supa.rpc('leave_party', { target_host_id: leaveHostId }).then(function(res){
+          if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
+          toast('ออกจากปาร์ตี้แล้ว');
+          if(App.viewingHostId === leaveHostId){ switchToPersonalView(); } else { renderPartyPanel(); }
+        });
+      });
+    }
   });
 
   document.getElementById('addPartyMemberBtn').addEventListener('click', function(){

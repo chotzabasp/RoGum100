@@ -648,6 +648,8 @@ svg.icon{width:18px;height:18px;display:block}
 .party-panel{margin-bottom:1.1rem}
 .party-panel-controls{display:flex;align-items:center;gap:.7rem}
 .party-panel-summary{font-size:.78rem;color:var(--text-dim)}
+.party-member-row{padding:.55rem .8rem;gap:.6rem}
+.party-member-row .admin-topup-user{font-size:.84rem;font-weight:600}
 
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.3rem}
 .stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem}
@@ -5136,7 +5138,7 @@ svg.icon{width:18px;height:18px;display:block}
       if(!rows.length){ listEl.innerHTML = '<p class="admin-topup-empty">ยังไม่มีเพื่อนในปาร์ตี้ของคุณ</p>'; return; }
       listEl.innerHTML = rows.map(function(r){
         var name = (r.profiles && r.profiles.display_name) || 'ไม่ทราบชื่อ';
-        return '<div class="admin-topup-row">'+
+        return '<div class="admin-topup-row party-member-row">'+
           '<div class="admin-topup-main"><div class="admin-topup-user">'+name+'</div></div>'+
           '<div class="admin-topup-actions"><button type="button" class="btn btn-ghost" data-remove-member="'+r.member_id+'">เอาออก</button></div>'+
         '</div>';
@@ -5152,7 +5154,7 @@ svg.icon{width:18px;height:18px;display:block}
       }
       memberListEl.innerHTML = App.myMemberships.map(function(m){
         var viewing = App.viewingHostId === m.hostId;
-        return '<div class="admin-topup-row">'+
+        return '<div class="admin-topup-row party-member-row">'+
           '<div class="admin-topup-main"><div class="admin-topup-user">'+m.hostName+'</div></div>'+
           '<div class="admin-topup-actions">'+
             (viewing

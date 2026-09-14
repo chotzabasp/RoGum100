@@ -783,7 +783,42 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-field-tip{position:fixed;z-index:65;background:var(--text);color:var(--bg);padding:.45rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.35);opacity:0;transform:translateY(4px);transition:opacity .15s ease, transform .15s ease;pointer-events:none}
 .mr-field-tip.show{opacity:1;transform:translateY(0)}
 
+/* ---------- เติมแพ็กเกจ ---------- */
+.pricing-hero{text-align:center;padding:.4rem 0 2rem;display:flex;flex-direction:column;align-items:center;gap:.85rem}
+.pricing-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);color:var(--accent);font-size:.76rem;font-weight:700}
+.pricing-title{font-size:2.1rem;font-weight:800;letter-spacing:-.01em;margin:0}
+.pricing-title-accent{background:var(--gradient-brand);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pricing-sub{color:var(--text-dim);font-size:.9rem;max-width:520px;margin:0}
+.pricing-cycle-toggle{margin-top:.3rem}
+.pricing-cycle-toggle .seg-btn{font-size:.8rem;padding:.5rem 1.2rem}
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;align-items:stretch}
+.pricing-card{
+  position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-l);
+  padding:1.5rem 1.2rem 1.2rem;display:flex;flex-direction:column;gap:.9rem;
+}
+.pricing-card-best{
+  border:2px solid transparent;
+  background:linear-gradient(var(--surface),var(--surface)) padding-box, var(--gradient-brand) border-box;
+}
+.pricing-badge-best{
+  position:absolute;top:-.7rem;right:1rem;background:var(--gradient-brand);color:#fff;font-size:.68rem;font-weight:800;
+  padding:.3rem .7rem;border-radius:999px;letter-spacing:.02em;box-shadow:0 4px 12px rgba(0,0,0,.35);
+}
+.pricing-card-name{font-size:.95rem;font-weight:700;min-height:2.5em;display:flex;align-items:center}
+.pricing-card-price{display:flex;align-items:baseline;gap:.3rem;flex-wrap:wrap}
+.pricing-card-amount{font-size:2rem;font-weight:800;font-family:"JetBrains Mono";color:var(--text)}
+.pricing-card-unit{color:var(--text-dim);font-size:.78rem}
+.pricing-save{font-size:.7rem;font-weight:700;color:var(--success);background:color-mix(in srgb, var(--success) 16%, transparent);border-radius:999px;padding:.3rem .6rem;display:inline-flex;align-self:flex-start}
+.pricing-save-hidden{visibility:hidden}
+.pricing-features{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem;flex:1}
+.pricing-features li{display:flex;align-items:center;gap:.55rem;font-size:.84rem;color:var(--text-dim)}
+.pricing-check{color:var(--success);font-weight:700;flex:none}
+.pricing-cta{margin-top:.2rem}
+@media (max-width:980px){ .pricing-grid{grid-template-columns:repeat(2,1fr)} }
+
 @media (max-width: 760px){
+  .pricing-grid{grid-template-columns:1fr}
+  .pricing-title{font-size:1.7rem}
   #appScreen{grid-template-columns:1fr}
   .rail{flex-direction:row;align-items:center;justify-content:center;border-right:none;border-bottom:1px solid var(--border);padding:.6rem}
   .rail-brand{display:none}
@@ -843,7 +878,7 @@ svg.icon{width:18px;height:18px;display:block}
     <button class="rail-btn" data-page="items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="tip">คลังไอเทม</span><span class="rail-badge" id="railItemsBadge" hidden>0</span></button>
     <button class="rail-btn" data-page="farm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 9c0 0-6 0-6-5 5 0 6 3 6 5z"/><path d="M12 9c0 0 6 0 6-5-5 0-6 3-6 5z"/></svg><span class="tip">ยอดนักฟาม</span></button>
     <button class="rail-btn" data-page="timers"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="tip">จับเวลาบอส</span></button>
-    <button class="rail-btn" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10M11 19V5M18 19v-7"/></svg><span class="tip">เติมแพ็กเกจ</span></button>
+    <button class="rail-btn" data-page="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="tip">เติมแพ็กเกจ</span></button>
     <button class="rail-btn" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="tip">ตั้งค่ากิลด์ (เร็วๆ นี้)</span></button>
   </nav>
 
@@ -1283,6 +1318,19 @@ svg.icon{width:18px;height:18px;display:block}
           <div id="itemsPendingList"></div>
         </div>
       </div>
+    </section>
+
+    <section id="view-pricing" hidden>
+      <div class="pricing-hero">
+        <span class="pricing-badge">✦ ปลดล็อกฟีเจอร์เต็มรูปแบบ</span>
+        <h1 class="pricing-title">เติม<span class="pricing-title-accent">แพ็กเกจ</span></h1>
+        <p class="pricing-sub">เลือกแพ็กเกจที่ตรงกับสไตล์การเล่นของคุณ ปลดล็อกฟีเจอร์เพิ่มเติมและใช้งานได้เต็มรูปแบบ</p>
+        <div class="seg-toggle pricing-cycle-toggle" id="pricingCycleToggle">
+          <button type="button" class="seg-btn active" data-cycle="monthly">รายเดือน</button>
+          <button type="button" class="seg-btn" data-cycle="yearly">รายปี</button>
+        </div>
+      </div>
+      <div class="pricing-grid" id="pricingGrid"></div>
     </section>
 
   </main>
@@ -4666,12 +4714,59 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('view-farm').hidden = page !== 'farm';
     document.getElementById('view-timers').hidden = page !== 'timers';
     document.getElementById('view-items').hidden = page !== 'items';
+    document.getElementById('view-pricing').hidden = page !== 'pricing';
     if(page==='farm') renderFarmPage();
     if(page==='items') renderItemsPage();
+    if(page==='pricing') renderPricingPage();
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);
     });
   }
+
+  // ---------- เติมแพ็กเกจ ----------
+  // ราคารายปีทุกแพ็กเกจตั้งไว้ที่ 10 เท่าของราคารายเดือน (เท่ากับแถมฟรี 2 เดือน) —
+  // คำนวณส่วนลดที่แสดงจากตัวเลขจริงแทนที่จะเขียนตายตัว เผื่อภายหลังปรับราคา
+  var PRICING_PLANS = [
+    { key:'accountItems', name:'บัญชีนักลงทุน + คลังไอเทม', monthly:199, yearly:1990 },
+    { key:'farm', name:'ยอดนักฟาม', monthly:99, yearly:990 },
+    { key:'timers', name:'จับเวลาบอส', monthly:149, yearly:1490 },
+    { key:'all', name:'ใช้งานทั้งหมด', monthly:349, yearly:3490, best:true }
+  ];
+  var pricingCycle = 'monthly';
+
+  function renderPricingPage(){
+    var grid = document.getElementById('pricingGrid');
+    grid.innerHTML = PRICING_PLANS.map(function(p){
+      var monthly = pricingCycle==='monthly';
+      var price = monthly ? p.monthly : p.yearly;
+      var unit = monthly ? '/ เดือน' : '/ ปี';
+      var savings = p.monthly*12 - p.yearly;
+      var monthsFree = p.monthly>0 ? Math.round(savings/p.monthly) : 0;
+      var savingsHtml = '<div class="pricing-save'+(monthly?' pricing-save-hidden':'')+'">ประหยัด '+fmtNum(savings)+' บ (เท่ากับฟรี '+monthsFree+' เดือน)</div>';
+      // รายละเอียดสิทธิ์ยังไม่ระบุ — ใส่ "-" ไว้ก่อน 5 แถว รอเนื้อหาจริง
+      var features = '';
+      for(var i=0;i<5;i++) features += '<li><span class="pricing-check">✓</span><span>-</span></li>';
+      var ctaLabel = 'สมัคร'+(monthly?'รายเดือน':'รายปี');
+      return '<div class="pricing-card'+(p.best?' pricing-card-best':'')+'">'+
+        (p.best ? '<span class="pricing-badge-best">คุ้มสุด</span>' : '')+
+        '<div class="pricing-card-name">'+p.name+'</div>'+
+        '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
+        savingsHtml+
+        '<ul class="pricing-features">'+features+'</ul>'+
+        '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta">'+ctaLabel+'</button>'+
+      '</div>';
+    }).join('');
+  }
+
+  document.getElementById('pricingCycleToggle').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-cycle]');
+    if(!btn) return;
+    pricingCycle = btn.dataset.cycle;
+    document.querySelectorAll('#pricingCycleToggle .seg-btn').forEach(function(b){
+      b.classList.toggle('active', b===btn);
+    });
+    renderPricingPage();
+  });
   document.querySelectorAll('.rail-btn[data-page]').forEach(function(btn){
     btn.addEventListener('click', function(){ switchPage(btn.dataset.page); });
   });

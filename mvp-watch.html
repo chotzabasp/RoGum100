@@ -627,15 +627,6 @@ svg.icon{width:18px;height:18px;display:block}
   background:var(--surface-2);
 }
 
-.intro-banner{
-  display:flex;align-items:center;justify-content:space-between;gap:1rem;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-left:3px solid var(--accent);
-  border-radius:var(--radius-m);
-  padding:.65rem 1rem;font-size:.84rem;margin-bottom:1.1rem;color:var(--text-dim);
-}
-.intro-banner button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem}
 .party-panel{margin-bottom:1.1rem}
 .party-panel.viewing-party{border-left:3px solid var(--grad-b)}
 .party-panel-controls{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;min-width:0}
@@ -1259,11 +1250,6 @@ svg.icon{width:18px;height:18px;display:block}
       </div>
     </div>
 
-    <div class="intro-banner" id="introBanner" hidden>
-      <span>นี่คือข้อมูลตัวอย่างสำหรับทดลองใช้งาน — แก้ไขหรือลบได้ตามต้องการ</span>
-      <button id="introClose" aria-label="ปิด">✕</button>
-    </div>
-
     <div class="panel party-panel" id="partyPanel">
       <div class="panel-head">
         <h2>ปาร์ตี้</h2>
@@ -1676,7 +1662,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   var DataKeys = function(email){
     return {
-      db:'mvpwatch_db_'+email, active:'mvpwatch_active_'+email, log:'mvpwatch_log_'+email, intro:'mvpwatch_intro_'+email,
+      db:'mvpwatch_db_'+email, active:'mvpwatch_active_'+email, log:'mvpwatch_log_'+email,
       lastPage:'mvpwatch_lastpage_'+email,
       rateSlots:'mvpwatch_rateslots_'+email, rateSlotsVer:'mvpwatch_rateslotsver_'+email, merchantLog:'mvpwatch_merchantlog_'+email,
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
@@ -1706,7 +1692,6 @@ svg.icon{width:18px;height:18px;display:block}
     App.keys = keys;
     // App.db/App.active (รายการบอส+เวลาที่จับ) โหลดแยกจาก Supabase ใน loadUserBosses()
     // ประวัติการฆ่าบอส (App.log) ยังเก็บใน localStorage ต่อไปตามเดิม
-    if(store(keys.intro, null) === null) persist(keys.intro, false);
     App.log = store(keys.log, []);
     App.pendingItems = {};
     var RATE_SLOTS_VERSION = 2; // bump to force a one-time reset to the new 1-card default
@@ -4061,8 +4046,6 @@ svg.icon{width:18px;height:18px;display:block}
       recomputeServerRatesFromAnnouncements();
       document.getElementById('authScreen').hidden = true;
       document.getElementById('appScreen').hidden = false;
-      var seen = store(App.keys.intro, true);
-      document.getElementById('introBanner').hidden = !!seen;
       renderAll();
       updatePartyPanelSummary();
       // เปิดกลับมาที่หน้าเดิมที่ค้างไว้ตอน refresh แทนที่จะเด้งไปหน้าแรกเสมอ
@@ -4074,11 +4057,6 @@ svg.icon{width:18px;height:18px;display:block}
       updateClock();
     });
   }
-
-  document.getElementById('introClose').addEventListener('click', function(){
-    document.getElementById('introBanner').hidden = true;
-    persist(App.keys.intro, true);
-  });
 
   document.getElementById('rateChips').addEventListener('change', function(e){
     var sel = e.target.closest('.rate-select');

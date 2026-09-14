@@ -110,33 +110,36 @@ svg.icon{width:18px;height:18px;display:block}
 .auth-note{font-size:.72rem;color:var(--text-dim);text-align:center;margin-top:1rem;line-height:1.5;border-top:1px dashed var(--border);padding-top:.85rem}
 
 /* ---------- app shell ---------- */
-#appScreen{display:grid;grid-template-columns:68px 1fr;min-height:100vh;background:var(--bg)}
+#appScreen{display:grid;grid-template-columns:210px 1fr;min-height:100vh;background:var(--bg)}
 .rail{
   background:var(--surface);
   border-right:1px solid var(--border);
-  display:flex;flex-direction:column;align-items:center;
-  padding:1rem 0;gap:.3rem;
+  display:flex;flex-direction:column;align-items:stretch;
+  padding:1rem .65rem;gap:.15rem;
 }
-.rail-logo{width:34px;height:34px;border-radius:8px;background:color-mix(in srgb, var(--accent) 22%, transparent);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:.7rem}
+.rail-brand{display:flex;align-items:center;gap:.6rem;padding:.1rem .3rem .95rem;margin-bottom:.4rem;border-bottom:1px solid var(--border)}
+.rail-logo{width:34px;height:34px;border-radius:8px;background:color-mix(in srgb, var(--accent) 22%, transparent);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:none}
+.rail-brand-name{font-weight:800;font-size:.95rem;color:var(--text);letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rail-btn{
-  width:42px;height:42px;border-radius:var(--radius-s);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--text-dim);cursor:pointer;position:relative;
+  width:100%;min-height:40px;border-radius:var(--radius-s);
+  display:flex;align-items:center;gap:.65rem;justify-content:flex-start;
+  padding:.5rem .6rem;
+  color:var(--text-dim);cursor:pointer;position:relative;text-align:left;font:inherit;
   background:transparent;border:none;
 }
+.rail-btn .icon{flex:none}
 .rail-btn.active{background:color-mix(in srgb, var(--accent) 16%, transparent);color:var(--accent)}
-.rail-btn[disabled]{opacity:.3;cursor:not-allowed}
+.rail-btn:not(.active):not([disabled]):hover{background:var(--surface-hover);color:var(--text)}
+.rail-btn[disabled]{opacity:.4;cursor:not-allowed}
 .rail-btn .tip{
-  position:absolute;left:52px;top:50%;transform:translateY(-50%);
-  background:#000;color:#fff;font-size:.72rem;padding:.3rem .55rem;border-radius:6px;
-  white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s ease;z-index:5;
+  font-size:.82rem;font-weight:600;line-height:1.25;
+  white-space:normal;overflow-wrap:break-word;
 }
-.rail-btn:hover .tip{opacity:1}
 .rail-badge{
-  position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 3px;
+  margin-left:auto;flex:none;min-width:16px;height:16px;padding:0 3px;
   border-radius:999px;background:var(--danger);color:#fff;font-size:.6rem;font-weight:700;
   display:flex;align-items:center;justify-content:center;line-height:1;
-  font-family:"JetBrains Mono",monospace;box-shadow:0 0 0 2px var(--surface);pointer-events:none;
+  font-family:"JetBrains Mono",monospace;pointer-events:none;
 }
 
 .content{padding:1.4rem 1.75rem 3rem;max-width:1180px;width:100%}
@@ -782,7 +785,9 @@ svg.icon{width:18px;height:18px;display:block}
 
 @media (max-width: 760px){
   #appScreen{grid-template-columns:1fr}
-  .rail{flex-direction:row;justify-content:center;border-right:none;border-bottom:1px solid var(--border);padding:.6rem}
+  .rail{flex-direction:row;align-items:center;justify-content:center;border-right:none;border-bottom:1px solid var(--border);padding:.6rem}
+  .rail-brand{display:none}
+  .rail-btn{width:42px;min-width:42px;justify-content:center;padding:.5rem}
   .rail-btn .tip{display:none}
   .stats-row{grid-template-columns:repeat(2,1fr)}
   .content{padding:1.1rem 1rem 3rem}
@@ -830,9 +835,12 @@ svg.icon{width:18px;height:18px;display:block}
 <!-- ===================== APP SCREEN ===================== -->
 <div id="appScreen" hidden>
   <nav class="rail">
-    <div class="rail-logo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></div>
+    <div class="rail-brand">
+      <div class="rail-logo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></div>
+      <span class="rail-brand-name">MVP Watch</span>
+    </div>
     <button class="rail-btn active" data-page="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg><span class="tip">บัญชีนักลงทุน</span></button>
-    <button class="rail-btn" data-page="items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="rail-badge" id="railItemsBadge" hidden>0</span><span class="tip">คลังไอเทม</span></button>
+    <button class="rail-btn" data-page="items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="tip">คลังไอเทม</span><span class="rail-badge" id="railItemsBadge" hidden>0</span></button>
     <button class="rail-btn" data-page="farm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 9c0 0-6 0-6-5 5 0 6 3 6 5z"/><path d="M12 9c0 0 6 0 6-5-5 0-6 3-6 5z"/></svg><span class="tip">ยอดนักฟาม</span></button>
     <button class="rail-btn" data-page="timers"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="tip">จับเวลาบอส</span></button>
     <button class="rail-btn" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10M11 19V5M18 19v-7"/></svg><span class="tip">สถิติเชิงลึก (เร็วๆ นี้)</span></button>

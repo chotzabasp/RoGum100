@@ -642,6 +642,7 @@ svg.icon{width:18px;height:18px;display:block}
 .party-panel-summary{font-size:.78rem;color:var(--text-dim);min-width:0;overflow-wrap:anywhere}
 .party-member-row{padding:.55rem .8rem;gap:.6rem}
 .party-member-row .admin-topup-user{font-size:.84rem;font-weight:600}
+.party-role-tag{color:var(--text-dim);font-weight:400;font-size:.72rem}
 .party-panel-body{display:flex;flex-direction:column;gap:.9rem}
 .party-panel-body .admin-topup-list{margin-top:0}
 
@@ -1273,14 +1274,10 @@ svg.icon{width:18px;height:18px;display:block}
       </div>
       <div id="partyPanelBody" class="party-panel-body" hidden>
         <div class="panel-head">
-          <h2>ปาร์ตี้ของฉัน</h2>
+          <h2>สมาชิกในปาร์ตี้</h2>
           <button type="button" class="btn btn-gradient btn-sm" id="addPartyMemberBtn">+ เพิ่มเพื่อน (20 แต้ม)</button>
         </div>
         <div id="myPartyList" class="admin-topup-list"></div>
-        <div class="panel-head">
-          <h2>ปาร์ตี้ที่ฉันเข้าร่วม</h2>
-        </div>
-        <div id="myMembershipList" class="admin-topup-list"></div>
       </div>
     </div>
 
@@ -1680,7 +1677,7 @@ svg.icon{width:18px;height:18px;display:block}
   var DataKeys = function(email){
     return {
       db:'mvpwatch_db_'+email, active:'mvpwatch_active_'+email, log:'mvpwatch_log_'+email, intro:'mvpwatch_intro_'+email,
-      lastPage:'mvpwatch_lastpage_'+email, viewingHost:'mvpwatch_viewinghost_'+email,
+      lastPage:'mvpwatch_lastpage_'+email,
       rateSlots:'mvpwatch_rateslots_'+email, rateSlotsVer:'mvpwatch_rateslotsver_'+email, merchantLog:'mvpwatch_merchantlog_'+email,
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
@@ -1700,7 +1697,7 @@ svg.icon{width:18px;height:18px;display:block}
   // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
-  var App = { session:null, profile:null, viewingHostId:null, viewingHostName:null, myMemberships:[], db:[], active:{}, markers:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, profile:null, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -1879,15 +1876,18 @@ svg.icon{width:18px;height:18px;display:block}
   // (App.viewingHostId) ทุกฟังก์ชันด้านล่างอ่าน/เขียนผ่านตัวนี้แทน App.session.id ตรงๆ
   // เพื่อให้สลับไปดู/แก้ข้อมูลของปาร์ตี้ได้ — RLS ฝั่ง Supabase เป็นคนอนุญาต/บล็อกจริง
   function activeOwnerId(){ return App.viewingHostId || App.session.id; }
-  // ปาร์ตี้ที่ฉันเป็นสมาชิกอยู่ตอนนี้ (ยัง active ไม่ถูกเอาออก) — ใช้ทั้งโชว์ในหน้า
-  // "ตั้งค่า" และเช็คว่า viewingHostId ที่จำไว้จาก localStorage ยังใช้ได้จริงไหม
-  // (เผื่อโดนหัวปาร์ตี้เอาออกไปแล้วตั้งแต่ครั้งก่อนที่เปิดแอป)
-  function loadMyMemberships(){
-    return supa.from('party_members').select('host_id, profiles!host_id(display_name)').eq('member_id', App.session.id).is('removed_at', null).then(function(res){
-      if(res.error){ console.error('loadMyMemberships', res.error); App.myMemberships = []; return; }
-      App.myMemberships = (res.data||[]).map(function(r){
-        return { hostId:r.host_id, hostName:(r.profiles && r.profiles.display_name) || '-' };
-      });
+  // แต่ละคนเป็นสมาชิก active ได้แค่ 1 ปาร์ตี้ในเวลาเดียวกัน (บังคับด้วย unique index ฝั่ง DB)
+  // ฟังก์ชันนี้เช็คจากฐานข้อมูลจริงว่าตอนนี้ฉันอยู่ปาร์ตี้ใคร แล้วอัปเดต App.viewingHostId ให้ตรงเสมอ
+  function resolvePartyContext(){
+    return supa.from('party_members').select('host_id, profiles!host_id(display_name)').eq('member_id', App.session.id).is('removed_at', null).maybeSingle().then(function(res){
+      if(res.error){ console.error('resolvePartyContext', res.error); App.viewingHostId = null; App.viewingHostName = null; return; }
+      if(res.data){
+        App.viewingHostId = res.data.host_id;
+        App.viewingHostName = (res.data.profiles && res.data.profiles.display_name) || '-';
+      } else {
+        App.viewingHostId = null;
+        App.viewingHostName = null;
+      }
     });
   }
   function loadUserBosses(){
@@ -1912,19 +1912,6 @@ svg.icon{width:18px;height:18px;display:block}
       });
     });
   }
-  function switchToPersonalView(){
-    App.viewingHostId = null;
-    App.viewingHostName = null;
-    persist(App.keys.viewingHost, null);
-    loadUserBosses().then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
-  }
-  function switchToPartyView(hostId, hostName){
-    App.viewingHostId = hostId;
-    App.viewingHostName = hostName;
-    persist(App.keys.viewingHost, hostId);
-    loadUserBosses().then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); switchPage('timers'); });
-  }
-
   function supaAddBoss(bossId){
     return supa.from('user_bosses').insert({ user_id: activeOwnerId(), boss_id: bossId });
   }
@@ -4067,13 +4054,7 @@ svg.icon{width:18px;height:18px;display:block}
   function enterApp(user){
     App.session = { id:user.id, email:user.email };
     App.keys = DataKeys(user.email);
-    var savedHostId = store(App.keys.viewingHost, null);
-    return Promise.all([ refreshProfile(), loadMyMemberships(), serversReady ]).then(function(){
-      // เช็คว่าปาร์ตี้ที่จำไว้จากรอบก่อนยังเป็นสมาชิกอยู่จริงไหม (เผื่อโดนเอาออกไปแล้ว)
-      var stillIn = savedHostId && App.myMemberships.filter(function(m){ return m.hostId===savedHostId; })[0];
-      App.viewingHostId = stillIn ? savedHostId : null;
-      App.viewingHostName = stillIn ? stillIn.hostName : null;
-      if(savedHostId && !stillIn) persist(App.keys.viewingHost, null);
+    return Promise.all([ refreshProfile(), resolvePartyContext(), serversReady ]).then(function(){
       return loadUserBosses();
     }).then(function(){
       loadUserData(user.email);
@@ -5102,53 +5083,40 @@ svg.icon{width:18px;height:18px;display:block}
   });
 
   // ---------- การ์ด "ปาร์ตี้" บนหน้าจับเวลาบอส (พับได้) ----------
-  var partyPanelHostCount = 0, partyPanelMemberCount = 0;
+  // ลิสต์เดียวรวมหัวปาร์ตี้+สมาชิกทั้งหมด — แสดงปาร์ตี้ที่ตัวเองอยู่ตอนนี้เท่านั้น (คนละ 1 ปาร์ตี้ต่อครั้ง)
+  var partyPanelMemberCount = 0;
   function updatePartyPanelSummary(){
     var prefix = App.viewingHostId ? ('กำลังดูปาร์ตี้ของ '+(App.viewingHostName||'-')+' · ') : '';
     document.getElementById('partyPanelSummary').textContent =
-      prefix+'ปาร์ตี้ของฉัน '+partyPanelHostCount+' คน · เข้าร่วม '+partyPanelMemberCount+' ปาร์ตี้';
+      prefix+'สมาชิกในปาร์ตี้ '+partyPanelMemberCount+' คน';
     document.getElementById('partyPanel').classList.toggle('viewing-party', !!App.viewingHostId);
   }
   function renderPartyPanel(){
     var listEl = document.getElementById('myPartyList');
-    var memberListEl = document.getElementById('myMembershipList');
     listEl.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';
-    memberListEl.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';
+    var amHost = !App.viewingHostId;
+    var contextHostId = App.viewingHostId || App.session.id;
+    var contextHostName = App.viewingHostId ? App.viewingHostName : ((App.profile && App.profile.display_name) || '-');
 
-    supa.from('party_members').select('member_id, profiles!member_id(display_name)').eq('host_id', App.session.id).is('removed_at', null).then(function(res){
+    supa.from('party_members').select('member_id, profiles!member_id(display_name)').eq('host_id', contextHostId).is('removed_at', null).then(function(res){
       if(res.error){ listEl.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+res.error.message+'</p>'; return; }
-      var rows = res.data || [];
-      partyPanelHostCount = rows.length;
+      var members = res.data || [];
+      partyPanelMemberCount = members.length + 1;
       updatePartyPanelSummary();
-      if(!rows.length){ listEl.innerHTML = '<p class="admin-topup-empty">ยังไม่มีเพื่อนในปาร์ตี้ของคุณ</p>'; return; }
-      listEl.innerHTML = rows.map(function(r){
-        var name = (r.profiles && r.profiles.display_name) || 'ไม่ทราบชื่อ';
-        return '<div class="admin-topup-row party-member-row">'+
-          '<div class="admin-topup-main"><div class="admin-topup-user">'+name+'</div></div>'+
-          '<div class="admin-topup-actions"><button type="button" class="btn btn-ghost btn-sm" data-remove-member="'+r.member_id+'">เอาออก</button></div>'+
-        '</div>';
-      }).join('');
-    });
 
-    loadMyMemberships().then(function(){
-      partyPanelMemberCount = App.myMemberships.length;
-      updatePartyPanelSummary();
-      if(!App.myMemberships.length){
-        memberListEl.innerHTML = '<p class="admin-topup-empty">คุณยังไม่ได้เข้าร่วมปาร์ตี้ของใคร</p>';
-        return;
-      }
-      memberListEl.innerHTML = App.myMemberships.map(function(m){
-        var viewing = App.viewingHostId === m.hostId;
+      var hostRow = '<div class="admin-topup-row party-member-row">'+
+        '<div class="admin-topup-main"><div class="admin-topup-user">'+contextHostName+' <span class="party-role-tag">หัวปาร์ตี้'+(amHost?' · คุณ':'')+'</span></div></div>'+
+        '<div class="admin-topup-actions">'+(!amHost ? '<button type="button" class="btn btn-ghost btn-sm" data-leave-party="'+contextHostId+'">ออกจากปาร์ตี้</button>' : '')+'</div>'+
+      '</div>';
+      var memberRows = members.map(function(m){
+        var name = (m.profiles && m.profiles.display_name) || 'ไม่ทราบชื่อ';
+        var isMe = m.member_id === App.session.id;
         return '<div class="admin-topup-row party-member-row">'+
-          '<div class="admin-topup-main"><div class="admin-topup-user">'+m.hostName+'</div></div>'+
-          '<div class="admin-topup-actions">'+
-            (viewing
-              ? '<span class="membership-pill ok">กำลังดูอยู่</span>'
-              : '<button type="button" class="btn btn-primary btn-sm" data-view-party="'+m.hostId+'">ดูข้อมูลปาร์ตี้นี้</button>')+
-            '<button type="button" class="btn btn-ghost btn-sm" data-leave-party="'+m.hostId+'">ออกจากปาร์ตี้</button>'+
-          '</div>'+
+          '<div class="admin-topup-main"><div class="admin-topup-user">'+name+(isMe?' <span class="party-role-tag">คุณ</span>':'')+'</div></div>'+
+          '<div class="admin-topup-actions">'+(amHost ? '<button type="button" class="btn btn-ghost btn-sm" data-remove-member="'+m.member_id+'">เอาออก</button>' : '')+'</div>'+
         '</div>';
       }).join('');
+      listEl.innerHTML = hostRow + memberRows;
     });
   }
   document.getElementById('partyPanelToggle').addEventListener('click', function(){
@@ -5158,35 +5126,28 @@ svg.icon{width:18px;height:18px;display:block}
   });
 
   document.getElementById('myPartyList').addEventListener('click', function(e){
-    var btn = e.target.closest('[data-remove-member]');
-    if(!btn) return;
-    var memberId = btn.dataset.removeMember;
-    showConfirm('เอาเพื่อนคนนี้ออกจากปาร์ตี้? สล็อตนี้จะเสียไปเลย เพิ่มคนใหม่ต้องจ่าย 20 แต้มใหม่', function(){
-      supa.rpc('remove_party_member', { target_member_id: memberId }).then(function(res){
-        if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
-        toast('เอาออกจากปาร์ตี้แล้ว');
-        renderPartyPanel();
+    var removeBtn = e.target.closest('[data-remove-member]');
+    if(removeBtn){
+      var memberId = removeBtn.dataset.removeMember;
+      showConfirm('เอาเพื่อนคนนี้ออกจากปาร์ตี้? สล็อตนี้จะเสียไปเลย เพิ่มคนใหม่ต้องจ่าย 20 แต้มใหม่', function(){
+        supa.rpc('remove_party_member', { target_member_id: memberId }).then(function(res){
+          if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
+          toast('เอาออกจากปาร์ตี้แล้ว');
+          renderPartyPanel();
+        });
       });
-    });
-  });
-
-  document.getElementById('myMembershipList').addEventListener('click', function(e){
-    var viewBtn = e.target.closest('[data-view-party]');
-    if(viewBtn){
-      var hostId = viewBtn.dataset.viewParty;
-      var m = App.myMemberships.filter(function(x){ return x.hostId===hostId; })[0];
-      switchToPartyView(hostId, m ? m.hostName : '-');
       return;
     }
     var leaveBtn = e.target.closest('[data-leave-party]');
     if(leaveBtn){
       var leaveHostId = leaveBtn.dataset.leaveParty;
-      var lm = App.myMemberships.filter(function(x){ return x.hostId===leaveHostId; })[0];
-      showConfirm('ออกจากปาร์ตี้ของ '+(lm?lm.hostName:'-')+'? สล็อตนี้จะเสียไปเลย หัวปาร์ตี้ต้องจ่าย 20 แต้มใหม่ถ้าจะเพิ่มคุณกลับเข้าปาร์ตี้อีกครั้ง', function(){
+      showConfirm('ออกจากปาร์ตี้ของ '+(App.viewingHostName||'-')+'? สล็อตนี้จะเสียไปเลย หัวปาร์ตี้ต้องจ่าย 20 แต้มใหม่ถ้าจะเพิ่มคุณกลับเข้าปาร์ตี้อีกครั้ง', function(){
         supa.rpc('leave_party', { target_host_id: leaveHostId }).then(function(res){
           if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
           toast('ออกจากปาร์ตี้แล้ว');
-          if(App.viewingHostId === leaveHostId){ switchToPersonalView(); } else { renderPartyPanel(); }
+          resolvePartyContext().then(function(){
+            loadUserBosses().then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
+          });
         });
       });
     }

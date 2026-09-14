@@ -1633,6 +1633,7 @@ svg.icon{width:18px;height:18px;display:block}
   var DataKeys = function(email){
     return {
       db:'mvpwatch_db_'+email, active:'mvpwatch_active_'+email, log:'mvpwatch_log_'+email, intro:'mvpwatch_intro_'+email,
+      lastPage:'mvpwatch_lastpage_'+email,
       rateSlots:'mvpwatch_rateslots_'+email, rateSlotsVer:'mvpwatch_rateslotsver_'+email, merchantLog:'mvpwatch_merchantlog_'+email,
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
@@ -3997,6 +3998,12 @@ svg.icon{width:18px;height:18px;display:block}
       var seen = store(App.keys.intro, true);
       document.getElementById('introBanner').hidden = !!seen;
       renderAll();
+      // เปิดกลับมาที่หน้าเดิมที่ค้างไว้ตอน refresh แทนที่จะเด้งไปหน้าแรกเสมอ
+      var validPages = ['home','farm','timers','items','pricing','admin'];
+      var lastPage = store(App.keys.lastPage, 'home');
+      var isAdmin = App.profile && App.profile.role === 'admin';
+      if(validPages.indexOf(lastPage)===-1 || (lastPage==='admin' && !isAdmin)) lastPage = 'home';
+      switchPage(lastPage);
       updateClock();
     });
   }
@@ -4803,6 +4810,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   // ---------- page switching ----------
   function switchPage(page){
+    persist(App.keys.lastPage, page);
     document.getElementById('view-home').hidden = page !== 'home';
     document.getElementById('view-farm').hidden = page !== 'farm';
     document.getElementById('view-timers').hidden = page !== 'timers';

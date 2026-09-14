@@ -650,6 +650,8 @@ svg.icon{width:18px;height:18px;display:block}
 .party-panel-summary{font-size:.78rem;color:var(--text-dim)}
 .party-member-row{padding:.55rem .8rem;gap:.6rem}
 .party-member-row .admin-topup-user{font-size:.84rem;font-weight:600}
+.party-panel-body{display:flex;flex-direction:column;gap:.9rem}
+.party-panel-body .admin-topup-list{margin-top:0}
 
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.3rem}
 .stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem}
@@ -1282,7 +1284,7 @@ svg.icon{width:18px;height:18px;display:block}
           <button type="button" class="btn btn-ghost btn-sm" id="partyPanelToggle">จัดการปาร์ตี้</button>
         </div>
       </div>
-      <div id="partyPanelBody" hidden>
+      <div id="partyPanelBody" class="party-panel-body" hidden>
         <div class="panel-head">
           <h2>ปาร์ตี้ของฉัน</h2>
           <button type="button" class="btn btn-gradient btn-sm" id="addPartyMemberBtn">+ เพิ่มเพื่อน (20 แต้ม)</button>

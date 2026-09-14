@@ -420,9 +420,6 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-item-row input[readonly]{background:var(--surface);color:var(--text);cursor:not-allowed}
 .mr-row-currency{cursor:pointer}
 .mr-sell-source{display:flex;flex-direction:column;gap:.35rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.25rem;margin-bottom:.1rem}
-.mr-sell-source-toggle{display:flex;gap:.4rem}
-.mr-sell-source-btn{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);border-radius:var(--radius-s);padding:.35rem .5rem;font-size:.76rem;cursor:pointer}
-.mr-sell-source-btn.active{background:color-mix(in srgb, var(--accent) 20%, transparent);border-color:var(--accent);color:var(--accent);font-weight:600}
 .mr-stock-select{font-size:.78rem}
 .mr-stock-info{font-size:.74rem;color:var(--text-dim)}
 .mr-slot-section-locked{color:var(--text-dim);font-size:.76rem;padding:.1rem .2rem}
@@ -2901,12 +2898,12 @@ svg.icon{width:18px;height:18px;display:block}
     saveCurrentServer();
     renderMerchantServers();
     renderMrExchangeRate();
-    // A stock pick belongs to the server it was picked under — drop it (fromStock too,
-    // not just the picked batch) on server switch rather than risk selling something
-    // from the wrong server's warehouse, or leaving a stale flag that caps qty against
-    // a pool the row no longer actually points at.
+    // A stock pick belongs to the server it was picked under — drop the picked batch on
+    // server switch rather than risk selling something from the wrong server's warehouse.
+    // Selling an Item is always "จากคลัง" now, so fromStock itself stays true — only the
+    // specific batch selection is cleared, ready to re-pick from the new server's stock.
     [App.zenyRows, App.itemRows, App.otherRows].forEach(function(rows){
-      (rows||[]).forEach(function(row){ if(row.fromStock){ row.fromStock = false; row.stockGroupKey = null; row.stockGroup = null; } });
+      (rows||[]).forEach(function(row){ if(row.stockGroupKey){ row.stockGroupKey = null; row.stockGroup = null; } });
     });
     renderItemRows();
   }
@@ -2920,8 +2917,12 @@ svg.icon{width:18px;height:18px;display:block}
   }
 
   function newItemRow(name, price, qty, currency, slots, lineId){
+    // fromStock defaults true — selling an Item only ever works "จากคลัง" now (the
+    // manual/stock toggle was removed), so a fresh row is always ready to show the
+    // เลือกรายการในคลัง dropdown the moment it's a sell-Item row. It's a no-op for any
+    // other type/category, since only sellFromStockAvailable (sell + item) reads it.
     return { rid: uid(), lineId: lineId||null, name: name||'', price: price!=null?price:'', qty: qty!=null?qty:'', currency: currency==='zeny'?'zeny':'baht', slots: slots||[],
-      fromStock:false, stockGroupKey:null, stockGroup:null };
+      fromStock:true, stockGroupKey:null, stockGroup:null };
   }
 
   function cleanDecimalInput(value){
@@ -3024,7 +3025,7 @@ svg.icon{width:18px;height:18px;display:block}
     var stockGroups = sellFromStockAvailable ? sellableGroupsFor(App.currentServerId, App.merchantCategory) : [];
     root.innerHTML = rows.map(function(row, rowIdx){
       var slots = row.slots || [];
-      var fromStock = sellFromStockAvailable && row.fromStock;
+      var fromStock = sellFromStockAvailable; // selling an Item is always "จากคลัง" — no manual/stock toggle to choose between
       var lockFields = fromStock && row.stockGroupKey;
       var slotsHtml = '';
       if(showSlots && !lockFields){
@@ -3048,25 +3049,20 @@ svg.icon{width:18px;height:18px;display:block}
           '<option value="zeny"'+(row.currency==='zeny'?' selected':'')+'>Zeny</option>';
       var sellSourceHtml = '';
       if(sellFromStockAvailable){
-        var manualActive = !row.fromStock;
+        // No more manual-vs-stock toggle — selling an Item always means picking a batch
+        // from the warehouse, so the dropdown is the only thing here now.
+        var opts = '<option value="">— เลือกรายการในคลัง —</option>'+stockGroups.map(function(g){
+          var unit = g.currency==='zeny' ? 'z' : 'บ';
+          var label = '['+itemTierLabel(g.tier)+'] ' + g.name + (g.slots&&g.slots.length ? ' : '+g.slots.join(' | ') : '') + ' — คงเหลือ '+fmtNum(g.qty)+' ชิ้น (ราคาซื้อ '+fmtNum(g.price)+' '+unit+')';
+          return '<option value="'+escapeHtml(g.key)+'"'+(row.stockGroupKey===g.key?' selected':'')+'>'+escapeHtml(label)+'</option>';
+        }).join('');
         sellSourceHtml = '<div class="mr-sell-source">'+
-          '<div class="mr-sell-source-toggle">'+
-            '<button type="button" class="mr-sell-source-btn'+(manualActive?' active':'')+'" data-sell-source="manual" data-row-id="'+row.rid+'">ขาย Item คนละส่วนกับคลัง</button>'+
-            '<button type="button" class="mr-sell-source-btn'+(!manualActive?' active':'')+'" data-sell-source="stock" data-row-id="'+row.rid+'">ขาย Item จากคลัง</button>'+
-          '</div>';
-        if(row.fromStock){
-          var opts = '<option value="">— เลือกรายการในคลัง —</option>'+stockGroups.map(function(g){
-            var unit = g.currency==='zeny' ? 'z' : 'บ';
-            var label = '['+itemTierLabel(g.tier)+'] ' + g.name + (g.slots&&g.slots.length ? ' : '+g.slots.join(' | ') : '') + ' — คงเหลือ '+fmtNum(g.qty)+' ชิ้น (ราคาซื้อ '+fmtNum(g.price)+' '+unit+')';
-            return '<option value="'+escapeHtml(g.key)+'"'+(row.stockGroupKey===g.key?' selected':'')+'>'+escapeHtml(label)+'</option>';
-          }).join('');
-          sellSourceHtml += '<select class="mr-stock-select" data-row-id="'+row.rid+'">'+opts+'</select>';
-          if(row.stockGroupKey){
-            // Read the live group (not the row's own cached snapshot) so a restore/undo
-            // elsewhere that touches this same batch shows up here immediately.
-            var liveItemGroup = stockGroups.filter(function(g){ return g.key===row.stockGroupKey; })[0];
-            if(liveItemGroup) sellSourceHtml += '<div class="mr-stock-info">คงเหลือในคลัง: '+fmtNum(liveItemGroup.qty)+' ชิ้น</div>';
-          }
+          '<select class="mr-stock-select" data-row-id="'+row.rid+'">'+opts+'</select>';
+        if(row.stockGroupKey){
+          // Read the live group (not the row's own cached snapshot) so a restore/undo
+          // elsewhere that touches this same batch shows up here immediately.
+          var liveItemGroup = stockGroups.filter(function(g){ return g.key===row.stockGroupKey; })[0];
+          if(liveItemGroup) sellSourceHtml += '<div class="mr-stock-info">คงเหลือในคลัง: '+fmtNum(liveItemGroup.qty)+' ชิ้น</div>';
         }
         sellSourceHtml += '</div>';
       }
@@ -3632,11 +3628,12 @@ svg.icon{width:18px;height:18px;display:block}
       b.classList.toggle('active', b.dataset.type===type);
     });
     if(changed){
-      // "จากคลัง" only makes sense for "ขาย" — switching away from it must drop the
-      // flag too, not just the picked batch, or a leftover fromStock=true silently caps
-      // qty against warehouse stock on a plain "ซื้อ" row where that never applies.
+      // "จากคลัง" only applies to "ขาย" — switching away from it must drop the picked
+      // batch, or a leftover selection would silently cap qty against warehouse stock on
+      // a plain "ซื้อ" row where that never applies. fromStock itself stays true; it's
+      // simply unused (sellFromStockAvailable is false) outside sell + item.
       [App.zenyRows, App.itemRows, App.otherRows].forEach(function(rows){
-        (rows||[]).forEach(function(row){ if(row.fromStock){ row.fromStock = false; row.stockGroupKey = null; row.stockGroup = null; } });
+        (rows||[]).forEach(function(row){ if(row.stockGroupKey){ row.stockGroupKey = null; row.stockGroup = null; } });
       });
       renderItemRows();
     }
@@ -3929,15 +3926,6 @@ svg.icon{width:18px;height:18px;display:block}
       renderItemRows();
       return;
     }
-    var sourceBtn = e.target.closest('[data-sell-source]');
-    if(sourceBtn){
-      var wantStock = sourceBtn.dataset.sellSource === 'stock';
-      if(row.fromStock !== wantStock){
-        row.fromStock = wantStock;
-        row.stockGroupKey = null; row.stockGroup = null;
-        renderItemRows();
-      }
-    }
   });
 
   document.getElementById('mrItemRows').addEventListener('input', function(e){
@@ -4081,7 +4069,6 @@ svg.icon{width:18px;height:18px;display:block}
           sourceLines: result.breakdown.map(function(b){ return { lineId:b.lineId, amount:b.amount }; }) };
         // The sale is committed now — unlink the row from the (now stale) stock group
         // it was picked from, so a lingering form doesn't show yesterday's "remaining".
-        plan.row.fromStock = false;
         plan.row.stockGroupKey = null;
         plan.row.stockGroup = null;
       });

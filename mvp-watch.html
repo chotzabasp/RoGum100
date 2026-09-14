@@ -4940,7 +4940,7 @@ svg.icon{width:18px;height:18px;display:block}
     var root = document.getElementById('adminTopupList');
     root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';
     supa.from('topup_requests')
-      .select('id, amount_baht, points_added, slip_image_url, created_at, profiles(display_name)')
+      .select('id, amount_baht, points_added, slip_image_url, created_at, profiles!user_id(display_name)')
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
       .then(function(res){

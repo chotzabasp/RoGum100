@@ -1937,9 +1937,9 @@ svg.icon{width:18px;height:18px;display:block}
         timeHtml = '<div class="bc-time mono state-'+st+'" data-time>'+fmtDuration(remaining)+'</div>';
         var approxMin = Math.max(0, Math.ceil(remaining/60000));
         subHtml = '<div class="bc-time-sub" data-sub>'+(remaining>0 ? 'อีก ~'+approxMin+' นาที' : 'เลยเวลาโดยประมาณ')+'</div>';
-        if(act.adjusted){
-          delayHtml = '<button type="button" class="bc-delay-pill" data-action="clear-time" title="ล้างเวลาที่จับอยู่ กลับไปเป็นยังไม่ได้ฆ่า">⏱ เคลียร์เวลา</button>';
-        }
+        // ปุ่มนี้โผล่ทุกครั้งที่มีการจับเวลาอยู่ (ไม่ใช่แค่ตอนแก้เวลาตายเอง) เพราะเป็น
+        // ปุ่ม "เคลียร์เวลา" ทั่วไป ไว้ล้างรอบที่กำลังจับอยู่ กลับไปเป็นยังไม่ได้ฆ่า
+        delayHtml = '<button type="button" class="bc-delay-pill" data-action="clear-time" title="ล้างเวลาที่จับอยู่ กลับไปเป็นยังไม่ได้ฆ่า">⏱ เคลียร์เวลา</button>';
       } else {
         timeHtml = '<div class="bc-time idle">—</div>';
         subHtml = '<div class="bc-time-sub">ยังไม่ได้ฆ่า</div>';

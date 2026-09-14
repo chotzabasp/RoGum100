@@ -161,6 +161,10 @@ svg.icon{width:18px;height:18px;display:block}
 .membership-pill.expired{background:color-mix(in srgb, var(--danger) 22%, transparent);color:var(--danger)}
 .icon-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:.3rem;display:flex}
 .icon-btn:hover{color:var(--danger)}
+.points-chip{display:flex;align-items:center;gap:.4rem;padding:.4rem .75rem;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text);font-size:.8rem}
+.points-chip .icon{width:15px;height:15px;color:var(--warn)}
+.points-chip b{font-family:"JetBrains Mono";font-weight:800}
+.points-chip small{color:var(--text-dim);font-weight:600;font-size:.72rem}
 
 /* ---------- home view ---------- */
 #view-home{position:relative}
@@ -888,6 +892,10 @@ svg.icon{width:18px;height:18px;display:block}
         <div class="time mono" id="clockTime">--:--:--</div>
         <div class="date" id="clockDate">-</div>
       </div>
+      <div class="points-chip" id="pointsChip" title="แต้มคงเหลือ — ใช้ซื้อแพ็กเกจได้ (1 บาท = 1 แต้ม)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <b id="pointsValue">0</b><small>แต้ม</small>
+      </div>
       <div class="user-menu">
         <div class="avatar" id="userAvatar">?</div>
         <div class="who">
@@ -1587,7 +1595,7 @@ svg.icon{width:18px;height:18px;display:block}
   function ensureDemoAccount(){
     var accs = Auth.accounts();
     if(!accs['demo@guild.local']){
-      accs['demo@guild.local'] = { name:'หัวหน้ากิลด์ (เดโม)', password:'demo', expiresAt: Date.now() + 30*86400000 };
+      accs['demo@guild.local'] = { name:'หัวหน้ากิลด์ (เดโม)', password:'demo', expiresAt: Date.now() + 30*86400000, points: 1250 };
       Auth.save(accs);
     }
     if(!Auth.session()){
@@ -1975,6 +1983,9 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('userAvatar').textContent = acc.name.trim().charAt(0).toUpperCase();
     document.getElementById('userName').textContent = acc.name;
     document.getElementById('homeGreetName').textContent = acc.name + '!';
+    // แต้ม = หน่วยหลังเติมเงิน (1 บาท = 1 แต้ม) ยังไม่มีระบบเติมเงินจริงตอนนี้ ค่านี้จึงเป็น
+    // ตัวเลขคงที่ต่อบัญชี (ดูฟังก์ชัน ensureDemoAccount / สมัครสมาชิก) รอระบบเติมเงินจริงมาอัปเดต
+    document.getElementById('pointsValue').textContent = fmtNum(acc.points||0);
     var daysLeft = Math.ceil((acc.expiresAt - Date.now())/86400000);
     var pill = document.getElementById('userPill');
     if(daysLeft <= 0){ pill.textContent = 'หมดอายุแล้ว'; pill.className='membership-pill expired'; }
@@ -3876,7 +3887,7 @@ svg.icon{width:18px;height:18px;display:block}
       var pass = document.getElementById('rg-pass').value;
       if(!name || !email || !pass){ errEl.textContent = 'กรอกข้อมูลให้ครบทุกช่อง'; return; }
       if(accs[email]){ errEl.textContent = 'อีเมลนี้สมัครไว้แล้ว'; return; }
-      accs[email] = { name:name, password:pass, expiresAt: Date.now() + 30*86400000 };
+      accs[email] = { name:name, password:pass, expiresAt: Date.now() + 30*86400000, points: 0 };
       Auth.save(accs);
       Auth.setSession({ email:email });
       enterApp(email);

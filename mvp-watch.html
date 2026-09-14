@@ -422,6 +422,7 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-sell-source{display:flex;flex-direction:column;gap:.35rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.25rem;margin-bottom:.1rem}
 .mr-stock-select{font-size:.78rem}
 .mr-stock-info{font-size:.74rem;color:var(--text-dim)}
+.mr-stock-info-warn{color:var(--danger);font-weight:600}
 .mr-slot-section-locked{color:var(--text-dim);font-size:.76rem;padding:.1rem .2rem}
 .mr-slot-section{display:flex;flex-direction:column;gap:.3rem;padding-left:.2rem}
 .mr-slot-row{display:flex;gap:.4rem;align-items:center}
@@ -2948,6 +2949,21 @@ svg.icon{width:18px;height:18px;display:block}
   // A fresh M row always carries the fixed, locked name — never blank, never user-typed.
   // `price` is optional — passed in when carrying the last-used ราคา (เรท) forward after a save.
   function newZenyRow(price){ return newItemRow(ZENY_LABEL, price!=null&&price!=='' ? price : null, null, 'baht'); }
+
+  // How much M is currently on hand for this server — ซื้อมาทั้งหมด minus ขายไปทั้งหมด,
+  // across every M entry ever logged (not just what's on screen in ประวัติ). Shown right
+  // on the buy-sell form itself so there's no need to go check ประวัติ first to know how
+  // much is left before recording a new M trade.
+  function computeZenyRemaining(serverId){
+    if(!serverId) return 0;
+    var buyQty = 0, sellQty = 0;
+    App.merchantLog.forEach(function(e){
+      if(e.serverId!==serverId || (e.category||'zeny')!=='zeny') return;
+      var qty = (e.lines||[]).reduce(function(s,l){ return s+(parseFloat(l.qty)||0); }, 0);
+      if(entryType(e)==='buy') buyQty += qty; else sellQty += qty;
+    });
+    return buyQty - sellQty;
+  }
   function activeRows(){
     if(App.merchantCategory==='zeny') return App.zenyRows;
     if(App.merchantCategory==='other') return App.otherRows;
@@ -3066,6 +3082,16 @@ svg.icon{width:18px;height:18px;display:block}
         }
         sellSourceHtml += '</div>';
       }
+      // M has no warehouse card of its own — show "คงเหลือ" (bought minus sold so far,
+      // this server) right on the row instead, so it's visible before recording a trade
+      // without having to go check ประวัติ first.
+      var zenyRemainingHtml = '';
+      if(isZenyTab && App.currentServerId){
+        var remaining = computeZenyRemaining(App.currentServerId);
+        zenyRemainingHtml = remaining>=0
+          ? '<div class="mr-stock-info">คงเหลือตอนนี้: '+fmtNum(remaining)+' M</div>'
+          : '<div class="mr-stock-info mr-stock-info-warn">ขายเกินที่มี: '+fmtNum(-remaining)+' M</div>';
+      }
       return '<div class="mr-item-row" data-row-id="'+row.rid+'">'+
         sellSourceHtml+
         '<div class="mr-item-row-main">'+
@@ -3081,6 +3107,7 @@ svg.icon{width:18px;height:18px;display:block}
           '<input type="text" inputmode="decimal" class="mr-row-qty" placeholder="จำนวน" value="'+formatDecimalDisplay(row.qty)+'">'+
           '<button type="button" class="mr-row-remove" data-remove-row="'+row.rid+'" '+(removable?'':'disabled')+'>✕</button>'+
         '</div>'+
+        zenyRemainingHtml+
         slotsHtml+
       '</div>';
     }).join('');

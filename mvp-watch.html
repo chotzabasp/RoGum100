@@ -743,6 +743,18 @@ svg.icon{width:18px;height:18px;display:block}
 .post-announce-field{margin-bottom:.9rem}
 .post-announce-field label{display:block;font-size:.76rem;color:var(--text-dim);margin-bottom:.3rem}
 .post-announce-field select, .post-announce-field input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.5rem .6rem;font-size:.85rem}
+.topup-box{width:min(360px,90vw);text-align:left}
+.topup-rate{margin:0 0 .8rem;font-size:.78rem;color:var(--text-dim)}
+.topup-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.9rem}
+.topup-preset-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.5rem .3rem;font-size:.76rem;font-weight:700;cursor:pointer;font-family:"JetBrains Mono"}
+.topup-preset-btn.active{background:color-mix(in srgb, var(--accent) 20%, transparent);border-color:var(--accent);color:var(--accent)}
+.topup-methods{display:flex;gap:.4rem}
+.topup-method-btn{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:var(--radius-s);padding:.5rem .4rem;font-size:.78rem;font-weight:600;cursor:pointer}
+.topup-method-btn.active{background:color-mix(in srgb, var(--accent) 20%, transparent);border-color:var(--accent);color:var(--accent)}
+.topup-summary{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.6rem .8rem;font-size:.85rem;text-align:center;margin-bottom:.8rem}
+.topup-summary b{color:var(--warn);font-family:"JetBrains Mono";font-size:1.05rem}
+.points-topup-btn{width:17px;height:17px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:.8rem;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;margin-left:.1rem}
+.points-topup-btn:hover{filter:brightness(1.15)}
 .post-announce-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem}
 .post-announce-check{display:flex;align-items:center;gap:.4rem;font-size:.85rem;color:var(--text);width:76px;flex:none;cursor:pointer}
 .post-announce-row input[type="text"]{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.5rem .6rem;font-size:.85rem}
@@ -895,6 +907,7 @@ svg.icon{width:18px;height:18px;display:block}
       <div class="points-chip" id="pointsChip" title="แต้มคงเหลือ — ใช้ซื้อแพ็กเกจได้ (1 บาท = 1 แต้ม)">
         <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         <b id="pointsValue">0</b><small>แต้ม</small>
+        <button type="button" class="points-topup-btn" id="pointsTopupBtn" title="เติมแต้ม">+</button>
       </div>
       <div class="user-menu">
         <div class="avatar" id="userAvatar">?</div>
@@ -1442,6 +1455,37 @@ svg.icon{width:18px;height:18px;display:block}
     <div id="myAnnouncementsList"></div>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" id="myAnnouncementsCloseBtn">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<div id="topupOverlay" hidden>
+  <div class="confirm-backdrop"></div>
+  <div class="confirm-box topup-box">
+    <h3 class="post-announce-title">เติมแต้ม</h3>
+    <p class="topup-rate">1 บาท = 1 แต้ม</p>
+    <div class="topup-presets" id="topupPresets">
+      <button type="button" class="topup-preset-btn" data-amount="100">100 บ</button>
+      <button type="button" class="topup-preset-btn" data-amount="300">300 บ</button>
+      <button type="button" class="topup-preset-btn active" data-amount="500">500 บ</button>
+      <button type="button" class="topup-preset-btn" data-amount="1000">1,000 บ</button>
+    </div>
+    <div class="post-announce-field">
+      <label>หรือระบุจำนวนเงินเอง (บาท)</label>
+      <input type="text" inputmode="numeric" id="topupCustomAmount" class="mono" placeholder="เช่น 250">
+    </div>
+    <div class="post-announce-field">
+      <label>ช่องทางชำระเงิน (จำลอง)</label>
+      <div class="topup-methods" id="topupMethods">
+        <button type="button" class="topup-method-btn active" data-method="promptpay">พร้อมเพย์ / QR</button>
+        <button type="button" class="topup-method-btn" data-method="card">บัตรเครดิต/เดบิต</button>
+      </div>
+    </div>
+    <div class="topup-summary">จะได้รับ <b id="topupPointsPreview">500</b> แต้ม</div>
+    <p class="post-announce-note">โหมดจำลอง — ยังไม่เชื่อมระบบชำระเงินจริง กดยืนยันเพื่อทดสอบหน้าตาเท่านั้น</p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-ghost" id="topupCancelBtn">ยกเลิก</button>
+      <button type="button" class="btn btn-gradient" id="topupSubmitBtn">ยืนยันการเติมเงิน (จำลอง)</button>
     </div>
   </div>
 </div>
@@ -4764,7 +4808,7 @@ svg.icon{width:18px;height:18px;display:block}
         '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
         savingsHtml+
         '<ul class="pricing-features">'+features+'</ul>'+
-        '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta">'+ctaLabel+'</button>'+
+        '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+p.name+'">'+ctaLabel+'</button>'+
       '</div>';
     }).join('');
   }
@@ -4777,6 +4821,81 @@ svg.icon{width:18px;height:18px;display:block}
       b.classList.toggle('active', b===btn);
     });
     renderPricingPage();
+  });
+
+  // จำลองการ "ซื้อแพ็กเกจด้วยแต้ม" — หักแต้มจริงในบัญชี (localStorage) แค่เพื่อให้เห็น
+  // หน้าตาสมบูรณ์ครบวงจร ไม่ใช่ระบบชำระเงินจริง (ดูหมายเหตุที่ปุ่ม "เติมแต้ม")
+  function addUserPoints(email, delta){
+    var accs = Auth.accounts();
+    var acc = accs[email];
+    if(!acc) return;
+    acc.points = Math.max(0, (acc.points||0) + delta);
+    Auth.save(accs);
+  }
+  document.getElementById('pricingGrid').addEventListener('click', function(e){
+    var btn = e.target.closest('.pricing-cta');
+    if(!btn) return;
+    var price = parseInt(btn.dataset.price, 10) || 0;
+    var planName = btn.dataset.planName;
+    var acc = Auth.accounts()[App.session.email];
+    var have = acc ? (acc.points||0) : 0;
+    if(have < price){
+      toast('แต้มไม่พอ ขาดอีก '+fmtNum(price-have)+' แต้ม — เติมแต้มก่อนนะ');
+      openTopup();
+      return;
+    }
+    showConfirm('ยืนยันสมัคร "'+planName+'" ด้วย '+fmtNum(price)+' แต้ม? (จำลอง)', function(){
+      addUserPoints(App.session.email, -price);
+      renderUser();
+      toast('สมัคร '+planName+' สำเร็จ (จำลอง) — ใช้ '+fmtNum(price)+' แต้ม เหลือ '+fmtNum(have-price)+' แต้ม');
+    });
+  });
+
+  // ---------- เติมแต้ม (จำลอง) ----------
+  var topupAmount = 500;
+  function updateTopupPreview(){
+    document.getElementById('topupPointsPreview').textContent = fmtNum(topupAmount);
+  }
+  function openTopup(){
+    topupAmount = 500;
+    document.getElementById('topupCustomAmount').value = '';
+    document.querySelectorAll('.topup-preset-btn').forEach(function(b){ b.classList.toggle('active', parseInt(b.dataset.amount,10)===topupAmount); });
+    document.querySelectorAll('.topup-method-btn').forEach(function(b, i){ b.classList.toggle('active', i===0); });
+    updateTopupPreview();
+    document.getElementById('topupOverlay').hidden = false;
+  }
+  function closeTopup(){ document.getElementById('topupOverlay').hidden = true; }
+  document.getElementById('pointsTopupBtn').addEventListener('click', openTopup);
+  document.getElementById('topupCancelBtn').addEventListener('click', closeTopup);
+  document.querySelector('#topupOverlay .confirm-backdrop').addEventListener('click', closeTopup);
+
+  document.getElementById('topupPresets').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-amount]');
+    if(!btn) return;
+    topupAmount = parseInt(btn.dataset.amount, 10);
+    document.getElementById('topupCustomAmount').value = '';
+    document.querySelectorAll('.topup-preset-btn').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    updateTopupPreview();
+  });
+  document.getElementById('topupCustomAmount').addEventListener('input', function(){
+    var digits = this.value.replace(/[^\d]/g,'');
+    this.value = digits;
+    var n = parseInt(digits, 10);
+    document.querySelectorAll('.topup-preset-btn').forEach(function(b){ b.classList.remove('active'); });
+    topupAmount = n>0 ? n : 0;
+    updateTopupPreview();
+  });
+  document.getElementById('topupMethods').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-method]');
+    if(!btn) return;
+    document.querySelectorAll('.topup-method-btn').forEach(function(b){ b.classList.toggle('active', b===btn); });
+  });
+  document.getElementById('topupSubmitBtn').addEventListener('click', function(){
+    if(!(topupAmount>0)){ toast('กรุณาระบุจำนวนเงิน'); return; }
+    addUserPoints(App.session.email, topupAmount);
+    renderUser();
+    closeTopup();
+    toast('เติมแต้มสำเร็จ (จำลอง) +'+fmtNum(topupAmount)+' แต้ม');
   });
   document.querySelectorAll('.rail-btn[data-page]').forEach(function(btn){
     btn.addEventListener('click', function(){ switchPage(btn.dataset.page); });

@@ -1602,17 +1602,19 @@ svg.icon{width:18px;height:18px;display:block}
     return boss.mapImageUrl ? '<img src="'+boss.mapImageUrl+'" alt="">' : mapSVG(boss.map);
   }
 
-  // Exchange rates per server — set from the backend admin side. Users only
-  // pick which server each home-page rate chip shows, not the rate itself.
-  var SERVER_RATES = [
-    { id:'loki', name:'Sv.Loki', buy:100, sell:120 },
-    { id:'thor', name:'Sv.Thor', buy:200, sell:250 },
-    { id:'isis', name:'Sv.Isis', buy:100, sell:120 },
-    { id:'freyja', name:'Sv.Freyja', buy:150, sell:180 },
-    { id:'odin', name:'Sv.Odin', buy:120, sell:140 }
-  ];
-  var DEFAULT_RATE_SLOTS = ['loki','thor','isis'];
-  var DEFAULT_RATE_CHIP_SLOTS = ['loki'];
+  // รายชื่อ + เรทตั้งต้นของแต่ละเซิร์ฟเวอร์ — โหลดจากตาราง `servers` ใน Supabase
+  // แทนของคงที่ในโค้ด แอดมินเพิ่ม/ลบ/แก้ได้ผ่าน Table Editor ผู้ใช้เลือกได้เท่าที่มีจริง
+  var SERVER_RATES = [];
+  function loadServers(){
+    return supa.from('servers').select('*').order('sort_order').then(function(res){
+      if(res.error){ console.error('loadServers', res.error); return; }
+      SERVER_RATES = (res.data||[]).map(function(s){
+        return { id:s.id, name:s.name, buy:s.buy, sell:s.sell };
+      });
+    });
+  }
+  function defaultRateSlots(){ return SERVER_RATES.slice(0,3).map(function(s){ return s.id; }); }
+  function defaultRateChipSlots(){ return SERVER_RATES.slice(0,1).map(function(s){ return s.id; }); }
   var MAX_RATE_CHIP_SLOTS = 10;
   var RATE_ANNOUNCEMENTS_VERSION = 3; // bump to force-clear old test announcements from everyone's storage
   var RATE_MAX_DEVIATION = 0.30; // block a posted price more than ±30% away from the current rate (typo guard)
@@ -1667,11 +1669,11 @@ svg.icon{width:18px;height:18px;display:block}
     App.pendingItems = {};
     var RATE_SLOTS_VERSION = 2; // bump to force a one-time reset to the new 1-card default
     if(store(keys.rateSlotsVer, 0) !== RATE_SLOTS_VERSION){
-      App.rateSlots = DEFAULT_RATE_CHIP_SLOTS.slice();
+      App.rateSlots = defaultRateChipSlots();
       persist(keys.rateSlots, App.rateSlots);
       persist(keys.rateSlotsVer, RATE_SLOTS_VERSION);
     } else {
-      App.rateSlots = store(keys.rateSlots, null) || DEFAULT_RATE_CHIP_SLOTS.slice();
+      App.rateSlots = store(keys.rateSlots, null) || defaultRateChipSlots();
     }
     if(App.rateSlots.length > MAX_RATE_CHIP_SLOTS){
       App.rateSlots = App.rateSlots.slice(0, MAX_RATE_CHIP_SLOTS);
@@ -1736,7 +1738,7 @@ svg.icon{width:18px;height:18px;display:block}
     App.farmMapNames = store(keys.farmMapNames, null) || {};
     App.farmLog = store(keys.farmLog, []);
     App.farmServerId = store(keys.farmServer, null) || SERVER_RATES[0].id;
-    App.tickerServers = store(keys.tickerServers, null) || DEFAULT_RATE_SLOTS.slice();
+    App.tickerServers = store(keys.tickerServers, null) || defaultRateSlots();
     App.tickerSelectedServers = store(keys.tickerSelectedServers, null) || App.tickerServers.slice();
     App.tickerSelectedServers = App.tickerSelectedServers.filter(function(id){ return App.tickerServers.indexOf(id)!==-1; });
     App.lastRateUpdateTs = store(keys.lastRateUpdateTs, null);
@@ -3990,7 +3992,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   function enterApp(user){
     App.session = { id:user.id, email:user.email };
-    return Promise.all([ refreshProfile(), loadUserBosses() ]).then(function(){
+    return Promise.all([ refreshProfile(), loadUserBosses(), serversReady ]).then(function(){
       loadUserData(user.email);
       recomputeServerRatesFromAnnouncements();
       document.getElementById('authScreen').hidden = true;
@@ -5731,6 +5733,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   // ---------- boot ----------
   loadCatalog();
+  var serversReady = loadServers();
   supa.auth.getSession().then(function(res){
     var session = res.data && res.data.session;
     if(session) enterApp(session.user);

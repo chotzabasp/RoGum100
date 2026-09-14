@@ -645,6 +645,9 @@ svg.icon{width:18px;height:18px;display:block}
   padding:.65rem 1rem;font-size:.84rem;margin-bottom:1.1rem;color:var(--text-dim);
 }
 .party-mode-banner b{color:var(--text)}
+.party-panel{margin-bottom:1.1rem}
+.party-panel-controls{display:flex;align-items:center;gap:.7rem}
+.party-panel-summary{font-size:.78rem;color:var(--text-dim)}
 
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.3rem}
 .stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem}
@@ -922,7 +925,7 @@ svg.icon{width:18px;height:18px;display:block}
     <button class="rail-btn" data-page="timers"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="tip">จับเวลาบอส</span></button>
     <button class="rail-btn" data-page="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="tip">เติมแพ็กเกจ</span></button>
     <button class="rail-btn" data-page="admin" id="railAdminBtn" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg><span class="tip">แอดมิน</span><span class="rail-badge" id="railAdminBadge" hidden>0</span></button>
-    <button class="rail-btn" data-page="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="tip">ตั้งค่า</span></button>
+    <button class="rail-btn" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="tip">ตั้งค่า</span></button>
   </nav>
 
   <main class="content">
@@ -1269,6 +1272,27 @@ svg.icon{width:18px;height:18px;display:block}
       <button type="button" class="btn btn-ghost btn-sm" id="partyModeExitBtn">กลับไปดูของตัวเอง</button>
     </div>
 
+    <div class="panel party-panel" id="partyPanel">
+      <div class="panel-head">
+        <h2>ปาร์ตี้</h2>
+        <div class="party-panel-controls">
+          <span class="party-panel-summary" id="partyPanelSummary">กำลังโหลด...</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="partyPanelToggle">จัดการปาร์ตี้</button>
+        </div>
+      </div>
+      <div id="partyPanelBody" hidden>
+        <div class="panel-head">
+          <h2>ปาร์ตี้ของฉัน</h2>
+          <button type="button" class="btn btn-gradient btn-sm" id="addPartyMemberBtn">+ เพิ่มเพื่อน (20 แต้ม)</button>
+        </div>
+        <div id="myPartyList" class="admin-topup-list"></div>
+        <div class="panel-head">
+          <h2>ปาร์ตี้ที่ฉันเข้าร่วม</h2>
+        </div>
+        <div id="myMembershipList" class="admin-topup-list"></div>
+      </div>
+    </div>
+
     <section class="stats-row">
       <div class="stat-tile">
         <div class="stat-tile-top">
@@ -1394,30 +1418,6 @@ svg.icon{width:18px;height:18px;display:block}
         </div>
       </div>
       <div id="adminTopupList" class="admin-topup-list"></div>
-    </section>
-
-    <section id="view-settings" hidden>
-      <div class="topbar">
-        <div>
-          <h1>ตั้งค่า</h1>
-          <p class="sub">จัดการปาร์ตี้ที่แชร์ข้อมูล "จับเวลาบอส" ร่วมกัน</p>
-        </div>
-      </div>
-
-      <div class="panel" style="margin-bottom:1rem">
-        <div class="panel-head">
-          <h2>ปาร์ตี้ของฉัน</h2>
-          <button type="button" class="btn btn-gradient btn-sm" id="addPartyMemberBtn">+ เพิ่มเพื่อน (20 แต้ม)</button>
-        </div>
-        <div id="myPartyList" class="admin-topup-list"></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <h2>ปาร์ตี้ที่ฉันเข้าร่วม</h2>
-        </div>
-        <div id="myMembershipList" class="admin-topup-list"></div>
-      </div>
     </section>
 
   </main>
@@ -1930,7 +1930,7 @@ svg.icon{width:18px;height:18px;display:block}
     App.viewingHostId = null;
     App.viewingHostName = null;
     persist(App.keys.viewingHost, null);
-    loadUserBosses().then(function(){ renderRoster(); renderStats(); renderPartyModeBanner(); });
+    loadUserBosses().then(function(){ renderRoster(); renderStats(); renderPartyModeBanner(); renderPartyPanel(); });
   }
   function switchToPartyView(hostId, hostName){
     App.viewingHostId = hostId;
@@ -4100,7 +4100,7 @@ svg.icon{width:18px;height:18px;display:block}
       renderAll();
       renderPartyModeBanner();
       // เปิดกลับมาที่หน้าเดิมที่ค้างไว้ตอน refresh แทนที่จะเด้งไปหน้าแรกเสมอ
-      var validPages = ['home','farm','timers','items','pricing','admin','settings'];
+      var validPages = ['home','farm','timers','items','pricing','admin'];
       var lastPage = store(App.keys.lastPage, 'home');
       var isAdmin = App.profile && App.profile.role === 'admin';
       if(validPages.indexOf(lastPage)===-1 || (lastPage==='admin' && !isAdmin)) lastPage = 'home';
@@ -4918,12 +4918,11 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('view-items').hidden = page !== 'items';
     document.getElementById('view-pricing').hidden = page !== 'pricing';
     document.getElementById('view-admin').hidden = page !== 'admin';
-    document.getElementById('view-settings').hidden = page !== 'settings';
     if(page==='farm') renderFarmPage();
     if(page==='items') renderItemsPage();
     if(page==='pricing') renderPricingPage();
     if(page==='admin') renderAdminTopups();
-    if(page==='settings') renderSettingsPage();
+    if(page==='timers') renderPartyPanel();
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);
     });
@@ -5117,8 +5116,13 @@ svg.icon{width:18px;height:18px;display:block}
     });
   });
 
-  // ---------- ตั้งค่า: จัดการปาร์ตี้ (เพิ่ม/เอาเพื่อนออก, สลับไปดูข้อมูลปาร์ตี้) ----------
-  function renderSettingsPage(){
+  // ---------- การ์ด "ปาร์ตี้" บนหน้าจับเวลาบอส (พับได้) ----------
+  var partyPanelHostCount = 0, partyPanelMemberCount = 0;
+  function updatePartyPanelSummary(){
+    document.getElementById('partyPanelSummary').textContent =
+      'ปาร์ตี้ของฉัน '+partyPanelHostCount+' คน · เข้าร่วม '+partyPanelMemberCount+' ปาร์ตี้';
+  }
+  function renderPartyPanel(){
     var listEl = document.getElementById('myPartyList');
     var memberListEl = document.getElementById('myMembershipList');
     listEl.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';
@@ -5127,6 +5131,8 @@ svg.icon{width:18px;height:18px;display:block}
     supa.from('party_members').select('member_id, profiles!member_id(display_name)').eq('host_id', App.session.id).is('removed_at', null).then(function(res){
       if(res.error){ listEl.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+res.error.message+'</p>'; return; }
       var rows = res.data || [];
+      partyPanelHostCount = rows.length;
+      updatePartyPanelSummary();
       if(!rows.length){ listEl.innerHTML = '<p class="admin-topup-empty">ยังไม่มีเพื่อนในปาร์ตี้ของคุณ</p>'; return; }
       listEl.innerHTML = rows.map(function(r){
         var name = (r.profiles && r.profiles.display_name) || 'ไม่ทราบชื่อ';
@@ -5138,6 +5144,8 @@ svg.icon{width:18px;height:18px;display:block}
     });
 
     loadMyMemberships().then(function(){
+      partyPanelMemberCount = App.myMemberships.length;
+      updatePartyPanelSummary();
       if(!App.myMemberships.length){
         memberListEl.innerHTML = '<p class="admin-topup-empty">คุณยังไม่ได้เข้าร่วมปาร์ตี้ของใคร</p>';
         return;
@@ -5155,6 +5163,11 @@ svg.icon{width:18px;height:18px;display:block}
       }).join('');
     });
   }
+  document.getElementById('partyPanelToggle').addEventListener('click', function(){
+    var body = document.getElementById('partyPanelBody');
+    body.hidden = !body.hidden;
+    this.textContent = body.hidden ? 'จัดการปาร์ตี้' : 'ซ่อน';
+  });
 
   document.getElementById('myPartyList').addEventListener('click', function(e){
     var btn = e.target.closest('[data-remove-member]');
@@ -5164,7 +5177,7 @@ svg.icon{width:18px;height:18px;display:block}
       supa.rpc('remove_party_member', { target_member_id: memberId }).then(function(res){
         if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
         toast('เอาออกจากปาร์ตี้แล้ว');
-        renderSettingsPage();
+        renderPartyPanel();
       });
     });
   });
@@ -5198,7 +5211,7 @@ svg.icon{width:18px;height:18px;display:block}
       if(res.error){ toast('เพิ่มไม่สำเร็จ: '+res.error.message); return; }
       document.getElementById('addPartyMemberOverlay').hidden = true;
       refreshProfile();
-      renderSettingsPage();
+      renderPartyPanel();
       toast('เพิ่มเพื่อนเข้าปาร์ตี้แล้ว');
     });
   });

@@ -10,3 +10,4 @@ dist/
 build/
 experiments/
 .claude/launch.json
+.agents/

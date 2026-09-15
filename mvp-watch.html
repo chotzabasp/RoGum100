@@ -889,6 +889,29 @@ svg.icon{width:18px;height:18px;display:block}
 .admin-topup-actions{display:flex;gap:.5rem;flex:none}
 .admin-topup-empty{color:var(--text-dim);font-size:.88rem;text-align:center;padding:2rem 0}
 
+/* หน้า "ตั้งค่า" */
+.field-hint{font-size:.72rem;color:var(--text-dim)}
+.field-hint.ok{color:var(--success)}
+.field-hint.bad{color:var(--danger)}
+.settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;align-items:start}
+.settings-card .field{margin-bottom:.2rem}
+.settings-wide{grid-column:1/-1}
+.settings-kv{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+.settings-kv>div{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .6rem;display:flex;flex-direction:column;gap:.15rem;min-width:0}
+.settings-kv .lbl{font-size:.68rem;color:var(--text-dim)}
+.settings-kv b{font-size:.86rem;overflow-wrap:anywhere}
+.settings-note{font-size:.74rem;color:var(--text-dim)}
+.settings-actions{display:flex;justify-content:flex-end}
+.settings-list{display:flex;flex-direction:column}
+.settings-list .admin-topup-empty{padding:1rem 0}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:.8rem;padding:.6rem 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-row-main{min-width:0;flex:1}
+.settings-row-title{font-size:.88rem;font-weight:600;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.settings-row-meta{font-size:.74rem;color:var(--text-dim);margin-top:.15rem}
+.settings-row-amt{font-family:"JetBrains Mono";font-variant-numeric:tabular-nums;font-size:.9rem;flex:none}
+@media (max-width:760px){ .settings-grid{grid-template-columns:1fr} }
+
 @media (max-width: 760px){
   .pricing-grid{grid-template-columns:1fr}
   .pricing-title{font-size:1.7rem}
@@ -924,13 +947,16 @@ svg.icon{width:18px;height:18px;display:block}
     <p class="auth-tag">จับเวลาการเกิดใหม่ของบอส ไม่พลาดทุกรอบล่า</p>
 
     <div id="loginFields">
-      <div class="field"><label for="li-email">อีเมล</label><input id="li-email" type="email" placeholder="guild@example.com" autocomplete="email"></div>
+      <div class="field"><label for="li-email">อีเมลหรือ Username</label><input id="li-email" type="text" placeholder="guild@example.com หรือ username" autocomplete="username"></div>
       <div class="field"><label for="li-pass">รหัสผ่าน</label><input id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
     </div>
     <div id="registerFields" hidden>
-      <div class="field"><label for="rg-name">ชื่อที่ใช้แสดง</label><input id="rg-name" type="text" placeholder="เช่น หัวหน้ากิลด์"></div>
-      <div class="field"><label for="rg-email">อีเมล</label><input id="rg-email" type="email" placeholder="guild@example.com"></div>
-      <div class="field"><label for="rg-pass">รหัสผ่าน</label><input id="rg-pass" type="password" placeholder="••••••••"></div>
+      <div class="field"><label for="rg-name">ชื่อที่ใช้แสดง</label><input id="rg-name" type="text" placeholder="เช่น หัวหน้ากิลด์" maxlength="40"></div>
+      <div class="field"><label for="rg-username">Username</label><input id="rg-username" type="text" placeholder="a-z 0-9 _ . ยาว 3-20 ตัว" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20"><div class="field-hint" id="rg-username-hint">ใช้ล็อกอินได้ และเปลี่ยนภายหลังไม่ได้</div></div>
+      <div class="field"><label for="rg-email">อีเมล</label><input id="rg-email" type="email" placeholder="guild@example.com" autocomplete="email"></div>
+      <div class="field"><label for="rg-pass">รหัสผ่าน</label><input id="rg-pass" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password"></div>
+      <div class="field"><label for="rg-pass2">ยืนยันรหัสผ่าน</label><input id="rg-pass2" type="password" placeholder="พิมพ์รหัสผ่านอีกครั้ง" autocomplete="new-password"></div>
+      <div class="field"><label for="rg-birth">วันเดือนปีเกิด</label><input id="rg-birth" type="date" min="1900-01-01"></div>
     </div>
 
     <p class="auth-error" id="authError"></p>
@@ -953,7 +979,7 @@ svg.icon{width:18px;height:18px;display:block}
     <button class="rail-btn" data-page="timers"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="tip">จับเวลาบอส</span></button>
     <button class="rail-btn" data-page="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="tip">เติมแพ็กเกจ</span></button>
     <button class="rail-btn" data-page="admin" id="railAdminBtn" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg><span class="tip">แอดมิน</span><span class="rail-badge" id="railAdminBadge" hidden>0</span></button>
-    <button class="rail-btn" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="tip">ตั้งค่า</span></button>
+    <button class="rail-btn" data-page="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="tip">ตั้งค่า</span></button>
   </nav>
 
   <main class="content">
@@ -1419,6 +1445,45 @@ svg.icon{width:18px;height:18px;display:block}
         </div>
       </div>
       <div class="pricing-grid" id="pricingGrid"></div>
+    </section>
+
+    <section id="view-settings" hidden>
+      <div class="topbar">
+        <div>
+          <h1>ตั้งค่า</h1>
+          <p class="sub">ข้อมูลบัญชี รหัสผ่าน และประวัติการเติมแต้ม/ซื้อแพ็กเกจของคุณ</p>
+        </div>
+      </div>
+      <div class="settings-grid">
+        <div class="panel settings-card">
+          <div class="panel-head"><h2>ข้อมูลบัญชี</h2></div>
+          <div class="settings-kv">
+            <div><span class="lbl">Username</span><b id="stUsername">-</b></div>
+            <div><span class="lbl">อีเมล</span><b id="stEmail">-</b></div>
+            <div><span class="lbl">วันเกิด</span><b id="stBirth">-</b></div>
+            <div><span class="lbl">ใช้งานได้ถึง</span><b id="stExpires">-</b></div>
+          </div>
+          <div class="field"><label for="stDisplayName">ชื่อที่ใช้แสดง</label><input id="stDisplayName" type="text" maxlength="40" placeholder="ชื่อที่เพื่อนในปาร์ตี้จะเห็น"></div>
+          <div class="field" id="stBirthField" hidden><label for="stBirthInput">วันเดือนปีเกิด (กรอกได้ครั้งเดียว แก้ไม่ได้)</label><input id="stBirthInput" type="date" min="1900-01-01"></div>
+          <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveProfile">บันทึกข้อมูล</button></div>
+        </div>
+        <div class="panel settings-card">
+          <div class="panel-head"><h2>เปลี่ยนรหัสผ่าน</h2></div>
+          <div class="field"><label for="stPassOld">รหัสผ่านเดิม</label><input id="stPassOld" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+          <div class="field"><label for="stPassNew">รหัสผ่านใหม่</label><input id="stPassNew" type="password" autocomplete="new-password" placeholder="อย่างน้อย 6 ตัวอักษร"></div>
+          <div class="field"><label for="stPassNew2">ยืนยันรหัสผ่านใหม่</label><input id="stPassNew2" type="password" autocomplete="new-password" placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง"></div>
+          <p class="settings-note">เปลี่ยนแล้วเครื่องอื่นที่ล็อกอินบัญชีนี้ค้างอยู่จะถูกออกจากระบบ</p>
+          <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSavePass">เปลี่ยนรหัสผ่าน</button></div>
+        </div>
+        <div class="panel settings-card settings-wide">
+          <div class="panel-head"><h2>ประวัติการเติมแต้ม</h2><span class="party-panel-summary" id="stTopupSummary"></span></div>
+          <div id="stTopupList" class="settings-list"></div>
+        </div>
+        <div class="panel settings-card settings-wide">
+          <div class="panel-head"><h2>ประวัติการซื้อแพ็กเกจ</h2><span class="party-panel-summary" id="stPurchaseSummary"></span></div>
+          <div id="stPurchaseList" class="settings-list"></div>
+        </div>
+      </div>
     </section>
 
     <section id="view-admin" hidden>
@@ -2222,7 +2287,7 @@ svg.icon{width:18px;height:18px;display:block}
     });
   }
   function refreshProfile(){
-    return withSkewRetry(function(){ return supa.from('profiles').select('display_name, points, role, expires_at').eq('id', App.session.id).single(); }).then(function(res){
+    return withSkewRetry(function(){ return supa.from('profiles').select('display_name, points, role, expires_at, username, birth_date').eq('id', App.session.id).single(); }).then(function(res){
       if(res.error){ console.error('refreshProfile', res.error); return; }
       App.profile = res.data;
       document.getElementById('railAdminBtn').hidden = App.profile.role !== 'admin';
@@ -4286,11 +4351,49 @@ svg.icon{width:18px;height:18px;display:block}
   });
 
   function mapAuthError(msg){
-    if(/invalid login credentials/i.test(msg)) return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+    if(/invalid login credentials/i.test(msg)) return 'อีเมล/Username หรือรหัสผ่านไม่ถูกต้อง';
     if(/already registered/i.test(msg)) return 'อีเมลนี้สมัครไว้แล้ว';
     if(/at least 6 characters/i.test(msg)) return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
     if(/invalid email|unable to validate email/i.test(msg)) return 'รูปแบบอีเมลไม่ถูกต้อง';
+    if(/database error saving new user/i.test(msg)) return 'สมัครไม่สำเร็จ — Username นี้อาจเพิ่งมีคนใช้ ลองเปลี่ยนแล้วสมัครใหม่';
+    if(/email not confirmed/i.test(msg)) return 'บัญชีนี้ยังไม่ได้ยืนยันอีเมล กรุณากดลิงก์ยืนยันในอีเมลก่อนเข้าสู่ระบบ';
     return msg;
+  }
+
+  // ---------- Username: a-z 0-9 _ . ยาว 3-20 ตัว เช็คว่าว่างไหมทันทีที่พิมพ์ (ผ่าน RPC username_available) ----------
+  var USERNAME_RE = /^[a-z0-9_.]{3,20}$/;
+  var usernameCheckTimer = null, usernameCheckSeq = 0, usernameOk = null; // usernameOk: true=ว่าง, false=ซ้ำ/ผิดรูปแบบ, null=ยังไม่รู้
+  function setUsernameHint(text, cls){
+    var h = document.getElementById('rg-username-hint');
+    h.textContent = text; h.className = 'field-hint'+(cls ? ' '+cls : '');
+  }
+  function checkUsername(u){
+    var seq = ++usernameCheckSeq;
+    if(!u){ usernameOk = null; setUsernameHint('ใช้ล็อกอินได้ และเปลี่ยนภายหลังไม่ได้'); return Promise.resolve(null); }
+    if(!USERNAME_RE.test(u)){ usernameOk = false; setUsernameHint('ใช้ได้เฉพาะ a-z 0-9 _ . ยาว 3-20 ตัว', 'bad'); return Promise.resolve(false); }
+    setUsernameHint('กำลังตรวจสอบ...');
+    return supa.rpc('username_available', { u:u }).then(function(res){
+      if(seq !== usernameCheckSeq) return null; // มีการพิมพ์ต่อแล้ว ผลอันนี้เก่า
+      if(res.error){ console.error('username_available', res.error); usernameOk = null; setUsernameHint('ตรวจสอบไม่ได้ ลองใหม่อีกครั้ง', 'bad'); return null; }
+      usernameOk = !!res.data;
+      setUsernameHint(usernameOk ? '✓ ใช้ Username นี้ได้' : 'Username นี้มีคนใช้แล้ว', usernameOk ? 'ok' : 'bad');
+      return usernameOk;
+    });
+  }
+  document.getElementById('rg-username').addEventListener('input', function(){
+    var inp = document.getElementById('rg-username');
+    var u = inp.value.toLowerCase().replace(/\s+/g, '');
+    if(u !== inp.value) inp.value = u;
+    usernameOk = null;
+    clearTimeout(usernameCheckTimer);
+    usernameCheckTimer = setTimeout(function(){ checkUsername(u); }, 350);
+  });
+  function birthDateError(v){
+    if(!v) return 'กรอกวันเดือนปีเกิด';
+    var d = new Date(v+'T00:00:00');
+    if(isNaN(d.getTime())) return 'วันเกิดไม่ถูกต้อง';
+    if(d.getTime() > Date.now() || d.getFullYear() < 1900) return 'วันเกิดไม่ถูกต้อง';
+    return '';
   }
 
   var authBusy = false;
@@ -4300,26 +4403,59 @@ svg.icon{width:18px;height:18px;display:block}
     errEl.textContent = '';
     if(isRegister){
       var name = document.getElementById('rg-name').value.trim();
+      var username = document.getElementById('rg-username').value.trim().toLowerCase();
       var email = document.getElementById('rg-email').value.trim().toLowerCase();
       var pass = document.getElementById('rg-pass').value;
-      if(!name || !email || !pass){ errEl.textContent = 'กรอกข้อมูลให้ครบทุกช่อง'; return; }
+      var pass2 = document.getElementById('rg-pass2').value;
+      var birth = document.getElementById('rg-birth').value;
+      if(!name || !username || !email || !pass || !pass2 || !birth){ errEl.textContent = 'กรอกข้อมูลให้ครบทุกช่อง'; return; }
+      if(!USERNAME_RE.test(username)){ errEl.textContent = 'Username ใช้ได้เฉพาะ a-z 0-9 _ . ยาว 3-20 ตัว'; return; }
+      if(pass.length < 6){ errEl.textContent = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'; return; }
+      if(pass !== pass2){ errEl.textContent = 'รหัสผ่านทั้งสองช่องไม่ตรงกัน'; return; }
+      var bErr = birthDateError(birth);
+      if(bErr){ errEl.textContent = bErr; return; }
       authBusy = true;
-      supa.auth.signUp({ email:email, password:pass, options:{ data:{ display_name:name } } }).then(function(res){
-        authBusy = false;
-        if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
-        enterApp(res.data.user);
+      clearTimeout(usernameCheckTimer);
+      checkUsername(username).then(function(ok){
+        if(ok === false){ authBusy = false; errEl.textContent = 'Username นี้มีคนใช้แล้ว'; return; }
+        if(ok === null){ authBusy = false; errEl.textContent = 'ตรวจสอบ Username ไม่ได้ ลองใหม่อีกครั้ง'; return; }
+        // username/วันเกิด ส่งเป็น metadata → trigger handle_new_user คัดลอกลง profiles ให้
+        return supa.auth.signUp({ email:email, password:pass, options:{ data:{ display_name:name, username:username, birth_date:birth } } }).then(function(res){
+          authBusy = false;
+          if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
+          // โปรเจกต์เปิด "ยืนยันอีเมล" ไว้: สมัครแล้วยังไม่มีเซสชันจนกว่าจะกดลิงก์ในอีเมล → พาไปหน้าล็อกอินพร้อมบอกให้ไปยืนยัน
+          if(!res.data.session){
+            document.getElementById('authToggle').click();
+            document.getElementById('li-email').value = username;
+            document.getElementById('authError').textContent = 'สมัครสำเร็จ! กรุณากดลิงก์ยืนยันในอีเมล '+email+' แล้วกลับมาเข้าสู่ระบบ';
+            return;
+          }
+          enterApp(res.data.user);
+        });
       });
     } else {
-      var lemail = document.getElementById('li-email').value.trim().toLowerCase();
+      var ident = document.getElementById('li-email').value.trim().toLowerCase();
       var lpass = document.getElementById('li-pass').value;
-      if(!lemail || !lpass){ errEl.textContent = 'กรอกข้อมูลให้ครบทุกช่อง'; return; }
+      if(!ident || !lpass){ errEl.textContent = 'กรอกข้อมูลให้ครบทุกช่อง'; return; }
       authBusy = true;
-      supa.auth.signInWithPassword({ email:lemail, password:lpass }).then(function(res){
+      // ไม่มี @ = พิมพ์ username มา → ขอให้เซิร์ฟเวอร์แปลงเป็นอีเมลก่อน (RPC email_for_username)
+      var emailReady = ident.indexOf('@') !== -1 ? Promise.resolve(ident)
+        : supa.rpc('email_for_username', { u:ident }).then(function(r){
+            if(r.error) throw new Error(r.error.message);
+            if(!r.data) throw new Error('ไม่พบ Username นี้');
+            return r.data;
+          });
+      emailReady.then(function(lemail){
+        return supa.auth.signInWithPassword({ email:lemail, password:lpass });
+      }).then(function(res){
         authBusy = false;
         if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
         // เตะเซสชันอื่นของบัญชีนี้ทิ้ง กันเอารหัสเดียวไปใช้พร้อมกันหลายเครื่อง
         supa.auth.signOut({ scope: 'others' }).then(function(r){ if(r.error) console.error('signOut others', r.error); });
         enterApp(res.data.user);
+      }).catch(function(err){
+        authBusy = false;
+        errEl.textContent = mapAuthError(err.message || String(err));
       });
     }
   });
@@ -4357,7 +4493,7 @@ svg.icon{width:18px;height:18px;display:block}
       renderAll();
       updatePartyPanelSummary();
       // เปิดกลับมาที่หน้าเดิมที่ค้างไว้ตอน refresh แทนที่จะเด้งไปหน้าแรกเสมอ
-      var validPages = ['home','farm','timers','items','pricing','admin'];
+      var validPages = ['home','farm','timers','items','pricing','admin','settings'];
       var lastPage = store(App.keys.lastPage, 'home');
       var isAdmin = App.profile && App.profile.role === 'admin';
       if(validPages.indexOf(lastPage)===-1 || (lastPage==='admin' && !isAdmin)) lastPage = 'home';
@@ -5170,10 +5306,12 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('view-items').hidden = page !== 'items';
     document.getElementById('view-pricing').hidden = page !== 'pricing';
     document.getElementById('view-admin').hidden = page !== 'admin';
+    document.getElementById('view-settings').hidden = page !== 'settings';
     if(page==='farm') renderFarmPage();
     if(page==='items') renderItemsPage();
     if(page==='pricing') renderPricingPage();
     if(page==='admin') renderAdminTopups();
+    if(page==='settings') renderSettingsPage();
     if(page==='timers') renderPartyPanel();
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);
@@ -5210,7 +5348,7 @@ svg.icon{width:18px;height:18px;display:block}
         '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
         savingsHtml+
         '<ul class="pricing-features">'+features+'</ul>'+
-        '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+p.name+'">'+ctaLabel+'</button>'+
+        '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+p.name+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>'+
       '</div>';
     }).join('');
   }
@@ -5225,25 +5363,123 @@ svg.icon{width:18px;height:18px;display:block}
     renderPricingPage();
   });
 
-  // จำลองการ "ซื้อแพ็กเกจด้วยแต้ม" — หักแต้มจริงในบัญชี (localStorage) แค่เพื่อให้เห็น
-  // หน้าตาสมบูรณ์ครบวงจร ไม่ใช่ระบบชำระเงินจริง (ดูหมายเหตุที่ปุ่ม "เติมแต้ม")
+  // ซื้อแพ็กเกจด้วยแต้ม: RPC buy_package หักแต้ม + ต่ออายุ (30/365 วัน ต่อจากวันหมดอายุเดิมถ้ายังไม่หมด) + บันทึกประวัติ
+  // ราคาจริงอยู่ฝั่งเซิร์ฟเวอร์ ตัวเลขในหน้านี้ใช้แสดงผลเท่านั้น
   document.getElementById('pricingGrid').addEventListener('click', function(e){
     var btn = e.target.closest('.pricing-cta');
     if(!btn) return;
     var price = parseInt(btn.dataset.price, 10) || 0;
-    var planName = btn.dataset.planName;
+    var planName = btn.dataset.planName, planKey = btn.dataset.planKey, cycle = btn.dataset.cycle;
+    var days = cycle === 'yearly' ? 365 : 30;
     var have = App.profile ? (App.profile.points||0) : 0;
     if(have < price){
       toast('แต้มไม่พอ ขาดอีก '+fmtNum(price-have)+' แต้ม — เติมแต้มก่อนนะ');
       openTopup();
       return;
     }
-    showConfirm('ยืนยันสมัคร "'+planName+'" ด้วย '+fmtNum(price)+' แต้ม?', function(){
-      supa.rpc('spend_points', { p_amount: price }).then(function(res){
+    var curExp = App.profile && App.profile.expires_at ? new Date(App.profile.expires_at).getTime() : 0;
+    var newExp = Math.max(curExp, Date.now()) + days*86400000;
+    showConfirm('ยืนยันสมัคร "'+planName+'" ('+(cycle==='yearly' ? 'รายปี +365 วัน' : 'รายเดือน +30 วัน')+') ด้วย '+fmtNum(price)+' แต้ม?<br>ใช้งานได้ถึงประมาณ '+fmtDate(newExp), function(){
+      supa.rpc('buy_package', { p_plan_key: planKey, p_cycle: cycle }).then(function(res){
         if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
         refreshProfile();
-        toast('สมัคร '+planName+' สำเร็จ — ใช้ '+fmtNum(price)+' แต้ม');
+        toast('สมัคร '+planName+' สำเร็จ — ใช้งานได้ถึง '+fmtDate(new Date(res.data).getTime()));
       });
+    });
+  });
+
+  // ---------- หน้า "ตั้งค่า": ข้อมูลบัญชี / เปลี่ยนรหัสผ่าน / ประวัติเติมแต้ม / ประวัติซื้อแพ็กเกจ ----------
+  var fmtFullDate = function(v){ return new Date(v).toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' }); };
+  var TOPUP_STATUS = { pending:['รอตรวจสอบ','soon'], approved:['อนุมัติแล้ว','ok'], rejected:['ปฏิเสธ','expired'] };
+  function renderSettingsPage(){
+    var p = App.profile || {};
+    document.getElementById('stUsername').textContent = p.username || '-';
+    document.getElementById('stEmail').textContent = App.session ? App.session.email : '-';
+    document.getElementById('stBirth').textContent = p.birth_date ? fmtFullDate(p.birth_date+'T00:00:00') : 'ยังไม่ได้กรอก';
+    document.getElementById('stExpires').textContent = p.expires_at ? fmtDate(new Date(p.expires_at).getTime()) : '-';
+    document.getElementById('stDisplayName').value = p.display_name || '';
+    // บัญชีเก่าที่สมัครก่อนมีช่องวันเกิด: กรอกได้ครั้งเดียว พอมีค่าแล้วช่องจะหายไป
+    document.getElementById('stBirthField').hidden = !!p.birth_date;
+    if(p.birth_date) document.getElementById('stBirthInput').value = '';
+    loadTopupHistory();
+    loadPurchaseHistory();
+  }
+  function loadTopupHistory(){
+    var root = document.getElementById('stTopupList'), sum = document.getElementById('stTopupSummary');
+    root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = '';
+    supa.from('topup_requests').select('id, amount_baht, points_added, status, created_at')
+      .eq('user_id', App.session.id).order('created_at', { ascending:false }).then(function(res){
+        if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+res.error.message+'</p>'; return; }
+        var rows = res.data || [];
+        if(!rows.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่เคยเติมแต้ม</p>'; return; }
+        var approved = rows.filter(function(r){ return r.status==='approved'; });
+        sum.textContent = 'อนุมัติแล้ว '+approved.length+' ครั้ง · รวม '+fmtNum(approved.reduce(function(s,r){ return s+(r.points_added||0); }, 0))+' แต้ม';
+        root.innerHTML = rows.map(function(r){
+          var st = TOPUP_STATUS[r.status] || [r.status || '-', 'neutral'];
+          return '<div class="settings-row"><div class="settings-row-main">'+
+            '<div class="settings-row-title">'+fmtNum(r.amount_baht)+' บาท → +'+fmtNum(r.points_added)+' แต้ม</div>'+
+            '<div class="settings-row-meta">'+fmtDateTime(new Date(r.created_at).getTime())+'</div></div>'+
+            '<span class="membership-pill '+st[1]+'">'+st[0]+'</span></div>';
+        }).join('');
+      });
+  }
+  function loadPurchaseHistory(){
+    var root = document.getElementById('stPurchaseList'), sum = document.getElementById('stPurchaseSummary');
+    root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = '';
+    supa.from('package_purchases').select('id, plan_name, cycle, points_spent, days_added, expires_after, created_at')
+      .eq('user_id', App.session.id).order('created_at', { ascending:false }).then(function(res){
+        if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+res.error.message+'</p>'; return; }
+        var rows = res.data || [];
+        if(!rows.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่เคยซื้อแพ็กเกจ</p>'; return; }
+        sum.textContent = rows.length+' รายการ · ใช้ไป '+fmtNum(rows.reduce(function(s,r){ return s+(r.points_spent||0); }, 0))+' แต้ม';
+        root.innerHTML = rows.map(function(r){
+          return '<div class="settings-row"><div class="settings-row-main">'+
+            '<div class="settings-row-title">'+r.plan_name+' <span class="membership-pill neutral">'+(r.cycle==='yearly' ? 'รายปี' : 'รายเดือน')+' +'+r.days_added+' วัน</span></div>'+
+            '<div class="settings-row-meta">'+fmtDateTime(new Date(r.created_at).getTime())+' · ใช้งานได้ถึง '+fmtDate(new Date(r.expires_after).getTime())+'</div></div>'+
+            '<b class="settings-row-amt">-'+fmtNum(r.points_spent)+' แต้ม</b></div>';
+        }).join('');
+      });
+  }
+  var settingsBusy = false;
+  document.getElementById('stSaveProfile').addEventListener('click', function(){
+    if(settingsBusy) return;
+    var name = document.getElementById('stDisplayName').value.trim();
+    var birthField = document.getElementById('stBirthField');
+    var birth = birthField.hidden ? '' : document.getElementById('stBirthInput').value;
+    if(!name){ toast('กรอกชื่อที่ใช้แสดง'); return; }
+    if(birth){ var bErr = birthDateError(birth); if(bErr){ toast(bErr); return; } }
+    var go = function(){
+      settingsBusy = true;
+      supa.rpc('update_my_profile', { p_display_name: name, p_birth_date: birth || null }).then(function(res){
+        settingsBusy = false;
+        if(res.error){ toast('บันทึกไม่สำเร็จ: '+res.error.message); return; }
+        return refreshProfile().then(function(){ renderSettingsPage(); toast('บันทึกข้อมูลแล้ว'); });
+      });
+    };
+    if(birth) showConfirm('ยืนยันวันเกิด '+fmtFullDate(birth+'T00:00:00')+'? บันทึกแล้วแก้ไขไม่ได้อีก', go); else go();
+  });
+  document.getElementById('stSavePass').addEventListener('click', function(){
+    if(settingsBusy) return;
+    var oldP = document.getElementById('stPassOld').value, newP = document.getElementById('stPassNew').value, newP2 = document.getElementById('stPassNew2').value;
+    if(!oldP || !newP || !newP2){ toast('กรอกรหัสผ่านให้ครบทุกช่อง'); return; }
+    if(newP.length < 6){ toast('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร'); return; }
+    if(newP !== newP2){ toast('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'); return; }
+    if(newP === oldP){ toast('รหัสผ่านใหม่ต้องต่างจากรหัสเดิม'); return; }
+    settingsBusy = true;
+    // เช็ครหัสเดิมด้วยการล็อกอินซ้ำก่อน → เปลี่ยนรหัส → เตะเครื่องอื่นออกตามกติกา 1 เครื่อง
+    supa.auth.signInWithPassword({ email: App.session.email, password: oldP }).then(function(res){
+      if(res.error) throw new Error('รหัสผ่านเดิมไม่ถูกต้อง');
+      return supa.auth.updateUser({ password: newP });
+    }).then(function(res){
+      if(res.error) throw new Error(mapAuthError(res.error.message));
+      return supa.auth.signOut({ scope: 'others' });
+    }).then(function(){
+      settingsBusy = false;
+      ['stPassOld','stPassNew','stPassNew2'].forEach(function(id){ document.getElementById(id).value = ''; });
+      toast('เปลี่ยนรหัสผ่านแล้ว');
+    }).catch(function(err){
+      settingsBusy = false;
+      toast(err.message || String(err));
     });
   });
 

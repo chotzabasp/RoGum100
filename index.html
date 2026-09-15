@@ -116,9 +116,10 @@ svg.icon{width:18px;height:18px;display:block}
    จอที่แคบกว่า 1390px จะไม่โดนผลอะไรเลย เลย์เอาต์เหมือนเดิมทุกอย่าง
    ถ้าไม่ใส่ margin:0 auto เนื้อหาจะไปกองชิดซ้ายและทิ้งที่ว่างไว้ขวาล้วนๆ บนจอกว้าง */
 #appScreen{display:grid;grid-template-columns:210px 1fr;min-height:100vh;background:var(--bg);max-width:1390px;margin:0 auto}
+/* เมนูซ้ายกลืนไปกับพื้นหลังหน้าเว็บ (ไม่มีแผงสีอ่อนกว่า ไม่มีเส้นคั่นแนวตั้ง)
+   แบบเดียวกับเมนูซ้ายของ Facebook — ตัวเลือกเมนูจึงลอยอยู่บนพื้นหลังเดียวกันทั้งหน้า */
 .rail{
-  background:var(--surface);
-  border-right:1px solid var(--border);
+  background:transparent;
   display:flex;flex-direction:column;align-items:stretch;
   padding:1rem .65rem;gap:.15rem;
 }

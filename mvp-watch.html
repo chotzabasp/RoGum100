@@ -757,6 +757,12 @@ svg.icon{width:18px;height:18px;display:block}
 #expiryOverlay .confirm-backdrop{z-index:85}
 #expiryOverlay .confirm-box{z-index:86}
 .expiry-msg{margin:0 0 1.1rem;font-size:.88rem;line-height:1.55;color:var(--text)}
+/* เลือกเซิร์ฟเวอร์ที่เล่น (ตอนสมัคร + หน้าตั้งค่า) */
+#serverPickOverlay .confirm-backdrop{z-index:87}
+#serverPickOverlay .confirm-box{z-index:88}
+.server-pick-list{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:.6rem}
+.server-pick-list .share-chip{font-size:.84rem;padding:.35rem .8rem}
+.server-pick-list .share-chip.on{font-weight:600}
 .expiry-banner{display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;padding:.7rem 1rem;border-radius:var(--radius-m);margin-bottom:1rem;border:1px solid;font-size:.84rem;line-height:1.45}
 .expiry-banner.expired{background:color-mix(in srgb, var(--danger) 14%, transparent);border-color:color-mix(in srgb, var(--danger) 55%, transparent);color:var(--text)}
 .expiry-banner.soon{background:color-mix(in srgb, var(--warn) 14%, transparent);border-color:color-mix(in srgb, var(--warn) 55%, transparent);color:var(--text)}
@@ -978,6 +984,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       <div class="field"><label for="li-pass">รหัสผ่าน</label><input id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
     </div>
     <div id="registerFields" hidden>
+      <div class="field"><label for="rg-server">เซิร์ฟเวอร์ที่เล่น</label><select id="rg-server"><option value="">— เลือกเซิร์ฟเวอร์ —</option></select><div class="field-hint">เลือกเพิ่มเติมได้ที่ตั้งค่าภายหลัง</div></div>
       <div class="field"><label for="rg-name">ชื่อที่ใช้แสดง</label><input id="rg-name" type="text" placeholder="เช่น หัวหน้ากิลด์" maxlength="40"></div>
       <div class="field"><label for="rg-username">Username</label><input id="rg-username" type="text" placeholder="a-z 0-9 _ . ยาว 3-20 ตัว" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20"><div class="field-hint" id="rg-username-hint">ใช้ล็อกอินได้ และเปลี่ยนภายหลังไม่ได้</div></div>
       <div class="field"><label for="rg-email">อีเมล</label><input id="rg-email" type="email" placeholder="guild@example.com" autocomplete="email"></div>
@@ -1506,6 +1513,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
           <p class="settings-note">เปลี่ยนแล้วเครื่องอื่นที่ล็อกอินบัญชีนี้ค้างอยู่จะถูกออกจากระบบ</p>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSavePass">เปลี่ยนรหัสผ่าน</button></div>
         </div>
+        <div class="panel settings-card">
+          <div class="panel-head"><h2>เซิร์ฟเวอร์ที่เล่น</h2><span class="party-panel-summary" id="stServersSummary"></span></div>
+          <p class="settings-note">แตะเพื่อเลือก/เอาออก ต้องมีอย่างน้อย 1 เซิร์ฟเวอร์</p>
+          <div class="server-pick-list" id="stServerList"></div>
+          <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveServers">บันทึกเซิร์ฟเวอร์</button></div>
+        </div>
         <div class="panel settings-card settings-wide">
           <div class="panel-head"><h2>ประวัติการเติมแต้ม</h2><span class="party-panel-summary" id="stTopupSummary"></span></div>
           <div id="stTopupList" class="settings-list"></div>
@@ -1543,6 +1556,19 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       <label class="h-filter"><input type="checkbox" id="todayOnly"> แสดงเฉพาะวันนี้</label>
       <div class="h-actions"><button type="button" class="btn btn-ghost btn-sm" id="historyDeleteAll" hidden>ลบประวัติทั้งหมด</button></div>
       <div id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<div id="serverPickOverlay" hidden>
+  <div class="confirm-backdrop"></div>
+  <div class="confirm-box topup-box">
+    <h3 class="post-announce-title">เลือกเซิร์ฟเวอร์ที่คุณเล่น</h3>
+    <p class="expiry-msg">เลือกได้มากกว่า 1 เซิร์ฟเวอร์ อย่างน้อย 1 เซิร์ฟเวอร์ แก้ไขภายหลังได้ที่หน้า "ตั้งค่า"</p>
+    <div class="server-pick-list" id="serverPickList"></div>
+    <p class="auth-error" id="serverPickError"></p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-gradient" id="serverPickSaveBtn">บันทึกและเริ่มใช้งาน</button>
     </div>
   </div>
 </div>
@@ -2332,7 +2358,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     });
   }
   function refreshProfile(){
-    return withSkewRetry(function(){ return supa.from('profiles').select('display_name, points, role, expires_at, username, birth_date').eq('id', App.session.id).single(); }).then(function(res){
+    return withSkewRetry(function(){ return supa.from('profiles').select('display_name, points, role, expires_at, username, birth_date, servers').eq('id', App.session.id).single(); }).then(function(res){
       if(res.error){ console.error('refreshProfile', res.error); return; }
       App.profile = res.data;
       document.getElementById('railAdminBtn').hidden = App.profile.role !== 'admin';
@@ -4453,6 +4479,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       var pass = document.getElementById('rg-pass').value;
       var pass2 = document.getElementById('rg-pass2').value;
       var birth = document.getElementById('rg-birth').value;
+      var server = document.getElementById('rg-server').value;
+      if(!server){ errEl.textContent = 'เลือกเซิร์ฟเวอร์ที่เล่นก่อน'; return; }
       if(!name || !username || !email || !pass || !pass2 || !birth){ errEl.textContent = 'กรอกข้อมูลให้ครบทุกช่อง'; return; }
       if(!USERNAME_RE.test(username)){ errEl.textContent = 'Username ใช้ได้เฉพาะ a-z 0-9 _ . ยาว 3-20 ตัว'; return; }
       if(pass.length < 6){ errEl.textContent = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'; return; }
@@ -4465,7 +4493,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         if(ok === false){ authBusy = false; errEl.textContent = 'Username นี้มีคนใช้แล้ว'; return; }
         if(ok === null){ authBusy = false; errEl.textContent = 'ตรวจสอบ Username ไม่ได้ ลองใหม่อีกครั้ง'; return; }
         // username/วันเกิด ส่งเป็น metadata → trigger handle_new_user คัดลอกลง profiles ให้
-        return supa.auth.signUp({ email:email, password:pass, options:{ data:{ display_name:name, username:username, birth_date:birth } } }).then(function(res){
+        return supa.auth.signUp({ email:email, password:pass, options:{ data:{ display_name:name, username:username, birth_date:birth, servers:[server] } } }).then(function(res){
           authBusy = false;
           if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
           // โปรเจกต์เปิด "ยืนยันอีเมล" ไว้: สมัครแล้วยังไม่มีเซสชันจนกว่าจะกดลิงก์ในอีเมล → พาไปหน้าล็อกอินพร้อมบอกให้ไปยืนยัน
@@ -4546,6 +4574,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       updateClock();
       renderExpiryState();
       checkExpiryReminder();
+      // บัญชีเก่าก่อนมีช่องเซิร์ฟเวอร์ตอนสมัคร (ยังว่าง) → บังคับเลือกครั้งเดียวก่อนใช้งาน (บัญชีใหม่เลือกจากฟอร์มสมัครแล้ว)
+      if(!App.profile || !(App.profile.servers||[]).length) openServerPick();
     });
   }
 
@@ -5448,9 +5478,57 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     // บัญชีเก่าที่สมัครก่อนมีช่องวันเกิด: กรอกได้ครั้งเดียว พอมีค่าแล้วช่องจะหายไป
     document.getElementById('stBirthField').hidden = !!p.birth_date;
     if(p.birth_date) document.getElementById('stBirthInput').value = '';
+    renderServerChips(document.getElementById('stServerList'), p.servers||[]);
+    updateServersSummary();
     loadTopupHistory();
     loadPurchaseHistory();
   }
+  // ---------- เซิร์ฟเวอร์ที่เล่น: ชิปเลือกได้หลายอัน ใช้ทั้ง popup ตอนสมัคร/ล็อกอินครั้งแรก และหน้าตั้งค่า ----------
+  function renderServerChips(root, selected){
+    if(!SERVER_RATES.length){ root.innerHTML = '<p class="empty-note">ยังไม่มีเซิร์ฟเวอร์ในระบบ</p>'; return; }
+    root.innerHTML = SERVER_RATES.map(function(s){
+      var on = selected.indexOf(s.id)!==-1;
+      return '<button type="button" class="share-chip'+(on?' on':'')+'" data-server-pick="'+s.id+'">'+(on?'✓ ':'')+escapeHtml(s.name)+'</button>';
+    }).join('');
+  }
+  function pickedServers(root){
+    return Array.prototype.map.call(root.querySelectorAll('.share-chip.on'), function(b){ return b.dataset.serverPick; });
+  }
+  function updateServersSummary(){
+    var el = document.getElementById('stServersSummary');
+    var names = (App.profile && App.profile.servers || []).map(function(id){ var s = serverRateById(id); return s ? s.name : id; });
+    el.textContent = names.length ? 'เล่นอยู่ '+names.length+' เซิร์ฟเวอร์: '+names.join(', ') : 'ยังไม่ได้เลือก';
+  }
+  document.addEventListener('click', function(e){
+    var chip = e.target.closest('[data-server-pick]');
+    if(!chip) return;
+    chip.classList.toggle('on');
+    chip.textContent = (chip.classList.contains('on') ? '✓ ' : '')+chip.textContent.replace(/^✓ /, '');
+  });
+  function saveServers(root, errEl, onDone){
+    var ids = pickedServers(root);
+    if(!ids.length){ if(errEl) errEl.textContent = 'เลือกอย่างน้อย 1 เซิร์ฟเวอร์'; else toast('เลือกอย่างน้อย 1 เซิร์ฟเวอร์'); return; }
+    if(errEl) errEl.textContent = '';
+    supa.rpc('set_my_servers', { p_servers: ids }).then(function(res){
+      if(res.error){ if(errEl) errEl.textContent = 'บันทึกไม่สำเร็จ: '+res.error.message; else toast('บันทึกไม่สำเร็จ: '+res.error.message); return; }
+      return refreshProfile().then(onDone);
+    });
+  }
+  function openServerPick(){
+    renderServerChips(document.getElementById('serverPickList'), (App.profile && App.profile.servers) || []);
+    document.getElementById('serverPickError').textContent = '';
+    document.getElementById('serverPickOverlay').hidden = false;
+  }
+  document.getElementById('serverPickSaveBtn').addEventListener('click', function(){
+    saveServers(document.getElementById('serverPickList'), document.getElementById('serverPickError'), function(){
+      document.getElementById('serverPickOverlay').hidden = true;
+      updateServersSummary();
+      toast('บันทึกเซิร์ฟเวอร์ที่เล่นแล้ว');
+    });
+  });
+  document.getElementById('stSaveServers').addEventListener('click', function(){
+    saveServers(document.getElementById('stServerList'), null, function(){ renderSettingsPage(); toast('บันทึกเซิร์ฟเวอร์ที่เล่นแล้ว'); });
+  });
   function loadTopupHistory(){
     var root = document.getElementById('stTopupList'), sum = document.getElementById('stTopupSummary');
     root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = '';
@@ -5543,7 +5621,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
   // สิ่งที่ยังกดได้ตอนหมดอายุ (นอกจากนี้ = ทำรายการ → กัน)
   var RO_ALLOW = [
-    '#authScreen', '#expiryOverlay', '#expiryBanner', '#topupOverlay', '#confirmOverlay', '#farmOcHintOverlay', '#farmRateRequiredOverlay', '#mrRateRequiredOverlay',
+    '#authScreen', '#expiryOverlay', '#expiryBanner', '#serverPickOverlay', '#topupOverlay', '#confirmOverlay', '#farmOcHintOverlay', '#farmRateRequiredOverlay', '#mrRateRequiredOverlay',
     '.rail', '.util-bar', '#view-pricing', '#view-settings', '#view-admin',
     // ประวัติการล่า: เปลี่ยนแท็บ/ตัวกรอง/ปิดได้ แต่ลบ/หาร/ขาย/เก็บไว้ไม่ได้
     '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]',
@@ -6694,7 +6772,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // ---------- boot ----------
   loadCatalog();
   loadItemImages();
-  var serversReady = loadServers();
+  var serversReady = loadServers().then(function(){
+    // dropdown เซิร์ฟเวอร์ในฟอร์มสมัคร (เลือก 1 ตอนสมัคร เพิ่มทีหลังได้ที่ตั้งค่า)
+    var sel = document.getElementById('rg-server');
+    sel.innerHTML = '<option value="">— เลือกเซิร์ฟเวอร์ —</option>'+SERVER_RATES.map(function(s){ return '<option value="'+escapeHtml(s.id)+'">'+escapeHtml(s.name)+'</option>'; }).join('');
+  });
   supa.auth.getSession().then(function(res){
     var session = res.data && res.data.session;
     if(session) enterApp(session.user);

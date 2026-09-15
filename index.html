@@ -112,7 +112,10 @@ svg.icon{width:18px;height:18px;display:block}
 .auth-note{font-size:.72rem;color:var(--text-dim);text-align:center;margin-top:1rem;line-height:1.5;border-top:1px dashed var(--border);padding-top:.85rem}
 
 /* ---------- app shell ---------- */
-#appScreen{display:grid;grid-template-columns:210px 1fr;min-height:100vh;background:var(--bg)}
+/* จำกัดความกว้างรวมของแอพ (เมนูซ้าย 210 + เนื้อหาสูงสุด 1180 = 1390) แล้วจัดกึ่งกลางหน้าต่าง
+   จอที่แคบกว่า 1390px จะไม่โดนผลอะไรเลย เลย์เอาต์เหมือนเดิมทุกอย่าง
+   ถ้าไม่ใส่ margin:0 auto เนื้อหาจะไปกองชิดซ้ายและทิ้งที่ว่างไว้ขวาล้วนๆ บนจอกว้าง */
+#appScreen{display:grid;grid-template-columns:210px 1fr;min-height:100vh;background:var(--bg);max-width:1390px;margin:0 auto}
 .rail{
   background:var(--surface);
   border-right:1px solid var(--border);

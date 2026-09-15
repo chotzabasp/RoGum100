@@ -649,6 +649,11 @@ svg.icon{width:18px;height:18px;display:block}
 .stat-tile .num{font-size:1.6rem;font-weight:700;font-family:"JetBrains Mono";font-variant-numeric:tabular-nums}
 .stat-tile .lbl{font-size:.8rem;color:var(--text-dim)}
 .stat-tile .link{font-size:.74rem;align-self:flex-start;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font-weight:600}
+/* รูปบอส/ไอเทมล่าสุดในการ์ดสถิติ — วางขวาของตัวเลข สูงไม่เกินบล็อกตัวเลข+ป้าย การ์ดจึงไม่ขยาย */
+.stat-main{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.stat-main-txt{display:flex;flex-direction:column;gap:.55rem;min-width:0}
+.stat-thumb{width:48px;height:48px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center}
+.stat-thumb img{width:100%;height:100%;object-fit:contain}
 
 .toolbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1.1rem;position:relative}
 .search-wrap{position:relative;flex:1;min-width:200px}
@@ -810,9 +815,12 @@ svg.icon{width:18px;height:18px;display:block}
 .loot-summary>div{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .6rem;display:flex;flex-direction:column;gap:.15rem;min-width:0}
 .loot-summary .lbl{font-size:.68rem;color:var(--text-dim)}
 .loot-summary b{font-size:.86rem;overflow-wrap:anywhere}
-.loot-filter{display:flex;gap:.4rem;margin-bottom:.6rem}
+.loot-filter{display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap}
 .loot-filter button{padding:.3rem .7rem;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);font-size:.76rem;cursor:pointer}
 .loot-filter button.active{color:var(--accent);border-color:var(--accent);background:color-mix(in srgb, var(--accent) 18%, transparent)}
+.loot-act{height:24px;padding:0 .55rem;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);font-size:.72rem;cursor:pointer;flex:none;white-space:nowrap}
+.loot-act:hover{color:var(--text);border-color:var(--text-dim)}
+.hist-by{font-size:.72rem;color:var(--text-dim);margin:-.15rem 0 .3rem}
 .loot-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
 .loot-head .boss{margin:0}
 .loot-line{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.4rem;font-size:.78rem}
@@ -1306,8 +1314,7 @@ svg.icon{width:18px;height:18px;display:block}
           <div class="stat-icon kills"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
           <span class="stat-delta" id="deltaTotalKills">ตลอดเวลา</span>
         </div>
-        <span class="num" id="statTotalKills">0</span>
-        <span class="lbl">ฆ่าไปทั้งหมด</span>
+        <div class="stat-main"><div class="stat-main-txt"><span class="num" id="statTotalKills">0</span><span class="lbl">ฆ่าไปทั้งหมด</span></div><div class="stat-thumb" id="thumbTotalKills" hidden></div></div>
         <button class="link" data-open-history="kills-all">ดูทั้งหมด →</button>
       </div>
       <div class="stat-tile">
@@ -1315,8 +1322,7 @@ svg.icon{width:18px;height:18px;display:block}
           <div class="stat-icon kills"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
           <span class="stat-delta" id="deltaTodayKills">-</span>
         </div>
-        <span class="num" id="statTodayKills">0</span>
-        <span class="lbl">ฆ่าวันนี้</span>
+        <div class="stat-main"><div class="stat-main-txt"><span class="num" id="statTodayKills">0</span><span class="lbl">ฆ่าวันนี้</span></div><div class="stat-thumb" id="thumbTodayKills" hidden></div></div>
         <button class="link" data-open-history="kills-today">ดูทั้งหมด →</button>
       </div>
       <div class="stat-tile">
@@ -1324,8 +1330,7 @@ svg.icon{width:18px;height:18px;display:block}
           <div class="stat-icon items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/><path d="M12 12v8"/></svg></div>
           <span class="stat-delta" id="deltaTotalItems">ตลอดเวลา</span>
         </div>
-        <span class="num" id="statTotalItems">0</span>
-        <span class="lbl">ไอเทมที่ได้ทั้งหมด</span>
+        <div class="stat-main"><div class="stat-main-txt"><span class="num" id="statTotalItems">0</span><span class="lbl">ไอเทมที่ได้ทั้งหมด</span></div><div class="stat-thumb" id="thumbTotalItems" hidden></div></div>
         <button class="link" data-open-history="items-all">ดูทั้งหมด →</button>
       </div>
       <div class="stat-tile">
@@ -1333,8 +1338,7 @@ svg.icon{width:18px;height:18px;display:block}
           <div class="stat-icon items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/><path d="M12 12v8"/></svg></div>
           <span class="stat-delta" id="deltaTodayItems">-</span>
         </div>
-        <span class="num" id="statTodayItems">0</span>
-        <span class="lbl">ไอเทมวันนี้</span>
+        <div class="stat-main"><div class="stat-main-txt"><span class="num" id="statTodayItems">0</span><span class="lbl">ไอเทมวันนี้</span></div><div class="stat-thumb" id="thumbTodayItems" hidden></div></div>
         <button class="link" data-open-history="items-today">ดูทั้งหมด →</button>
       </div>
     </section>
@@ -1670,7 +1674,7 @@ svg.icon{width:18px;height:18px;display:block}
       if(res.error){ console.error('loadItemImages', res.error); return; }
       ITEM_IMAGES = {};
       (res.data||[]).forEach(function(r){ if(r.image_url) ITEM_IMAGES[(r.name||'').trim().toLowerCase()] = r.image_url; });
-      if(App.session) renderRoster();
+      if(App.session){ renderRoster(); renderStats(); }
     });
   }
   function bossAvatarHtml(boss){
@@ -1964,15 +1968,16 @@ svg.icon{width:18px;height:18px;display:block}
   }
   // ประวัติการฆ่า+ไอเทมของปาร์ตี้ที่กำลังดูอยู่ — ผูกกับหัวปาร์ตี้เหมือน user_bosses
   function loadKills(){
-    return withSkewRetry(function(){ return supa.from('kills').select('id, boss_id, boss_name, killed_at, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at)')
+    return withSkewRetry(function(){ return supa.from('kills').select('id, boss_id, boss_name, killed_at, killed_by, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)')
       .eq('host_id', activeOwnerId()).order('killed_at', { ascending:false }).order('created_at', { ascending:false }); }).then(function(res){
       if(res.error){ console.error('loadKills', res.error); App.kills = []; return; }
       App.kills = (res.data||[]).map(function(k){
         return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(),
+          killedById:k.killed_by || null,
           killedBy:(k.profiles && k.profiles.display_name) || null,
           // เรียงชื่อไอเทมในรอบเดียวกันให้คงที่ — ไม่งั้นหลังแก้ไขแถวจะสลับที่กัน (DB ไม่รับประกันลำดับ)
           items:(k.kill_items||[]).map(function(i){
-            return { id:i.id, name:i.name, sharedWith:i.shared_with||[], soldAmount:i.sold_amount==null?null:Number(i.sold_amount), soldCurrency:i.sold_currency||'zeny', soldAt:i.sold_at };
+            return { id:i.id, name:i.name, sharedWith:i.shared_with||[], soldAmount:i.sold_amount==null?null:Number(i.sold_amount), soldCurrency:i.sold_currency||'zeny', soldAt:i.sold_at, keptAt:i.kept_at||null };
           }).sort(function(a,b){ return a.name.localeCompare(b.name); }) };
       });
     });
@@ -2159,6 +2164,35 @@ svg.icon{width:18px;height:18px;display:block}
     var di = deltaText(s.todayItems, s.yestItems);
     var elK = document.getElementById('deltaTodayKills'); elK.textContent = dk.text; elK.className = 'stat-delta'+(dk.up?' up':'');
     var elI = document.getElementById('deltaTodayItems'); elI.textContent = di.text; elI.className = 'stat-delta'+(di.up?' up':'');
+    // รูปล่าสุดในการ์ด: การ์ด "ฆ่า" = บอสที่กดฆ่าล่าสุด, การ์ด "ไอเทม" = ไอเทมชิ้นล่าสุด — มีรูปในหลังบ้านถึงจะโชว์ ไม่มีก็ซ่อนช่อง
+    var today = todayKey(Date.now());
+    var sorted = App.kills.slice().sort(function(a,b){ return b.ts-a.ts; });
+    var todays = sorted.filter(function(k){ return todayKey(k.ts)===today; });
+    setStatThumb('thumbTotalKills', latestBossThumb(sorted));
+    setStatThumb('thumbTodayKills', latestBossThumb(todays));
+    setStatThumb('thumbTotalItems', latestItemThumb(sorted));
+    setStatThumb('thumbTodayItems', latestItemThumb(todays));
+  }
+  function latestBossThumb(kills){
+    if(!kills.length) return null;
+    var k = kills[0];
+    var b = CATALOG.filter(function(c){ return String(c.id)===String(k.bossId); })[0];
+    return (b && b.imageUrl) ? { url:b.imageUrl, title:k.bossName } : null;
+  }
+  function latestItemThumb(kills){
+    var k = kills.filter(function(x){ return x.items.length>0; })[0];
+    if(!k) return null;
+    for(var i=0;i<k.items.length;i++){
+      var url = itemImageUrl(k.items[i].name);
+      if(url) return { url:url, title:k.items[i].name };
+    }
+    return null;
+  }
+  function setStatThumb(id, t){
+    var el = document.getElementById(id);
+    var q = function(s){ return String(s).replace(/"/g,'&quot;'); };
+    el.hidden = !t;
+    el.innerHTML = t ? '<img src="'+q(t.url)+'" alt="'+q(t.title)+'" title="ล่าสุด: '+q(t.title)+'">' : '';
   }
 
   function renderUser(){
@@ -2207,8 +2241,8 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('htabBoss').className = App.historyTab==='boss' ? 'active' : '';
     document.getElementById('historyDeleteAll').hidden = !App.kills.length;
     if(App.historyTab==='items'){ renderLootView(list, entries.filter(function(l){ return l.items.length>0; })); return; }
+    if(App.historyTab==='boss'){ renderBossView(list, entries); return; }
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
-    if(App.historyTab==='boss'){ list.innerHTML = historyByBossHtml(entries); return; }
     list.innerHTML = entries.map(function(l){
       return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+l.killedBy : '')+'</div>'+
@@ -2238,7 +2272,9 @@ svg.icon{width:18px;height:18px;display:block}
   function lootRows(entries, applyFilter){
     var rows = [];
     entries.forEach(function(k){ k.items.forEach(function(it){ rows.push({ kill:k, item:it }); }); });
-    if(applyFilter && lootFilter==='unsold') rows = rows.filter(function(r){ return r.item.soldAmount==null; });
+    // "ยังไม่ขาย" = ของที่ยังค้างตัดสินใจจริงๆ ไม่นับของที่กด "เก็บไว้" แล้ว
+    if(applyFilter && lootFilter==='unsold') rows = rows.filter(function(r){ return r.item.soldAmount==null && !r.item.keptAt; });
+    if(applyFilter && lootFilter==='kept') rows = rows.filter(function(r){ return !!r.item.keptAt; });
     return rows;
   }
   function currencyLabel(c){ return c==='baht' ? 'บ' : 'z'; }
@@ -2279,13 +2315,25 @@ svg.icon{width:18px;height:18px;display:block}
         (it.soldAmount!=null ? '<button type="button" class="btn btn-ghost btn-sm" data-sold-clear="'+it.id+'">ยกเลิกขาย</button>' : '')+
       '</div>';
     }
-    var pill = it.soldAmount!=null ? '<span class="membership-pill ok">ขายแล้ว</span>'
-      : (it.sharedWith.length ? '<span class="membership-pill soon">หาร '+it.sharedWith.length+' คน</span>' : '<span class="membership-pill neutral">เก็บไว้</span>');
+    // สถานะ: ขายแล้ว > เก็บไว้ (ไม่หาร ไม่ขาย เช่นของราคาถูก — เก็บประวัติไว้โดยไม่ต้องลบ) > หาร N คน > รอแบ่ง (ยังไม่ตัดสินใจ)
+    var kept = !!it.keptAt && it.soldAmount==null;
+    var pill, action = '';
+    if(it.soldAmount!=null) pill = '<span class="membership-pill ok">ขายแล้ว</span>';
+    else if(kept){
+      pill = '<span class="membership-pill neutral">เก็บไว้</span>';
+      action = '<button type="button" class="loot-act" data-keep-undo="'+it.id+'" title="กลับไปเป็นรอแบ่ง">ยกเลิก</button>';
+    } else {
+      pill = it.sharedWith.length ? '<span class="membership-pill soon">หาร '+it.sharedWith.length+' คน</span>' : '<span class="membership-pill neutral">รอแบ่ง</span>';
+      action = '<button type="button" class="loot-act" data-keep="'+it.id+'" title="ของไม่มีมูลค่า ไม่หาร ไม่ขาย — เก็บประวัติไว้เฉยๆ">เก็บไว้</button>';
+    }
+    var bodyHtml = kept
+      ? '<div class="loot-line"><span class="loot-lbl">เก็บไว้</span><span class="loot-each">ไม่หาร ไม่ขาย · กดเก็บเมื่อ '+fmtDateTime(it.keptAt)+'</span></div>'
+      : shareHtml+soldHtml;
     return '<div class="log-row loot-row">'+historyAvatarHtml(k.bossId, k.bossName)+'<div class="log-body">'+
       '<div class="loot-head"><div class="boss">'+itemIconHtml(it.name,'item-ic item-ic-lg')+it.name+'</div>'+
-        '<div class="loot-head-r">'+pill+'<button type="button" class="hist-del" data-del-item="'+it.id+'" title="ลบไอเทมนี้">✕</button></div></div>'+
+        '<div class="loot-head-r">'+pill+action+'<button type="button" class="hist-del" data-del-item="'+it.id+'" title="ลบไอเทมนี้">✕</button></div></div>'+
       '<div class="when">'+k.bossName+' · '+fmtDateTime(k.ts)+(k.killedBy ? ' · '+k.killedBy : '')+'</div>'+
-      shareHtml+soldHtml+
+      bodyHtml+
     '</div></div>';
   }
   function renderLootView(list, entries){
@@ -2293,7 +2341,8 @@ svg.icon{width:18px;height:18px;display:block}
     var rows = lootRows(entries, true);
     var filterHtml = '<div class="loot-filter">'+
       '<button type="button" class="'+(lootFilter==='all'?'active':'')+'" data-loot-filter="all">ทั้งหมด</button>'+
-      '<button type="button" class="'+(lootFilter==='unsold'?'active':'')+'" data-loot-filter="unsold">ยังไม่ขาย</button></div>';
+      '<button type="button" class="'+(lootFilter==='unsold'?'active':'')+'" data-loot-filter="unsold">ยังไม่ขาย</button>'+
+      '<button type="button" class="'+(lootFilter==='kept'?'active':'')+'" data-loot-filter="kept">เก็บไว้</button></div>';
     list.innerHTML = lootSummaryHtml(allRows) + filterHtml +
       (rows.length ? rows.map(lootRowHtml).join('') : '<p class="empty-note">ไม่มีไอเทมในช่วงนี้</p>');
   }
@@ -2310,23 +2359,58 @@ svg.icon{width:18px;height:18px;display:block}
       return loadKills();
     }).then(function(){ renderHistory(); renderStats(); });
   }
-  // มุมมอง "ตามบอส": รวมยอดต่อตัว (ฆ่ากี่ครั้ง/วันนี้/ไอเทมที่เคยได้) เรียงตัวที่ฆ่าล่าสุดขึ้นก่อน
-  function historyByBossHtml(entries){
+  // มุมมอง "ตามบอส" แยกตามคนกด MVP/ตายแล้ว (kills.killed_by): ปุ่มเลือกคน = สมาชิกปาร์ตี้ + คนที่เคยกดแม้ออกจากปาร์ตี้ไปแล้ว
+  // 'all' = ทุกคน (มีบรรทัด "กดโดย ใคร ×กี่ครั้ง" ใต้ชื่อบอส), 'none' = รอบเก่าที่ไม่รู้ว่าใครกด
+  var bossKillerFilter = 'all';
+  function killerNameOf(k){ return k.killedById ? (k.killedBy || 'ไม่ทราบชื่อ') : 'ไม่ระบุ'; }
+  function killerOptions(){
+    var seen = {}, opts = [];
+    (App.partyRoster||[]).forEach(function(p){ if(!seen[p.id]){ seen[p.id] = true; opts.push({ id:p.id, name:p.name }); } });
+    App.kills.forEach(function(k){
+      var id = k.killedById || 'none';
+      if(seen[id]) return;
+      seen[id] = true; opts.push({ id:id, name:killerNameOf(k) });
+    });
+    return opts;
+  }
+  function renderBossView(list, entries){
+    var opts = killerOptions();
+    if(bossKillerFilter!=='all' && !opts.some(function(o){ return o.id===bossKillerFilter; })) bossKillerFilter = 'all';
+    var counts = {};
+    entries.forEach(function(k){ var id = k.killedById || 'none'; counts[id] = (counts[id]||0)+1; });
+    var multi = opts.length > 1;
+    var chips = multi ? '<div class="loot-filter">'+
+      '<button type="button" class="'+(bossKillerFilter==='all'?'active':'')+'" data-boss-killer="all">ทั้งหมด</button>'+
+      opts.map(function(o){
+        return '<button type="button" class="'+(bossKillerFilter===o.id?'active':'')+'" data-boss-killer="'+o.id+'">'+escapeHtml(o.name)+' ('+(counts[o.id]||0)+')</button>';
+      }).join('')+'</div>' : '';
+    var scoped = bossKillerFilter==='all' ? entries : entries.filter(function(k){ return (k.killedById||'none')===bossKillerFilter; });
+    list.innerHTML = chips + (scoped.length ? historyByBossHtml(scoped, multi ? bossKillerFilter : null) : '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>');
+  }
+  // รวมยอดต่อตัว (ฆ่ากี่ครั้ง/วันนี้/ไอเทมที่เคยได้) เรียงตัวที่ฆ่าล่าสุดขึ้นก่อน
+  // killer: null = ไม่แยกคน, 'all' = โชว์บรรทัด "กดโดย", อื่นๆ = กำลังดูคนเดียว (ปุ่ม ✕ ลบเฉพาะรอบของคนนั้น)
+  function historyByBossHtml(entries, killer){
     var groups = {}, order = [];
     entries.forEach(function(l){
-      if(!groups[l.bossId]){ groups[l.bossId] = { name:l.bossName, kills:[], items:{} }; order.push(l.bossId); }
-      groups[l.bossId].kills.push(l);
-      l.items.forEach(function(it){ groups[l.bossId].items[it.name] = (groups[l.bossId].items[it.name]||0)+1; });
+      if(!groups[l.bossId]){ groups[l.bossId] = { name:l.bossName, kills:[], items:{}, by:{}, byOrder:[] }; order.push(l.bossId); }
+      var g = groups[l.bossId];
+      g.kills.push(l);
+      var who = killerNameOf(l);
+      if(!g.by[who]){ g.by[who] = 0; g.byOrder.push(who); }
+      g.by[who]++;
+      l.items.forEach(function(it){ g.items[it.name] = (g.items[it.name]||0)+1; });
     });
     var today = todayKey(Date.now());
+    var delAttr = (killer && killer!=='all') ? ' data-del-killer="'+killer+'"' : '';
     return order.map(function(id){
       var g = groups[id];
       var todayCount = g.kills.filter(function(l){ return todayKey(l.ts)===today; }).length;
       var names = Object.keys(g.items);
+      var byHtml = killer==='all' ? '<div class="hist-by">กดโดย '+g.byOrder.map(function(w){ return escapeHtml(w)+' ×'+g.by[w]; }).join(' · ')+'</div>' : '';
       return '<div class="log-row">'+historyAvatarHtml(id, g.name)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">ฆ่าแล้ว '+g.kills.length+' ครั้ง · วันนี้ '+todayCount+' · ล่าสุด '+fmtDateTime(g.kills[0].ts)+'</div>'+
-          '<button type="button" class="hist-del" data-del-boss="'+String(id).replace(/"/g,'&quot;')+'" title="ลบประวัติบอสตัวนี้ทั้งหมด">✕</button></div>'+
-        '<div class="boss">'+g.name+'</div>'+
+          '<button type="button" class="hist-del" data-del-boss="'+String(id).replace(/"/g,'&quot;')+'"'+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>'+
+        '<div class="boss">'+g.name+'</div>'+byHtml+
         '<div class="chip-row">'+(names.length ? names.map(function(it){ return '<span class="chip">'+itemIconHtml(it,'item-ic')+it+(g.items[it]>1 ? ' ×'+g.items[it] : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div></div>';
     }).join('');
   }
@@ -5329,6 +5413,12 @@ svg.icon{width:18px;height:18px;display:block}
     dot.classList.remove('has-img');
     dot.textContent = dot.closest('.item-chip').classList.contains('selected') ? '✓' : '';
   }, true);
+  // รูปในการ์ดสถิติโหลดไม่ได้ (ลิงก์เสีย) → ซ่อนช่องรูปไปเลย ไม่ทิ้งกรอบว่างไว้
+  document.querySelector('.stats-row').addEventListener('error', function(e){
+    var img = e.target;
+    if(!(img && img.tagName==='IMG' && img.parentNode && img.parentNode.classList && img.parentNode.classList.contains('stat-thumb'))) return;
+    img.parentNode.hidden = true; img.parentNode.innerHTML = '';
+  }, true);
 
   document.getElementById('partyPanelToggle').addEventListener('click', function(){
     var body = document.getElementById('partyPanelBody');
@@ -6106,16 +6196,27 @@ svg.icon{width:18px;height:18px;display:block}
     var db = e.target.closest('[data-del-boss]');
     if(db){
       var bid = db.dataset.delBoss;
-      var ks = App.kills.filter(function(k){ return k.bossId===bid; });
+      var who = db.dataset.delKiller; // ไม่มี = ทุกคน, 'none' = รอบที่ไม่รู้ว่าใครกด, อื่นๆ = uuid ของคนที่กำลังดูอยู่
+      var ks = App.kills.filter(function(k){ return k.bossId===bid && (who==null || (k.killedById||'none')===who); });
       if(!ks.length) return;
       var itemCount = ks.reduce(function(s,k){ return s+k.items.length; }, 0);
-      showConfirm('ลบประวัติ '+ks[0].bossName+' ทั้งหมด '+ks.length+' ครั้ง'+(itemCount ? ' พร้อมไอเทม '+itemCount+' ชิ้น (รวมข้อมูลหาร/ยอดขาย)' : '')+'? ลบแล้วกู้คืนไม่ได้', function(){
-        runHistoryDelete(supa.from('kills').delete().eq('host_id', activeOwnerId()).eq('boss_id', bid).select('id'), 'ลบประวัติบอสแล้ว');
+      var scopeText = who==null ? ' ทั้งหมด' : ' เฉพาะรอบที่ '+escapeHtml(killerNameOf(ks[0]))+' กด';
+      showConfirm('ลบประวัติ '+ks[0].bossName+scopeText+' '+ks.length+' ครั้ง'+(itemCount ? ' พร้อมไอเทม '+itemCount+' ชิ้น (รวมข้อมูลหาร/ยอดขาย)' : '')+(who==null ? '' : ' (ของคนอื่นยังอยู่)')+'? ลบแล้วกู้คืนไม่ได้', function(){
+        var q = supa.from('kills').delete().eq('host_id', activeOwnerId()).eq('boss_id', bid);
+        if(who==='none') q = q.is('killed_by', null); else if(who!=null) q = q.eq('killed_by', who);
+        runHistoryDelete(q.select('id'), 'ลบประวัติบอสแล้ว');
       });
       return;
     }
     var f = e.target.closest('[data-loot-filter]');
     if(f){ lootFilter = f.dataset.lootFilter; renderHistory(); return; }
+    var bk = e.target.closest('[data-boss-killer]');
+    if(bk){ bossKillerFilter = bk.dataset.bossKiller; renderHistory(); return; }
+    // เก็บไว้ = ไม่หาร ไม่ขาย (ยกเลิกได้ กลับเป็นรอแบ่ง) — ไม่ต้องยืนยันเพราะย้อนกลับได้
+    var kp = e.target.closest('[data-keep]');
+    if(kp){ updateKillItem(kp.dataset.keep, { kept_at:new Date().toISOString() }); return; }
+    var ku = e.target.closest('[data-keep-undo]');
+    if(ku){ updateKillItem(ku.dataset.keepUndo, { kept_at:null }); return; }
     var sh = e.target.closest('[data-share-toggle]');
     if(sh){
       var it = findKillItem(sh.dataset.shareToggle);
@@ -6138,7 +6239,7 @@ svg.icon{width:18px;height:18px;display:block}
       var amt = parseFloat((inp.value||'').replace(/,/g,''));
       if(!(amt>0)){ showFieldTip(inp, 'กรอกจำนวนที่ขายได้'); return; }
       lootEditing = null;
-      updateKillItem(id, { sold_amount:amt, sold_currency:cur.value, sold_at:new Date().toISOString() });
+      updateKillItem(id, { sold_amount:amt, sold_currency:cur.value, sold_at:new Date().toISOString(), kept_at:null });
     }
   });
   document.getElementById('todayOnly').addEventListener('change', renderHistory);

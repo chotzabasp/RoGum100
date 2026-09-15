@@ -428,7 +428,10 @@ svg.icon{width:18px;height:18px;display:block}
 .items-detail-source{font-size:.7rem;color:var(--text-dim)}
 .items-undo-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem;padding:.1rem .2rem;line-height:1}
 .items-undo-btn:hover{color:var(--accent)}
-.panel-merchant-entry,.panel-farm-cost{position:sticky;top:1rem;min-height:0;max-height:calc(100vh - 2rem);overflow-y:auto}
+.panel-farm-cost{position:sticky;top:1rem;min-height:0;max-height:calc(100vh - 2rem);overflow-y:auto}
+/* รายการซื้อ-ขาย: ไม่ปักหมุด ไม่จำกัดความสูง ไม่มีแถบเลื่อนในตัว
+   การ์ดจะยืดยาวตามจำนวน Slot/รายการที่กด "+ เพิ่ม" แล้วเลื่อนไปพร้อมเนื้อหาอื่นตามล้อเมาส์ */
+.panel-merchant-entry{min-height:0;align-self:start}
 .field-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.5rem}
 .field-row label{margin:0}
 .chip.chip-server{
@@ -1006,7 +1009,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   /* พาเนลที่ปักหมุดไว้ (รายการซื้อ-ขาย / ต้นทุนฟาม) ต้องสูงไม่เกิน "กล่องไถ" ไม่ใช่ความสูงจอ
      ไม่งั้นมันจะสูงเกินกล่องแล้วปักหมุดไม่ติด เลื่อนหายไปกับเนื้อหา
      --scroller-h ถูกวัดและอัปเดตจาก JS (syncScrollerHeight) ทุกครั้งที่สลับหน้า/ย่อขยายจอ */
-  .panel-merchant-entry,.panel-farm-cost{max-height:calc(var(--scroller-h, 100vh) - 2rem)}
+  .panel-farm-cost{max-height:calc(var(--scroller-h, 100vh) - 2rem)}
 }
 
 @media (max-width: 760px){

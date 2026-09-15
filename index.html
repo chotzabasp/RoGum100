@@ -1,6 +1,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gum100</title>
+<link rel="icon" type="image/png" href="logo-gum100.png">
+<link rel="apple-touch-icon" href="logo-gum100.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -118,9 +120,8 @@ svg.icon{width:18px;height:18px;display:block}
   display:flex;flex-direction:column;align-items:stretch;
   padding:1rem .65rem;gap:.15rem;
 }
-.rail-brand{display:flex;align-items:center;gap:.6rem;padding:.1rem .3rem .95rem;margin-bottom:.4rem;border-bottom:1px solid var(--border)}
-.rail-logo{width:34px;height:34px;border-radius:8px;background:color-mix(in srgb, var(--accent) 22%, transparent);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:none}
-.rail-brand-name{font-weight:800;font-size:.95rem;color:var(--text);letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail-brand{display:flex;align-items:center;justify-content:center;padding:.1rem .3rem .85rem;margin-bottom:.4rem;border-bottom:1px solid var(--border)}
+.rail-logo-img{display:block;width:100%;max-width:168px;height:auto;filter:drop-shadow(0 3px 10px rgba(0,0,0,.45))}
 .rail-btn{
   width:100%;min-height:40px;border-radius:var(--radius-s);
   display:flex;align-items:center;gap:.65rem;justify-content:flex-start;
@@ -1027,8 +1028,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 <div id="appScreen">
   <nav class="rail">
     <div class="rail-brand">
-      <div class="rail-logo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></div>
-      <span class="rail-brand-name">Gum100</span>
+      <img class="rail-logo-img" src="logo-gum100.png" alt="Gum100" width="360" height="358">
     </div>
     <button class="rail-btn active" data-page="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg><span class="tip">บัญชีนักลงทุน</span></button>
     <button class="rail-btn" data-page="items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="tip">คลังไอเทม</span><span class="rail-badge" id="railItemsBadge" hidden>0</span></button>

@@ -984,6 +984,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     <div id="loginFields">
       <div class="field"><label for="li-email">อีเมลหรือ Username</label><input id="li-email" type="text" placeholder="guild@example.com หรือ username" autocomplete="username"></div>
       <div class="field"><label for="li-pass">รหัสผ่าน</label><input id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <p class="auth-switch"><button type="button" id="forgotPasswordLink">ลืมรหัสผ่าน?</button></p>
     </div>
     <div id="registerFields" hidden>
       <div class="field"><label for="rg-server">เซิร์ฟเวอร์ที่เล่น</label><select id="rg-server"><option value="">— เลือกเซิร์ฟเวอร์ —</option></select><div class="field-hint">เลือกเพิ่มเติมได้ที่ตั้งค่าภายหลัง</div></div>
@@ -998,7 +999,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     <p class="auth-error" id="authError"></p>
     <button class="btn btn-primary btn-block" id="authSubmit">เข้าสู่ระบบ</button>
     <p class="auth-switch">ยังไม่มีบัญชี? <button id="authToggle">สมัครสมาชิก</button></p>
-    <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่ เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ · ลืมรหัสผ่านติดต่อแอดมิน</p>
+    <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่ เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ · ลืมรหัสผ่านกดลิงก์ด้านบน ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริงให้ติดต่อแอดมิน</p>
   </div>
 </div>
 
@@ -1596,6 +1597,35 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" data-expiry-close>ไว้ก่อน</button>
       <button type="button" class="btn btn-gradient" data-go-pricing data-expiry-close>ไปเติมแพ็กเกจ</button>
+    </div>
+  </div>
+</div>
+
+<div id="forgotPasswordOverlay" hidden>
+  <div class="confirm-backdrop" data-forgot-close></div>
+  <div class="confirm-box topup-box">
+    <h3 class="post-announce-title">ลืมรหัสผ่าน</h3>
+    <p class="expiry-msg">กรอกอีเมลหรือ Username ที่ใช้สมัคร ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปที่อีเมลของบัญชีนั้น (ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริง ให้ติดต่อแอดมิน)</p>
+    <div class="field"><label for="forgotIdent">อีเมลหรือ Username</label><input id="forgotIdent" type="text" placeholder="guild@example.com หรือ username" autocomplete="username"></div>
+    <p class="auth-error" id="forgotError"></p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-ghost" data-forgot-close>ยกเลิก</button>
+      <button type="button" class="btn btn-gradient" id="forgotSendBtn">ส่งลิงก์รีเซ็ต</button>
+    </div>
+  </div>
+</div>
+
+<div id="recoveryPasswordOverlay" hidden>
+  <div class="confirm-backdrop"></div>
+  <div class="confirm-box topup-box">
+    <h3 class="post-announce-title">ตั้งรหัสผ่านใหม่</h3>
+    <p class="expiry-msg">คุณกดลิงก์รีเซ็ตรหัสผ่านมา ตั้งรหัสผ่านใหม่ที่นี่ได้เลย ไม่ต้องรู้รหัสเดิม</p>
+    <div class="field"><label for="recoveryPass">รหัสผ่านใหม่</label><input id="recoveryPass" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password"></div>
+    <div class="field"><label for="recoveryPass2">ยืนยันรหัสผ่านใหม่</label><input id="recoveryPass2" type="password" placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง" autocomplete="new-password"></div>
+    <p class="auth-error" id="recoveryError"></p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-ghost" id="recoveryCancelBtn">ออกจากระบบ</button>
+      <button type="button" class="btn btn-gradient" id="recoverySaveBtn">บันทึกรหัสผ่านใหม่</button>
     </div>
   </div>
 </div>
@@ -4443,6 +4473,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(/invalid email|unable to validate email/i.test(msg)) return 'รูปแบบอีเมลไม่ถูกต้อง';
     if(/database error saving new user/i.test(msg)) return 'สมัครไม่สำเร็จ — Username นี้อาจเพิ่งมีคนใช้ ลองเปลี่ยนแล้วสมัครใหม่';
     if(/email not confirmed/i.test(msg)) return 'บัญชีนี้ยังไม่ได้ยืนยันอีเมล กรุณากดลิงก์ยืนยันในอีเมลก่อนเข้าสู่ระบบ';
+    if(/security purposes|rate limit|only request this/i.test(msg)) return 'ส่งคำขอถี่เกินไป กรุณารออีกสักครู่แล้วลองใหม่';
     return msg;
   }
 
@@ -4554,9 +4585,73 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     supa.auth.signOut();
   });
 
+  // ---------- ลืมรหัสผ่าน: ส่งลิงก์รีเซ็ตไปอีเมลของบัญชี (รับได้ทั้งอีเมล/Username เหมือนหน้าล็อกอิน) ----------
+  document.getElementById('forgotPasswordLink').addEventListener('click', function(){
+    document.getElementById('forgotIdent').value = document.getElementById('li-email').value.trim();
+    document.getElementById('forgotError').textContent = '';
+    document.getElementById('forgotPasswordOverlay').hidden = false;
+  });
+  document.addEventListener('click', function(e){
+    if(e.target.closest('[data-forgot-close]')) document.getElementById('forgotPasswordOverlay').hidden = true;
+  });
+  var forgotBusy = false;
+  document.getElementById('forgotSendBtn').addEventListener('click', function(){
+    if(forgotBusy) return;
+    var errEl = document.getElementById('forgotError');
+    var ident = document.getElementById('forgotIdent').value.trim().toLowerCase();
+    if(!ident){ errEl.textContent = 'กรอกอีเมลหรือ Username ก่อน'; return; }
+    forgotBusy = true; errEl.textContent = '';
+    var emailReady = ident.indexOf('@') !== -1 ? Promise.resolve(ident)
+      : supa.rpc('email_for_username', { u:ident }).then(function(r){
+          if(r.error) throw new Error(r.error.message);
+          if(!r.data) throw new Error('ไม่พบ Username นี้');
+          return r.data;
+        });
+    emailReady.then(function(lemail){
+      return supa.auth.resetPasswordForEmail(lemail, { redirectTo: location.origin + location.pathname });
+    }).then(function(res){
+      forgotBusy = false;
+      if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
+      document.getElementById('forgotPasswordOverlay').hidden = true;
+      toast('ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลของบัญชีนี้แล้ว');
+    }).catch(function(err){
+      forgotBusy = false;
+      errEl.textContent = mapAuthError(err.message || String(err));
+    });
+  });
+
+  // ---------- ตั้งรหัสผ่านใหม่หลังกดลิงก์รีเซ็ต: ไม่ต้องรู้รหัสเดิม ----------
+  document.getElementById('recoverySaveBtn').addEventListener('click', function(){
+    var errEl = document.getElementById('recoveryError');
+    var p1 = document.getElementById('recoveryPass').value, p2 = document.getElementById('recoveryPass2').value;
+    if(!p1 || !p2){ errEl.textContent = 'กรอกรหัสผ่านให้ครบทั้งสองช่อง'; return; }
+    if(p1.length < 6){ errEl.textContent = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'; return; }
+    if(p1 !== p2){ errEl.textContent = 'รหัสผ่านทั้งสองช่องไม่ตรงกัน'; return; }
+    errEl.textContent = '';
+    supa.auth.updateUser({ password: p1 }).then(function(res){
+      if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
+      document.getElementById('recoveryPasswordOverlay').hidden = true;
+      supa.auth.signOut({ scope: 'others' }).then(function(r){ if(r.error) console.error('signOut others', r.error); });
+      toast('ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว');
+    });
+  });
+  document.getElementById('recoveryCancelBtn').addEventListener('click', function(){
+    document.getElementById('recoveryPasswordOverlay').hidden = true;
+    manualSignOut = true;
+    supa.auth.signOut();
+  });
+
   // จับเหตุการณ์ถูกเตะออกจากเซสชันอื่น (เช่น มีคนเอารหัสเดียวกันไปล็อกอินที่เครื่องอื่น)
   // แยกจากการกด "ออกจากระบบ" เอง ด้วย manualSignOut flag เพื่อไม่ให้ toast ซ้อนกัน
+  // PASSWORD_RECOVERY: กดลิงก์รีเซ็ตรหัสผ่านมา เด้ง popup ตั้งรหัสใหม่ก่อนเข้าแอพ
   supa.auth.onAuthStateChange(function(event){
+    if(event === 'PASSWORD_RECOVERY'){
+      document.getElementById('recoveryError').textContent = '';
+      document.getElementById('recoveryPass').value = '';
+      document.getElementById('recoveryPass2').value = '';
+      document.getElementById('recoveryPasswordOverlay').hidden = false;
+      return;
+    }
     if(event !== 'SIGNED_OUT') return;
     var wasManual = manualSignOut;
     manualSignOut = false;
@@ -5662,7 +5757,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
   // สิ่งที่ยังกดได้ตอนหมดอายุ (นอกจากนี้ = ทำรายการ → กัน)
   var RO_ALLOW = [
-    '#authScreen', '#expiryOverlay', '#expiryBanner', '#serverPickOverlay', '#topupOverlay', '#confirmOverlay', '#farmOcHintOverlay', '#farmRateRequiredOverlay', '#mrRateRequiredOverlay',
+    '#authScreen', '#expiryOverlay', '#expiryBanner', '#serverPickOverlay', '#topupOverlay', '#confirmOverlay', '#farmOcHintOverlay', '#farmRateRequiredOverlay', '#mrRateRequiredOverlay', '#forgotPasswordOverlay', '#recoveryPasswordOverlay',
     '.rail', '.util-bar', '#view-pricing', '#view-settings', '#view-admin',
     // ประวัติการล่า: เปลี่ยนแท็บ/ตัวกรอง/ปิดได้ แต่ลบ/หาร/ขาย/เก็บไว้ไม่ได้
     '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]',

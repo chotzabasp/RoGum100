@@ -65,9 +65,8 @@ svg.icon{width:18px;height:18px;display:block}
   padding:2rem 1.75rem 1.75rem;
   position:relative;
 }
-.auth-brand{display:flex;align-items:center;gap:.55rem;margin-bottom:.35rem}
-.auth-brand .glyph{width:30px;height:30px;border-radius:8px;background:color-mix(in srgb, var(--accent) 20%, transparent);color:var(--accent);display:flex;align-items:center;justify-content:center}
-.auth-brand h1{font-size:1.3rem;color:var(--text)}
+.auth-brand{display:flex;align-items:center;justify-content:center;margin-bottom:1.35rem}
+.auth-brand-logo{display:block;width:100%;max-width:210px;height:auto;filter:drop-shadow(0 3px 12px rgba(0,0,0,.45))}
 .auth-tag{color:var(--text-dim);font-size:.88rem;margin:0 0 1.5rem}
 .field{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.9rem}
 .field label{font-size:.76rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em}
@@ -963,8 +962,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   .pricing-grid{grid-template-columns:1fr}
   .pricing-title{font-size:1.7rem}
   #appScreen{grid-template-columns:1fr}
-  .rail{flex-direction:row;align-items:center;justify-content:center;border-right:none;border-bottom:1px solid var(--border);padding:.6rem}
-  .rail-brand{display:none}
+  .rail{flex-direction:row;align-items:center;justify-content:flex-start;border-right:none;border-bottom:1px solid var(--border);padding:.6rem;overflow-x:auto;scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .rail-brand{padding:0;margin:0 .55rem 0 .15rem;border-bottom:none;flex:none}
+  .rail-logo-img{width:auto;max-width:none;height:28px}
   .rail-btn{width:42px;min-width:42px;justify-content:center;padding:.5rem}
   .rail-btn .tip{display:none}
   .stats-row{grid-template-columns:repeat(2,1fr)}
@@ -996,8 +997,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   <div class="auth-card">
     <button type="button" class="icon-btn auth-modal-close" id="authModalClose">✕</button>
     <div class="auth-brand">
-      <span class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></span>
-      <h1>Gum100</h1>
+      <img class="auth-brand-logo" src="logo-gum100.png" alt="Gum100">
     </div>
 
     <div id="loginFields">

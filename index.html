@@ -180,12 +180,16 @@ svg.icon{width:18px;height:18px;display:block}
 #view-home::after{width:300px;height:300px;top:-80px;right:5%;background:var(--grad-c)}
 #view-home > *{position:relative;z-index:1}
 
-.hero-row{
-  display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;
-  margin-bottom:1.4rem;padding:2.2rem 1.75rem;border-radius:var(--radius-l);
+.home-banner-zone{
+  border-radius:var(--radius-l);overflow:hidden;margin-bottom:1.4rem;
   background:
     linear-gradient(90deg, rgba(8,10,16,.75) 0%, rgba(8,10,16,.4) 55%, rgba(8,10,16,.75) 100%),
     url('login-bg.jpg') center/cover no-repeat;
+}
+.home-banner-zone .util-bar{margin-bottom:0;padding:1rem 1.5rem 0}
+.hero-row{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;
+  padding:1.5rem 1.75rem 2.2rem;
 }
 .hero-greet{min-width:0}
 .hero-line1{font-size:1.05rem;color:var(--text-dim);font-weight:600;margin-bottom:.1rem;text-shadow:0 2px 8px rgba(0,0,0,.6)}
@@ -1032,7 +1036,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       <div class="expiry-banner-text" id="expiryBannerText"></div>
       <button type="button" class="btn btn-primary btn-sm" data-go-pricing>สมัครแพ็กเกจ</button>
     </div>
-    <div class="util-bar">
+    <div class="util-bar" id="utilBar">
       <div class="clock">
         <div class="time mono" id="clockTime">--:--:--</div>
         <div class="date" id="clockDate">-</div>
@@ -1054,12 +1058,14 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 
     <!-- ===================== HOME VIEW ===================== -->
     <section id="view-home">
-      <div class="hero-row">
-        <div class="hero-greet">
-          <div class="hero-line1">ยินดีต้อนรับกลับมา,</div>
-          <h1 class="hero-line2" id="homeGreetName">นักล่า</h1>
+      <div class="home-banner-zone" id="homeBannerZone">
+        <div class="hero-row">
+          <div class="hero-greet">
+            <div class="hero-line1">ยินดีต้อนรับกลับมา,</div>
+            <h1 class="hero-line2" id="homeGreetName">นักล่า</h1>
+          </div>
+          <div class="hero-stats" id="rateChips"></div>
         </div>
-        <div class="hero-stats" id="rateChips"></div>
       </div>
 
       <div class="panel panel-ticker">
@@ -5501,8 +5507,18 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(!h || /access_token|refresh_token|type=recovery|type=signup|error=/.test(h)) return '';
     return h;
   }
+  // เข้าหน้าแรก: ย้าย util-bar (นาฬิกา/แต้ม/เมนูผู้ใช้) เข้าไปในกรอบ banner ให้เป็นพื้นหลังเดียวกับแถบต้อนรับ
+  // ออกจากหน้าแรก: ย้ายกลับตำแหน่งเดิม (หน้า #view-home เองที่เป็นจุดอ้างอิงตำแหน่งเดิม อยู่คงที่เสมอ)
+  function placeUtilBar(onHome){
+    var bar = document.getElementById('utilBar');
+    var zone = document.getElementById('homeBannerZone');
+    var viewHome = document.getElementById('view-home');
+    if(onHome) zone.insertBefore(bar, zone.firstChild);
+    else viewHome.parentNode.insertBefore(bar, viewHome);
+  }
   function switchPage(page){
     persist(App.keys.lastPage, page);
+    placeUtilBar(page === 'home');
     document.getElementById('view-home').hidden = page !== 'home';
     document.getElementById('view-farm').hidden = page !== 'farm';
     document.getElementById('view-timers').hidden = page !== 'timers';

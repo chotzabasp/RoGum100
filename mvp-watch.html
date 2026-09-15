@@ -325,6 +325,8 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-rare-row .farm-rare-name{flex:1 1 auto;min-width:0}
 .farm-rare-row .farm-rare-qty{flex:0 0 48px;min-width:0}
 .farm-rare-row .farm-rare-price{flex:0 0 68px;min-width:0}
+.farm-earned-hint{font-size:.72rem;color:var(--text-dim);margin-top:.3rem}
+.farm-perkam{color:var(--text-dim);font-size:.72rem}
 .farm-rare-row .farm-rare-currency{flex:0 0 42px}
 .farm-rare-row .mr-row-remove{flex:0 0 auto}
 .farm-rare-row input,.farm-rare-row select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.45rem .5rem;font-size:.8rem}
@@ -1259,8 +1261,9 @@ svg.icon{width:18px;height:18px;display:block}
                 <input type="number" id="farmCountInput" class="mono" value="1" min="1">
               </div>
               <div class="farm-log-field farm-log-field-earned">
-                <div class="farm-log-field-label">ยอดที่ฟามได้รวม <button type="button" class="farm-oc-toggle" id="farmOcToggle">OC 24%</button></div>
+                <div class="farm-log-field-label">ยอดที่ฟามได้ต่อกั้ม <button type="button" class="farm-oc-toggle" id="farmOcToggle">OC 24%</button></div>
                 <input type="text" inputmode="numeric" id="farmEarnedInput" class="mono" placeholder="เช่น 100,000">
+                <div class="farm-earned-hint" id="farmEarnedHint" hidden></div>
               </div>
             </div>
             <div class="mr-confirm-row">
@@ -2962,7 +2965,7 @@ svg.icon{width:18px;height:18px;display:block}
               '<button type="button" class="mr-del" data-farm-del="'+e.id+'" title="ลบ">🗑</button>'+
             '</span>'+
           '</span></div>'+
-        '<div class="mr-entry-sub farm-entry-sub"><span>ฟามได้ '+fmtNum(e.earned)+' z'+earnedBahtText+'</span>'+rareTag+'</div>'+
+        '<div class="mr-entry-sub farm-entry-sub"><span>ฟามได้ '+fmtNum(e.earned)+' z'+earnedBahtText+(e.perKam && count>1 ? ' <span class="farm-perkam">('+fmtNum(e.earnedBase)+' z/กั้ม)</span>' : '')+'</span>'+rareTag+'</div>'+
       '</div>';
     }).join('');
 
@@ -3028,7 +3031,14 @@ svg.icon{width:18px;height:18px;display:block}
       var hasRate = entry.exchangeRate>0;
       var earnedBase = entry.earnedBase!=null ? entry.earnedBase : entry.earned;
       function bahtSuffix(z){ return hasRate ? ' (= '+fmtNum(farmZenyToBaht(z, entry.exchangeRate))+' บ)' : ''; }
-      var rows = '<div class="ct-row"><span class="ct-key">ฟามได้ (พื้นฐาน)</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z'+bahtSuffix(earnedBase)+'</span></div>';
+      var rows;
+      if(entry.perKam){
+        var kc = entry.count || 1;
+        rows = '<div class="ct-row"><span class="ct-key">ฟามได้ต่อกั้ม</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z'+bahtSuffix(earnedBase)+'</span></div>'+
+          '<div class="ct-row"><span class="ct-key">× '+kc+' กั้ม</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase*kc)+' z'+bahtSuffix(earnedBase*kc)+'</span></div>';
+      } else {
+        rows = '<div class="ct-row"><span class="ct-key">ฟามได้ (พื้นฐาน)</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z'+bahtSuffix(earnedBase)+'</span></div>';
+      }
       (entry.rareItems||[]).filter(function(r){ return r.name && r.price; }).forEach(function(r){
         var rareTotal = r.price*r.qty;
         var isRareBaht = (r.currency||'zeny')==='baht';
@@ -3106,7 +3116,11 @@ svg.icon{width:18px;height:18px;display:block}
     renderFarmMapName();
     renderFarmCostItems();
     document.getElementById('farmCountInput').value = entry.count || 1;
-    document.getElementById('farmEarnedInput').value = fmtNum(entry.earnedBase!=null ? entry.earnedBase : entry.earned);
+    // รายการเก่าที่บันทึกเป็น "ยอดรวม" ให้แปลงเป็นต่อกั้มก่อนใส่ช่อง จะได้บันทึกซ้ำด้วยความหมายใหม่ได้ถูก
+    var eb = entry.earnedBase!=null ? entry.earnedBase : entry.earned;
+    if(!entry.perKam && (entry.count||1)>1) eb = Math.round(eb/(entry.count||1));
+    document.getElementById('farmEarnedInput').value = fmtNum(eb);
+    updateFarmEarnedHint();
     farmRareItemRows = (entry.rareItems && entry.rareItems.length)
       ? entry.rareItems.map(function(r){ return { id: r.id || uid(), name:r.name, price:r.price, qty:r.qty, currency:r.currency||'zeny' }; })
       : [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
@@ -5718,10 +5732,19 @@ svg.icon{width:18px;height:18px;display:block}
     renderFarmRareItems();
   });
 
+  function updateFarmEarnedHint(){
+    var hint = document.getElementById('farmEarnedHint');
+    var count = parseInt(document.getElementById('farmCountInput').value, 10) || 1;
+    var val = parseFloat((document.getElementById('farmEarnedInput').value||'').replace(/,/g,'')) || 0;
+    hint.hidden = !(val>0 && count>1);
+    if(!hint.hidden) hint.textContent = 'รวม '+count+' กั้ม = '+fmtNum(val*count)+' z';
+  }
   document.getElementById('farmEarnedInput').addEventListener('input', function(){
     var digits = this.value.replace(/[^\d]/g,'');
     this.value = digits ? Number(digits).toLocaleString('th-TH') : '';
+    updateFarmEarnedHint();
   });
+  document.getElementById('farmCountInput').addEventListener('input', updateFarmEarnedHint);
 
   document.getElementById('farmEarnedInput').addEventListener('focus', showFarmOcHint);
 
@@ -5750,6 +5773,7 @@ svg.icon{width:18px;height:18px;display:block}
       var base = Math.round(raw / 1.24);
       earnedInput.value = base ? fmtNum(base) : '';
     }
+    updateFarmEarnedHint();
   });
 
   document.getElementById('farmLogConfirm').addEventListener('click', function(){
@@ -5776,7 +5800,8 @@ svg.icon{width:18px;height:18px;display:block}
       var lineTotal = (r.price||0)*r.qty;
       return s + (r.currency==='baht' ? farmBahtToZeny(lineTotal, costBd.rate) : lineTotal);
     }, 0);
-    var totalEarned = val + rareTotal;
+    // ยอดที่ฟามได้กรอกเป็น "ต่อกั้ม" คูณจำนวนกั้มเหมือนฝั่งต้นทุน ส่วนไอเทมหายากเป็นยอดของรอบนั้นทั้งรอบ
+    var totalEarned = val*count + rareTotal;
 
     function commitFarmLog(){
       if(editingFarmId){
@@ -5786,6 +5811,7 @@ svg.icon{width:18px;height:18px;display:block}
           entry.count = count;
           entry.cost = cost;
           entry.earnedBase = val;
+          entry.perKam = true;
           entry.ocApplied = farmOcActive;
           entry.rareItems = rareItemsSnapshot;
           entry.earned = totalEarned;
@@ -5800,10 +5826,11 @@ svg.icon{width:18px;height:18px;display:block}
         renderFarmChart();
         toast('แก้ไขรายการแล้ว');
       } else {
-        App.farmLog.push({ id:uid(), ts:Date.now(), serverId:App.farmServerId, count:count, cost:cost, earnedBase:val, ocApplied:farmOcActive, rareItems: rareItemsSnapshot, earned:totalEarned, profit:totalEarned-cost, costItems: farmSnapshotCostRows(App.farmServerId), exchangeRate: farmExchangeRate(App.farmServerId) || null, mapName: App.farmMapNames[App.farmServerId] || '' });
+        App.farmLog.push({ id:uid(), ts:Date.now(), serverId:App.farmServerId, count:count, cost:cost, earnedBase:val, perKam:true, ocApplied:farmOcActive, rareItems: rareItemsSnapshot, earned:totalEarned, profit:totalEarned-cost, costItems: farmSnapshotCostRows(App.farmServerId), exchangeRate: farmExchangeRate(App.farmServerId) || null, mapName: App.farmMapNames[App.farmServerId] || '' });
         saveFarmLog();
         earnedInput.value = '';
         countInput.value = '1';
+        updateFarmEarnedHint();
         farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
         renderFarmRareItems();
         renderFarmHistory();

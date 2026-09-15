@@ -47,15 +47,25 @@ svg.icon{width:18px;height:18px;display:block}
 /* ---------- auth screen ---------- */
 #authScreen{
   min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  position:relative;
   padding:2rem 1.25rem;
   background:
     radial-gradient(60% 50% at 50% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
     url('login-bg.jpg') center/100% auto no-repeat,
     var(--bg);
 }
+.landing-actions{position:absolute;top:1.5rem;right:1.5rem;display:flex;gap:.6rem;z-index:2}
+.landing-hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;text-align:center}
+.landing-hero .glyph{width:52px;height:52px;border-radius:14px;background:color-mix(in srgb, var(--accent) 20%, transparent);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.landing-hero .glyph .icon{width:28px;height:28px}
+.landing-hero h1{font-size:2.4rem;font-weight:800;color:var(--text)}
+.auth-modal{position:fixed;inset:0;z-index:80}
+.auth-modal[hidden]{display:none}
+.auth-modal .auth-card{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:81;
+  max-height:90vh;overflow-y:auto;
+}
+.auth-modal-close{position:absolute;top:.9rem;right:.9rem}
 .auth-card{
   width:100%;
   max-width:380px;
@@ -64,6 +74,7 @@ svg.icon{width:18px;height:18px;display:block}
   border-radius:var(--radius-l);
   box-shadow:var(--shadow);
   padding:2rem 1.75rem 1.75rem;
+  position:relative;
 }
 .auth-brand{display:flex;align-items:center;gap:.55rem;margin-bottom:.35rem}
 .auth-brand .glyph{width:30px;height:30px;border-radius:8px;background:color-mix(in srgb, var(--accent) 20%, transparent);color:var(--accent);display:flex;align-items:center;justify-content:center}
@@ -992,7 +1003,19 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 
 <!-- ===================== AUTH SCREEN ===================== -->
 <div id="authScreen">
+  <div class="landing-actions">
+    <button type="button" class="btn btn-ghost" id="landingLoginBtn">เข้าสู่ระบบ</button>
+    <button type="button" class="btn btn-gradient" id="landingRegisterBtn">สมัครสมาชิก</button>
+  </div>
+  <div class="landing-hero">
+    <span class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></span>
+    <h1>Gum100</h1>
+  </div>
+
+  <div class="auth-modal" id="authModal" hidden>
+  <div class="confirm-backdrop" id="authModalBackdrop"></div>
   <div class="auth-card">
+    <button type="button" class="icon-btn auth-modal-close" id="authModalClose">✕</button>
     <div class="auth-brand">
       <span class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></span>
       <h1>Gum100</h1>
@@ -1015,8 +1038,9 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 
     <p class="auth-error" id="authError"></p>
     <button class="btn btn-primary btn-block" id="authSubmit">เข้าสู่ระบบ</button>
-    <p class="auth-switch">ยังไม่มีบัญชี? <button id="authToggle">สมัครสมาชิก</button></p>
+    <p class="auth-switch" id="authSwitchText">ยังไม่มีบัญชี? <button id="authToggle">สมัครสมาชิก</button></p>
     <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่ เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ · ลืมรหัสผ่านกดลิงก์ด้านบน ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริงให้ติดต่อแอดมิน</p>
+  </div>
   </div>
 </div>
 
@@ -4473,17 +4497,26 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     document.getElementById('clockDate').textContent = now.toLocaleDateString('th-TH', {weekday:'short', day:'numeric', month:'short'})+' '+farmBeShort(now);
   }
 
-  // ---------- auth screen wiring ----------
+  // ---------- auth screen wiring: หน้าแรกโชว์แค่ปุ่ม "เข้าสู่ระบบ/สมัครสมาชิก" มุมขวาบน กดแล้วค่อยเด้งฟอร์มเป็น modal ----------
   var isRegister = false;
-  document.getElementById('authToggle').addEventListener('click', function(){
-    isRegister = !isRegister;
+  function setAuthMode(register){
+    isRegister = register;
     document.getElementById('loginFields').hidden = isRegister;
     document.getElementById('registerFields').hidden = !isRegister;
     document.getElementById('authSubmit').textContent = isRegister ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
     document.getElementById('authToggle').textContent = isRegister ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
-    document.querySelector('.auth-switch').firstChild.textContent = isRegister ? 'มีบัญชีแล้ว? ' : 'ยังไม่มีบัญชี? ';
+    document.getElementById('authSwitchText').firstChild.textContent = isRegister ? 'มีบัญชีแล้ว? ' : 'ยังไม่มีบัญชี? ';
     document.getElementById('authError').textContent = '';
-  });
+  }
+  document.getElementById('authToggle').addEventListener('click', function(){ setAuthMode(!isRegister); });
+  function openAuthModal(register){
+    setAuthMode(register);
+    document.getElementById('authModal').hidden = false;
+  }
+  document.getElementById('landingLoginBtn').addEventListener('click', function(){ openAuthModal(false); });
+  document.getElementById('landingRegisterBtn').addEventListener('click', function(){ openAuthModal(true); });
+  document.getElementById('authModalClose').addEventListener('click', function(){ document.getElementById('authModal').hidden = true; });
+  document.getElementById('authModalBackdrop').addEventListener('click', function(){ document.getElementById('authModal').hidden = true; });
 
   function mapAuthError(msg){
     if(/invalid login credentials/i.test(msg)) return 'อีเมล/Username หรือรหัสผ่านไม่ถูกต้อง';
@@ -4679,6 +4712,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     App.profile = null;
     document.getElementById('appScreen').hidden = true;
     document.getElementById('authScreen').hidden = false;
+    document.getElementById('authModal').hidden = true;
     if(!wasManual) toast('บัญชีนี้เพิ่งถูกใช้ล็อกอินจากที่อื่น กรุณาล็อกอินใหม่');
   });
 

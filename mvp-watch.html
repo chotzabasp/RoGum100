@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MVP Watch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -143,7 +145,7 @@ svg.icon{width:18px;height:18px;display:block}
 }
 
 .content{padding:1.4rem 1.75rem 3rem;max-width:1180px;width:100%}
-.util-bar{display:flex;align-items:center;justify-content:flex-end;gap:.9rem;margin-bottom:1.3rem}
+.util-bar{display:flex;align-items:center;justify-content:flex-end;gap:.9rem;margin-bottom:1.3rem;flex-wrap:wrap}
 .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.3rem}
 .topbar h1{font-size:1.4rem;margin:0 0 .2rem}
 .topbar .sub{color:var(--text-dim);font-size:.86rem;margin:0}
@@ -151,10 +153,12 @@ svg.icon{width:18px;height:18px;display:block}
 .clock{text-align:right}
 .clock .time{font-size:1rem}
 .clock .date{font-size:.72rem;color:var(--text-dim)}
-.user-menu{display:flex;align-items:center;gap:.6rem;padding:.35rem .65rem .35rem .45rem;border:1px solid var(--border);border-radius:999px;background:var(--surface)}
-.user-menu .avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:700}
-.user-menu .who{display:flex;flex-direction:column;line-height:1.2}
-.user-menu .name{font-size:.8rem;font-weight:600}
+.user-menu{display:flex;align-items:center;gap:.6rem;padding:.35rem .65rem .35rem .45rem;border:1px solid var(--border);border-radius:999px;background:var(--surface);min-width:0;max-width:100%}
+.user-menu .avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:700;flex:none}
+.user-menu .who{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+/* ชื่อยาว (เช่นบัญชีเก่าที่ชื่อเป็นอีเมล) ตัดด้วย … แทนที่จะดันแถบหัวเว็บล้นจอ */
+.user-menu .name{font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.user-menu .icon-btn{flex:none}
 .membership-pill{font-size:.64rem;padding:.05rem .4rem;border-radius:999px;width:fit-content;font-weight:600}
 .membership-pill.ok{background:color-mix(in srgb, var(--success) 20%, transparent);color:var(--success)}
 .membership-pill.soon{background:color-mix(in srgb, var(--warn) 22%, transparent);color:var(--warn)}
@@ -921,7 +925,12 @@ svg.icon{width:18px;height:18px;display:block}
   .rail-btn{width:42px;min-width:42px;justify-content:center;padding:.5rem}
   .rail-btn .tip{display:none}
   .stats-row{grid-template-columns:repeat(2,1fr)}
-  .content{padding:1.1rem 1rem 3rem}
+  .content{padding:1.1rem 1rem 3rem;min-width:0}
+  .util-bar{justify-content:space-between;gap:.5rem .7rem}
+  .user-menu .name{max-width:130px}
+  /* แสงเรืองหน้าแรกย่อให้อยู่ในจอ ไม่งั้นดันหน้าให้เลื่อนซ้าย-ขวาได้บนมือถือ */
+  #view-home::before{width:220px;height:220px;left:0}
+  #view-home::after{width:200px;height:200px;right:0}
   .hero-line2{font-size:1.8rem}
   .home-grid{grid-template-columns:1fr}
   .home-controlbar{flex-wrap:wrap}
@@ -962,7 +971,7 @@ svg.icon{width:18px;height:18px;display:block}
     <p class="auth-error" id="authError"></p>
     <button class="btn btn-primary btn-block" id="authSubmit">เข้าสู่ระบบ</button>
     <p class="auth-switch">ยังไม่มีบัญชี? <button id="authToggle">สมัครสมาชิก</button></p>
-    <p class="auth-note">ระบบสมาชิกในหน้านี้เป็นเดโมสำหรับทดสอบดีไซน์เท่านั้น ข้อมูลเก็บไว้ในเบราว์เซอร์นี้เท่านั้น เวอร์ชันจริงจะย้ายไปใช้ระบบสมาชิก+ฐานข้อมูลกลาง</p>
+    <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่ เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ · ลืมรหัสผ่านติดต่อแอดมิน</p>
   </div>
 </div>
 
@@ -1643,8 +1652,8 @@ svg.icon{width:18px;height:18px;display:block}
   <div class="confirm-box topup-box">
     <h3 class="post-announce-title">เพิ่มเพื่อนเข้าปาร์ตี้</h3>
     <div class="post-announce-field">
-      <label>อีเมลที่เพื่อนใช้สมัครสมาชิก</label>
-      <input type="email" id="addPartyMemberEmail" placeholder="friend@example.com">
+      <label>อีเมลหรือ Username ของเพื่อน</label>
+      <input type="text" id="addPartyMemberEmail" placeholder="friend@example.com หรือ username" autocomplete="off" autocapitalize="none" spellcheck="false">
     </div>
     <p class="post-announce-note">ใช้ 20 แต้มต่อการเพิ่ม 1 คน — เพิ่มแล้ว<b>เปลี่ยนเป็นคนอื่นไม่ได้</b> ถ้าเอาออกภายหลัง สล็อตนี้จะเสียไปเลย ต้องจ่าย 20 แต้มใหม่ถ้าจะเพิ่มคนอื่นอีกครั้ง</p>
     <div class="confirm-actions">
@@ -5703,8 +5712,9 @@ svg.icon{width:18px;height:18px;display:block}
   var addPartyMemberBusy = false;
   document.getElementById('addPartyMemberConfirmBtn').addEventListener('click', function(){
     if(addPartyMemberBusy) return;
+    // รับได้ทั้งอีเมลหรือ username — ฝั่งเซิร์ฟเวอร์ (add_party_member) หาบัญชีจากทั้งสองอย่างเอง
     var email = document.getElementById('addPartyMemberEmail').value.trim().toLowerCase();
-    if(!email){ toast('กรุณากรอกอีเมล'); return; }
+    if(!email){ toast('กรุณากรอกอีเมลหรือ Username ของเพื่อน'); return; }
     addPartyMemberBusy = true;
     supa.rpc('add_party_member', { member_email: email }).then(function(res){
       addPartyMemberBusy = false;

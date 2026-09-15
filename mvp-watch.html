@@ -4022,18 +4022,31 @@ svg.icon{width:18px;height:18px;display:block}
       supa.auth.signInWithPassword({ email:lemail, password:lpass }).then(function(res){
         authBusy = false;
         if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
+        // เตะเซสชันอื่นของบัญชีนี้ทิ้ง กันเอารหัสเดียวไปใช้พร้อมกันหลายเครื่อง
+        supa.auth.signOut({ scope: 'others' }).then(function(r){ if(r.error) console.error('signOut others', r.error); });
         enterApp(res.data.user);
       });
     }
   });
 
+  var manualSignOut = false;
   document.getElementById('logoutBtn').addEventListener('click', function(){
-    supa.auth.signOut().then(function(){
-      App.session = null;
-      App.profile = null;
-      document.getElementById('appScreen').hidden = true;
-      document.getElementById('authScreen').hidden = false;
-    });
+    manualSignOut = true;
+    supa.auth.signOut();
+  });
+
+  // จับเหตุการณ์ถูกเตะออกจากเซสชันอื่น (เช่น มีคนเอารหัสเดียวกันไปล็อกอินที่เครื่องอื่น)
+  // แยกจากการกด "ออกจากระบบ" เอง ด้วย manualSignOut flag เพื่อไม่ให้ toast ซ้อนกัน
+  supa.auth.onAuthStateChange(function(event){
+    if(event !== 'SIGNED_OUT') return;
+    var wasManual = manualSignOut;
+    manualSignOut = false;
+    if(!App.session) return;
+    App.session = null;
+    App.profile = null;
+    document.getElementById('appScreen').hidden = true;
+    document.getElementById('authScreen').hidden = false;
+    if(!wasManual) toast('บัญชีนี้เพิ่งถูกใช้ล็อกอินจากที่อื่น กรุณาล็อกอินใหม่');
   });
 
   function enterApp(user){

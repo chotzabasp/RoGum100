@@ -975,6 +975,40 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 .settings-row-amt{font-family:"JetBrains Mono";font-variant-numeric:tabular-nums;font-size:.9rem;flex:none}
 @media (max-width:760px){ .settings-grid{grid-template-columns:1fr} }
 
+/* ===== โครงแบบ "หัวตรึง เนื้อหาไถ" (เหมือน feed Facebook) — ใช้เฉพาะจอคอม =====
+   บนมือถือปล่อยให้เลื่อนทั้งหน้าตามปกติ เพราะจอสูงน้อยและแถบ URL ของเบราว์เซอร์
+   ทำให้ 100vh เพี้ยน การล็อกความสูงจะยิ่งอึดอัด
+
+   ส่วนที่ตรึง = เมนูซ้าย + แถบบน (นาฬิกา/แต้ม/ผู้ใช้) + หัวของแต่ละหน้า
+   ส่วนที่ไถได้ = .page-scroll ซึ่งครอบเนื้อหาจริงของหน้านั้นๆ ไว้ */
+@media (min-width: 761px){
+  #appScreen{height:100vh;overflow:hidden}
+  .rail{height:100vh;overflow-y:auto;scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .content{height:100vh;overflow:hidden;display:flex;flex-direction:column;padding-bottom:0}
+  /* ทุกอย่างที่ไม่ใช่ตัวไถ ห้ามยุบ ไม่งั้นแบนเนอร์/หัวหน้าจะโดนบีบเตี้ยลงเมื่อเนื้อหายาว */
+  .content > *{flex:0 0 auto}
+  .content > section{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+  .content > section > *{flex:0 0 auto}
+  .content > section[hidden]{display:none}
+  /* ตัวไถ: กินพื้นที่ที่เหลือหลังหัวหน้า แล้วเลื่อนอยู่ในตัวเอง
+     margin/padding ติดลบ-บวกคู่กัน เพื่อดันแถบเลื่อนไปชิดขอบขวาสุดของแอพ
+     ไม่ให้ลอยอยู่กลางช่องว่าง padding ของ .content */
+  .content > section > .page-scroll{
+    flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+    margin:0 -1.75rem;padding:0 1.75rem 3rem;
+    scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+  }
+  .page-scroll::-webkit-scrollbar{width:10px}
+  .page-scroll::-webkit-scrollbar-track{background:transparent}
+  .page-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+  .page-scroll::-webkit-scrollbar-thumb:hover{background:var(--text-dim);background-clip:content-box}
+  /* พาเนลที่ปักหมุดไว้ (รายการซื้อ-ขาย / ต้นทุนฟาม) ต้องสูงไม่เกิน "กล่องไถ" ไม่ใช่ความสูงจอ
+     ไม่งั้นมันจะสูงเกินกล่องแล้วปักหมุดไม่ติด เลื่อนหายไปกับเนื้อหา
+     --scroller-h ถูกวัดและอัปเดตจาก JS (syncScrollerHeight) ทุกครั้งที่สลับหน้า/ย่อขยายจอ */
+  .panel-merchant-entry,.panel-farm-cost{max-height:calc(var(--scroller-h, 100vh) - 2rem)}
+}
+
 @media (max-width: 760px){
   .pricing-grid{grid-template-columns:1fr}
   .pricing-title{font-size:1.7rem}
@@ -1123,6 +1157,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         </div>
       </div>
 
+      <div class="page-scroll">
       <div class="home-grid">
         <div class="home-left">
           <div class="panel panel-hero">
@@ -1277,6 +1312,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
           </div>
         </div>
       </div>
+      </div>
     </section>
 
     <!-- ===================== FARM VIEW ===================== -->
@@ -1294,6 +1330,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         </div>
       </div>
 
+      <div class="page-scroll">
       <div class="home-grid">
         <div class="home-left">
           <div class="panel panel-farm-revenue">
@@ -1397,6 +1434,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
           </div>
         </div>
       </div>
+      </div>
     </section>
 
     <!-- ===================== TIMERS VIEW ===================== -->
@@ -1408,6 +1446,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       </div>
     </div>
 
+    <div class="page-scroll">
     <div class="panel party-panel" id="partyPanel">
       <div class="panel-head">
         <h2>ปาร์ตี้</h2>
@@ -1469,6 +1508,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     </div>
 
     <div class="roster" id="roster"></div>
+    </div>
     </section>
 
     <!-- ===================== ITEMS (คลังไอเทม) VIEW ===================== -->
@@ -1480,6 +1520,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         </div>
       </div>
 
+      <div class="page-scroll">
       <div class="home-grid">
         <div class="home-left">
           <div class="items-card-a-grid">
@@ -1523,9 +1564,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
           <div id="itemsPendingList"></div>
         </div>
       </div>
+      </div>
     </section>
 
     <section id="view-pricing" hidden>
+      <div class="page-scroll">
       <div class="pricing-hero">
         <span class="pricing-badge">✦ ปลดล็อกฟีเจอร์เต็มรูปแบบ</span>
         <h1 class="pricing-title">เติม<span class="pricing-title-accent">แพ็กเกจ</span></h1>
@@ -1536,9 +1579,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         </div>
       </div>
       <div class="pricing-grid" id="pricingGrid"></div>
+      </div>
     </section>
 
     <section id="view-settings" hidden>
+      <div class="page-scroll">
       <div class="topbar">
         <div>
           <h1>ตั้งค่า</h1>
@@ -1594,9 +1639,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
           </div>
         </div>
       </div>
+      </div>
     </section>
 
     <section id="view-admin" hidden>
+      <div class="page-scroll">
       <div class="topbar">
         <div>
           <h1>คำขอเติมเงิน</h1>
@@ -1604,6 +1651,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         </div>
       </div>
       <div id="adminTopupList" class="admin-topup-list"></div>
+      </div>
     </section>
 
   </main>
@@ -5587,6 +5635,18 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(onHome) zone.insertBefore(bar, zone.firstChild);
     else viewHome.parentNode.insertBefore(bar, viewHome);
   }
+  // โหมด "หัวตรึง เนื้อหาไถ" บนจอคอม: เนื้อหาเลื่อนอยู่ในกล่อง .page-scroll ไม่ใช่ทั้งหน้า
+  // พาเนลที่ปักหมุด (position:sticky) จึงต้องรู้ความสูงของกล่องนี้ ไม่ใช่ 100vh
+  // ไม่งั้นมันจะสูงเกินกล่องแล้วปักหมุดไม่ติด เลื่อนหายไปพร้อมเนื้อหา
+  function syncScrollerHeight(){
+    var box = document.querySelector('.content > section:not([hidden]) > .page-scroll');
+    if(!box || !box.clientHeight) return;
+    document.documentElement.style.setProperty('--scroller-h', box.clientHeight + 'px');
+  }
+  window.addEventListener('resize', syncScrollerHeight);
+  if(window.ResizeObserver){
+    new ResizeObserver(syncScrollerHeight).observe(document.querySelector('.content'));
+  }
   function switchPage(page){
     persist(App.keys.lastPage, page);
     placeUtilBar(page === 'home');
@@ -5607,6 +5667,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       b.classList.toggle('active', b.dataset.page===page);
     });
     if(location.hash.slice(1) !== page) history.pushState({ page:page }, '', '#'+page);
+    syncScrollerHeight();
   }
   // ปุ่ม back/forward ของเบราว์เซอร์: เปลี่ยนหน้าในแอพตาม hash ที่ browser พาไป (ไม่ push ซ้ำ เพราะ hash ตรงกันแล้ว)
   window.addEventListener('popstate', function(){

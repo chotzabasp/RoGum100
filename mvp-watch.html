@@ -802,6 +802,23 @@ svg.icon{width:18px;height:18px;display:block}
 .log-row .boss{font-weight:600;font-size:.9rem;margin:.15rem 0 .3rem}
 .chip-row{display:flex;gap:.35rem;flex-wrap:wrap}
 .chip{background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.18rem .6rem;font-size:.76rem}
+.loot-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.8rem}
+.loot-summary>div{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.5rem .6rem;display:flex;flex-direction:column;gap:.15rem;min-width:0}
+.loot-summary .lbl{font-size:.68rem;color:var(--text-dim)}
+.loot-summary b{font-size:.86rem;overflow-wrap:anywhere}
+.loot-filter{display:flex;gap:.4rem;margin-bottom:.6rem}
+.loot-filter button{padding:.3rem .7rem;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);font-size:.76rem;cursor:pointer}
+.loot-filter button.active{color:var(--accent);border-color:var(--accent);background:color-mix(in srgb, var(--accent) 18%, transparent)}
+.loot-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.loot-head .boss{margin:0}
+.loot-line{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.4rem;font-size:.78rem}
+.loot-lbl{color:var(--text-dim);font-size:.72rem;min-width:2.6rem}
+.loot-each{color:var(--text-dim);font-size:.72rem}
+.share-chip{background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.18rem .6rem;font-size:.74rem;color:var(--text-dim);cursor:pointer}
+.share-chip.on{color:var(--accent);border-color:var(--accent);background:color-mix(in srgb, var(--accent) 18%, transparent)}
+.sold-amount{width:7.5rem;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.3rem .5rem;font-size:.8rem}
+.sold-currency{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.3rem .4rem;font-size:.78rem}
+.membership-pill.neutral{background:var(--surface-2);color:var(--text-dim)}
 
 .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);background:var(--text);color:var(--bg);padding:.7rem 1.1rem;border-radius:999px;font-size:.85rem;text-align:center;max-width:min(90vw,360px);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
@@ -1688,7 +1705,7 @@ svg.icon{width:18px;height:18px;display:block}
   // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
-  var App = { session:null, profile:null, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, profile:null, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], partyRoster:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -1919,13 +1936,15 @@ svg.icon{width:18px;height:18px;display:block}
   }
   // ประวัติการฆ่า+ไอเทมของปาร์ตี้ที่กำลังดูอยู่ — ผูกกับหัวปาร์ตี้เหมือน user_bosses
   function loadKills(){
-    return supa.from('kills').select('id, boss_id, boss_name, killed_at, profiles!killed_by(display_name), kill_items(name)')
+    return supa.from('kills').select('id, boss_id, boss_name, killed_at, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at)')
       .eq('host_id', activeOwnerId()).order('killed_at', { ascending:false }).then(function(res){
       if(res.error){ console.error('loadKills', res.error); App.kills = []; return; }
       App.kills = (res.data||[]).map(function(k){
         return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(),
           killedBy:(k.profiles && k.profiles.display_name) || null,
-          items:(k.kill_items||[]).map(function(i){ return i.name; }) };
+          items:(k.kill_items||[]).map(function(i){
+            return { id:i.id, name:i.name, sharedWith:i.shared_with||[], soldAmount:i.sold_amount==null?null:Number(i.sold_amount), soldCurrency:i.sold_currency||'zeny', soldAt:i.sold_at };
+          }) };
       });
     });
   }
@@ -2140,17 +2159,109 @@ svg.icon{width:18px;height:18px;display:block}
     var onlyToday = document.getElementById('todayOnly').checked;
     var entries = App.kills.filter(function(l){ return !onlyToday || todayKey(l.ts)===today; })
                           .slice().sort(function(a,b){ return b.ts-a.ts; });
-    if(App.historyTab==='items'){ entries = entries.filter(function(l){ return l.items.length>0; }); }
     document.getElementById('htabKills').className = App.historyTab==='kills' ? 'active' : '';
     document.getElementById('htabItems').className = App.historyTab==='items' ? 'active' : '';
     document.getElementById('htabBoss').className = App.historyTab==='boss' ? 'active' : '';
+    if(App.historyTab==='items'){ renderLootView(list, entries.filter(function(l){ return l.items.length>0; })); return; }
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
     if(App.historyTab==='boss'){ list.innerHTML = historyByBossHtml(entries); return; }
     list.innerHTML = entries.map(function(l){
       return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+l.killedBy : '')+'</div>'+
         '<div class="boss">'+l.bossName+'</div>'+
-        '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+it+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div></div>';
+        '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+it.name+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div></div>';
     }).join('');
+  }
+
+  // ---------- รอบ 2: ของที่ได้ — หารกับปาร์ตี้ / บันทึกขาย / ส่วนแบ่ง ----------
+  var lootFilter = 'all';
+  var lootEditing = null;
+  function loadPartyRoster(){
+    var hostId = activeOwnerId();
+    return Promise.all([
+      supa.from('profiles').select('id, display_name').eq('id', hostId).maybeSingle(),
+      supa.from('party_members').select('member_id, profiles!member_id(display_name)').eq('host_id', hostId).is('removed_at', null)
+    ]).then(function(rs){
+      if(rs[0].error) console.error('loadPartyRoster host', rs[0].error);
+      if(rs[1].error) console.error('loadPartyRoster members', rs[1].error);
+      var host = rs[0].data;
+      App.partyRoster = [{ id:hostId, name:(host && host.display_name) || '-' }].concat((rs[1].data||[]).map(function(m){
+        return { id:m.member_id, name:(m.profiles && m.profiles.display_name) || 'ไม่ทราบชื่อ' };
+      }));
+    });
+  }
+  function lootRows(entries, applyFilter){
+    var rows = [];
+    entries.forEach(function(k){ k.items.forEach(function(it){ rows.push({ kill:k, item:it }); }); });
+    if(applyFilter && lootFilter==='unsold') rows = rows.filter(function(r){ return r.item.soldAmount==null; });
+    return rows;
+  }
+  function currencyLabel(c){ return c==='baht' ? 'บ' : 'z'; }
+  function lootSummaryHtml(rows){
+    var sold = { zeny:0, baht:0 }, mine = { zeny:0, baht:0 }, soldCount = 0;
+    rows.forEach(function(r){
+      var it = r.item;
+      if(it.soldAmount==null) return;
+      soldCount++;
+      sold[it.soldCurrency] += it.soldAmount;
+      if(it.sharedWith.indexOf(App.session.id)!==-1) mine[it.soldCurrency] += it.soldAmount / it.sharedWith.length;
+    });
+    var pair = function(o){ var p=[]; if(o.zeny) p.push(fmtNum(Math.round(o.zeny))+' z'); if(o.baht) p.push(fmtNum(Math.round(o.baht))+' บ'); return p.length ? p.join(' · ') : '0'; };
+    return '<div class="loot-summary">'+
+      '<div><span class="lbl">ได้ของทั้งหมด</span><b>'+rows.length+' ชิ้น</b></div>'+
+      '<div><span class="lbl">ขายแล้ว '+soldCount+' ชิ้น</span><b>'+pair(sold)+'</b></div>'+
+      '<div><span class="lbl">ส่วนแบ่งของฉัน</span><b>'+pair(mine)+'</b></div>'+
+    '</div>';
+  }
+  function lootRowHtml(r){
+    var k = r.kill, it = r.item, roster = App.partyRoster || [];
+    var unit = currencyLabel(it.soldCurrency);
+    var shareHtml = roster.length > 1 ? '<div class="loot-line"><span class="loot-lbl">หาร</span>'+roster.map(function(p){
+        var on = it.sharedWith.indexOf(p.id)!==-1;
+        return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'">'+(on?'✓ ':'')+p.name+'</button>';
+      }).join('')+'</div>' : '';
+    var soldHtml;
+    if(it.soldAmount!=null && lootEditing!==it.id){
+      var each = it.sharedWith.length ? it.soldAmount / it.sharedWith.length : null;
+      soldHtml = '<div class="loot-line"><span class="loot-lbl">ขายแล้ว</span><b>'+fmtNum(it.soldAmount)+' '+unit+'</b>'+
+        '<span class="loot-each">'+(each!=null ? 'คนละ '+fmtNum(Math.round(each))+' '+unit+' ('+it.sharedWith.length+' คน)' : 'ไม่หาร')+'</span>'+
+        '<button type="button" class="btn btn-ghost btn-sm" data-sold-edit="'+it.id+'">แก้ไข</button></div>';
+    } else {
+      soldHtml = '<div class="loot-line"><span class="loot-lbl">ขายได้</span>'+
+        '<input type="text" inputmode="numeric" class="sold-amount" placeholder="จำนวน" value="'+(it.soldAmount!=null ? fmtNum(it.soldAmount) : '')+'" data-sold-input="'+it.id+'">'+
+        '<select class="sold-currency" data-sold-currency="'+it.id+'"><option value="zeny"'+(it.soldCurrency!=='baht'?' selected':'')+'>zeny</option><option value="baht"'+(it.soldCurrency==='baht'?' selected':'')+'>บาท</option></select>'+
+        '<button type="button" class="btn btn-primary btn-sm" data-sold-save="'+it.id+'">บันทึก</button>'+
+        (it.soldAmount!=null ? '<button type="button" class="btn btn-ghost btn-sm" data-sold-clear="'+it.id+'">ยกเลิกขาย</button>' : '')+
+      '</div>';
+    }
+    var pill = it.soldAmount!=null ? '<span class="membership-pill ok">ขายแล้ว</span>'
+      : (it.sharedWith.length ? '<span class="membership-pill soon">หาร '+it.sharedWith.length+' คน</span>' : '<span class="membership-pill neutral">เก็บไว้</span>');
+    return '<div class="log-row loot-row">'+historyAvatarHtml(k.bossId, k.bossName)+'<div class="log-body">'+
+      '<div class="loot-head"><div class="boss">'+it.name+'</div>'+pill+'</div>'+
+      '<div class="when">'+k.bossName+' · '+fmtDateTime(k.ts)+(k.killedBy ? ' · '+k.killedBy : '')+'</div>'+
+      shareHtml+soldHtml+
+    '</div></div>';
+  }
+  function renderLootView(list, entries){
+    var allRows = lootRows(entries, false);
+    var rows = lootRows(entries, true);
+    var filterHtml = '<div class="loot-filter">'+
+      '<button type="button" class="'+(lootFilter==='all'?'active':'')+'" data-loot-filter="all">ทั้งหมด</button>'+
+      '<button type="button" class="'+(lootFilter==='unsold'?'active':'')+'" data-loot-filter="unsold">ยังไม่ขาย</button></div>';
+    list.innerHTML = lootSummaryHtml(allRows) + filterHtml +
+      (rows.length ? rows.map(lootRowHtml).join('') : '<p class="empty-note">ไม่มีไอเทมในช่วงนี้</p>');
+  }
+  function findKillItem(itemId){
+    for(var i=0;i<App.kills.length;i++){
+      var its = App.kills[i].items;
+      for(var j=0;j<its.length;j++){ if(its[j].id===itemId) return its[j]; }
+    }
+    return null;
+  }
+  function updateKillItem(itemId, patch){
+    return supa.from('kill_items').update(patch).eq('id', itemId).then(function(res){
+      if(res.error){ console.error('updateKillItem', res.error); toast('บันทึกไม่สำเร็จ: '+res.error.message); }
+      return loadKills();
+    }).then(function(){ renderHistory(); renderStats(); });
   }
   // มุมมอง "ตามบอส": รวมยอดต่อตัว (ฆ่ากี่ครั้ง/วันนี้/ไอเทมที่เคยได้) เรียงตัวที่ฆ่าล่าสุดขึ้นก่อน
   function historyByBossHtml(entries){
@@ -2158,7 +2269,7 @@ svg.icon{width:18px;height:18px;display:block}
     entries.forEach(function(l){
       if(!groups[l.bossId]){ groups[l.bossId] = { name:l.bossName, kills:[], items:{} }; order.push(l.bossId); }
       groups[l.bossId].kills.push(l);
-      l.items.forEach(function(it){ groups[l.bossId].items[it] = (groups[l.bossId].items[it]||0)+1; });
+      l.items.forEach(function(it){ groups[l.bossId].items[it.name] = (groups[l.bossId].items[it.name]||0)+1; });
     });
     var today = todayKey(Date.now());
     return order.map(function(id){
@@ -5870,6 +5981,7 @@ svg.icon{width:18px;height:18px;display:block}
     document.getElementById('todayOnly').checked = mode.indexOf('today') !== -1;
     document.getElementById('historyOverlay').hidden = false;
     renderHistory();
+    loadPartyRoster().then(renderHistory);
   }
   document.querySelectorAll('[data-open-history]').forEach(function(btn){
     btn.addEventListener('click', function(){ openHistory(btn.dataset.openHistory); });
@@ -5880,6 +5992,35 @@ svg.icon{width:18px;height:18px;display:block}
   document.getElementById('htabKills').addEventListener('click', function(){ App.historyTab='kills'; renderHistory(); });
   document.getElementById('htabItems').addEventListener('click', function(){ App.historyTab='items'; renderHistory(); });
   document.getElementById('htabBoss').addEventListener('click', function(){ App.historyTab='boss'; renderHistory(); });
+
+  document.getElementById('historyList').addEventListener('click', function(e){
+    var f = e.target.closest('[data-loot-filter]');
+    if(f){ lootFilter = f.dataset.lootFilter; renderHistory(); return; }
+    var sh = e.target.closest('[data-share-toggle]');
+    if(sh){
+      var it = findKillItem(sh.dataset.shareToggle);
+      if(!it) return;
+      var arr = it.sharedWith.slice();
+      var pos = arr.indexOf(sh.dataset.member);
+      if(pos===-1) arr.push(sh.dataset.member); else arr.splice(pos,1);
+      updateKillItem(it.id, { shared: arr.length>0, shared_with: arr });
+      return;
+    }
+    var ed = e.target.closest('[data-sold-edit]');
+    if(ed){ lootEditing = ed.dataset.soldEdit; renderHistory(); return; }
+    var cl = e.target.closest('[data-sold-clear]');
+    if(cl){ lootEditing = null; updateKillItem(cl.dataset.soldClear, { sold_amount:null, sold_at:null }); return; }
+    var sv = e.target.closest('[data-sold-save]');
+    if(sv){
+      var id = sv.dataset.soldSave;
+      var inp = document.querySelector('[data-sold-input="'+id+'"]');
+      var cur = document.querySelector('[data-sold-currency="'+id+'"]');
+      var amt = parseFloat((inp.value||'').replace(/,/g,''));
+      if(!(amt>0)){ showFieldTip(inp, 'กรอกจำนวนที่ขายได้'); return; }
+      lootEditing = null;
+      updateKillItem(id, { sold_amount:amt, sold_currency:cur.value, sold_at:new Date().toISOString() });
+    }
+  });
   document.getElementById('todayOnly').addEventListener('change', renderHistory);
 
   // ---------- merchant รับ/ขาย chart controls ----------

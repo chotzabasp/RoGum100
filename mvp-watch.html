@@ -5299,6 +5299,15 @@ svg.icon{width:18px;height:18px;display:block}
       listEl.innerHTML = hostRow + memberRows;
     });
   }
+  // รูปไอเทมโหลดไม่ได้ (ลิงก์ผิด/ไฟล์ถูกลบ) → กลับไปใช้ช่องติ๊ก ✓ แบบเดิม ไม่ให้เหลือช่องว่างเปล่า
+  document.getElementById('roster').addEventListener('error', function(e){
+    var img = e.target;
+    if(!(img && img.tagName==='IMG' && img.parentNode && img.parentNode.classList && img.parentNode.classList.contains('has-img'))) return;
+    var dot = img.parentNode;
+    dot.classList.remove('has-img');
+    dot.textContent = dot.closest('.item-chip').classList.contains('selected') ? '✓' : '';
+  }, true);
+
   document.getElementById('partyPanelToggle').addEventListener('click', function(){
     var body = document.getElementById('partyPanelBody');
     body.hidden = !body.hidden;

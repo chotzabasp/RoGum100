@@ -731,6 +731,9 @@ svg.icon{width:18px;height:18px;display:block}
 .item-chip .dot{width:16px;height:16px;border-radius:5px;background:color-mix(in srgb, var(--accent) 25%, transparent);display:flex;align-items:center;justify-content:center;font-size:.6rem}
 .item-chip.selected{background:color-mix(in srgb, var(--accent) 18%, transparent);border-color:var(--accent);color:var(--text)}
 .item-chip.selected .dot{background:var(--accent);color:#fff}
+.item-chip .dot.has-img{background:var(--surface);overflow:hidden}
+.item-chip .dot.has-img img{width:100%;height:100%;object-fit:contain;display:block}
+.item-chip.selected .dot.has-img{background:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 
 .empty-note{color:var(--text-dim);font-size:.85rem;text-align:center;padding:2.5rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m)}
 
@@ -1645,6 +1648,17 @@ svg.icon{width:18px;height:18px;display:block}
       });
     });
   }
+  // รูปไอเทมจากตาราง items (ชื่อ → ลิงก์รูป) แอดมินใส่ผ่าน Table Editor เหมือนรูปบอส/แมพ
+  var ITEM_IMAGES = {};
+  function itemImageUrl(name){ return ITEM_IMAGES[(name||'').trim().toLowerCase()] || null; }
+  function loadItemImages(){
+    return supa.from('items').select('name, image_url').then(function(res){
+      if(res.error){ console.error('loadItemImages', res.error); return; }
+      ITEM_IMAGES = {};
+      (res.data||[]).forEach(function(r){ if(r.image_url) ITEM_IMAGES[(r.name||'').trim().toLowerCase()] = r.image_url; });
+      if(App.session) renderRoster();
+    });
+  }
   function bossAvatarHtml(boss){
     return boss.imageUrl ? '<img src="'+boss.imageUrl+'" alt="">' : (boss.glyph||'');
   }
@@ -1884,7 +1898,7 @@ svg.icon{width:18px;height:18px;display:block}
   // แต่ละคนเป็นสมาชิก active ได้แค่ 1 ปาร์ตี้ในเวลาเดียวกัน (บังคับด้วย unique index ฝั่ง DB)
   // ฟังก์ชันนี้เช็คจากฐานข้อมูลจริงว่าตอนนี้ฉันอยู่ปาร์ตี้ใคร แล้วอัปเดต App.viewingHostId ให้ตรงเสมอ
   function resolvePartyContext(){
-    return supa.from('party_members').select('host_id, profiles!host_id(display_name)').eq('member_id', App.session.id).is('removed_at', null).maybeSingle().then(function(res){
+    return withSkewRetry(function(){ return supa.from('party_members').select('host_id, profiles!host_id(display_name)').eq('member_id', App.session.id).is('removed_at', null).maybeSingle(); }).then(function(res){
       if(res.error){ console.error('resolvePartyContext', res.error); App.viewingHostId = null; App.viewingHostName = null; return; }
       if(res.data){
         App.viewingHostId = res.data.host_id;
@@ -1896,7 +1910,7 @@ svg.icon{width:18px;height:18px;display:block}
     });
   }
   function loadUserBosses(){
-    return supa.from('user_bosses').select('boss_id, target_time, started_by, marker_x, marker_y, bosses(*)').eq('user_id', activeOwnerId()).then(function(res){
+    return withSkewRetry(function(){ return supa.from('user_bosses').select('boss_id, target_time, started_by, marker_x, marker_y, bosses(*)').eq('user_id', activeOwnerId()); }).then(function(res){
       if(res.error){ console.error('loadUserBosses', res.error); return; }
       App.db = (res.data||[]).map(function(r){
         var b = r.bosses || {};
@@ -1936,8 +1950,8 @@ svg.icon{width:18px;height:18px;display:block}
   }
   // ประวัติการฆ่า+ไอเทมของปาร์ตี้ที่กำลังดูอยู่ — ผูกกับหัวปาร์ตี้เหมือน user_bosses
   function loadKills(){
-    return supa.from('kills').select('id, boss_id, boss_name, killed_at, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at)')
-      .eq('host_id', activeOwnerId()).order('killed_at', { ascending:false }).order('created_at', { ascending:false }).then(function(res){
+    return withSkewRetry(function(){ return supa.from('kills').select('id, boss_id, boss_name, killed_at, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at)')
+      .eq('host_id', activeOwnerId()).order('killed_at', { ascending:false }).order('created_at', { ascending:false }); }).then(function(res){
       if(res.error){ console.error('loadKills', res.error); App.kills = []; return; }
       App.kills = (res.data||[]).map(function(k){
         return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(),
@@ -2014,8 +2028,12 @@ svg.icon{width:18px;height:18px;display:block}
 
   function itemChip(boss, it){
     var selected = (App.pendingItems[boss.id]||[]).indexOf(it) !== -1;
+    var url = itemImageUrl(it);
+    var box = url
+      ? '<span class="dot has-img"><img src="'+url.replace(/"/g,'&quot;')+'" alt=""></span>'
+      : '<span class="dot">'+(selected?'✓':'')+'</span>';
     return '<button type="button" class="item-chip'+(selected?' selected':'')+'" data-boss="'+boss.id+'" data-item="'+it.replace(/"/g,'&quot;')+'">'+
-      '<span class="dot">'+(selected?'✓':'')+'</span>'+it+'</button>';
+      box+it+'</button>';
   }
 
   // ---------- rendering ----------
@@ -2145,8 +2163,18 @@ svg.icon{width:18px;height:18px;display:block}
     else { pill.textContent = 'ใช้งานได้ถึง '+fmtDate(expiresAt); pill.className='membership-pill ok'; }
   }
 
+  // โทเค็นที่เพิ่งต่ออายุอาจถูกเซิร์ฟเวอร์ปฏิเสธชั่วคราว (นาฬิกาเหลื่อมกันไม่กี่วินาที → PGRST303)
+  // ลองใหม่อีก 1 ครั้งหลังรอสั้นๆ กันข้อมูลหลักโหลดไม่ขึ้นตอนเปิดแอป
+  function withSkewRetry(run){
+    return run().then(function(res){
+      if(res && res.error && res.error.code==='PGRST303'){
+        return new Promise(function(r){ setTimeout(r, 1500); }).then(run);
+      }
+      return res;
+    });
+  }
   function refreshProfile(){
-    return supa.from('profiles').select('display_name, points, role, expires_at').eq('id', App.session.id).single().then(function(res){
+    return withSkewRetry(function(){ return supa.from('profiles').select('display_name, points, role, expires_at').eq('id', App.session.id).single(); }).then(function(res){
       if(res.error){ console.error('refreshProfile', res.error); return; }
       App.profile = res.data;
       document.getElementById('railAdminBtn').hidden = App.profile.role !== 'admin';
@@ -5895,7 +5923,8 @@ svg.icon{width:18px;height:18px;display:block}
       if(pos===-1) arr.push(item); else arr.splice(pos,1);
       App.pendingItems[bossId] = arr;
       chip.classList.toggle('selected');
-      chip.querySelector('.dot').textContent = chip.classList.contains('selected') ? '✓' : '';
+      var dot = chip.querySelector('.dot');
+      if(!dot.classList.contains('has-img')) dot.textContent = chip.classList.contains('selected') ? '✓' : '';
       return;
     }
 
@@ -6080,6 +6109,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   // ---------- boot ----------
   loadCatalog();
+  loadItemImages();
   var serversReady = loadServers();
   supa.auth.getSession().then(function(res){
     var session = res.data && res.data.session;

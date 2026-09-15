@@ -753,6 +753,24 @@ svg.icon{width:18px;height:18px;display:block}
    (e.g. delete inside "ประกาศของฉัน") — it must always render above them */
 #confirmOverlay .confirm-backdrop{z-index:90}
 #confirmOverlay .confirm-box{z-index:91}
+/* บัญชีหมดอายุ / ใกล้หมดอายุ */
+#expiryOverlay .confirm-backdrop{z-index:85}
+#expiryOverlay .confirm-box{z-index:86}
+.expiry-msg{margin:0 0 1.1rem;font-size:.88rem;line-height:1.55;color:var(--text)}
+.expiry-banner{display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;padding:.7rem 1rem;border-radius:var(--radius-m);margin-bottom:1rem;border:1px solid;font-size:.84rem;line-height:1.45}
+.expiry-banner.expired{background:color-mix(in srgb, var(--danger) 14%, transparent);border-color:color-mix(in srgb, var(--danger) 55%, transparent);color:var(--text)}
+.expiry-banner.soon{background:color-mix(in srgb, var(--warn) 14%, transparent);border-color:color-mix(in srgb, var(--warn) 55%, transparent);color:var(--text)}
+.expiry-banner-text{flex:1;min-width:200px}
+.expiry-banner .btn{flex:none}
+/* โหมดดูอย่างเดียว: ปุ่ม/ช่องที่ "ทำรายการ" จางลงให้รู้ว่าใช้ไม่ได้ (ตัวกันจริงอยู่ที่ JS) */
+body.ro-mode #postAnnouncementBtn, body.ro-mode .ticker-post-caret, body.ro-mode #mrServerChips, body.ro-mode #mrCategoryToggle, body.ro-mode #mrTypeToggle,
+body.ro-mode #mrExRateInput, body.ro-mode #mrItemRows, body.ro-mode #mrAddRowBtn, body.ro-mode #mrConfirm, body.ro-mode #mrImageInput, body.ro-mode #mrUploadClear,
+body.ro-mode #mrHistoryList [data-del], body.ro-mode #mrHistoryList [data-undo-ids],
+body.ro-mode #farmExRateInput, body.ro-mode #farmMapInput, body.ro-mode #farmCostItems, body.ro-mode #farmAddCostRowBtn, body.ro-mode #farmRareItems, body.ro-mode #farmAddRareItemBtn,
+body.ro-mode #farmCountInput, body.ro-mode #farmOcToggle, body.ro-mode #farmEarnedInput, body.ro-mode #farmLogConfirm, body.ro-mode #farmCancelEdit, body.ro-mode [data-farm-edit], body.ro-mode [data-farm-del],
+body.ro-mode #addPartyMemberBtn, body.ro-mode [data-remove-member], body.ro-mode [data-leave-party], body.ro-mode .bc-kill-btn, body.ro-mode .bc-input, body.ro-mode .bc-close, body.ro-mode .item-chip, body.ro-mode [data-minutes],
+body.ro-mode #historyDeleteAll, body.ro-mode .hist-del, body.ro-mode .share-chip, body.ro-mode .loot-act, body.ro-mode .sold-amount, body.ro-mode .sold-currency, body.ro-mode [data-sold-save], body.ro-mode [data-sold-edit], body.ro-mode [data-sold-clear],
+body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #itemsDetailList [data-action]{opacity:.45;cursor:not-allowed}
 .confirm-message{margin:0 0 1.1rem;font-size:.88rem;color:var(--text);text-align:center;line-height:1.5}
 .confirm-detail{display:block;margin-top:.4rem;font-size:.74rem;color:var(--text-dim)}
 .confirm-warehouse-note{margin-top:.5rem;font-size:.74rem;color:var(--warning, #f2c94c)}
@@ -992,6 +1010,10 @@ svg.icon{width:18px;height:18px;display:block}
   </nav>
 
   <main class="content">
+    <div class="expiry-banner" id="expiryBanner" hidden>
+      <div class="expiry-banner-text" id="expiryBannerText"></div>
+      <button type="button" class="btn btn-primary btn-sm" data-go-pricing>สมัครแพ็กเกจ</button>
+    </div>
     <div class="util-bar">
       <div class="clock">
         <div class="time mono" id="clockTime">--:--:--</div>
@@ -1525,6 +1547,18 @@ svg.icon{width:18px;height:18px;display:block}
   </div>
 </div>
 
+<div id="expiryOverlay" hidden>
+  <div class="confirm-backdrop" data-expiry-close></div>
+  <div class="confirm-box topup-box expiry-box">
+    <h3 class="post-announce-title" id="expiryTitle">บัญชีใกล้หมดอายุ</h3>
+    <p class="expiry-msg" id="expiryMsg"></p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-ghost" data-expiry-close>ไว้ก่อน</button>
+      <button type="button" class="btn btn-gradient" data-go-pricing data-expiry-close>ไปเติมแพ็กเกจ</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div class="mr-field-tip" id="mrFieldTip" hidden></div>
 <div class="chart-tooltip farm-cost-tooltip" id="farmCostTooltip" hidden></div>
@@ -1792,6 +1826,7 @@ svg.icon{width:18px;height:18px;display:block}
     return {
       db:'mvpwatch_db_'+email, active:'mvpwatch_active_'+email,
       lastPage:'mvpwatch_lastpage_'+email,
+      expiryWarn:'mvpwatch_expirywarn_'+email,
       rateSlots:'mvpwatch_rateslots_'+email, rateSlotsVer:'mvpwatch_rateslotsver_'+email, merchantLog:'mvpwatch_merchantlog_'+email,
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
@@ -2283,6 +2318,7 @@ svg.icon{width:18px;height:18px;display:block}
     if(daysLeft <= 0){ pill.textContent = 'หมดอายุแล้ว'; pill.className='membership-pill expired'; }
     else if(daysLeft <= 7){ pill.textContent = 'เหลือ '+daysLeft+' วัน'; pill.className='membership-pill soon'; }
     else { pill.textContent = 'ใช้งานได้ถึง '+fmtDate(expiresAt); pill.className='membership-pill ok'; }
+    renderExpiryState();
   }
 
   // โทเค็นที่เพิ่งต่ออายุอาจถูกเซิร์ฟเวอร์ปฏิเสธชั่วคราว (นาฬิกาเหลื่อมกันไม่กี่วินาที → PGRST303)
@@ -4508,6 +4544,8 @@ svg.icon{width:18px;height:18px;display:block}
       if(validPages.indexOf(lastPage)===-1 || (lastPage==='admin' && !isAdmin)) lastPage = 'home';
       switchPage(lastPage);
       updateClock();
+      renderExpiryState();
+      checkExpiryReminder();
     });
   }
 
@@ -5491,6 +5529,115 @@ svg.icon{width:18px;height:18px;display:block}
       toast(err.message || String(err));
     });
   });
+
+  // ---------- บัญชีหมดอายุ = โหมดดูอย่างเดียว + แจ้งเตือนก่อนหมดอายุ 3/2/1 วัน ----------
+  // แอดมินไม่ติดกติกา · ยังทำได้: เติมแต้ม ซื้อแพ็กเกจ ตั้งค่า ออกจากระบบ และการเปลี่ยนมุมมอง/ตัวกรองทุกอย่าง
+  // การเขียนข้อมูลบอส/ประวัติ/ปาร์ตี้ถูกกันซ้ำที่ฐานข้อมูล (is_active()) ส่วนข้อมูลในเครื่อง (นักลงทุน/ฟาม/คลัง) กันที่นี่
+  function accountDaysLeft(){
+    if(!App.profile || !App.profile.expires_at) return null;
+    return Math.ceil((new Date(App.profile.expires_at).getTime() - Date.now())/86400000);
+  }
+  function isExpiredAccount(){
+    if(!App.profile || App.profile.role === 'admin' || !App.profile.expires_at) return false;
+    return new Date(App.profile.expires_at).getTime() <= Date.now();
+  }
+  // สิ่งที่ยังกดได้ตอนหมดอายุ (นอกจากนี้ = ทำรายการ → กัน)
+  var RO_ALLOW = [
+    '#authScreen', '#expiryOverlay', '#expiryBanner', '#topupOverlay', '#confirmOverlay', '#farmOcHintOverlay', '#farmRateRequiredOverlay', '#mrRateRequiredOverlay',
+    '.rail', '.util-bar', '#view-pricing', '#view-settings', '#view-admin',
+    // ประวัติการล่า: เปลี่ยนแท็บ/ตัวกรอง/ปิดได้ แต่ลบ/หาร/ขาย/เก็บไว้ไม่ได้
+    '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]',
+    // บัญชีนักลงทุน: กราฟ/ตัวกรอง/ค้นหา/กางการ์ดประวัติ (ไม่รวมฟอร์มรับ-ขาย, ลงประกาศ, แก้/ลบรายการ)
+    '#mrChartCategoryToggle', '#mrChartServerSelect', '#mrChartTimeframeSelect', '#mrSeriesDropdownBtn', '#mrSeriesDropdown', '#mrSeriesChips', '#mrChartLegend',
+    '#historyViewToggle', '#historyServerFilter', '#mrHistorySearch', '#mrHistoryRange', '#mrHistMore', '#mrItSoldToggle', '.mr-ic-head', '.mr-ic-day-head', '.mr-rate-hover', '.mr-edited-hover',
+    '#tickerServerChips', '#rateChips',
+    // ยอดนักฟาม: เปลี่ยนเซิร์ฟเวอร์/หน่วย/ช่วงเวลา/กราฟ/หน้าประวัติ (ไม่รวมฟอร์มบันทึก, ต้นทุน, เรท, แก้/ลบ)
+    '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
+    '#farmHistoryFromDate', '#farmHistoryToDate', '#farmHistoryPagination', '.farm-cost-hover', '.farm-profit-hover',
+    // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหาได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
+    '#partyPanelToggle', '[data-open-history]', '#searchInput',
+    // คลังไอเทม: ดูตามระดับ/เปลี่ยนเซิร์ฟเวอร์
+    '[data-view-tier]', '#itemsServerSelect'
+  ].join(',');
+  function roAllowed(target){
+    if(!target || !target.closest) return true;
+    if(document.getElementById('appScreen').hidden) return true;
+    return !!target.closest(RO_ALLOW);
+  }
+  var roNoticeAt = 0;
+  function roNotice(){
+    var now = Date.now();
+    if(now - roNoticeAt < 2500) return;
+    roNoticeAt = now;
+    toast('บัญชีหมดอายุแล้ว ดูข้อมูลได้อย่างเดียว — สมัครแพ็กเกจเพื่อใช้งานต่อ');
+  }
+  function roBlock(e){
+    if(!isExpiredAccount() || roAllowed(e.target)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    roNotice();
+  }
+  // ดักตั้งแต่ชั้น document (capture) ก่อนถึง handler ของแต่ละปุ่ม: คลิก/ลาก/เปลี่ยนค่า/พิมพ์
+  ['click','dragstart','drop','change','input','submit'].forEach(function(ev){ document.addEventListener(ev, roBlock, true); });
+  document.addEventListener('mousedown', function(e){ // กันเปิด dropdown ของ select ที่ใช้ไม่ได้
+    if(isExpiredAccount() && e.target && e.target.tagName === 'SELECT' && !roAllowed(e.target)){ e.preventDefault(); roNotice(); }
+  }, true);
+  document.addEventListener('focus', function(e){ // ช่องกรอกที่ใช้ไม่ได้: โฟกัสไม่ได้ พิมพ์ไม่ได้ (capture ดักก่อน handler ของช่องนั้นเอง)
+    var t = e.target;
+    if(!isExpiredAccount() || !t || !/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) || roAllowed(t)) return;
+    e.stopImmediatePropagation();
+    setTimeout(function(){ t.blur(); }, 0); // blur ทันทีในจังหวะ focus ไม่มีผล ต้องรอให้ focus จบก่อน
+    roNotice();
+  }, true);
+  document.addEventListener('keydown', function(e){
+    if(isExpiredAccount() && e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) && !roAllowed(e.target) && e.key !== 'Tab' && e.key !== 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
+
+  function renderExpiryState(){
+    var banner = document.getElementById('expiryBanner');
+    var expired = isExpiredAccount();
+    document.body.classList.toggle('ro-mode', expired);
+    var days = accountDaysLeft();
+    if(!App.profile || App.profile.role === 'admin' || days === null){ banner.hidden = true; return; }
+    var expText = fmtDate(new Date(App.profile.expires_at).getTime());
+    if(expired){
+      banner.hidden = false; banner.className = 'expiry-banner expired';
+      document.getElementById('expiryBannerText').textContent = 'บัญชีหมดอายุเมื่อ '+expText+' — ตอนนี้ดูข้อมูลได้อย่างเดียว ทำรายการไม่ได้ สมัครแพ็กเกจเพื่อกลับมาใช้งานได้เต็มรูปแบบ';
+    } else if(days <= 3){
+      banner.hidden = false; banner.className = 'expiry-banner soon';
+      document.getElementById('expiryBannerText').textContent = 'เหลืออีก '+days+' วัน บัญชีจะหมดอายุ ('+expText+') — ต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า';
+    } else banner.hidden = true;
+  }
+  function showExpiryPopup(title, msg){
+    document.getElementById('expiryTitle').textContent = title;
+    document.getElementById('expiryMsg').textContent = msg;
+    document.getElementById('expiryOverlay').hidden = false;
+  }
+  var expiryPopupShownForSession = false;
+  // หมดอายุ: popup ทุกครั้งที่เข้าแอป · ใกล้หมด 3/2/1 วัน: popup วันละครั้งต่อบัญชี (จำในเครื่อง)
+  function checkExpiryReminder(){
+    if(!App.profile || App.profile.role === 'admin') return;
+    var days = accountDaysLeft();
+    if(days === null) return;
+    var expText = fmtDate(new Date(App.profile.expires_at).getTime());
+    if(isExpiredAccount()){
+      if(expiryPopupShownForSession) return;
+      expiryPopupShownForSession = true;
+      showExpiryPopup('บัญชีหมดอายุแล้ว', 'บัญชีของคุณหมดอายุเมื่อ '+expText+' ตอนนี้เข้าดูข้อมูลเดิมได้อย่างเดียว ทำรายการใด ๆ ไม่ได้ สมัครแพ็กเกจเพื่อกลับมาใช้งานได้เต็มรูปแบบ');
+      return;
+    }
+    if(days > 3) return;
+    var stamp = todayKey(Date.now())+':'+days;
+    if(store(App.keys.expiryWarn, '') === stamp) return;
+    persist(App.keys.expiryWarn, stamp);
+    showExpiryPopup('บัญชีใกล้หมดอายุ', 'เหลืออีก '+days+' วัน บัญชีจะหมดอายุ ('+expText+') ต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า ถ้าปล่อยให้หมดอายุจะเข้าดูข้อมูลได้อย่างเดียว');
+  }
+  document.addEventListener('click', function(e){
+    if(e.target.closest('[data-go-pricing]')){ document.getElementById('expiryOverlay').hidden = true; switchPage('pricing'); return; }
+    if(e.target.closest('[data-expiry-close]')) document.getElementById('expiryOverlay').hidden = true;
+  });
+  // เปิดแอปค้างไว้ข้ามวัน: เช็คทุกนาที แถบ/โหมดดูอย่างเดียวจะอัปเดตเอง
+  setInterval(function(){ if(App.session && App.profile){ renderExpiryState(); checkExpiryReminder(); } }, 60000);
 
   // ---------- เติมแต้ม: ส่งคำขอ + แนบสลิป รอแอดมินตรวจสอบก่อนได้แต้มจริง ----------
   var topupAmount = 500;

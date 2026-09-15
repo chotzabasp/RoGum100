@@ -45,20 +45,7 @@ a{color:var(--accent)}
 svg.icon{width:18px;height:18px;display:block}
 
 /* ---------- auth screen ---------- */
-#authScreen{
-  min-height:100vh;
-  position:relative;
-  padding:2rem 1.25rem;
-  background:
-    radial-gradient(60% 50% at 50% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
-    url('login-bg.jpg') center/100% auto no-repeat,
-    var(--bg);
-}
-.landing-actions{position:absolute;top:1.5rem;right:1.5rem;display:flex;gap:.6rem;z-index:2}
-.landing-hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;text-align:center}
-.landing-hero .glyph{width:52px;height:52px;border-radius:14px;background:color-mix(in srgb, var(--accent) 20%, transparent);color:var(--accent);display:flex;align-items:center;justify-content:center}
-.landing-hero .glyph .icon{width:28px;height:28px}
-.landing-hero h1{font-size:2.4rem;font-weight:800;color:var(--text)}
+.guest-auth-buttons{display:flex;gap:.6rem}
 .auth-modal{position:fixed;inset:0;z-index:80}
 .auth-modal[hidden]{display:none}
 .auth-modal .auth-card{
@@ -1001,18 +988,9 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 }
 </style>
 
-<!-- ===================== AUTH SCREEN ===================== -->
-<div id="authScreen">
-  <div class="landing-actions">
-    <button type="button" class="btn btn-ghost" id="landingLoginBtn">เข้าสู่ระบบ</button>
-    <button type="button" class="btn btn-gradient" id="landingRegisterBtn">สมัครสมาชิก</button>
-  </div>
-  <div class="landing-hero">
-    <span class="glyph"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></span>
-    <h1>Gum100</h1>
-  </div>
-
-  <div class="auth-modal" id="authModal" hidden>
+<!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
+<!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
+<div class="auth-modal" id="authModal" hidden>
   <div class="confirm-backdrop" id="authModalBackdrop"></div>
   <div class="auth-card">
     <button type="button" class="icon-btn auth-modal-close" id="authModalClose">✕</button>
@@ -1041,11 +1019,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     <p class="auth-switch" id="authSwitchText">ยังไม่มีบัญชี? <button id="authToggle">สมัครสมาชิก</button></p>
     <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่ เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ · ลืมรหัสผ่านกดลิงก์ด้านบน ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริงให้ติดต่อแอดมิน</p>
   </div>
-  </div>
 </div>
 
 <!-- ===================== APP SCREEN ===================== -->
-<div id="appScreen" hidden>
+<!-- โชว์เสมอตั้งแต่เปิดเว็บ ไม่รอล็อกอิน — ถ้ายังไม่ล็อกอินจะเป็นโหมด "ผู้เยี่ยมชม" (App.isGuest)
+     ดูได้ทุกหน้าแต่กดอะไรไม่ได้เลย กดแล้วเด้ง popup login แทน (ดู enterGuestPreview/guestBlock) -->
+<div id="appScreen">
   <nav class="rail">
     <div class="rail-brand">
       <div class="rail-logo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></div>
@@ -1075,13 +1054,17 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         <b id="pointsValue">0</b><small>แต้ม</small>
         <button type="button" class="points-topup-btn" id="pointsTopupBtn" title="เติมแต้ม">+</button>
       </div>
-      <div class="user-menu">
+      <div class="user-menu" id="userMenu">
         <div class="avatar" id="userAvatar">?</div>
         <div class="who">
           <span class="name" id="userName">-</span>
           <span class="membership-pill" id="userPill">-</span>
         </div>
         <button class="icon-btn" id="logoutBtn" title="ออกจากระบบ"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 01-2-2V5a2 2 0 012-2h3"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>
+      </div>
+      <div class="guest-auth-buttons" id="guestAuthButtons" hidden>
+        <button type="button" class="btn btn-ghost btn-sm" id="guestLoginBtn">เข้าสู่ระบบ</button>
+        <button type="button" class="btn btn-gradient btn-sm" id="guestRegisterBtn">สมัครสมาชิก</button>
       </div>
     </div>
 
@@ -1960,7 +1943,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
-  var App = { session:null, profile:null, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], partyRoster:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], partyRoster:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -2418,7 +2401,16 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     el.innerHTML = t ? '<img src="'+q(t.url)+'" alt="'+q(t.title)+'" title="ล่าสุด: '+q(t.title)+'">' : '';
   }
 
+  function renderGuestChip(){
+    document.getElementById('userMenu').hidden = true;
+    document.getElementById('guestAuthButtons').hidden = false;
+    document.getElementById('homeGreetName').textContent = 'นักล่า';
+    document.getElementById('pointsValue').textContent = '0';
+  }
   function renderUser(){
+    if(App.isGuest){ renderGuestChip(); return; }
+    document.getElementById('userMenu').hidden = false;
+    document.getElementById('guestAuthButtons').hidden = true;
     var acc = App.profile;
     if(!acc) return;
     var name = acc.display_name || '';
@@ -4497,7 +4489,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     document.getElementById('clockDate').textContent = now.toLocaleDateString('th-TH', {weekday:'short', day:'numeric', month:'short'})+' '+farmBeShort(now);
   }
 
-  // ---------- auth screen wiring: หน้าแรกโชว์แค่ปุ่ม "เข้าสู่ระบบ/สมัครสมาชิก" มุมขวาบน กดแล้วค่อยเด้งฟอร์มเป็น modal ----------
+  // ---------- auth modal wiring: เปิดจากปุ่ม "เข้าสู่ระบบ/สมัครสมาชิก" ในมุม util-bar ตอนเป็นผู้เยี่ยมชม (guestBlock ด้านล่าง) ----------
   var isRegister = false;
   function setAuthMode(register){
     isRegister = register;
@@ -4513,8 +4505,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     setAuthMode(register);
     document.getElementById('authModal').hidden = false;
   }
-  document.getElementById('landingLoginBtn').addEventListener('click', function(){ openAuthModal(false); });
-  document.getElementById('landingRegisterBtn').addEventListener('click', function(){ openAuthModal(true); });
   document.getElementById('authModalClose').addEventListener('click', function(){ document.getElementById('authModal').hidden = true; });
   document.getElementById('authModalBackdrop').addEventListener('click', function(){ document.getElementById('authModal').hidden = true; });
 
@@ -4710,13 +4700,35 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(!App.session) return;
     App.session = null;
     App.profile = null;
-    document.getElementById('appScreen').hidden = true;
-    document.getElementById('authScreen').hidden = false;
     document.getElementById('authModal').hidden = true;
+    enterGuestPreview();
     if(!wasManual) toast('บัญชีนี้เพิ่งถูกใช้ล็อกอินจากที่อื่น กรุณาล็อกอินใหม่');
   });
 
+  // ---------- โหมดผู้เยี่ยมชม: ยังไม่ได้ล็อกอิน แต่เห็นหน้าตาแอพเหมือนจริงได้ (ข้อมูลว่างเปล่าตามจริง
+  // เพราะไม่มีสิทธิ์ดึงข้อมูลของใคร) กดอะไรก็ตามในหน้าโดนกันด้วย guestBlock แล้วเด้ง popup login แทน ----------
+  function enterGuestPreview(){
+    App.session = null;
+    App.profile = null;
+    App.isGuest = true;
+    // เคลียร์ข้อมูลที่โหลดมาจาก Supabase ตอนล็อกอินจริงรอบก่อน (ถ้ามี) กันไม่ให้เหลือค้างโชว์
+    // ผิดๆ ตอนกลับมาเป็นผู้เยี่ยมชม — ต้องว่างเปล่าจริงเหมือนบัญชีใหม่เอี่ยม
+    App.db = []; App.active = {}; App.markers = {}; App.kills = []; App.partyRoster = [];
+    App.viewingHostId = null; App.viewingHostName = null;
+    loadUserData('guest'); // โหลดจาก localStorage namespace 'guest' แยกต่างหาก (ว่างเปล่าเสมอ)
+    document.body.classList.add('ro-mode');
+    document.getElementById('appScreen').hidden = false;
+    renderAll();
+    var hashPage = pageFromHash();
+    var page = (NAV_PAGES.indexOf(hashPage) !== -1 && hashPage !== 'admin') ? hashPage : 'home';
+    switchPage(page);
+    updateClock();
+    updatePartyPanelSummary();
+  }
+
   function enterApp(user){
+    App.isGuest = false;
+    document.body.classList.remove('ro-mode');
     App.session = { id:user.id, email:user.email };
     App.keys = DataKeys(user.email);
     return Promise.all([ refreshProfile(), resolvePartyContext(), serversReady ]).then(function(){
@@ -4724,7 +4736,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     }).then(function(){
       loadUserData(user.email);
       recomputeServerRatesFromAnnouncements();
-      document.getElementById('authScreen').hidden = true;
+      document.getElementById('authModal').hidden = true;
       document.getElementById('appScreen').hidden = false;
       renderAll();
       updatePartyPanelSummary();
@@ -5837,7 +5849,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
   // สิ่งที่ยังกดได้ตอนหมดอายุ (นอกจากนี้ = ทำรายการ → กัน)
   var RO_ALLOW = [
-    '#authScreen', '#expiryOverlay', '#expiryBanner', '#serverPickOverlay', '#topupOverlay', '#confirmOverlay', '#farmOcHintOverlay', '#farmRateRequiredOverlay', '#mrRateRequiredOverlay', '#forgotPasswordOverlay', '#recoveryPasswordOverlay',
+    '#expiryOverlay', '#expiryBanner', '#serverPickOverlay', '#topupOverlay', '#confirmOverlay', '#farmOcHintOverlay', '#farmRateRequiredOverlay', '#mrRateRequiredOverlay', '#forgotPasswordOverlay', '#recoveryPasswordOverlay',
     '.rail', '.util-bar', '#view-pricing', '#view-settings', '#view-admin',
     // ประวัติการล่า: เปลี่ยนแท็บ/ตัวกรอง/ปิดได้ แต่ลบ/หาร/ขาย/เก็บไว้ไม่ได้
     '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]',
@@ -5886,6 +5898,29 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   document.addEventListener('keydown', function(e){
     if(isExpiredAccount() && e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) && !roAllowed(e.target) && e.key !== 'Tab' && e.key !== 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); }
   }, true);
+
+  // ---------- โหมดผู้เยี่ยมชม (ยังไม่ล็อกอิน): กันทุกการกระทำ ไม่มี allow-list เลย
+  // (ต่างจากบัญชีหมดอายุที่ยังดูตัวกรอง/สลับหน้าได้ — guest กดอะไรก็เด้ง popup login ทันที) ----------
+  var GUEST_ALLOW = '#authModal, #forgotPasswordOverlay, #recoveryPasswordOverlay, #guestLoginBtn, #guestRegisterBtn';
+  function guestBlock(e){
+    if(!App.isGuest || e.target.closest(GUEST_ALLOW)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    openAuthModal(false);
+  }
+  ['click','dragstart','drop','change','input','submit'].forEach(function(ev){ document.addEventListener(ev, guestBlock, true); });
+  document.addEventListener('mousedown', function(e){
+    if(App.isGuest && e.target && e.target.tagName === 'SELECT' && !e.target.closest(GUEST_ALLOW)){ e.preventDefault(); openAuthModal(false); }
+  }, true);
+  document.addEventListener('focus', function(e){
+    var t = e.target;
+    if(!App.isGuest || !t || !/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) || t.closest(GUEST_ALLOW)) return;
+    e.stopImmediatePropagation();
+    setTimeout(function(){ t.blur(); }, 0);
+    openAuthModal(false);
+  }, true);
+  document.getElementById('guestLoginBtn').addEventListener('click', function(){ openAuthModal(false); });
+  document.getElementById('guestRegisterBtn').addEventListener('click', function(){ openAuthModal(true); });
 
   function renderExpiryState(){
     var banner = document.getElementById('expiryBanner');
@@ -6995,7 +7030,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   });
   supa.auth.getSession().then(function(res){
     var session = res.data && res.data.session;
-    if(session) enterApp(session.user);
+    if(session) enterApp(session.user); else enterGuestPreview();
   });
   setInterval(function(){ tickTimers(); updateClock(); tickTickerCountdowns(); }, 1000);
 

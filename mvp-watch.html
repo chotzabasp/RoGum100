@@ -793,7 +793,10 @@ svg.icon{width:18px;height:18px;display:block}
 .h-tabs button{flex:1;padding:.45rem;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);font-size:.82rem;cursor:pointer;font-weight:600}
 .h-tabs button.active{background:color-mix(in srgb, var(--accent) 18%, transparent);color:var(--accent);border-color:var(--accent)}
 .h-filter{display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--text-dim);margin-bottom:.9rem}
-.log-row{padding:.7rem 0;border-bottom:1px solid var(--border)}
+.log-row{padding:.7rem 0;border-bottom:1px solid var(--border);display:flex;gap:.7rem;align-items:center}
+.log-avatar{width:44px;height:44px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex:none;overflow:hidden}
+.log-avatar img{width:100%;height:100%;object-fit:contain}
+.log-body{flex:1;min-width:0}
 .log-row:last-child{border-bottom:none}
 .log-row .when{font-size:.72rem;color:var(--text-dim)}
 .log-row .boss{font-weight:600;font-size:.9rem;margin:.15rem 0 .3rem}
@@ -1935,6 +1938,10 @@ svg.icon{width:18px;height:18px;display:block}
     });
     return { total:total, today:todayCount, items:items };
   }
+  function historyAvatarHtml(bossId, bossName){
+    var b = CATALOG.filter(function(c){ return String(c.id)===String(bossId); })[0];
+    return '<div class="log-avatar">'+(b ? bossAvatarHtml(b) : (bossName||'').charAt(0))+'</div>';
+  }
   function saveFarmCostItems(){ persist(App.keys.farmCostItems, App.farmCostItems); }
   function saveFarmLog(){ persist(App.keys.farmLog, App.farmLog); }
   function saveFarmServer(){ persist(App.keys.farmServer, App.farmServerId); }
@@ -2140,9 +2147,9 @@ svg.icon{width:18px;height:18px;display:block}
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
     if(App.historyTab==='boss'){ list.innerHTML = historyByBossHtml(entries); return; }
     list.innerHTML = entries.map(function(l){
-      return '<div class="log-row"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+l.killedBy : '')+'</div>'+
+      return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+l.killedBy : '')+'</div>'+
         '<div class="boss">'+l.bossName+'</div>'+
-        '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+it+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div>';
+        '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+it+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div></div>';
     }).join('');
   }
   // มุมมอง "ตามบอส": รวมยอดต่อตัว (ฆ่ากี่ครั้ง/วันนี้/ไอเทมที่เคยได้) เรียงตัวที่ฆ่าล่าสุดขึ้นก่อน
@@ -2158,9 +2165,9 @@ svg.icon{width:18px;height:18px;display:block}
       var g = groups[id];
       var todayCount = g.kills.filter(function(l){ return todayKey(l.ts)===today; }).length;
       var names = Object.keys(g.items);
-      return '<div class="log-row"><div class="when">ฆ่าแล้ว '+g.kills.length+' ครั้ง · วันนี้ '+todayCount+' · ล่าสุด '+fmtDateTime(g.kills[0].ts)+'</div>'+
+      return '<div class="log-row">'+historyAvatarHtml(id, g.name)+'<div class="log-body"><div class="when">ฆ่าแล้ว '+g.kills.length+' ครั้ง · วันนี้ '+todayCount+' · ล่าสุด '+fmtDateTime(g.kills[0].ts)+'</div>'+
         '<div class="boss">'+g.name+'</div>'+
-        '<div class="chip-row">'+(names.length ? names.map(function(it){ return '<span class="chip">'+it+(g.items[it]>1 ? ' ×'+g.items[it] : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div>';
+        '<div class="chip-row">'+(names.length ? names.map(function(it){ return '<span class="chip">'+it+(g.items[it]>1 ? ' ×'+g.items[it] : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div></div>';
     }).join('');
   }
 

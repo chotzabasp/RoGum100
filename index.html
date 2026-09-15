@@ -146,7 +146,13 @@ svg.icon{width:18px;height:18px;display:block}
 }
 
 .content{padding:1.4rem 1.75rem 3rem;max-width:1180px;width:100%}
-.util-bar{display:flex;align-items:center;justify-content:flex-end;gap:.9rem;margin-bottom:1.3rem;flex-wrap:wrap}
+.util-bar{
+  display:flex;align-items:center;justify-content:flex-end;gap:.9rem;margin-bottom:1.3rem;flex-wrap:wrap;
+  padding:1rem 1.5rem;border-radius:var(--radius-l);
+  background:
+    linear-gradient(90deg, rgba(8,10,16,.75) 0%, rgba(8,10,16,.4) 55%, rgba(8,10,16,.75) 100%),
+    url('login-bg.jpg') center/cover no-repeat;
+}
 .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.3rem}
 .topbar h1{font-size:1.4rem;margin:0 0 .2rem}
 .topbar .sub{color:var(--text-dim);font-size:.86rem;margin:0}
@@ -186,7 +192,7 @@ svg.icon{width:18px;height:18px;display:block}
     linear-gradient(90deg, rgba(8,10,16,.75) 0%, rgba(8,10,16,.4) 55%, rgba(8,10,16,.75) 100%),
     url('login-bg.jpg') center/cover no-repeat;
 }
-.home-banner-zone .util-bar{margin-bottom:0;padding:1rem 1.5rem 0}
+.home-banner-zone .util-bar{margin-bottom:0;padding:1rem 1.5rem 0;border-radius:var(--radius-l) var(--radius-l) 0 0;background:none}
 .hero-row{
   display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;
   padding:1.5rem 1.75rem 2.2rem;

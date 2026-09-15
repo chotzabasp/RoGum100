@@ -703,6 +703,7 @@ svg.icon{width:18px;height:18px;display:block}
 .bc-title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bc-sub{font-size:.74rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem}
 .bc-killedby{font-size:.72rem;color:var(--accent);margin-top:.25rem;display:flex;align-items:center;gap:.3rem}
+.bc-stats{font-size:.72rem;color:var(--text-dim);margin-top:.25rem}
 .bc-map{width:125px;height:125px;border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative;flex:none;cursor:crosshair}
 .bc-map svg{width:100%;height:100%;display:block}
 .bc-map img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1405,6 +1406,7 @@ svg.icon{width:18px;height:18px;display:block}
       <div class="h-tabs">
         <button class="active" data-htab="kills" id="htabKills">การฆ่า</button>
         <button data-htab="items" id="htabItems">ไอเทม</button>
+        <button data-htab="boss" id="htabBoss">ตามบอส</button>
       </div>
       <label class="h-filter"><input type="checkbox" id="todayOnly"> แสดงเฉพาะวันนี้</label>
       <div id="historyList"></div>
@@ -1662,7 +1664,7 @@ svg.icon{width:18px;height:18px;display:block}
 
   var DataKeys = function(email){
     return {
-      db:'mvpwatch_db_'+email, active:'mvpwatch_active_'+email, log:'mvpwatch_log_'+email,
+      db:'mvpwatch_db_'+email, active:'mvpwatch_active_'+email,
       lastPage:'mvpwatch_lastpage_'+email,
       rateSlots:'mvpwatch_rateslots_'+email, rateSlotsVer:'mvpwatch_rateslotsver_'+email, merchantLog:'mvpwatch_merchantlog_'+email,
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
@@ -1683,7 +1685,7 @@ svg.icon{width:18px;height:18px;display:block}
   // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
-  var App = { session:null, profile:null, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, log:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, profile:null, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -1691,8 +1693,6 @@ svg.icon{width:18px;height:18px;display:block}
     var keys = DataKeys(email);
     App.keys = keys;
     // App.db/App.active (รายการบอส+เวลาที่จับ) โหลดแยกจาก Supabase ใน loadUserBosses()
-    // ประวัติการฆ่าบอส (App.log) ยังเก็บใน localStorage ต่อไปตามเดิม
-    App.log = store(keys.log, []);
     App.pendingItems = {};
     var RATE_SLOTS_VERSION = 2; // bump to force a one-time reset to the new 1-card default
     if(store(keys.rateSlotsVer, 0) !== RATE_SLOTS_VERSION){
@@ -1914,7 +1914,27 @@ svg.icon{width:18px;height:18px;display:block}
   function supaSetBossMarker(bossId, x, y){
     return supa.from('user_bosses').update({ marker_x:x, marker_y:y }).eq('user_id', activeOwnerId()).eq('boss_id', bossId);
   }
-  function saveLog(){ persist(App.keys.log, App.log); }
+  // ประวัติการฆ่า+ไอเทมของปาร์ตี้ที่กำลังดูอยู่ — ผูกกับหัวปาร์ตี้เหมือน user_bosses
+  function loadKills(){
+    return supa.from('kills').select('id, boss_id, boss_name, killed_at, profiles!killed_by(display_name), kill_items(name)')
+      .eq('host_id', activeOwnerId()).order('killed_at', { ascending:false }).then(function(res){
+      if(res.error){ console.error('loadKills', res.error); App.kills = []; return; }
+      App.kills = (res.data||[]).map(function(k){
+        return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(),
+          killedBy:(k.profiles && k.profiles.display_name) || null,
+          items:(k.kill_items||[]).map(function(i){ return i.name; }) };
+      });
+    });
+  }
+  function bossKillStats(bossId){
+    var today = todayKey(Date.now()), total = 0, todayCount = 0, items = 0;
+    App.kills.forEach(function(k){
+      if(k.bossId !== String(bossId)) return;
+      total++; items += k.items.length;
+      if(todayKey(k.ts)===today) todayCount++;
+    });
+    return { total:total, today:todayCount, items:items };
+  }
   function saveFarmCostItems(){ persist(App.keys.farmCostItems, App.farmCostItems); }
   function saveFarmLog(){ persist(App.keys.farmLog, App.farmLog); }
   function saveFarmServer(){ persist(App.keys.farmServer, App.farmServerId); }
@@ -2004,13 +2024,15 @@ svg.icon{width:18px;height:18px;display:block}
         subHtml = '<div class="bc-time-sub">ยังไม่ได้ฆ่า</div>';
       }
       var killedByHtml = (act && act.startedBy) ? '<div class="bc-killedby">🏹 ฆ่าโดย '+act.startedBy+'</div>' : '';
+      var ks = bossKillStats(boss.id);
+      var statsHtml = '<div class="bc-stats">ฆ่าแล้ว '+ks.total+' ครั้ง · วันนี้ '+ks.today+' · ไอเทมที่ได้ '+ks.items+'</div>';
       var metaLine = 'เกิดใหม่ทุก '+boss.minutes+' นาที • '+boss.loc + (act ? ' • เกิดเวลา '+fmtClock(act.targetTime) : '');
 
       return '<div class="boss-card'+(st==='critical'?' state-critical':'')+'" data-boss="'+boss.id+'">'+
         '<div class="bc-row">'+
           rankHtml+
           '<div class="bc-avatar">'+bossAvatarHtml(boss)+'</div>'+
-          '<div class="bc-main"><div class="bc-title">'+boss.name+'</div><div class="bc-sub">'+metaLine+'</div>'+killedByHtml+'</div>'+
+          '<div class="bc-main"><div class="bc-title">'+boss.name+'</div><div class="bc-sub">'+metaLine+'</div>'+killedByHtml+statsHtml+'</div>'+
           '<div class="bc-map" data-map>'+bossMapHtml(boss)+(App.markers[boss.id] ? '<div class="bc-pin" style="left:'+App.markers[boss.id].x+'%;top:'+App.markers[boss.id].y+'%"></div>' : '')+'</div>'+
           '<div class="bc-time-block">'+timeHtml+subHtml+delayHtml+'</div>'+
           '<input class="bc-input" type="text" inputmode="decimal" placeholder="เวลาตาย" data-minutes title="ระบุเวลาที่บอสตายจริง เช่น 14.35 หรือ 1435 (ถ้าไม่ตรงกับตอนนี้)">'+
@@ -2053,12 +2075,12 @@ svg.icon{width:18px;height:18px;display:block}
     var now = Date.now();
     var today = todayKey(now);
     var yesterday = todayKey(dayShift(now, -1));
-    var totalKills = App.log.length;
-    var todayKills = App.log.filter(function(l){ return todayKey(l.ts)===today; }).length;
-    var yestKills = App.log.filter(function(l){ return todayKey(l.ts)===yesterday; }).length;
-    var totalItems = App.log.reduce(function(s,l){ return s + l.items.length; }, 0);
-    var todayItems = App.log.filter(function(l){ return todayKey(l.ts)===today; }).reduce(function(s,l){ return s + l.items.length; }, 0);
-    var yestItems = App.log.filter(function(l){ return todayKey(l.ts)===yesterday; }).reduce(function(s,l){ return s + l.items.length; }, 0);
+    var totalKills = App.kills.length;
+    var todayKills = App.kills.filter(function(l){ return todayKey(l.ts)===today; }).length;
+    var yestKills = App.kills.filter(function(l){ return todayKey(l.ts)===yesterday; }).length;
+    var totalItems = App.kills.reduce(function(s,l){ return s + l.items.length; }, 0);
+    var todayItems = App.kills.filter(function(l){ return todayKey(l.ts)===today; }).reduce(function(s,l){ return s + l.items.length; }, 0);
+    var yestItems = App.kills.filter(function(l){ return todayKey(l.ts)===yesterday; }).reduce(function(s,l){ return s + l.items.length; }, 0);
     return { totalKills:totalKills, todayKills:todayKills, yestKills:yestKills, totalItems:totalItems, todayItems:todayItems, yestItems:yestItems };
   }
 
@@ -2109,16 +2131,36 @@ svg.icon{width:18px;height:18px;display:block}
     var list = document.getElementById('historyList');
     var today = todayKey(Date.now());
     var onlyToday = document.getElementById('todayOnly').checked;
-    var entries = App.log.filter(function(l){ return !onlyToday || todayKey(l.ts)===today; })
+    var entries = App.kills.filter(function(l){ return !onlyToday || todayKey(l.ts)===today; })
                           .slice().sort(function(a,b){ return b.ts-a.ts; });
     if(App.historyTab==='items'){ entries = entries.filter(function(l){ return l.items.length>0; }); }
     document.getElementById('htabKills').className = App.historyTab==='kills' ? 'active' : '';
     document.getElementById('htabItems').className = App.historyTab==='items' ? 'active' : '';
+    document.getElementById('htabBoss').className = App.historyTab==='boss' ? 'active' : '';
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
+    if(App.historyTab==='boss'){ list.innerHTML = historyByBossHtml(entries); return; }
     list.innerHTML = entries.map(function(l){
-      return '<div class="log-row"><div class="when">'+fmtDateTime(l.ts)+'</div>'+
+      return '<div class="log-row"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+l.killedBy : '')+'</div>'+
         '<div class="boss">'+l.bossName+'</div>'+
         '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+it+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div>';
+    }).join('');
+  }
+  // มุมมอง "ตามบอส": รวมยอดต่อตัว (ฆ่ากี่ครั้ง/วันนี้/ไอเทมที่เคยได้) เรียงตัวที่ฆ่าล่าสุดขึ้นก่อน
+  function historyByBossHtml(entries){
+    var groups = {}, order = [];
+    entries.forEach(function(l){
+      if(!groups[l.bossId]){ groups[l.bossId] = { name:l.bossName, kills:[], items:{} }; order.push(l.bossId); }
+      groups[l.bossId].kills.push(l);
+      l.items.forEach(function(it){ groups[l.bossId].items[it] = (groups[l.bossId].items[it]||0)+1; });
+    });
+    var today = todayKey(Date.now());
+    return order.map(function(id){
+      var g = groups[id];
+      var todayCount = g.kills.filter(function(l){ return todayKey(l.ts)===today; }).length;
+      var names = Object.keys(g.items);
+      return '<div class="log-row"><div class="when">ฆ่าแล้ว '+g.kills.length+' ครั้ง · วันนี้ '+todayCount+' · ล่าสุด '+fmtDateTime(g.kills[0].ts)+'</div>'+
+        '<div class="boss">'+g.name+'</div>'+
+        '<div class="chip-row">'+(names.length ? names.map(function(it){ return '<span class="chip">'+it+(g.items[it]>1 ? ' ×'+g.items[it] : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div>';
     }).join('');
   }
 
@@ -4053,7 +4095,7 @@ svg.icon{width:18px;height:18px;display:block}
     App.session = { id:user.id, email:user.email };
     App.keys = DataKeys(user.email);
     return Promise.all([ refreshProfile(), resolvePartyContext(), serversReady ]).then(function(){
-      return loadUserBosses();
+      return Promise.all([ loadUserBosses(), loadKills() ]);
     }).then(function(){
       loadUserData(user.email);
       recomputeServerRatesFromAnnouncements();
@@ -5137,7 +5179,7 @@ svg.icon{width:18px;height:18px;display:block}
           if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
           toast('ออกจากปาร์ตี้แล้ว');
           resolvePartyContext().then(function(){
-            loadUserBosses().then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
+            Promise.all([ loadUserBosses(), loadKills() ]).then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
           });
         });
       });
@@ -5763,10 +5805,11 @@ svg.icon{width:18px;height:18px;display:block}
         showFieldTip(minutesInput, 'รูปแบบเวลาไม่ถูกต้อง เช่น 14.35 หรือ 1435');
         return;
       }
-      var items = App.pendingItems[bossId] || [];
-
-      App.log.push({ ts: deathTs, bossName: boss.name, items: items.slice() });
-      saveLog();
+      var items = (App.pendingItems[bossId] || []).slice();
+      supa.rpc('record_kill', { p_boss_id: String(boss.id), p_boss_name: boss.name, p_killed_at: new Date(deathTs).toISOString(), p_items: items }).then(function(res){
+        if(res.error){ console.error('record_kill', res.error); toast('บันทึกประวัติการฆ่าไม่สำเร็จ: '+res.error.message); return; }
+        loadKills().then(function(){ renderStats(); renderRoster(); });
+      });
 
       var startedByName = App.profile ? App.profile.display_name : null;
       var targetTime = deathTs + boss.minutes*60000;
@@ -5829,6 +5872,7 @@ svg.icon{width:18px;height:18px;display:block}
   });
   document.getElementById('htabKills').addEventListener('click', function(){ App.historyTab='kills'; renderHistory(); });
   document.getElementById('htabItems').addEventListener('click', function(){ App.historyTab='items'; renderHistory(); });
+  document.getElementById('htabBoss').addEventListener('click', function(){ App.historyTab='boss'; renderHistory(); });
   document.getElementById('todayOnly').addEventListener('change', renderHistory);
 
   // ---------- merchant รับ/ขาย chart controls ----------

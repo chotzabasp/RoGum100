@@ -489,6 +489,12 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-entry-actions button:hover{color:var(--accent)}
 .mr-entry-actions button.mr-del:hover{color:var(--danger)}
 .panel-farm-cost.mr-entry-editing{border-color:var(--danger);box-shadow:0 0 0 1px rgba(239,90,86,.35)}
+/* เซิร์ฟที่เลิกเล่นแล้ว: การ์ดต้นทุนกลายเป็นโหมดดูอย่างเดียว */
+.farm-retired-note{margin:.6rem 0 0;padding:.55rem .7rem;border-radius:var(--radius-s);font-size:.76rem;line-height:1.5;color:var(--warn);background:color-mix(in srgb, var(--warn) 12%, transparent);border:1px solid color-mix(in srgb, var(--warn) 30%, transparent)}
+.panel-farm-cost.server-retired .farm-log-form,
+.panel-farm-cost.server-retired .farm-map-row,
+.panel-farm-cost.server-retired .farm-cost-items,
+.panel-farm-cost.server-retired .farm-exrate-row{opacity:.45}
 .mr-entry.just-saved{animation:mr-flash 1.1s ease}
 @keyframes mr-flash{
   0%{background:color-mix(in srgb, var(--success) 35%, var(--surface-2)); border-color:var(--success)}
@@ -1398,6 +1404,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
               <span>บาท</span>
             </div>
           </div>
+          <p class="farm-retired-note" id="farmRetiredNote" hidden>เซิร์ฟเวอร์นี้ไม่ได้อยู่ใน "เซิร์ฟเวอร์ที่เล่น" แล้ว — ดูกราฟและประวัติย้อนหลังได้ แต่บันทึกรอบฟามใหม่ไม่ได้ (เพิ่มกลับได้ที่หน้าตั้งค่า)</p>
           <div class="farm-log-divider"></div>
           <div class="farm-map-row">
             <span>Map</span>
@@ -1971,8 +1978,42 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       });
     });
   }
-  function defaultRateSlots(){ return SERVER_RATES.slice(0,3).map(function(s){ return s.id; }); }
-  function defaultRateChipSlots(){ return SERVER_RATES.slice(0,1).map(function(s){ return s.id; }); }
+  // ---------- "เซิร์ฟเวอร์ที่เล่น" (profiles.servers) เป็นตัวกรองกลางของทุก dropdown เลือกเซิร์ฟ ----------
+  // ยกเว้นที่เกี่ยวกับประวัติ ซึ่งต้องโชว์เซิร์ฟที่เคยมีข้อมูลบันทึกไว้ต่อไป แม้จะเลิกเล่นแล้ว
+  // (ดู historyServerIds สำหรับประวัติซื้อ-ขาย, farmServerIds สำหรับหน้าฟาม, populateItemsServerSelect สำหรับคลังไอเทม)
+  function myServerIds(){
+    var picked = (App.profile && App.profile.servers) || [];
+    var live = SERVER_RATES.filter(function(s){ return picked.indexOf(s.id)!==-1; }).map(function(s){ return s.id; });
+    // ผู้เยี่ยมชม / โปรไฟล์ยังโหลดไม่เสร็จ / เซิร์ฟที่เลือกไว้ถูกลบออกจากระบบหมด → ใช้ทุกเซิร์ฟไปก่อน
+    // ไม่งั้น dropdown จะว่างเปล่าและกดอะไรไม่ได้เลย
+    return live.length ? live : SERVER_RATES.map(function(s){ return s.id; });
+  }
+  function isRetiredServer(id){ return id!=null && myServerIds().indexOf(id)===-1; }
+  // เรียกหลังล็อกอิน และหลังกด "บันทึกเซิร์ฟเวอร์" ในหน้าตั้งค่า —
+  // ตัดเซิร์ฟที่ไม่ได้เล่นแล้วออกจากการ์ดราคา/ชิปประกาศ/กล่องซื้อ-ขาย ให้ตรงกับที่เลือกไว้
+  // (ประวัติ คลังไอเทม และหน้าฟาม ไม่โดนตัด — จัดการแยกด้วย *ServerIds() ของตัวเอง)
+  // addNew = true เฉพาะตอนกดบันทึกในหน้าตั้งค่า: เซิร์ฟที่เพิ่งเพิ่มเข้ามาจะได้การ์ดราคา
+  // และชิปกรองประกาศให้เลยโดยไม่ต้องไปกดเพิ่มเองอีกรอบ ส่วนตอนล็อกอินจะแค่ "ตัดออก"
+  // ไม่ใช่ "เติมกลับ" ไม่งั้นการ์ดที่ผู้ใช้ตั้งใจลบทิ้งจะโผล่กลับมาทุกครั้งที่เข้าเว็บ
+  function pruneServerSelections(addNew){
+    var mine = myServerIds();
+    App.rateSlots = App.rateSlots.filter(function(id){ return mine.indexOf(id)!==-1; });
+    if(addNew){
+      mine.forEach(function(id){
+        if(App.rateSlots.indexOf(id)===-1 && App.rateSlots.length < MAX_RATE_CHIP_SLOTS) App.rateSlots.push(id);
+      });
+    }
+    if(!App.rateSlots.length) App.rateSlots = defaultRateSlots();
+    saveRateSlots();
+    syncMerchantServersWithRateSlots();
+    syncTickerServersWithRateSlots();
+  }
+  function serverLabel(id){
+    var sv = serverRateById(id);
+    return (sv ? sv.name : id) + (isRetiredServer(id) ? ' (เลิกเล่นแล้ว)' : '');
+  }
+  function defaultRateSlots(){ return myServerIds().slice(0,3); }
+  function defaultRateChipSlots(){ return myServerIds().slice(0,1); }
   var MAX_RATE_CHIP_SLOTS = 10;
   var RATE_MAX_DEVIATION = 0.30; // block a posted price more than ±30% away from the current rate (typo guard)
   var ANNOUNCE_DURATION_OPTIONS = [
@@ -2048,7 +2089,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       });
     });
     if(merchantLogNeedsIdFix) persist(keys.merchantLog, App.merchantLog);
-    App.merchantServers = store(keys.merchantServers, null) || SERVER_RATES.map(function(s){ return s.id; });
+    App.merchantServers = store(keys.merchantServers, null) || myServerIds().slice();
     var storedMerchantItems = store(keys.merchantItems, null);
     if(Array.isArray(storedMerchantItems)){
       // legacy flat list (pre category-split) — carry it over as "item" suggestions
@@ -2724,8 +2765,9 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(!SERVER_RATES.length){ root.innerHTML = '<p class="empty-note">ยังไม่มีเซิร์ฟเวอร์ในระบบ</p>'; return; }
     var cards = App.rateSlots.map(function(serverId, i){
       var sv = serverRateById(serverId) || SERVER_RATES[0];
-      var options = SERVER_RATES.map(function(s){
-        return '<option value="'+s.id+'"'+(s.id===sv.id?' selected':'')+'>'+s.name+'</option>';
+      var options = myServerIds().map(function(id){
+        var s = serverRateById(id);
+        return '<option value="'+id+'"'+(id===sv.id?' selected':'')+'>'+(s?s.name:id)+'</option>';
       }).join('');
       return '<div class="stat-chip rate-chip">'+
         (removable ? '<button type="button" class="rate-chip-remove" data-remove-rate-slot="'+i+'" title="ลบการ์ด">✕</button>' : '')+
@@ -2954,9 +2996,25 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     return farmCostRows(serverId).map(function(r){ return { id:r.id, name:r.name, price:r.price, qty:r.qty, currency:r.currency||'zeny' }; });
   }
 
+  // หน้าฟามใช้ dropdown ตัวเดียวคุมทั้ง "ช่องกรอกต้นทุน" และ "กราฟ/ประวัติการฟาม"
+  // เลยต้องโชว์เซิร์ฟที่เคยมีข้อมูลฟามไว้ด้วย ไม่งั้นเลิกเล่นเซิร์ฟไหนแล้วประวัติเซิร์ฟนั้นจะเข้าไม่ถึงเลย
+  // เซิร์ฟที่เลิกเล่นแล้วจะดูย้อนหลังได้อย่างเดียว กรอกใหม่ไม่ได้ (ดู renderFarmRetiredState)
+  function farmServerIds(){
+    var ids = myServerIds().slice();
+    App.farmLog.forEach(function(e){ if(e.serverId && ids.indexOf(e.serverId)===-1) ids.push(e.serverId); });
+    Object.keys(App.farmCostItems||{}).forEach(function(id){
+      if(ids.indexOf(id)===-1 && (App.farmCostItems[id]||[]).length) ids.push(id);
+    });
+    return ids;
+  }
   function populateFarmServerSelect(){
     var sel = document.getElementById('farmServerSelect');
-    sel.innerHTML = SERVER_RATES.map(function(s){ return '<option value="'+s.id+'">'+s.name+'</option>'; }).join('');
+    var ids = farmServerIds();
+    if(ids.indexOf(App.farmServerId)===-1){
+      App.farmServerId = ids[0] || null;
+      saveFarmServer();
+    }
+    sel.innerHTML = ids.map(function(id){ return '<option value="'+id+'">'+serverLabel(id)+'</option>'; }).join('');
     sel.value = App.farmServerId;
   }
 
@@ -3527,6 +3585,23 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     fromInput.max = todayStr;
     toInput.max = todayStr;
     renderFarmHistory();
+    renderFarmRetiredState();
+  }
+
+  // เซิร์ฟที่ไม่ได้อยู่ใน "เซิร์ฟเวอร์ที่เล่น" แล้ว = ดูย้อนหลังได้ แต่กรอก/บันทึกอะไรใหม่ไม่ได้
+  // ปิดทุกช่องกรอกในการ์ด "ต้นทุนต่อกั้ม" ทิ้ง แล้วขึ้นป้ายบอกเหตุผล
+  // (เรียกท้าย renderFarmPage เสมอ เพราะ renderFarmCostItems วาดปุ่ม/ช่องใหม่ทุกครั้ง)
+  function renderFarmRetiredState(){
+    var panel = document.querySelector('.panel-farm-cost');
+    if(!panel) return;
+    var retired = isRetiredServer(App.farmServerId);
+    panel.classList.toggle('server-retired', retired);
+    panel.querySelectorAll('input, select, textarea, button').forEach(function(el){
+      if(retired) el.setAttribute('disabled','');
+      else el.removeAttribute('disabled');
+    });
+    var note = document.getElementById('farmRetiredNote');
+    if(note) note.hidden = !retired;
   }
 
   function renderMrChart(){
@@ -4819,6 +4894,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       return Promise.all([ loadUserBosses(), loadKills() ]);
     }).then(function(){
       loadUserData(user.email);
+      pruneServerSelections();
       // ประกาศเป็นกระดานร่วม โหลดแยกแล้วค่อยวาดทับอีกที ไม่บล็อกการเปิดหน้า
       loadAnnouncements().then(function(){
         recomputeServerRatesFromAnnouncements();
@@ -4860,10 +4936,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   document.getElementById('rateChips').addEventListener('click', function(e){
     var addBtn = e.target.closest('#addRateChipBtn');
     if(addBtn){
-      if(App.rateSlots.length >= MAX_RATE_CHIP_SLOTS || !SERVER_RATES.length) return;
+      var mine = myServerIds();
+      if(App.rateSlots.length >= MAX_RATE_CHIP_SLOTS || !mine.length) return;
       var used = App.rateSlots;
-      var next = SERVER_RATES.filter(function(s){ return used.indexOf(s.id)===-1; })[0] || SERVER_RATES[0];
-      App.rateSlots.push(next.id);
+      var next = mine.filter(function(id){ return used.indexOf(id)===-1; })[0] || mine[0];
+      App.rateSlots.push(next);
       saveRateSlots();
       renderRateChips();
       syncMerchantServersWithRateSlots();
@@ -5461,16 +5538,23 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function warehouseTierCount(serverId, tier){
     return warehouseStockFor(serverId)[tier].reduce(function(s,item){ return s + (parseFloat(item.qty)||0); }, 0);
   }
+  // คลังไอเทมเก็บของจริงรายเซิร์ฟ เลยต้องโชว์ทั้งเซิร์ฟที่เล่นอยู่ (ไว้เก็บของใหม่)
+  // และเซิร์ฟที่ยังมีของค้างคลังหรือมีประวัติซื้อ-ขาย ไม่งั้นของที่ค้างอยู่จะเข้าไปดูไม่ได้
+  function itemsServerIds(){
+    var ids = myServerIds().slice();
+    historyServerIds().forEach(function(id){ if(ids.indexOf(id)===-1) ids.push(id); });
+    Object.keys(App.itemWarehouseStock||{}).forEach(function(id){ if(ids.indexOf(id)===-1) ids.push(id); });
+    return ids;
+  }
   function populateItemsServerSelect(){
     var sel = document.getElementById('itemsServerSelect');
-    var ids = historyServerIds();
+    var ids = itemsServerIds();
     if(App.itemsServerId==null || ids.indexOf(App.itemsServerId)===-1){
       App.itemsServerId = ids.indexOf(App.currentServerId)!==-1 ? App.currentServerId : (ids[0] || null);
       saveItemsServer();
     }
     sel.innerHTML = ids.map(function(id){
-      var sv = serverRateById(id);
-      return '<option value="'+id+'">'+(sv?sv.name:id)+'</option>';
+      return '<option value="'+id+'">'+serverLabel(id)+'</option>';
     }).join('');
     sel.value = App.itemsServerId;
   }
@@ -5821,7 +5905,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     });
   });
   document.getElementById('stSaveServers').addEventListener('click', function(){
-    saveServers(document.getElementById('stServerList'), null, function(){ renderSettingsPage(); toast('บันทึกเซิร์ฟเวอร์ที่เล่นแล้ว'); });
+    saveServers(document.getElementById('stServerList'), null, function(){
+      // เซิร์ฟที่เล่นเปลี่ยน = ทุก dropdown เลือกเซิร์ฟต้องอัปเดตตามทันที ไม่ต้องรีเฟรชหน้า
+      pruneServerSelections(true);
+      renderSettingsPage();
+      renderAll();
+      toast('บันทึกเซิร์ฟเวอร์ที่เล่นแล้ว');
+    });
   });
   function loadTopupHistory(){
     var root = document.getElementById('stTopupList'), sum = document.getElementById('stTopupSummary'), moreWrap = document.getElementById('stTopupMoreWrap');
@@ -6472,6 +6562,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     renderFarmChart();
     farmHistoryPage = 0;
     renderFarmHistory();
+    // สลับเซิร์ฟแล้วต้องคำนวณใหม่ว่าเซิร์ฟนี้ยังเล่นอยู่ไหม (เปิด/ปิดช่องกรอกตามนั้น)
+    renderFarmRetiredState();
   });
 
   document.getElementById('farmExRateInput').addEventListener('input', function(){

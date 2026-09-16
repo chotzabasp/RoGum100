@@ -1425,7 +1425,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
           <div class="farm-log-divider"></div>
           <div class="farm-map-row">
             <span>Map</span>
-            <input type="text" id="farmMapInput" placeholder="เช่น มิด4, ย่อน5, ดันOGH">
+            <input type="text" id="farmMapInput" maxlength="120" placeholder="เช่น มิด4, ย่อน5, ดันOGH">
           </div>
           <p class="farm-exrate-error" id="farmExRateError" hidden>กรุณาใส่อัตราแลกเปลี่ยนก่อนบันทึก</p>
           <div class="farm-cost-items" id="farmCostItems"></div>
@@ -1966,8 +1966,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
     catch(e){ return fallback; }
   }
+  // เขียนไม่ลงเมื่อไหร่ (พื้นที่เบราว์เซอร์เต็ม) จำไว้ — ตัวซิงก์คลาวด์จะเลิกเชื่อแคชในเครื่องแล้วดึงใหม่ทั้งหมด
+  var cachePersistFailed = false;
   function persist(key, val){
-    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){ cachePersistFailed = true; }
   }
 
   // Simulates the backend boss catalog — the full list an admin maintains,
@@ -2257,8 +2259,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // ข้อควรรู้: คลัง/การตั้งค่าเป็นแบบ "บันทึกทีหลังชนะ" ถ้าสองเครื่องแก้หัวข้อเดียวกันในเวลาใกล้กันมาก
   // เลยคอยเช็คของใหม่บนคลาวด์ทุกนาที + ทุกครั้งที่กลับมาที่แท็บ ให้ช่วงที่ข้อมูลค้างสั้นที่สุด
   var CLOUD_ENTRY_SETS = {
-    merchant: { table:'merchant_entries', name:'merchantLog', get:function(){ return App.merchantLog; } },
-    farm:     { table:'farm_entries',     name:'farmLog',     get:function(){ return App.farmLog; } }
+    merchant: { table:'merchant_entries', name:'merchantLog', stateKey:'m', get:function(){ return App.merchantLog; } },
+    farm:     { table:'farm_entries',     name:'farmLog',     stateKey:'f', get:function(){ return App.farmLog; } }
   };
   // ชื่อหัวข้อ = ชื่อใน DataKeys (ใช้เป็นทั้ง key บนคลาวด์และ key แคชใน localStorage)
   var CLOUD_KV = {
@@ -2504,32 +2506,129 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       return JSON.stringify(res.data);
     });
   }
-  function cloudFetchEntries(table){
-    var userId = cloudSync.userId, all = [];
+  // ---- ดึงข้อมูลจากคลาวด์แบบ "เฉพาะที่เปลี่ยน" ----
+  // เครื่องจำ cursor = เวลาแก้ล่าสุดบนคลาวด์ ณ รอบที่รวมข้อมูลลงเครื่องครั้งล่าสุด (เก็บคู่กับแคชใน localStorage)
+  // รอบถัดไปขอแค่แถวที่ updated_at ใหม่กว่านั้น ส่วนแถวเก่าใช้ของในเครื่อง แล้วเทียบ "จำนวนแถว" กับคลาวด์:
+  // ไม่ตรง (มีคนลบ/มีแถวตกหล่น) หรือมีคิวค้าง → ขอรายชื่อ id ทั้งหมด (เล็กมาก) มาเทียบ ลบของที่หายไป + ดึงแถวที่ขาด
+  // ครั้งแรกของเครื่อง / ไม่มี cursor / แคชในเครื่องเคยเขียนไม่ลง → ดึงทั้งหมดเหมือนเดิม
+  var CLOUD_EPOCH = '1970-01-01T00:00:00Z';
+  var CLOUD_CURSOR_OVERLAP_MS = 120000; // ขอย้อนเผื่อ 2 นาที กันแถวที่บันทึกเสร็จช้ากว่าเวลาที่ประทับไว้
+  function cloudMetaKey(){ return 'mvpwatch_cloudmeta_'+cloudSync.email; }
+  function cloudReadCursor(){
+    var meta = store(cloudMetaKey(), null);
+    return (meta && meta.cursor) || {};
+  }
+  function cloudWriteCursor(stateObj){
+    // แคชในเครื่องเคยเขียนไม่ลง (พื้นที่เบราว์เซอร์เต็ม) → ห้ามเชื่อแคช ลบ cursor ให้รอบหน้าดึงทั้งหมด
+    if(cachePersistFailed){
+      try{ localStorage.removeItem(cloudMetaKey()); }catch(e){}
+      return;
+    }
+    stateObj = stateObj || {};
+    function maxOf(k){ return (stateObj[k] && stateObj[k][1]) || CLOUD_EPOCH; }
+    persist(cloudMetaKey(), { cursor: { merchant: maxOf('m'), farm: maxOf('f'), kv: maxOf('k') } });
+  }
+  function cloudSince(cursor){
+    var t = Date.parse(cursor);
+    return new Date((isNaN(t) ? 0 : t) - CLOUD_CURSOR_OVERLAP_MS).toISOString();
+  }
+  // PostgREST คืนทีละไม่เกิน 1000 แถว — ไล่ขอทีละหน้า (buildQuery ต้องสร้าง query ใหม่ทุกหน้า)
+  function cloudPaged(buildQuery){
+    var all = [];
     function page(from){
-      return supa.from(table).select('id, data').eq('user_id', userId)
-        .order('ts', { ascending:true }).order('id', { ascending:true })
-        .range(from, from+999).then(function(res){
-          if(res.error) throw res.error;
-          var rows = res.data || [];
-          all = all.concat(rows);
-          return rows.length===1000 ? page(from+1000) : all;
-        });
+      return buildQuery().range(from, from+999).then(function(res){
+        if(res.error) throw res.error;
+        var rows = res.data || [];
+        all = all.concat(rows);
+        return rows.length===1000 ? page(from+1000) : all;
+      });
     }
     return page(0);
   }
+  function cloudFetchEntries(table){
+    var userId = cloudSync.userId;
+    return cloudPaged(function(){
+      return supa.from(table).select('id, data').eq('user_id', userId)
+        .order('ts', { ascending:true }).order('id', { ascending:true });
+    });
+  }
+  function cloudFetchEntriesSince(table, cursor){
+    var userId = cloudSync.userId;
+    return cloudPaged(function(){
+      return supa.from(table).select('id, data').eq('user_id', userId).gte('updated_at', cloudSince(cursor))
+        .order('updated_at', { ascending:true }).order('id', { ascending:true });
+    });
+  }
+  function cloudFetchIds(table){
+    var userId = cloudSync.userId;
+    return cloudPaged(function(){
+      return supa.from(table).select('id').eq('user_id', userId).order('id', { ascending:true });
+    }).then(function(rows){ return rows.map(function(r){ return r.id; }); });
+  }
+  function cloudFetchByIds(table, ids){
+    var userId = cloudSync.userId;
+    return Promise.all(cloudChunks(ids, 100).map(function(part){
+      return supa.from(table).select('id, data').eq('user_id', userId).in('id', part).then(function(res){
+        if(res.error) throw res.error;
+        return res.data || [];
+      });
+    })).then(function(parts){ return [].concat.apply([], parts); });
+  }
+  function cloudRowsFromMap(map){
+    return Object.keys(map).map(function(id){ return { id:id, data:map[id] }; });
+  }
+  // คืนค่า "ข้อมูลบนคลาวด์ทั้งหมด" ในรูปแบบเดียวกับการดึงเต็ม (แถวที่ไม่เปลี่ยนใช้ของในเครื่องแทน)
+  // cloudApply จึงรวมข้อมูลด้วยกฎเดิมได้โดยไม่ต้องรู้ว่าดึงมาแบบไหน
   function cloudFetchAll(){
     var userId = cloudSync.userId;
+    var firstSync = !store(cloudSyncedKey(), false);
+    var cursor = cloudReadCursor();
     // อ่านสถานะก่อนตัวข้อมูล: ถ้ามีเครื่องอื่นเขียนแทรกระหว่างดึง รอบเช็คถัดไปจะเห็นว่าเปลี่ยนแล้วดึงใหม่
-    return cloudFetchState().then(function(state){
-      return Promise.all([
-        cloudFetchEntries('merchant_entries'),
-        cloudFetchEntries('farm_entries'),
-        supa.from('user_app_data').select('key, value').eq('user_id', userId).then(function(res){
+    return cloudFetchState().then(function(stateJson){
+      var state = {};
+      try{ state = JSON.parse(stateJson) || {}; }catch(e){}
+      var setJobs = Object.keys(CLOUD_ENTRY_SETS).map(function(set){
+        var cfg = CLOUD_ENTRY_SETS[set];
+        if(firstSync || !cursor[set]) return cloudFetchEntries(cfg.table);
+        var serverCount = state[cfg.stateKey] ? (Number(state[cfg.stateKey][0]) || 0) : 0;
+        return cloudFetchEntriesSince(cfg.table, cursor[set]).then(function(changed){
+          var ob = cloudSync.outbox[set];
+          var map = cloudIndexById(cfg.get());
+          changed.forEach(function(r){ if(r && r.id && r.data) map[r.id] = r.data; });
+          var pending = Object.keys(ob.up).length + Object.keys(ob.del).length;
+          if(!pending && Object.keys(map).length === serverCount) return cloudRowsFromMap(map);
+          return cloudFetchIds(cfg.table).then(function(ids){
+            var onServer = {};
+            ids.forEach(function(id){ onServer[id] = true; });
+            Object.keys(map).forEach(function(id){ if(!onServer[id] && !ob.up[id]) delete map[id]; });
+            var missing = ids.filter(function(id){ return !map[id] && !ob.del[id]; });
+            return cloudFetchByIds(cfg.table, missing).then(function(rows){
+              rows.forEach(function(r){ if(r && r.id && r.data) map[r.id] = r.data; });
+              return cloudRowsFromMap(map);
+            });
+          });
+        });
+      });
+      var kvNames = Object.keys(CLOUD_KV);
+      var kvCount = state.k ? (Number(state.k[0]) || 0) : 0;
+      var kvJob;
+      if(firstSync || !cursor.kv || kvCount < kvNames.length){
+        kvJob = supa.from('user_app_data').select('key, value').eq('user_id', userId).then(function(res){
           if(res.error) throw res.error;
           return res.data || [];
-        })
-      ]).then(function(r){ return { state:state, merchant:r[0], farm:r[1], kv:r[2] }; });
+        });
+      } else {
+        kvJob = supa.from('user_app_data').select('key, value').eq('user_id', userId).gte('updated_at', cloudSince(cursor.kv)).then(function(res){
+          if(res.error) throw res.error;
+          var changed = {};
+          (res.data || []).forEach(function(r){ if(r && r.key) changed[r.key] = r; });
+          // หัวข้อที่ไม่ได้เปลี่ยน = ค่าในเครื่องตอนนี้ตรงกับคลาวด์อยู่แล้ว
+          return kvNames.map(function(name){ return changed[name] || { key:name, value: cloudClone(CLOUD_KV[name]()) }; });
+        });
+      }
+      return Promise.all(setJobs.concat([kvJob])).then(function(r){
+        return { state:stateJson, stateObj:state, merchant:r[0], farm:r[1], kv:r[2] };
+      });
     });
   }
 
@@ -2616,6 +2715,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         if(cloudSync.userId !== userId) return;
         var before = opts.initial ? null : cloudFingerprint();
         var result = cloudApply(cloud);
+        cloudWriteCursor(cloud.stateObj);
         if(result.migrated){
           toast(isExpiredAccount()
             ? 'พบประวัติเดิมในเครื่องนี้ '+fmtNum(result.migrated)+' รายการ — จะย้ายขึ้นคลาวด์ให้เมื่อต่ออายุแพ็กเกจ'
@@ -2741,17 +2841,40 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       .order('created_at', { ascending:false })
       .then(function(res){
         // ตารางยังไม่ถูกสร้าง / เน็ตหลุด → ปล่อยกระดานว่างไว้ ไม่ทำให้หน้าพัง
-        if(res.error){ console.warn('loadAnnouncements', res.error); return; }
+        if(res.error){ console.warn('loadAnnouncements', res.error); return false; }
         App.rateAnnouncements = (res.data||[]).map(mapAnnouncement);
+        return true;
       });
   }
   // โหลดใหม่แล้ววาดใหม่ทั้งแถบ — ใช้หลังลง/แก้/ลบประกาศ และตอน poll ตามรอบ
   function refreshAnnouncements(){
-    return loadAnnouncements().then(function(){
+    return loadAnnouncements().then(function(ok){
       recomputeServerRatesFromAnnouncements();
       renderRateChips();
       renderTicker();
+      return ok;
     });
+  }
+  // เช็คก่อนค่อยดึง: ถามแค่ "ประกาศที่ยังไม่หมดอายุมีกี่อัน + แก้ล่าสุดเมื่อไหร่" (announcements_state)
+  // ถ้าเหมือนรอบก่อนก็ไม่ต้องโหลดทั้งกระดาน — และปกติเช็คเฉพาะตอนอยู่หน้าบัญชีนักลงทุน
+  // (กระดาน + การ์ดราคารับ M อยู่หน้านี้หน้าเดียว) force = ข้ามทั้งสองเงื่อนไข ใช้หลังลง/แก้/ลบประกาศเอง
+  var announcementsKnownState = null;
+  var announcementsCheckRun = null;
+  function refreshAnnouncementsIfChanged(force){
+    if(!App.session) return Promise.resolve();
+    if(!force && document.getElementById('view-home').hidden) return Promise.resolve();
+    if(announcementsCheckRun){
+      // กำลังเช็คอยู่: ปกติใช้ผลรอบนั้นเลย / แบบ force ต้องรอให้จบแล้วเช็คใหม่ (รอบเดิมอาจอ่านก่อนเราลงประกาศ)
+      return force ? announcementsCheckRun.then(function(){ return refreshAnnouncementsIfChanged(true); }) : announcementsCheckRun;
+    }
+    var run = supa.rpc('announcements_state').then(function(res){
+      if(res.error) return refreshAnnouncements(); // ยังไม่มีตัวเช็คบนคลาวด์ → ดึงทั้งกระดานแบบเดิม
+      var state = JSON.stringify(res.data);
+      if(!force && state === announcementsKnownState) return;
+      return refreshAnnouncements().then(function(ok){ if(ok) announcementsKnownState = state; });
+    }, function(){ return refreshAnnouncements(); });
+    announcementsCheckRun = run.then(function(){ announcementsCheckRun = null; }, function(){ announcementsCheckRun = null; });
+    return announcementsCheckRun;
   }
 
   // The "current buy price" per server tracks what players are actually posting
@@ -3680,7 +3803,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       var currency = r.currency || 'zeny';
       return '<div class="farm-cost-row" data-row-id="'+r.id+'">'+
         '<span class="mr-row-index">'+(rowIdx+1)+'.</span>'+
-        '<input type="text" class="farm-cost-name" placeholder="วิง, เร่ง, กั้ม" value="'+(r.name||'').replace(/"/g,'&quot;')+'">'+
+        '<input type="text" class="farm-cost-name" maxlength="120" placeholder="วิง, เร่ง, กั้ม" value="'+(r.name||'').replace(/"/g,'&quot;')+'">'+
         '<input type="number" class="farm-cost-qty" placeholder="จำนวน" value="'+(r.qty===''||r.qty==null?'':r.qty)+'">'+
         '<input type="text" inputmode="numeric" class="farm-cost-price" placeholder="ราคา" value="'+(r.price===''||r.price==null?'':fmtNum(r.price))+'">'+
         '<select class="farm-cost-currency">'+
@@ -3704,7 +3827,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       var currency = r.currency || 'zeny';
       return '<div class="farm-rare-row" data-row-id="'+r.id+'">'+
         '<span class="mr-row-index">'+(rowIdx+1)+'.</span>'+
-        '<input type="text" class="farm-rare-name" placeholder="Elu, Ori, Card" value="'+(r.name||'').replace(/"/g,'&quot;')+'">'+
+        '<input type="text" class="farm-rare-name" maxlength="120" placeholder="Elu, Ori, Card" value="'+(r.name||'').replace(/"/g,'&quot;')+'">'+
         '<input type="number" class="farm-rare-qty" placeholder="จำนวน" value="'+(r.qty===''||r.qty==null?'':r.qty)+'" min="1">'+
         '<input type="text" inputmode="numeric" class="farm-rare-price" placeholder="ราคา" value="'+(r.price===''||r.price==null?'':fmtNum(r.price))+'">'+
         '<select class="farm-rare-currency">'+
@@ -4560,7 +4683,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         slotsHtml = '<div class="mr-slot-section">'+
           slots.map(function(slot, idx){
             return '<div class="mr-slot-row">'+
-              '<input type="text" class="mr-slot-input" data-slot-idx="'+idx+'" placeholder="เช่น : C.ไข่หมุน, Aspd+1, Dex+5, โจมไกล5%" value="'+String(slot||'').replace(/"/g,'&quot;')+'">'+
+              '<input type="text" class="mr-slot-input" maxlength="120" data-slot-idx="'+idx+'" placeholder="เช่น : C.ไข่หมุน, Aspd+1, Dex+5, โจมไกล5%" value="'+String(slot||'').replace(/"/g,'&quot;')+'">'+
               '<button type="button" class="mr-slot-remove" data-remove-slot="'+idx+'" title="ลบ Slot">✕</button>'+
             '</div>';
           }).join('')+
@@ -4611,7 +4734,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
             '<span class="mr-row-index">'+(rowIdx+1)+'.</span>'+
             (isZenyTab
               ? '<input type="text" class="mr-row-name" autocomplete="off" readonly value="'+ZENY_LABEL+'">'
-              : '<input type="text" class="mr-row-name" autocomplete="off" placeholder="'+(App.merchantCategory==='other'?'เช่น : AirTime, สุ่มกาชา, เติมบัตร, จ้างปั้นตัว, อื่นๆ':'เช่น : +5 มัพ (ถ้ามีออฟ+เพิ่มSlot), C.โซฮี, อื่นๆ')+'" value="'+row.name.replace(/"/g,'&quot;')+'">'+
+              : '<input type="text" class="mr-row-name" autocomplete="off" maxlength="120" placeholder="'+(App.merchantCategory==='other'?'เช่น : AirTime, สุ่มกาชา, เติมบัตร, จ้างปั้นตัว, อื่นๆ':'เช่น : +5 มัพ (ถ้ามีออฟ+เพิ่มSlot), C.โซฮี, อื่นๆ')+'" value="'+row.name.replace(/"/g,'&quot;')+'">'+
                 '<div class="mr-item-suggest" hidden></div>'+
                 rowImageButtonHtml(row, stockGroups))+
           '</div>'+
@@ -5767,11 +5890,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     }).then(function(){
       pruneServerSelections();
       // ประกาศเป็นกระดานร่วม โหลดแยกแล้วค่อยวาดทับอีกที ไม่บล็อกการเปิดหน้า
-      loadAnnouncements().then(function(){
-        recomputeServerRatesFromAnnouncements();
-        renderRateChips();
-        renderTicker();
-      });
+      refreshAnnouncementsIfChanged(true);
       recomputeServerRatesFromAnnouncements();
       document.getElementById('authModal').hidden = true;
       document.getElementById('appScreen').hidden = false;
@@ -6762,6 +6881,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     document.getElementById('view-pricing').hidden = page !== 'pricing';
     document.getElementById('view-admin').hidden = page !== 'admin';
     document.getElementById('view-settings').hidden = page !== 'settings';
+    if(page==='home') refreshAnnouncementsIfChanged();
     if(page==='farm') renderFarmPage();
     if(page==='items') renderItemsPage();
     if(page==='pricing') renderPricingPage();
@@ -7492,7 +7612,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var done = function(msg){
       btn.disabled = false;
       closePostAnnouncement();
-      refreshAnnouncements();
+      refreshAnnouncementsIfChanged(true);
       toast(msg);
     };
     var failed = function(err){
@@ -7575,7 +7695,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       showConfirm('ยืนยันยกเลิกประกาศนี้?', function(){
         supa.from('announcements').delete().eq('id', id).then(function(res){
           if(res.error){ console.warn('announcement delete', res.error); toast('ยกเลิกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง'); return; }
-          refreshAnnouncements().then(renderMyAnnouncements);
+          refreshAnnouncementsIfChanged(true).then(renderMyAnnouncements);
           toast('ยกเลิกประกาศแล้ว');
         }, function(err){ console.warn('announcement delete', err); toast('ยกเลิกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง'); });
       });
@@ -8252,13 +8372,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(session) enterApp(session.user); else enterGuestPreview();
   });
   setInterval(function(){ tickTimers(); updateClock(); tickTickerCountdowns(); }, 1000);
-  // กระดานประกาศเป็นของร่วม — ดึงใหม่ทุก 60 วิ เพื่อให้เห็นประกาศที่คนอื่นเพิ่งลง
-  // (ข้ามตอนซ่อนแท็บอยู่ จะได้ไม่ยิงทิ้งเปล่าๆ ตอนเปิดค้างไว้)
+  // กระดานประกาศเป็นของร่วม — เช็คทุก 60 วิ เพื่อให้เห็นประกาศที่คนอื่นเพิ่งลง (โหลดจริงเฉพาะตอนมีอะไรเปลี่ยน)
+  // ข้ามตอนซ่อนแท็บ และตอนอยู่หน้าอื่นที่ไม่มีกระดาน — กลับมาหน้าบัญชีนักลงทุนเมื่อไหร่เช็คให้ทันที
   setInterval(function(){
-    if(App.session && !document.hidden) refreshAnnouncements();
+    if(App.session && !document.hidden) refreshAnnouncementsIfChanged();
   }, 60000);
   document.addEventListener('visibilitychange', function(){
-    if(App.session && !document.hidden) refreshAnnouncements();
+    if(App.session && !document.hidden) refreshAnnouncementsIfChanged();
   });
 
   window.addEventListener('pageshow', function(){

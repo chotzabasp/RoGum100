@@ -1173,6 +1173,37 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       <div class="page-scroll">
       <div class="home-grid">
         <div class="home-left">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>ประวัติ <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
+              <div class="hf-group">
+                <label>เซิร์ฟเวอร์</label>
+                <select id="historyServerFilter" autocomplete="off"><option value="all">ALL</option></select>
+              </div>
+            </div>
+
+            <div class="mr-history">
+              <div class="mr-summary" id="mrSummary"></div>
+              <!-- One control row: how to look (ตามไอเทม / ตามวัน), a search box, a time range.
+                   หมวดหมู่ shows as a tag on each item, ซื้อ/ขาย as a colored badge on each row,
+                   so neither needs its own filter toggle. -->
+              <div class="mr-hist-bar">
+                <div class="seg-toggle" id="historyViewToggle">
+                  <button type="button" class="seg-btn active" data-historyview="item">ตามไอเทม</button>
+                  <button type="button" class="seg-btn" data-historyview="day">ตามวัน</button>
+                </div>
+                <input type="search" class="mr-hist-search" id="mrHistorySearch" placeholder="ค้นหาไอเทม…" autocomplete="off">
+                <select class="chart-tf-select" id="mrHistoryRange">
+                  <option value="today">วันนี้</option>
+                  <option value="7d">7 วันล่าสุด</option>
+                  <option value="30d">30 วันล่าสุด</option>
+                  <option value="90d">3 เดือนล่าสุด</option>
+                  <option value="all" selected>ทั้งหมด</option>
+                </select>
+              </div>
+              <div id="mrHistoryList"></div>
+            </div>
+          </div>
           <div class="panel panel-hero">
             <div class="panel-head">
               <div class="ticker-head-title">
@@ -1218,37 +1249,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
             <div class="chart-legend" id="mrChartLegend"></div>
             <div class="chart-footer">
               <p class="mr-upload-note">สรุปยอดขาย ยอดรับ และกำไรสุทธิจากรายการซื้อขายที่บันทึกไว้ในแต่ละช่วงเวลา</p>
-            </div>
-          </div>
-          <div class="panel">
-            <div class="panel-head">
-              <h2>ประวัติ <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
-              <div class="hf-group">
-                <label>เซิร์ฟเวอร์</label>
-                <select id="historyServerFilter" autocomplete="off"><option value="all">ALL</option></select>
-              </div>
-            </div>
-
-            <div class="mr-history">
-              <div class="mr-summary" id="mrSummary"></div>
-              <!-- One control row: how to look (ตามไอเทม / ตามวัน), a search box, a time range.
-                   หมวดหมู่ shows as a tag on each item, ซื้อ/ขาย as a colored badge on each row,
-                   so neither needs its own filter toggle. -->
-              <div class="mr-hist-bar">
-                <div class="seg-toggle" id="historyViewToggle">
-                  <button type="button" class="seg-btn active" data-historyview="item">ตามไอเทม</button>
-                  <button type="button" class="seg-btn" data-historyview="day">ตามวัน</button>
-                </div>
-                <input type="search" class="mr-hist-search" id="mrHistorySearch" placeholder="ค้นหาไอเทม…" autocomplete="off">
-                <select class="chart-tf-select" id="mrHistoryRange">
-                  <option value="today">วันนี้</option>
-                  <option value="7d">7 วันล่าสุด</option>
-                  <option value="30d">30 วันล่าสุด</option>
-                  <option value="90d">3 เดือนล่าสุด</option>
-                  <option value="all" selected>ทั้งหมด</option>
-                </select>
-              </div>
-              <div id="mrHistoryList"></div>
             </div>
           </div>
         </div>
@@ -1346,6 +1346,19 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       <div class="page-scroll">
       <div class="home-grid">
         <div class="home-left">
+          <div class="panel panel-farm-history">
+            <div class="panel-head">
+              <h2>ประวัติการฟาม <span class="farm-history-summary" id="farmHistorySummary"></span></h2>
+              <div class="farm-history-daterange">
+                <input type="date" id="farmHistoryFromDate">
+                <span>-</span>
+                <input type="date" id="farmHistoryToDate">
+              </div>
+            </div>
+            <div id="farmHistoryList"></div>
+            <div class="farm-history-pagination" id="farmHistoryPagination"></div>
+          </div>
+
           <div class="panel panel-farm-revenue">
             <div class="panel-head">
               <div class="farm-revenue-title">
@@ -1387,19 +1400,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
               <div class="chart-tooltip" id="farmChartTooltip" hidden></div>
             </div>
             <div class="chart-legend" id="farmChartLegend"></div>
-          </div>
-
-          <div class="panel panel-farm-history">
-            <div class="panel-head">
-              <h2>ประวัติการฟาม <span class="farm-history-summary" id="farmHistorySummary"></span></h2>
-              <div class="farm-history-daterange">
-                <input type="date" id="farmHistoryFromDate">
-                <span>-</span>
-                <input type="date" id="farmHistoryToDate">
-              </div>
-            </div>
-            <div id="farmHistoryList"></div>
-            <div class="farm-history-pagination" id="farmHistoryPagination"></div>
           </div>
         </div>
 
@@ -2640,7 +2640,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       // ถ้าไม่ดักไว้ โปรไฟล์จะโหลดไม่ได้เลยและทั้งแอพจะพัง — ถอยไปใช้คอลัมน์ชุดเดิมแทน
       // (โควต้าจะถูกมองเป็น 1 ตาม default ของ serverQuota())
       if(res.error && PROFILE_COLS.indexOf('server_quota')!==-1 && /server_quota/.test(res.error.message||'')){
-        console.warn('profiles.server_quota ยังไม่มีในฐานข้อมูล — ใช้โควต้าเริ่มต้น 1 เซิร์ฟไปก่อน');
+        console.warn('profiles.server_quota ยังไม่มีในฐานข้อมูล — ใช้โควต้าเริ่มต้น 1 เซิร์ฟไปก่อน', res.error);
         PROFILE_COLS = 'display_name, points, role, expires_at, username, birth_date, servers';
         return refreshProfile();
       }

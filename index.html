@@ -497,7 +497,7 @@ svg.icon{width:18px;height:18px;display:block}
 /* ชิปเซิร์ฟที่เลือกไม่ได้เพราะโควต้าเต็ม */
 .share-chip.chip-locked{opacity:.4;cursor:not-allowed}
 .server-quota-hint{margin-top:.5rem}
-/* เซิร์ฟที่เลิกเล่นแล้ว: การ์ดต้นทุนกลายเป็นโหมดดูอย่างเดียว */
+/* เซิร์ฟที่พักอยู่: การ์ดต้นทุนกลายเป็นโหมดดูอย่างเดียว */
 .farm-retired-note{margin:.6rem 0 0;padding:.55rem .7rem;border-radius:var(--radius-s);font-size:.76rem;line-height:1.5;color:var(--warn);background:color-mix(in srgb, var(--warn) 12%, transparent);border:1px solid color-mix(in srgb, var(--warn) 30%, transparent)}
 .panel-farm-cost.server-retired .farm-log-form,
 .panel-farm-cost.server-retired .farm-map-row,
@@ -1412,7 +1412,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
               <span>บาท</span>
             </div>
           </div>
-          <p class="farm-retired-note" id="farmRetiredNote" hidden>เซิร์ฟเวอร์นี้ไม่ได้อยู่ใน "เซิร์ฟเวอร์ที่เล่น" แล้ว — ดูกราฟและประวัติย้อนหลังได้ แต่บันทึกรอบฟามใหม่ไม่ได้ (เพิ่มกลับได้ที่หน้าตั้งค่า)</p>
+          <p class="farm-retired-note" id="farmRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักเพราะไม่ได้เลือกไว้ใน "ตั้งค่า" แล้ว — ดูกราฟและประวัติย้อนหลังได้</p>
           <div class="farm-log-divider"></div>
           <div class="farm-map-row">
             <span>Map</span>
@@ -1989,7 +1989,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     });
   }
   // ---------- "เซิร์ฟเวอร์ที่เล่น" (profiles.servers) เป็นตัวกรองกลางของทุก dropdown เลือกเซิร์ฟ ----------
-  // ยกเว้นที่เกี่ยวกับประวัติ ซึ่งต้องโชว์เซิร์ฟที่เคยมีข้อมูลบันทึกไว้ต่อไป แม้จะเลิกเล่นแล้ว
+  // ยกเว้นที่เกี่ยวกับประวัติ ซึ่งต้องโชว์เซิร์ฟที่เคยมีข้อมูลบันทึกไว้ต่อไป แม้จะพักอยู่
   // (ดู historyServerIds สำหรับประวัติซื้อ-ขาย, farmServerIds สำหรับหน้าฟาม, populateItemsServerSelect สำหรับคลังไอเทม)
   function myServerIds(){
     var picked = (App.profile && App.profile.servers) || [];
@@ -2078,7 +2078,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
   function serverLabel(id){
     var sv = serverRateById(id);
-    return (sv ? sv.name : id) + (isRetiredServer(id) ? ' (เลิกเล่นแล้ว)' : '');
+    return (sv ? sv.name : id) + (isRetiredServer(id) ? ' (พัก)' : '');
   }
   function defaultRateSlots(){ return myServerIds().slice(0,3); }
   function defaultRateChipSlots(){ return myServerIds().slice(0,1); }
@@ -3084,7 +3084,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 
   // หน้าฟามใช้ dropdown ตัวเดียวคุมทั้ง "ช่องกรอกต้นทุน" และ "กราฟ/ประวัติการฟาม"
   // เลยต้องโชว์เซิร์ฟที่เคยมีข้อมูลฟามไว้ด้วย ไม่งั้นเลิกเล่นเซิร์ฟไหนแล้วประวัติเซิร์ฟนั้นจะเข้าไม่ถึงเลย
-  // เซิร์ฟที่เลิกเล่นแล้วจะดูย้อนหลังได้อย่างเดียว กรอกใหม่ไม่ได้ (ดู renderFarmRetiredState)
+  // เซิร์ฟที่พักอยู่จะดูย้อนหลังได้อย่างเดียว กรอกใหม่ไม่ได้ (ดู renderFarmRetiredState)
   function farmServerIds(){
     var ids = myServerIds().slice();
     App.farmLog.forEach(function(e){ if(e.serverId && ids.indexOf(e.serverId)===-1) ids.push(e.serverId); });

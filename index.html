@@ -378,9 +378,8 @@ svg.icon{width:18px;height:18px;display:block}
 #farmHistoryList{display:flex;flex-direction:column;gap:.5rem}
 .farm-profit-pos{color:var(--success);font-family:"JetBrains Mono"}
 .farm-profit-neg{color:var(--danger);font-family:"JetBrains Mono"}
-.farm-history-daterange{display:flex;align-items:center;gap:.4rem;color:var(--text-dim);font-size:.78rem}
+.panel-farm-history .chart-tf-select{padding:.35rem .5rem;font-size:.78rem}
 .farm-history-summary{font-size:.74rem;font-weight:500;color:var(--text-dim);margin-left:.4rem}
-.farm-history-daterange input[type="date"]{color-scheme:dark;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.35rem .5rem;font-size:.78rem}
 .farm-history-pagination{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.8rem;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)}
 .farm-history-pagination .farm-hist-size{grid-column:1;justify-self:start}
 .farm-history-pagination .farm-hist-nav{grid-column:2;justify-self:center}
@@ -1195,9 +1194,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
                 <input type="search" class="mr-hist-search" id="mrHistorySearch" placeholder="ค้นหาไอเทม…" autocomplete="off">
                 <select class="chart-tf-select" id="mrHistoryRange">
                   <option value="today">วันนี้</option>
-                  <option value="7d">7 วันล่าสุด</option>
-                  <option value="30d">30 วันล่าสุด</option>
-                  <option value="90d">3 เดือนล่าสุด</option>
+                  <option value="7d">7วัน</option>
+                  <option value="15d">15วัน</option>
+                  <option value="1m">1เดือน</option>
+                  <option value="3m">3เดือน</option>
+                  <option value="6m">6เดือน</option>
+                  <option value="1y">1ปี</option>
                   <option value="all" selected>ทั้งหมด</option>
                 </select>
               </div>
@@ -1218,15 +1220,14 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
               <div class="chart-controls">
                 <select class="chart-tf-select" id="mrChartServerSelect"></select>
                 <select class="chart-tf-select" id="mrChartTimeframeSelect">
-                  <option value="1d">1 วัน</option>
-                  <option value="3d">3 วัน</option>
-                  <option value="5d">5 วัน</option>
-                  <option value="7d" selected>7 วัน</option>
-                  <option value="14d">14 วัน</option>
-                  <option value="1m">1 เดือน</option>
-                  <option value="3m">3 เดือน</option>
-                  <option value="6m">6 เดือน</option>
-                  <option value="1y">1 ปี</option>
+                  <option value="today">วันนี้</option>
+                  <option value="7d" selected>7วัน</option>
+                  <option value="15d">15วัน</option>
+                  <option value="1m">1เดือน</option>
+                  <option value="3m">3เดือน</option>
+                  <option value="6m">6เดือน</option>
+                  <option value="1y">1ปี</option>
+                  <option value="all">ทั้งหมด</option>
                 </select>
               </div>
             </div>
@@ -1349,11 +1350,16 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
           <div class="panel panel-farm-history">
             <div class="panel-head">
               <h2>ประวัติการฟาม <span class="farm-history-summary" id="farmHistorySummary"></span></h2>
-              <div class="farm-history-daterange">
-                <input type="date" id="farmHistoryFromDate">
-                <span>-</span>
-                <input type="date" id="farmHistoryToDate">
-              </div>
+              <select class="chart-tf-select" id="farmHistoryRange">
+                <option value="today" selected>วันนี้</option>
+                <option value="7d">7วัน</option>
+                <option value="15d">15วัน</option>
+                <option value="1m">1เดือน</option>
+                <option value="3m">3เดือน</option>
+                <option value="6m">6เดือน</option>
+                <option value="1y">1ปี</option>
+                <option value="all">ทั้งหมด</option>
+              </select>
             </div>
             <div id="farmHistoryList"></div>
             <div class="farm-history-pagination" id="farmHistoryPagination"></div>
@@ -1370,15 +1376,14 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
               </div>
               <div class="chart-controls">
                 <select class="chart-tf-select" id="farmTimeframeSelect">
-                  <option value="1d">1 วัน</option>
-                  <option value="3d">3 วัน</option>
-                  <option value="5d">5 วัน</option>
-                  <option value="7d" selected>7 วัน</option>
-                  <option value="14d">14 วัน</option>
-                  <option value="1m">1 เดือน</option>
-                  <option value="3m">3 เดือน</option>
-                  <option value="6m">6 เดือน</option>
-                  <option value="1y">1 ปี</option>
+                  <option value="today">วันนี้</option>
+                  <option value="7d" selected>7วัน</option>
+                  <option value="15d">15วัน</option>
+                  <option value="1m">1เดือน</option>
+                  <option value="3m">3เดือน</option>
+                  <option value="6m">6เดือน</option>
+                  <option value="1y">1ปี</option>
+                  <option value="all">ทั้งหมด</option>
                 </select>
               </div>
             </div>
@@ -2961,16 +2966,15 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // Bucket unit/count come from CHART_TIMEFRAME_CONFIG (shared with the farm chart) so both
   // pages tier day → week → month at the same breakpoints instead of always bucketing by day
   // (which used to render 365 unreadable slivers at "1 ปี").
-  function mrChartGenerateBuckets(tf, endOffsetUnits){
-    var cfg = CHART_TIMEFRAME_CONFIG[tf] || CHART_TIMEFRAME_CONFIG['7d'];
+  function mrChartGenerateBuckets(cfg, endOffsetUnits){
     var buckets = generateTimeBuckets(cfg.unit, cfg.count, endOffsetUnits);
     buckets.forEach(function(b){ b.sell = 0; b.buy = 0; });
     return buckets;
   }
 
   function mrChartBuckets(tf, serverId, endOffsetUnits, categoryFilter){
-    var cfg = CHART_TIMEFRAME_CONFIG[tf] || CHART_TIMEFRAME_CONFIG['7d'];
-    var buckets = mrChartGenerateBuckets(tf, endOffsetUnits);
+    var cfg = mrChartCfg(tf, serverId, categoryFilter);
+    var buckets = mrChartGenerateBuckets(cfg, endOffsetUnits);
     var byKey = {};
     buckets.forEach(function(b){ byKey[b.key] = b; });
     App.merchantLog.forEach(function(e){
@@ -3024,17 +3028,65 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function farmUnitSuffix(){
     return farmChartUnit==='baht' ? ' บ' : ' z';
   }
+  // TF ชุดเดียวใช้ร่วมกันทุกที่: กราฟกำไร 2 หน้า + ประวัติซื้อ-ขาย + ประวัติการฟาม
+  // unit/count = ความละเอียดของแท่งกราฟ, days/months/years = ช่วงย้อนหลังของ "ประวัติ"
   var CHART_TIMEFRAME_CONFIG = {
-    '1d': { unit:'day', count:1, label:'วันนี้' },
-    '3d': { unit:'day', count:3, label:'3 วันล่าสุด' },
-    '5d': { unit:'day', count:5, label:'5 วันล่าสุด' },
-    '7d': { unit:'day', count:7, label:'7 วันล่าสุด' },
-    '14d': { unit:'day', count:14, label:'14 วันล่าสุด' },
-    '1m': { unit:'week', count:5, label:'1 เดือนล่าสุด' },
-    '3m': { unit:'week', count:13, label:'3 เดือนล่าสุด' },
-    '6m': { unit:'month', count:6, label:'6 เดือนล่าสุด' },
-    '1y': { unit:'month', count:12, label:'1 ปีล่าสุด' }
+    'today': { unit:'day', count:1, label:'วันนี้', days:1 },
+    '7d': { unit:'day', count:7, label:'7วัน', days:7 },
+    '15d': { unit:'day', count:15, label:'15วัน', days:15 },
+    '1m': { unit:'week', count:5, label:'1เดือน', months:1 },
+    '3m': { unit:'week', count:13, label:'3เดือน', months:3 },
+    '6m': { unit:'month', count:6, label:'6เดือน', months:6 },
+    '1y': { unit:'month', count:12, label:'1ปี', years:1 },
+    'all': { unit:'month', count:12, label:'ทั้งหมด' }
   };
+
+  // จุดเริ่มของช่วงเวลาที่ TF ครอบคลุม (null = ทั้งหมด ไม่ตัดอะไรทิ้ง)
+  function tfRangeStartTs(tf){
+    var cfg = CHART_TIMEFRAME_CONFIG[tf];
+    if(!cfg || tf==='all') return null;
+    var d = new Date(); d.setHours(0,0,0,0);
+    if(cfg.days) d.setDate(d.getDate()-(cfg.days-1));
+    else if(cfg.months) d.setMonth(d.getMonth()-cfg.months);
+    else if(cfg.years) d.setFullYear(d.getFullYear()-cfg.years);
+    return d.getTime();
+  }
+
+  // TF "ทั้งหมด" บนกราฟไม่มีจำนวนแท่งตายตัว — ย้อนไปถึงรายการแรกสุดที่มีจริง แล้วเลือก
+  // ความละเอียด วัน/สัปดาห์/เดือน ให้แท่งไม่ถี่จนอ่านไม่ออก (เหมือนที่ 1 ปี ใช้แท่งเดือน)
+  function tfConfigFor(tf, earliestTs){
+    var cfg = CHART_TIMEFRAME_CONFIG[tf] || CHART_TIMEFRAME_CONFIG['7d'];
+    if(tf!=='all') return cfg;
+    if(!earliestTs) return { unit:'day', count:7, label:cfg.label };
+    var now = new Date(); now.setHours(0,0,0,0);
+    var start = new Date(earliestTs); start.setHours(0,0,0,0);
+    var days = Math.floor((now.getTime()-start.getTime())/86400000)+1;
+    if(days<=31) return { unit:'day', count:Math.max(1,days), label:cfg.label };
+    if(days<=182) return { unit:'week', count:Math.ceil(days/7), label:cfg.label };
+    var months = (now.getFullYear()-start.getFullYear())*12 + (now.getMonth()-start.getMonth()) + 1;
+    return { unit:'month', count:Math.min(Math.max(1,months),60), label:cfg.label };
+  }
+
+  function farmEarliestTs(serverId){
+    var min = null;
+    App.farmLog.forEach(function(e){ if(e.serverId!==serverId) return; if(min===null || e.ts<min) min = e.ts; });
+    return min;
+  }
+  function mrEarliestTs(serverId, categoryFilter){
+    var min = null;
+    App.merchantLog.forEach(function(e){
+      if(serverId!=='all' && e.serverId!==serverId) return;
+      if(categoryFilter && categoryFilter!=='all' && (e.category||'zeny')!==categoryFilter) return;
+      if(min===null || e.ts<min) min = e.ts;
+    });
+    return min;
+  }
+  function farmChartCfg(){
+    return tfConfigFor(farmTimeframe, farmTimeframe==='all' ? farmEarliestTs(App.farmServerId) : null);
+  }
+  function mrChartCfg(tf, serverId, categoryFilter){
+    return tfConfigFor(tf, tf==='all' ? mrEarliestTs(serverId, categoryFilter) : null);
+  }
   var hiddenFarmSeries = { earned:false, cost:false, profit:false, avgPerSession:false };
   var farmTimeframe = '7d';
   var farmChartUnit = 'zeny';
@@ -3243,7 +3295,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var curServer = serverRateById(App.farmServerId);
     serverTagEl.textContent = curServer ? curServer.name : '';
     var svg = document.getElementById('farmChartSvg');
-    var cfg = CHART_TIMEFRAME_CONFIG[farmTimeframe] || CHART_TIMEFRAME_CONFIG['7d'];
+    var cfg = farmChartCfg();
     var buckets = farmBuckets(App.farmServerId, cfg.unit, cfg.count, 0);
     var series = FARM_SERIES_KEYS.filter(function(s){ return !hiddenFarmSeries[s]; });
     var W=640, H=220, padL=52, padR=8, padT=10, padB=22;
@@ -3348,7 +3400,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
 
   function renderFarmKpi(){
-    var cfg = CHART_TIMEFRAME_CONFIG[farmTimeframe] || CHART_TIMEFRAME_CONFIG['7d'];
+    var cfg = farmChartCfg();
     var cur = farmBuckets(App.farmServerId, cfg.unit, cfg.count, 0);
     var prev = farmBuckets(App.farmServerId, cfg.unit, cfg.count, 1);
     function sum(arr,k){ return arr.reduce(function(s,b){ return s+b[k]; }, 0); }
@@ -3422,6 +3474,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
 
   var farmHistoryPage = 0;
+  var farmHistoryRange = 'today';
   var editingFarmId = null;
   var farmEditCostBackup = null;
   var farmOcActive = false;
@@ -3429,17 +3482,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   var FARM_HISTORY_PAGE_SIZE = 5;
   var FARM_HISTORY_PAGE_SIZE_OPTIONS = [5,10,15,20,30];
 
-  function farmDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
-
   function renderFarmHistory(){
     var list = document.getElementById('farmHistoryList');
     var pag = document.getElementById('farmHistoryPagination');
-    var fromStr = document.getElementById('farmHistoryFromDate').value || farmDateStr(new Date());
-    var toStr = document.getElementById('farmHistoryToDate').value || farmDateStr(new Date());
-    var fromTs = new Date(fromStr+'T00:00:00').getTime();
-    var toTs = new Date(toStr+'T23:59:59.999').getTime();
+    // ประวัติการฟามใช้ TF ชุดเดียวกับกราฟ ไม่ต้องเลือกวันที่เริ่ม-สิ้นสุดเองแล้ว
+    var startTs = tfRangeStartTs(farmHistoryRange);
     var entries = App.farmLog.filter(function(e){
-      return e.serverId===App.farmServerId && e.ts>=fromTs && e.ts<=toTs;
+      return e.serverId===App.farmServerId && (startTs===null || e.ts>=startTs);
     });
     entries.sort(function(a,b){ return b.ts-a.ts; });
 
@@ -3663,13 +3712,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     renderFarmCostItems();
     renderFarmRareItems();
     renderFarmChart();
-    var fromInput = document.getElementById('farmHistoryFromDate');
-    var toInput = document.getElementById('farmHistoryToDate');
-    var todayStr = farmDateStr(new Date());
-    if(!fromInput.value) fromInput.value = todayStr;
-    if(!toInput.value) toInput.value = todayStr;
-    fromInput.max = todayStr;
-    toInput.max = todayStr;
+    document.getElementById('farmHistoryRange').value = farmHistoryRange;
     renderFarmHistory();
     renderFarmRetiredState();
   }
@@ -3787,7 +3830,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
 
   function renderMrKpi(){
-    var cfg = CHART_TIMEFRAME_CONFIG[mrChartTimeframe] || CHART_TIMEFRAME_CONFIG['7d'];
+    var cfg = mrChartCfg(mrChartTimeframe, mrChartServerId, mrChartCategoryFilter);
     var cur = mrChartBuckets(mrChartTimeframe, mrChartServerId, 0, mrChartCategoryFilter);
     var prev = mrChartBuckets(mrChartTimeframe, mrChartServerId, 1, mrChartCategoryFilter);
     function sum(arr,k){ return arr.reduce(function(s,b){ return s+b[k]; }, 0); }
@@ -4181,7 +4224,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function entryType(e){ return e.type === 'sell' ? 'sell' : 'buy'; }
 
   var MR_HISTORY_DAY_STEP = 30; // rows revealed per "แสดงเพิ่ม" click in the ตามวัน view
-  var MR_HISTORY_RANGE_DAYS = { 'today':1, '7d':7, '30d':30, '90d':90, 'all':null };
   var historyState = { serverId:'all', view:'item', range:'all', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{}, expandedDays:{}, soldOutOpen:null };
 
   function mrDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
@@ -4226,11 +4268,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // (server + ช่วงเวลา + ค้นหา). Both views and the summary tiles are built from this, so
   // the tiles always total exactly what's on screen.
   function historyRangeStartTs(){
-    var days = MR_HISTORY_RANGE_DAYS[historyState.range];
-    if(!days) return null;
-    var d = new Date(); d.setHours(0,0,0,0);
-    d.setDate(d.getDate()-(days-1));
-    return d.getTime();
+    return tfRangeStartTs(historyState.range);
   }
   function historyLineMatches(l){
     if(!historyState.search) return true;
@@ -6159,7 +6197,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     '#tickerServerChips', '#rateChips',
     // ยอดนักฟาม: เปลี่ยนเซิร์ฟเวอร์/หน่วย/ช่วงเวลา/กราฟ/หน้าประวัติ (ไม่รวมฟอร์มบันทึก, ต้นทุน, เรท, แก้/ลบ)
     '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
-    '#farmHistoryFromDate', '#farmHistoryToDate', '#farmHistoryPagination', '.farm-cost-hover', '.farm-profit-hover',
+    '#farmHistoryRange', '#farmHistoryPagination', '.farm-cost-hover', '.farm-profit-hover',
     // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหาได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
     '#partyPanelToggle', '[data-open-history]', '#searchInput',
     // คลังไอเทม: ดูตามระดับ/เปลี่ยนเซิร์ฟเวอร์
@@ -6714,11 +6752,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     renderFarmChart();
   });
 
-  document.getElementById('farmHistoryFromDate').addEventListener('change', function(){
-    farmHistoryPage = 0;
-    renderFarmHistory();
-  });
-  document.getElementById('farmHistoryToDate').addEventListener('change', function(){
+  document.getElementById('farmHistoryRange').addEventListener('change', function(e){
+    farmHistoryRange = e.target.value;
     farmHistoryPage = 0;
     renderFarmHistory();
   });

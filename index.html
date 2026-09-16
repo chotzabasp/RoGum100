@@ -2003,33 +2003,43 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var q = App.profile && App.profile.server_quota;
     return (typeof q === 'number' && q > 0) ? q : 1;
   }
-  // ซื้อโควต้าเซิร์ฟเพิ่ม 1 ช่อง แล้วเปิดเซิร์ฟถัดไปในระบบให้เลย จะได้จบในคลิกเดียว
-  // (สลับเป็นเซิร์ฟอื่นทีหลังได้ที่หน้าตั้งค่า) — แต้มหักที่ฝั่งเซิร์ฟเวอร์เท่านั้น
+  // ซื้อ "ช่องเซิร์ฟเวอร์" เพิ่ม 1 ช่อง — ซื้อแล้วได้แค่โควต้า ยังไม่ผูกกับเซิร์ฟไหน
+  // การ์ดใหม่จะซ้ำกับเซิร์ฟแรกไปก่อน จนกว่าผู้ใช้จะไปเลือกเซิร์ฟที่ 2 เองที่หน้าตั้งค่า
+  // (แต้มหักที่ฝั่งเซิร์ฟเวอร์เท่านั้น ตรงนี้เช็คก่อนแค่เพื่อไม่ต้องยิง RPC ทิ้ง)
   function buyServerSlotFlow(){
-    var mine = myServerIds();
-    var next = SERVER_RATES.filter(function(s){ return mine.indexOf(s.id)===-1; })[0];
-    if(!next){ toast('ไม่มีเซิร์ฟเวอร์อื่นในระบบให้เพิ่มแล้ว'); return; }
+    if(serverQuota() >= SERVER_RATES.length){
+      toast('มีโควต้าครบทุกเซิร์ฟเวอร์ในระบบแล้ว ('+SERVER_RATES.length+' เซิร์ฟเวอร์)');
+      return;
+    }
     var have = (App.profile && App.profile.points) || 0;
     if(have < SERVER_SLOT_COST){
       toast('แต้มไม่พอ (ต้องการ '+SERVER_SLOT_COST+' แต้ม · มีอยู่ '+fmtNum(have)+')');
       return;
     }
-    // showConfirm ใช้ innerHTML เลยต้องขึ้นบรรทัดด้วย <br> และ escape ชื่อเซิร์ฟก่อน
-    showConfirm('เพิ่มเซิร์ฟเวอร์อีก 1 ช่อง ใช้ <b>'+SERVER_SLOT_COST+' แต้ม</b> (เหลือ '+fmtNum(have-SERVER_SLOT_COST)+' แต้ม)<br><br>'+
-      'จะเปิด <b>'+escapeHtml(next.name)+'</b> ให้ทันที — เปลี่ยนเป็นเซิร์ฟอื่นได้ที่หน้าตั้งค่า<br>'+
+    // showConfirm ใช้ innerHTML เลยต้องขึ้นบรรทัดด้วย <br>
+    showConfirm('เพิ่มช่องเซิร์ฟเวอร์อีก 1 ช่อง ใช้ <b>'+SERVER_SLOT_COST+' แต้ม</b> (เหลือ '+fmtNum(have-SERVER_SLOT_COST)+' แต้ม)<br><br>'+
+      'ช่องใหม่จะซ้ำกับเซิร์ฟแรกไปก่อน — ไปเลือกว่าช่องที่ 2 เป็นเซิร์ฟไหนได้ที่หน้า <b>ตั้งค่า</b><br>'+
       'ช่องที่ซื้อเป็นของถาวร ลบการ์ดทิ้งแล้วเพิ่มใหม่ได้ฟรี', function(){
       supa.rpc('buy_server_slot').then(function(res){
         if(res.error){ toast(res.error.message || 'ซื้อโควต้าไม่สำเร็จ'); return; }
-        return supa.rpc('set_my_servers', { p_servers: mine.concat([next.id]) }).then(function(r2){
-          if(r2.error){ toast('ซื้อโควต้าแล้วแต่เปิดเซิร์ฟไม่สำเร็จ: '+r2.error.message); return refreshProfile(); }
-          return refreshProfile().then(function(){
-            pruneServerSelections(true);
-            renderAll();
-            toast('เพิ่ม '+next.name+' แล้ว (ใช้ '+SERVER_SLOT_COST+' แต้ม)');
-          });
+        return refreshProfile().then(function(){
+          addRateSlot();
+          renderAll();
+          toast('ได้ช่องเซิร์ฟเวอร์เพิ่มแล้ว — เลือกเซิร์ฟที่หน้า "ตั้งค่า"');
         });
       }, function(err){ console.warn('buy_server_slot', err); toast('ซื้อโควต้าไม่สำเร็จ ลองใหม่อีกครั้ง'); });
     });
+  }
+  // เพิ่มการ์ดราคา 1 ใบ: ถ้ายังมีเซิร์ฟที่เลือกไว้แต่ยังไม่มีการ์ด ใช้ตัวนั้นก่อน
+  // ถ้าไม่มี (เช่นเพิ่งซื้อช่องแต่ยังไม่ได้เลือกเซิร์ฟที่ 2) ก็ซ้ำกับการ์ดแรกไปก่อน
+  function addRateSlot(){
+    var mine = myServerIds();
+    if(!mine.length) return;
+    var unused = mine.filter(function(id){ return App.rateSlots.indexOf(id)===-1; });
+    App.rateSlots.push(unused.length ? unused[0] : (App.rateSlots[0] || mine[0]));
+    saveRateSlots();
+    syncMerchantServersWithRateSlots();
+    syncTickerServersWithRateSlots();
   }
   // เรียกหลังล็อกอิน และหลังกด "บันทึกเซิร์ฟเวอร์" ในหน้าตั้งค่า —
   // ตัดเซิร์ฟที่ไม่ได้เล่นแล้วออกจากการ์ดราคา/ชิปประกาศ/กล่องซื้อ-ขาย ให้ตรงกับที่เลือกไว้
@@ -2042,7 +2052,15 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     App.rateSlots = App.rateSlots.filter(function(id){ return mine.indexOf(id)!==-1; });
     if(addNew){
       mine.forEach(function(id){
-        if(App.rateSlots.indexOf(id)===-1 && App.rateSlots.length < MAX_RATE_CHIP_SLOTS) App.rateSlots.push(id);
+        if(App.rateSlots.indexOf(id)!==-1) return;
+        // เซิร์ฟที่เพิ่งเลือกเพิ่ม ให้ไปแทนที่ "ช่องที่ซ้ำ" (ช่องที่เพิ่งซื้อมาแล้วยังไม่ได้กำหนดเซิร์ฟ) ก่อน
+        // ถ้าไม่มีช่องซ้ำเหลือ ค่อยเพิ่มการ์ดใหม่ — ไม่งั้นการ์ดจะงอกเกินจำนวนช่องที่ซื้อไว้
+        var dupIdx = -1;
+        for(var i=App.rateSlots.length-1; i>=0; i--){
+          if(App.rateSlots.indexOf(App.rateSlots[i]) !== i){ dupIdx = i; break; }
+        }
+        if(dupIdx !== -1) App.rateSlots[dupIdx] = id;
+        else if(App.rateSlots.length < Math.min(serverQuota(), MAX_RATE_CHIP_SLOTS)) App.rateSlots.push(id);
       });
     }
     if(!App.rateSlots.length) App.rateSlots = defaultRateSlots();
@@ -2830,13 +2848,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     }).join('');
     // ปุ่มนี้ทำ 2 หน้าที่: ถ้ายังมีเซิร์ฟในโควต้าที่ยังไม่ได้วางการ์ด = เพิ่มฟรี
     // ถ้าใช้โควต้าหมดแล้ว = ซื้อโควต้าเพิ่ม 30 แต้ม (ป้ายราคาจะขึ้นให้เห็นก่อนกด)
-    var mineNow = myServerIds();
-    var unusedNow = mineNow.filter(function(id){ return App.rateSlots.indexOf(id)===-1; });
-    var moreInSystem = SERVER_RATES.filter(function(s){ return mineNow.indexOf(s.id)===-1; }).length;
-    var canAdd = App.rateSlots.length < MAX_RATE_CHIP_SLOTS && (unusedNow.length || moreInSystem);
+    var freeSlotLeft = App.rateSlots.length < serverQuota();
+    var canBuyMore = serverQuota() < SERVER_RATES.length;
+    var canAdd = App.rateSlots.length < MAX_RATE_CHIP_SLOTS && (freeSlotLeft || canBuyMore);
     var addBtn = canAdd
       ? '<button type="button" class="stat-chip rate-chip-add" id="addRateChipBtn">+ เพิ่มเซิร์ฟเวอร์'+
-          (unusedNow.length ? '' : ' <span class="rate-chip-cost">'+SERVER_SLOT_COST+' แต้ม</span>')+
+          (freeSlotLeft ? '' : ' <span class="rate-chip-cost">'+SERVER_SLOT_COST+' แต้ม</span>')+
         '</button>'
       : '';
     root.innerHTML = cards + addBtn;
@@ -4997,14 +5014,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(addBtn){
       var mine = myServerIds();
       if(App.rateSlots.length >= MAX_RATE_CHIP_SLOTS || !mine.length) return;
-      var unused = mine.filter(function(id){ return App.rateSlots.indexOf(id)===-1; });
-      if(!unused.length){
-        // โควต้าเต็มแล้ว → ต้องซื้อสล็อตเพิ่มก่อน (หักแต้ม + เพิ่มโควต้า ทำที่ฝั่งเซิร์ฟเวอร์)
+      if(App.rateSlots.length >= serverQuota()){
+        // ใช้ช่องครบโควต้าแล้ว → ต้องซื้อช่องเพิ่มก่อน (หักแต้มที่ฝั่งเซิร์ฟเวอร์)
         buyServerSlotFlow();
         return;
       }
-      App.rateSlots.push(unused[0]);
-      saveRateSlots();
+      addRateSlot();
       renderRateChips();
       syncMerchantServersWithRateSlots();
       syncTickerServersWithRateSlots();

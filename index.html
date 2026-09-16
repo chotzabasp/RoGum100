@@ -2007,19 +2007,20 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // การ์ดใหม่จะซ้ำกับเซิร์ฟแรกไปก่อน จนกว่าผู้ใช้จะไปเลือกเซิร์ฟที่ 2 เองที่หน้าตั้งค่า
   // (แต้มหักที่ฝั่งเซิร์ฟเวอร์เท่านั้น ตรงนี้เช็คก่อนแค่เพื่อไม่ต้องยิง RPC ทิ้ง)
   function buyServerSlotFlow(){
-    if(serverQuota() >= SERVER_RATES.length){
-      toast('มีโควต้าครบทุกเซิร์ฟเวอร์ในระบบแล้ว ('+SERVER_RATES.length+' เซิร์ฟเวอร์)');
-      return;
-    }
     var have = (App.profile && App.profile.points) || 0;
     if(have < SERVER_SLOT_COST){
       toast('แต้มไม่พอ (ต้องการ '+SERVER_SLOT_COST+' แต้ม · มีอยู่ '+fmtNum(have)+')');
       return;
     }
+    // ถ้าโควต้าที่มีอยู่ครอบคลุมทุกเซิร์ฟในระบบแล้ว ช่องใหม่จะยังไม่มีเซิร์ฟให้ใส่
+    // ไม่ห้ามซื้อ (เผื่อมีเซิร์ฟใหม่เข้าระบบ) แต่ต้องบอกให้รู้ตัวก่อนเสียแต้ม
+    var wasteWarn = serverQuota() >= SERVER_RATES.length
+      ? '<br><br><b>หมายเหตุ:</b> ตอนนี้ระบบมี '+SERVER_RATES.length+' เซิร์ฟเวอร์ และคุณมีโควต้า '+serverQuota()+' ช่องแล้ว ช่องที่ซื้อเพิ่มจะยังใช้ไม่ได้จนกว่าจะมีเซิร์ฟเวอร์ใหม่เข้าระบบ'
+      : '';
     // showConfirm ใช้ innerHTML เลยต้องขึ้นบรรทัดด้วย <br>
     showConfirm('เพิ่มช่องเซิร์ฟเวอร์อีก 1 ช่อง ใช้ <b>'+SERVER_SLOT_COST+' แต้ม</b> (เหลือ '+fmtNum(have-SERVER_SLOT_COST)+' แต้ม)<br><br>'+
-      'ช่องใหม่จะซ้ำกับเซิร์ฟแรกไปก่อน — ไปเลือกว่าช่องที่ 2 เป็นเซิร์ฟไหนได้ที่หน้า <b>ตั้งค่า</b><br>'+
-      'ช่องที่ซื้อเป็นของถาวร ลบการ์ดทิ้งแล้วเพิ่มใหม่ได้ฟรี', function(){
+      'ช่องใหม่จะซ้ำกับเซิร์ฟแรกไปก่อน — ไปเลือกว่าช่องใหม่เป็นเซิร์ฟไหนได้ที่หน้า <b>ตั้งค่า</b><br>'+
+      'ช่องที่ซื้อเป็นของถาวร ลบการ์ดทิ้งแล้วเพิ่มใหม่ได้ฟรี'+wasteWarn, function(){
       supa.rpc('buy_server_slot').then(function(res){
         if(res.error){ toast(res.error.message || 'ซื้อโควต้าไม่สำเร็จ'); return; }
         return refreshProfile().then(function(){
@@ -2849,9 +2850,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     // ปุ่มนี้ทำ 2 หน้าที่: ถ้ายังมีเซิร์ฟในโควต้าที่ยังไม่ได้วางการ์ด = เพิ่มฟรี
     // ถ้าใช้โควต้าหมดแล้ว = ซื้อโควต้าเพิ่ม 30 แต้ม (ป้ายราคาจะขึ้นให้เห็นก่อนกด)
     var freeSlotLeft = App.rateSlots.length < serverQuota();
-    var canBuyMore = serverQuota() < SERVER_RATES.length;
-    var canAdd = App.rateSlots.length < MAX_RATE_CHIP_SLOTS && (freeSlotLeft || canBuyMore);
-    var addBtn = canAdd
+    var addBtn = App.rateSlots.length < MAX_RATE_CHIP_SLOTS
       ? '<button type="button" class="stat-chip rate-chip-add" id="addRateChipBtn">+ เพิ่มเซิร์ฟเวอร์'+
           (freeSlotLeft ? '' : ' <span class="rate-chip-cost">'+SERVER_SLOT_COST+' แต้ม</span>')+
         '</button>'

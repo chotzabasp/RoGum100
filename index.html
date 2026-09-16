@@ -2989,7 +2989,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 
   function populateMrChartServerSelect(){
     var sel = document.getElementById('mrChartServerSelect');
-    var ids = historyServerIds();
+    var ids = historyPickerServerIds();
     if(mrChartServerId!=='all' && (mrChartServerId==null || ids.indexOf(mrChartServerId)===-1)){
       mrChartServerId = ids.indexOf(App.currentServerId)!==-1 ? App.currentServerId : (ids[0] || null);
     }
@@ -3869,6 +3869,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       (rows||[]).forEach(function(row){ if(row.stockGroupKey){ row.stockGroupKey = null; row.stockGroup = null; } });
     });
     renderItemRows();
+    // เลือกเซิร์ฟที่กล่องซื้อ-ขาย = ให้ "ประวัติ" กับกราฟกำไรเปลี่ยนตามไปด้วย
+    // จะได้ดูตัวเลขของเซิร์ฟที่กำลังบันทึกอยู่ ไม่ต้องไปไล่เปลี่ยน dropdown ทีละอัน
+    historyState.serverId = id;
+    historyState.dayLimit = MR_HISTORY_DAY_STEP;
+    mrChartServerId = id;
+    renderMerchantHistory();
+    renderMrChart();
   }
 
   function renderMrExchangeRate(){
@@ -4184,11 +4191,19 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     App.merchantLog.forEach(function(e){ if(ids.indexOf(e.serverId)===-1) ids.push(e.serverId); });
     return ids;
   }
+  // รายชื่อเซิร์ฟใน dropdown ของ "ประวัติ" กับกราฟกำไร = เซิร์ฟที่มีข้อมูลบันทึกไว้
+  // บวกเซิร์ฟที่กำลังเลือกอยู่ในกล่องซื้อ-ขาย ถึงเซิร์ฟนั้นจะยังไม่มีข้อมูลก็ต้องเลือกดูได้
+  // ไม่งั้นพอสลับเซิร์ฟที่กล่องซื้อ-ขาย ตัวกรองจะเด้งกลับไปเซิร์ฟอื่นทันที
+  function historyPickerServerIds(){
+    var ids = historyServerIds();
+    if(App.currentServerId && ids.indexOf(App.currentServerId)===-1) ids = ids.concat([App.currentServerId]);
+    return ids;
+  }
 
   var lastHistoryServerIdsKey = null;
   function populateHistoryServerFilter(){
     var sel = document.getElementById('historyServerFilter');
-    var ids = historyServerIds();
+    var ids = historyPickerServerIds();
     if(historyState.serverId!=='all' && ids.indexOf(historyState.serverId)===-1) historyState.serverId = 'all';
     var key = ids.join('|');
     if(key !== lastHistoryServerIdsKey){

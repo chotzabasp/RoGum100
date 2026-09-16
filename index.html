@@ -2152,24 +2152,32 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
-  function loadUserData(email){
+  var RATE_SLOTS_VERSION = 2; // bump to force a one-time reset to the new 1-card default
+  // cloudValues (ไม่บังคับ) = ค่าที่รวมกับคลาวด์แล้ว ชื่อตาม DataKeys — มีค่าไหนใช้ค่านั้นแทน localStorage
+  function loadUserData(email, cloudValues){
     var keys = DataKeys(email);
     App.keys = keys;
+    function read(name, fallback){
+      if(cloudValues && Object.prototype.hasOwnProperty.call(cloudValues, name)){
+        var v = cloudValues[name];
+        return v==null ? fallback : JSON.parse(JSON.stringify(v));
+      }
+      return store(keys[name], fallback);
+    }
     // App.db/App.active (รายการบอส+เวลาที่จับ) โหลดแยกจาก Supabase ใน loadUserBosses()
     App.pendingItems = {};
-    var RATE_SLOTS_VERSION = 2; // bump to force a one-time reset to the new 1-card default
-    if(store(keys.rateSlotsVer, 0) !== RATE_SLOTS_VERSION){
+    if(read('rateSlotsVer', 0) !== RATE_SLOTS_VERSION){
       App.rateSlots = defaultRateChipSlots();
       persist(keys.rateSlots, App.rateSlots);
       persist(keys.rateSlotsVer, RATE_SLOTS_VERSION);
     } else {
-      App.rateSlots = store(keys.rateSlots, null) || defaultRateChipSlots();
+      App.rateSlots = read('rateSlots', null) || defaultRateChipSlots();
     }
     if(App.rateSlots.length > MAX_RATE_CHIP_SLOTS){
       App.rateSlots = App.rateSlots.slice(0, MAX_RATE_CHIP_SLOTS);
       persist(keys.rateSlots, App.rateSlots);
     }
-    App.merchantLog = store(keys.merchantLog, []);
+    App.merchantLog = read('merchantLog', []);
     var merchantLogNeedsIdFix = false;
     App.merchantLog.forEach(function(entry){
       if(!entry.id){ entry.id = uid(); merchantLogNeedsIdFix = true; }
@@ -2185,8 +2193,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       });
     });
     if(merchantLogNeedsIdFix) persist(keys.merchantLog, App.merchantLog);
-    App.merchantServers = store(keys.merchantServers, null) || myServerIds().slice();
-    var storedMerchantItems = store(keys.merchantItems, null);
+    App.merchantServers = read('merchantServers', null) || myServerIds().slice();
+    var storedMerchantItems = read('merchantItems', null);
     if(Array.isArray(storedMerchantItems)){
       // legacy flat list (pre category-split) — carry it over as "item" suggestions
       App.merchantItems = { zeny:[], item:storedMerchantItems, other:[] };
@@ -2195,8 +2203,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       App.merchantItems = storedMerchantItems || { zeny:[], item:[], other:[] };
       if(!App.merchantItems.other) App.merchantItems.other = [];
     }
-    App.merchantExchangeRates = store(keys.merchantExRate, null) || {};
-    App.itemWarehouseStock = store(keys.itemWarehouseStock, null) || {};
+    App.merchantExchangeRates = read('merchantExRate', null) || {};
+    App.itemWarehouseStock = read('itemWarehouseStock', null) || {};
     // Tracks, per server+purchase-line, how much has EVER been dropped into a
     // warehouse tier (increases on drop, decreases only on explicit "undo → back to
     // pending"). This is deliberately separate from live stock qty so that a later
@@ -2204,7 +2212,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     // pending list think the purchase was never warehoused. `null` (key never saved)
     // means a pre-upgrade install: bootstrap it once from whatever is currently
     // sitting in the warehouse so existing users' pending lists don't jump.
-    var claimedQtyLoaded = store(keys.itemLineClaimedQty, null);
+    var claimedQtyLoaded = read('itemLineClaimedQty', null);
     if(claimedQtyLoaded == null){
       claimedQtyLoaded = {};
       Object.keys(App.itemWarehouseStock).forEach(function(serverId){
@@ -2220,24 +2228,493 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       persist(keys.itemLineClaimedQty, claimedQtyLoaded);
     }
     App.itemLineClaimedQty = claimedQtyLoaded;
-    App.itemsServerId = store(keys.itemsServer, null);
-    App.currentServerId = store(keys.currentServer, null);
+    App.itemsServerId = read('itemsServer', null);
+    App.currentServerId = read('currentServer', null);
     if(App.merchantServers.indexOf(App.currentServerId)===-1) App.currentServerId = App.merchantServers[0] || null;
-    App.farmCostItems = store(keys.farmCostItems, {});
-    App.farmExchangeRates = store(keys.farmExRate, null) || {};
-    App.farmMapNames = store(keys.farmMapNames, null) || {};
-    App.farmLog = store(keys.farmLog, []);
-    App.farmServerId = store(keys.farmServer, null) || (SERVER_RATES[0] && SERVER_RATES[0].id) || null;
-    App.tickerServers = store(keys.tickerServers, null) || defaultRateSlots();
-    App.tickerSelectedServers = store(keys.tickerSelectedServers, null) || App.tickerServers.slice();
+    App.farmCostItems = read('farmCostItems', {});
+    App.farmExchangeRates = read('farmExRate', null) || {};
+    App.farmMapNames = read('farmMapNames', null) || {};
+    App.farmLog = read('farmLog', []);
+    var farmLogNeedsIdFix = false;
+    App.farmLog.forEach(function(entry){ if(entry && !entry.id){ entry.id = uid(); farmLogNeedsIdFix = true; } });
+    if(farmLogNeedsIdFix) persist(keys.farmLog, App.farmLog);
+    App.farmServerId = read('farmServer', null) || (SERVER_RATES[0] && SERVER_RATES[0].id) || null;
+    App.tickerServers = read('tickerServers', null) || defaultRateSlots();
+    App.tickerSelectedServers = read('tickerSelectedServers', null) || App.tickerServers.slice();
     App.tickerSelectedServers = App.tickerSelectedServers.filter(function(id){ return App.tickerServers.indexOf(id)!==-1; });
-    App.lastRateUpdateTs = store(keys.lastRateUpdateTs, null);
+    App.lastRateUpdateTs = read('lastRateUpdateTs', null);
     // ประกาศ "รับ M" ไม่ได้อยู่ใน localStorage แล้ว — ย้ายไปเก็บใน Supabase ตาราง announcements
     // (กระดานร่วม ทุกคนเห็นประกาศของกันและกัน) เริ่มจากว่างไว้ก่อน แล้ว loadAnnouncements() เติมให้
     App.rateAnnouncements = [];
   }
-  function saveTickerServers(){ persist(App.keys.tickerServers, App.tickerServers); }
-  function saveTickerSelectedServers(){ persist(App.keys.tickerSelectedServers, App.tickerSelectedServers); }
+  // ---------- ซิงก์ข้อมูลขึ้นคลาวด์ (Supabase) ----------
+  // เดิม ประวัติซื้อ-ขาย / ยอดนักฟาม / คลังไอเทม / การตั้งค่า อยู่ใน localStorage อย่างเดียว → เปิดคนละเครื่อง
+  // ไม่เห็น ล้างเบราว์เซอร์แล้วหายถาวร ตอนนี้คลาวด์เป็นตัวจริง ส่วน localStorage เหลือเป็นแคชในเครื่อง
+  //   ประวัติ (ยาวขึ้นเรื่อยๆ) → ตาราง merchant_entries / farm_entries แถวละรายการ ส่งเฉพาะที่เปลี่ยน
+  //   คลัง + การตั้งค่า (ก้อนเล็ก) → ตาราง user_app_data แถวละหัวข้อ
+  // ทุกการเปลี่ยนแปลงลงคิวรอส่ง (outbox ใน localStorage เก็บแค่ id/ชื่อหัวข้อ) ก่อนยิงขึ้นคลาวด์ —
+  // เน็ตหลุด/ปิดแท็บกลางคัน ของยังอยู่ในเครื่อง รอบหน้าส่งต่อเอง
+  // ข้อควรรู้: คลัง/การตั้งค่าเป็นแบบ "บันทึกทีหลังชนะ" ถ้าสองเครื่องแก้หัวข้อเดียวกันในเวลาใกล้กันมาก
+  // เลยคอยเช็คของใหม่บนคลาวด์ทุกนาที + ทุกครั้งที่กลับมาที่แท็บ ให้ช่วงที่ข้อมูลค้างสั้นที่สุด
+  var CLOUD_ENTRY_SETS = {
+    merchant: { table:'merchant_entries', name:'merchantLog', get:function(){ return App.merchantLog; } },
+    farm:     { table:'farm_entries',     name:'farmLog',     get:function(){ return App.farmLog; } }
+  };
+  // ชื่อหัวข้อ = ชื่อใน DataKeys (ใช้เป็นทั้ง key บนคลาวด์และ key แคชใน localStorage)
+  var CLOUD_KV = {
+    rateSlots:             function(){ return App.rateSlots; },
+    rateSlotsVer:          function(){ return RATE_SLOTS_VERSION; },
+    merchantServers:       function(){ return App.merchantServers; },
+    merchantItems:         function(){ return App.merchantItems; },
+    merchantExRate:        function(){ return App.merchantExchangeRates; },
+    itemWarehouseStock:    function(){ return App.itemWarehouseStock; },
+    itemLineClaimedQty:    function(){ return App.itemLineClaimedQty; },
+    itemsServer:           function(){ return App.itemsServerId; },
+    currentServer:         function(){ return App.currentServerId; },
+    farmCostItems:         function(){ return App.farmCostItems; },
+    farmServer:            function(){ return App.farmServerId; },
+    farmExRate:            function(){ return App.farmExchangeRates; },
+    farmMapNames:          function(){ return App.farmMapNames; },
+    tickerServers:         function(){ return App.tickerServers; },
+    tickerSelectedServers: function(){ return App.tickerSelectedServers; }
+  };
+  // ย้ายข้อมูลครั้งแรกของเครื่องนี้ แต่คลาวด์มีของอยู่แล้ว (เคยย้ายจากอีกเครื่อง): หัวข้อเหล่านี้รวมของสองฝั่ง
+  // ไม่ให้ของในคลัง/ชื่อไอเทมที่จำไว้ของเครื่องนี้หาย — หัวข้ออื่น (เรท เซิร์ฟที่เลือก ฯลฯ) ใช้ของบนคลาวด์
+  var CLOUD_KV_MERGE_FIRST_SYNC = {
+    merchantItems: function(cloud, local){
+      var out = { zeny:[], item:[], other:[] };
+      ['zeny','item','other'].forEach(function(cat){
+        ((cloud && cloud[cat]) || []).concat((local && local[cat]) || []).forEach(function(n){
+          if(out[cat].indexOf(n)===-1) out[cat].push(n);
+        });
+      });
+      return out;
+    },
+    itemWarehouseStock: function(cloud, local){
+      var out = cloudClone(cloud || {});
+      Object.keys(local || {}).forEach(function(serverId){
+        if(!out[serverId]) out[serverId] = {};
+        Object.keys(local[serverId] || {}).forEach(function(tier){
+          var arr = out[serverId][tier] = out[serverId][tier] || [];
+          var have = {};
+          arr.forEach(function(it){ if(it && it.id) have[it.id] = true; });
+          (local[serverId][tier] || []).forEach(function(it){ if(it && !have[it.id]) arr.push(it); });
+        });
+      });
+      return out;
+    },
+    itemLineClaimedQty: function(cloud, local){
+      var out = cloudClone(cloud || {});
+      Object.keys(local || {}).forEach(function(serverId){
+        if(!out[serverId]) out[serverId] = {};
+        Object.keys(local[serverId] || {}).forEach(function(lineId){
+          out[serverId][lineId] = Math.max(out[serverId][lineId] || 0, local[serverId][lineId] || 0);
+        });
+      });
+      return out;
+    }
+  };
+  var cloudSync = {
+    userId:null, email:null,
+    ready:false,       // โหลด+รวมข้อมูลจากคลาวด์สำเร็จแล้วในรอบล็อกอินนี้ (ก่อนหน้านั้นเก็บคิวไว้เฉยๆ ยังไม่ส่ง)
+    outbox:null,       // { merchant:{up:{id:1},del:{id:1}}, farm:{...}, kv:{name:1} }
+    snap:{}, kvSnap:{},// JSON ตอนบันทึกครั้งล่าสุด — ไว้หาว่าอะไรเปลี่ยน
+    knownState:null,   // ผลของ my_app_data_state() ล่าสุดที่รู้ ไว้เช็คว่ามีเครื่องอื่นแก้อะไรไหม
+    chain:Promise.resolve(), flushTimer:null, retryDelay:0, failNotified:false, lastCheck:0
+  };
+
+  function cloudClone(v){ return v===undefined ? undefined : JSON.parse(JSON.stringify(v)); }
+  function cloudOutboxKey(){ return 'mvpwatch_cloudoutbox_'+cloudSync.email; }
+  function cloudSyncedKey(){ return 'mvpwatch_cloudsynced_'+cloudSync.email; }
+  function cloudReadOutbox(){
+    var saved = store(cloudOutboxKey(), null) || {};
+    var out = { kv: saved.kv || {} };
+    Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){
+      out[set] = { up: (saved[set] && saved[set].up) || {}, del: (saved[set] && saved[set].del) || {} };
+    });
+    return out;
+  }
+  function cloudSaveOutbox(){ if(cloudSync.userId && cloudSync.outbox) persist(cloudOutboxKey(), cloudSync.outbox); }
+  function cloudHasFlushableWork(){
+    var ob = cloudSync.outbox;
+    if(!ob) return false;
+    if(Object.keys(ob.kv).length) return true;
+    if(isExpiredAccount()) return false; // บัญชีหมดอายุเขียนประวัติไม่ได้ — คิวค้างไว้จนต่ออายุ
+    return Object.keys(CLOUD_ENTRY_SETS).some(function(set){
+      return Object.keys(ob[set].up).length || Object.keys(ob[set].del).length;
+    });
+  }
+  function cloudJsonIndex(arr){
+    var idx = {};
+    (arr || []).forEach(function(e){ if(e && e.id) idx[e.id] = JSON.stringify(e); });
+    return idx;
+  }
+  function cloudResetSnapshots(){
+    cloudSync.snap = {};
+    Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){ cloudSync.snap[set] = cloudJsonIndex(CLOUD_ENTRY_SETS[set].get()); });
+    cloudSync.kvSnap = {};
+    Object.keys(CLOUD_KV).forEach(function(name){ cloudSync.kvSnap[name] = JSON.stringify(CLOUD_KV[name]()); });
+  }
+  function cloudFingerprint(){
+    var parts = [];
+    Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){ parts.push(JSON.stringify(CLOUD_ENTRY_SETS[set].get())); });
+    Object.keys(CLOUD_KV).forEach(function(name){ parts.push(JSON.stringify(CLOUD_KV[name]())); });
+    return parts.join('|#|');
+  }
+
+  // เรียกจาก saveMerchantLog / saveFarmLog: หาว่ารายการไหนเพิ่ม/แก้/ถูกลบ แล้วลงคิว
+  function cloudQueueEntries(set){
+    if(!cloudSync.userId || !cloudSync.outbox) return;
+    var snap = cloudSync.snap[set] || {}, next = {}, ob = cloudSync.outbox[set];
+    (CLOUD_ENTRY_SETS[set].get() || []).forEach(function(e){
+      if(!e || !e.id) return;
+      var json = JSON.stringify(e);
+      next[e.id] = json;
+      if(snap[e.id] !== json){ ob.up[e.id] = true; delete ob.del[e.id]; }
+    });
+    Object.keys(snap).forEach(function(id){
+      if(!Object.prototype.hasOwnProperty.call(next, id)){ ob.del[id] = true; delete ob.up[id]; }
+    });
+    cloudSync.snap[set] = next;
+    cloudSaveOutbox();
+    cloudScheduleFlush();
+  }
+  // เรียกจาก save* ของคลัง/การตั้งค่า
+  function cloudQueueKV(name){
+    if(!cloudSync.userId || !cloudSync.outbox || !CLOUD_KV[name]) return;
+    var json = JSON.stringify(CLOUD_KV[name]());
+    if(cloudSync.kvSnap[name] === json) return;
+    cloudSync.kvSnap[name] = json;
+    cloudSync.outbox.kv[name] = true;
+    cloudSaveOutbox();
+    cloudScheduleFlush();
+  }
+
+  // งานซิงก์ทำทีละอย่างตามคิว (ส่ง/ดึง ไม่ทับกัน) และทิ้งงานของบัญชีที่ล็อกเอาต์ไปแล้ว
+  function cloudRun(fn){
+    var userAtStart = cloudSync.userId;
+    var run = cloudSync.chain.then(function(){
+      if(!cloudSync.userId || cloudSync.userId !== userAtStart) return;
+      return fn();
+    });
+    cloudSync.chain = run.catch(function(){});
+    return run;
+  }
+  function cloudScheduleFlush(delay){
+    if(!cloudSync.userId) return;
+    clearTimeout(cloudSync.flushTimer);
+    cloudSync.flushTimer = setTimeout(function(){
+      cloudRun(cloudFlush).catch(function(err){ console.warn('cloudFlush', err); });
+    }, delay==null ? 700 : delay);
+  }
+  function cloudChunks(arr, size){
+    var out = [];
+    for(var i=0;i<arr.length;i+=size) out.push(arr.slice(i, i+size));
+    return out;
+  }
+  function cloudIndexById(arr){
+    var idx = {};
+    (arr || []).forEach(function(e){ if(e && e.id) idx[e.id] = e; });
+    return idx;
+  }
+
+  function cloudFlush(){
+    if(!cloudSync.ready || !App.session) return; // ยังไม่ได้รวมข้อมูลกับคลาวด์ — คิวรอไว้ก่อน
+    var userId = cloudSync.userId, ob = cloudSync.outbox, jobs = [];
+    var entriesAllowed = !isExpiredAccount();
+    Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){
+      if(!entriesAllowed) return;
+      var cfg = CLOUD_ENTRY_SETS[set];
+      var current = cloudIndexById(cfg.get());
+      var rows = [], sent = {};
+      Object.keys(ob[set].up).forEach(function(id){
+        var e = current[id];
+        if(!e){ delete ob[set].up[id]; ob[set].del[id] = true; return; }
+        sent[id] = JSON.stringify(e);
+        rows.push({ user_id:userId, id:id, ts:Math.round(Number(e.ts)||0), server_id:e.serverId || null, data:e });
+      });
+      cloudChunks(rows, 200).forEach(function(part){
+        jobs.push(supa.from(cfg.table).upsert(part, { onConflict:'user_id,id' }).then(function(res){
+          if(res.error) throw res.error;
+          var now = cloudIndexById(cfg.get());
+          part.forEach(function(r){
+            // ระหว่างรอส่งถูกแก้ซ้ำ (JSON ไม่ตรงกับที่ส่งไป) → คงไว้ในคิว รอบหน้าส่งตัวล่าสุด
+            if(!now[r.id] || JSON.stringify(now[r.id]) === sent[r.id]) delete ob[set].up[r.id];
+          });
+        }));
+      });
+      cloudChunks(Object.keys(ob[set].del), 200).forEach(function(ids){
+        jobs.push(supa.from(cfg.table).delete().eq('user_id', userId).in('id', ids).then(function(res){
+          if(res.error) throw res.error;
+          ids.forEach(function(id){ if(!ob[set].up[id]) delete ob[set].del[id]; });
+        }));
+      });
+    });
+    var kvNames = Object.keys(ob.kv).filter(function(name){
+      if(CLOUD_KV[name]) return true;
+      delete ob.kv[name];
+      return false;
+    });
+    if(kvNames.length){
+      var sentKv = {};
+      var kvRows = kvNames.map(function(name){
+        var v = CLOUD_KV[name]();
+        sentKv[name] = JSON.stringify(v);
+        return { user_id:userId, key:name, value: v===undefined ? null : v };
+      });
+      jobs.push(supa.from('user_app_data').upsert(kvRows, { onConflict:'user_id,key' }).then(function(res){
+        if(res.error) throw res.error;
+        kvNames.forEach(function(name){ if(JSON.stringify(CLOUD_KV[name]()) === sentKv[name]) delete ob.kv[name]; });
+      }));
+    }
+    if(!jobs.length){ cloudSaveOutbox(); return; }
+    return Promise.all(jobs.map(function(p){
+      return p.then(function(){ return null; }, function(err){ return err || new Error('sync failed'); });
+    })).then(function(errors){
+      if(cloudSync.userId !== userId) return;
+      cloudSaveOutbox();
+      var failed = errors.filter(function(x){ return x; });
+      if(failed.length){ cloudOnFlushError(failed[0]); return; }
+      cloudOnFlushOk();
+      if(cloudHasFlushableWork()) cloudScheduleFlush(0);
+      // จำสถานะล่าสุดหลังเราส่งเอง จะได้ไม่นับว่าเป็น "ของใหม่จากเครื่องอื่น"
+      return cloudFetchState().then(function(state){ cloudSync.knownState = state; }, function(){});
+    });
+  }
+  function cloudOnFlushError(err){
+    console.warn('cloud sync failed', err);
+    cloudSync.retryDelay = Math.min(60000, cloudSync.retryDelay ? cloudSync.retryDelay*2 : 5000);
+    cloudScheduleFlush(cloudSync.retryDelay);
+    if(!cloudSync.failNotified){
+      cloudSync.failNotified = true;
+      toast('ยังบันทึกขึ้นคลาวด์ไม่ได้ — ข้อมูลยังอยู่ในเครื่องนี้ ระบบจะลองส่งใหม่เอง');
+    }
+  }
+  function cloudOnFlushOk(){
+    cloudSync.retryDelay = 0;
+    if(cloudSync.failNotified){
+      cloudSync.failNotified = false;
+      toast('ส่งข้อมูลที่ค้างขึ้นคลาวด์เรียบร้อยแล้ว');
+    }
+  }
+
+  function cloudFetchState(){
+    return supa.rpc('my_app_data_state').then(function(res){
+      if(res.error) throw res.error;
+      return JSON.stringify(res.data);
+    });
+  }
+  function cloudFetchEntries(table){
+    var userId = cloudSync.userId, all = [];
+    function page(from){
+      return supa.from(table).select('id, data').eq('user_id', userId)
+        .order('ts', { ascending:true }).order('id', { ascending:true })
+        .range(from, from+999).then(function(res){
+          if(res.error) throw res.error;
+          var rows = res.data || [];
+          all = all.concat(rows);
+          return rows.length===1000 ? page(from+1000) : all;
+        });
+    }
+    return page(0);
+  }
+  function cloudFetchAll(){
+    var userId = cloudSync.userId;
+    // อ่านสถานะก่อนตัวข้อมูล: ถ้ามีเครื่องอื่นเขียนแทรกระหว่างดึง รอบเช็คถัดไปจะเห็นว่าเปลี่ยนแล้วดึงใหม่
+    return cloudFetchState().then(function(state){
+      return Promise.all([
+        cloudFetchEntries('merchant_entries'),
+        cloudFetchEntries('farm_entries'),
+        supa.from('user_app_data').select('key, value').eq('user_id', userId).then(function(res){
+          if(res.error) throw res.error;
+          return res.data || [];
+        })
+      ]).then(function(r){ return { state:state, merchant:r[0], farm:r[1], kv:r[2] }; });
+    });
+  }
+
+  // รวมข้อมูลคลาวด์กับของในเครื่อง: คลาวด์เป็นหลัก ยกเว้นของที่ยังค้างในคิวรอส่ง (ใช้ของในเครื่อง)
+  // และถ้าเป็นการย้ายครั้งแรกของเครื่องนี้ รายการที่มีแต่ในเครื่องจะถูกเพิ่มขึ้นคลาวด์ด้วย
+  function cloudApply(cloud){
+    var ob = cloudSync.outbox;
+    var firstSync = !store(cloudSyncedKey(), false);
+    var values = {}, cloudJson = {}, migrated = 0;
+    Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){
+      var cfg = CLOUD_ENTRY_SETS[set];
+      var byId = {};
+      cloudJson[set] = {};
+      (cloud[set] || []).forEach(function(r){
+        if(!r || !r.id || !r.data || typeof r.data!=='object') return;
+        r.data.id = r.id;
+        byId[r.id] = r.data;
+        cloudJson[set][r.id] = JSON.stringify(r.data);
+      });
+      var local = cloudIndexById(cfg.get());
+      if(firstSync){
+        Object.keys(local).forEach(function(id){
+          if(!byId[id]){ byId[id] = local[id]; ob[set].up[id] = true; migrated++; }
+        });
+      }
+      Object.keys(ob[set].up).forEach(function(id){
+        if(local[id]) byId[id] = local[id];
+        else delete ob[set].up[id];
+      });
+      Object.keys(ob[set].del).forEach(function(id){ delete byId[id]; });
+      values[cfg.name] = Object.keys(byId).map(function(id){ return byId[id]; })
+        .sort(function(a, b){ return (Number(a.ts)||0) - (Number(b.ts)||0); });
+    });
+    var cloudKv = {};
+    (cloud.kv || []).forEach(function(r){ if(r && r.key) cloudKv[r.key] = r.value; });
+    Object.keys(CLOUD_KV).forEach(function(name){
+      var inCloud = Object.prototype.hasOwnProperty.call(cloudKv, name);
+      if(ob.kv[name] || !inCloud){
+        values[name] = cloudClone(CLOUD_KV[name]());
+        ob.kv[name] = true;
+      } else if(firstSync && CLOUD_KV_MERGE_FIRST_SYNC[name]){
+        values[name] = CLOUD_KV_MERGE_FIRST_SYNC[name](cloudKv[name], cloudClone(CLOUD_KV[name]()));
+        if(JSON.stringify(values[name]) !== JSON.stringify(cloudKv[name])) ob.kv[name] = true;
+      } else {
+        values[name] = cloudKv[name];
+      }
+    });
+
+    // โหลดผ่าน loadUserData ตัวเดิม เพื่อใช้กฎแปลงข้อมูลเก่า/ค่าเริ่มต้นชุดเดียวกันทั้งหมด
+    var keepAnnouncements = App.rateAnnouncements, keepPendingItems = App.pendingItems;
+    loadUserData(cloudSync.email, values);
+    App.rateAnnouncements = keepAnnouncements;
+    App.pendingItems = keepPendingItems;
+
+    // loadUserData อาจแปลง/เติมค่าบางอย่าง → ส่งตัวที่แปลงแล้วขึ้นไปด้วย
+    Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){
+      (CLOUD_ENTRY_SETS[set].get() || []).forEach(function(e){
+        var cj = e && e.id ? cloudJson[set][e.id] : undefined;
+        if(cj !== undefined && cj !== JSON.stringify(e)) ob[set].up[e.id] = true;
+      });
+    });
+    Object.keys(CLOUD_KV).forEach(function(name){
+      if(JSON.stringify(CLOUD_KV[name]()) !== JSON.stringify(values[name])) ob.kv[name] = true;
+    });
+
+    Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){
+      var cfg = CLOUD_ENTRY_SETS[set];
+      persist(App.keys[cfg.name], cfg.get());
+    });
+    Object.keys(CLOUD_KV).forEach(function(name){ if(App.keys[name]) persist(App.keys[name], CLOUD_KV[name]()); });
+    cloudResetSnapshots();
+    persist(cloudSyncedKey(), true);
+    cloudSaveOutbox();
+    cloudSync.knownState = cloud.state;
+    cloudSync.ready = true;
+    return { firstSync:firstSync, migrated:migrated };
+  }
+
+  function cloudRefresh(opts){
+    opts = opts || {};
+    return cloudRun(function(){
+      var userId = cloudSync.userId;
+      return cloudFetchAll().then(function(cloud){
+        if(cloudSync.userId !== userId) return;
+        var before = opts.initial ? null : cloudFingerprint();
+        var result = cloudApply(cloud);
+        if(result.migrated){
+          toast(isExpiredAccount()
+            ? 'พบประวัติเดิมในเครื่องนี้ '+fmtNum(result.migrated)+' รายการ — จะย้ายขึ้นคลาวด์ให้เมื่อต่ออายุแพ็กเกจ'
+            : 'กำลังย้ายประวัติเดิมในเครื่องนี้ขึ้นคลาวด์ '+fmtNum(result.migrated)+' รายการ — ต่อไปเปิดจากเครื่องไหนก็เห็น');
+        }
+        if(!opts.initial && cloudFingerprint() !== before) renderAfterCloudRefresh();
+        if(cloudHasFlushableWork()) cloudScheduleFlush(0);
+      });
+    });
+  }
+  // เช็คเบาๆ ว่ามีเครื่องอื่นแก้อะไรไหม (จำนวนแถว+เวลาแก้ล่าสุด) ถ้ามีค่อยดึงทั้งก้อน
+  function cloudCheckForChanges(){
+    if(!cloudSync.userId || App.isGuest) return;
+    var now = Date.now();
+    if(now - cloudSync.lastCheck < 10000) return;
+    cloudSync.lastCheck = now;
+    if(!cloudSync.ready){
+      cloudRefresh({}).catch(function(err){ console.warn('cloud load retry', err); });
+      return;
+    }
+    cloudRun(function(){
+      return cloudFetchState().then(function(state){ return state !== cloudSync.knownState; });
+    }).then(function(changed){
+      if(changed) return cloudRefresh({});
+    }).catch(function(err){ console.warn('cloud check', err); });
+  }
+  function renderAfterCloudRefresh(){
+    var active = document.activeElement;
+    function typingIn(sel){
+      return !!(active && active.closest && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName) && active.closest(sel));
+    }
+    if(!typingIn('#rateChips')) renderRateChips();
+    renderTickerServerChips();
+    renderTicker();
+    renderMerchantServers();
+    if(!typingIn('#mrExRateInput')) renderMrExchangeRate();
+    if(!typingIn('#mrItemRows')) renderItemRows();
+    renderMerchantHistory();
+    renderMerchantSummary();
+    renderMrChart();
+    updateItemsRailBadge();
+    if(!document.getElementById('view-items').hidden) renderItemsPage();
+    if(!document.getElementById('view-farm').hidden){
+      if(typingIn('#view-farm')){ renderFarmChart(); renderFarmHistory(); }
+      else renderFarmPage();
+    }
+  }
+  // เริ่มตอนล็อกอิน: โหลด+รวมข้อมูลจากคลาวด์ รอไม่เกิน 8 วิ — ช้า/ล่ม ใช้ของในเครื่องไปก่อน แล้วลองใหม่ทีหลัง
+  function cloudBegin(user){
+    cloudEnd();
+    cloudSync.userId = user.id;
+    cloudSync.email = user.email;
+    cloudSync.outbox = cloudReadOutbox();
+    cloudResetSnapshots();
+    cloudSync.lastCheck = Date.now();
+    var opts = { initial:true };
+    var load = cloudRefresh(opts);
+    return new Promise(function(resolve){
+      var settled = false;
+      var timer = setTimeout(function(){
+        if(settled) return;
+        settled = true;
+        opts.initial = false; // โหลดเสร็จทีหลังเมื่อไหร่ ให้วาดหน้าใหม่เอง
+        console.warn('cloud load slow — showing local data for now');
+        resolve();
+      }, 8000);
+      load.then(function(){
+        if(settled) return;
+        settled = true; clearTimeout(timer); resolve();
+      }, function(err){
+        console.warn('cloud load failed — showing local data for now', err);
+        if(settled) return;
+        settled = true; clearTimeout(timer); resolve();
+      });
+    });
+  }
+  function cloudEnd(){
+    clearTimeout(cloudSync.flushTimer);
+    cloudSync.userId = null;
+    cloudSync.email = null;
+    cloudSync.ready = false;
+    cloudSync.outbox = null;
+    cloudSync.snap = {};
+    cloudSync.kvSnap = {};
+    cloudSync.knownState = null;
+    cloudSync.retryDelay = 0;
+    cloudSync.failNotified = false;
+  }
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) cloudCheckForChanges(); });
+  window.addEventListener('focus', cloudCheckForChanges);
+  window.addEventListener('online', function(){
+    cloudSync.lastCheck = 0;
+    cloudCheckForChanges();
+    if(cloudSync.ready) cloudScheduleFlush(0);
+  });
+  setInterval(function(){ if(!document.hidden) cloudCheckForChanges(); }, 60000);
+
+  function saveTickerServers(){ persist(App.keys.tickerServers, App.tickerServers); cloudQueueKV('tickerServers'); }
+  function saveTickerSelectedServers(){ persist(App.keys.tickerSelectedServers, App.tickerSelectedServers); cloudQueueKV('tickerSelectedServers'); }
   function saveLastRateUpdateTs(){ persist(App.keys.lastRateUpdateTs, App.lastRateUpdateTs); }
 
   // ---------- ประกาศ "รับ M" : กระดานร่วม เก็บใน Supabase ตาราง announcements ----------
@@ -2293,10 +2770,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     App.lastRateUpdateTs = now;
     saveLastRateUpdateTs();
   }
-  function saveMerchantServers(){ persist(App.keys.merchantServers, App.merchantServers); }
-  function saveMerchantItems(){ persist(App.keys.merchantItems, App.merchantItems); }
-  function saveCurrentServer(){ persist(App.keys.currentServer, App.currentServerId); }
-  function saveRateSlots(){ persist(App.keys.rateSlots, App.rateSlots); }
+  function saveMerchantServers(){ persist(App.keys.merchantServers, App.merchantServers); cloudQueueKV('merchantServers'); }
+  function saveMerchantItems(){ persist(App.keys.merchantItems, App.merchantItems); cloudQueueKV('merchantItems'); }
+  function saveCurrentServer(){ persist(App.keys.currentServer, App.currentServerId); cloudQueueKV('currentServer'); }
+  function saveRateSlots(){ persist(App.keys.rateSlots, App.rateSlots); cloudQueueKV('rateSlots'); }
 
   // Keeps the "รายการซื้อ-ขาย" server list mirroring whatever servers are pinned as
   // rate-ticker chips — chips are now the only place servers get added/removed from.
@@ -2324,10 +2801,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     App.tickerSelectedServers = App.tickerSelectedServers.filter(function(id){ return unique.indexOf(id)!==-1; });
     saveTickerSelectedServers();
   }
-  function saveMerchantLog(){ persist(App.keys.merchantLog, App.merchantLog); }
-  function saveMerchantExchangeRates(){ persist(App.keys.merchantExRate, App.merchantExchangeRates); }
-  function saveItemWarehouseStock(){ persist(App.keys.itemWarehouseStock, App.itemWarehouseStock); }
-  function saveItemLineClaimedQty(){ persist(App.keys.itemLineClaimedQty, App.itemLineClaimedQty); }
+  function saveMerchantLog(){ persist(App.keys.merchantLog, App.merchantLog); cloudQueueEntries('merchant'); }
+  function saveMerchantExchangeRates(){ persist(App.keys.merchantExRate, App.merchantExchangeRates); cloudQueueKV('merchantExRate'); }
+  function saveItemWarehouseStock(){ persist(App.keys.itemWarehouseStock, App.itemWarehouseStock); cloudQueueKV('itemWarehouseStock'); }
+  function saveItemLineClaimedQty(){ persist(App.keys.itemLineClaimedQty, App.itemLineClaimedQty); cloudQueueKV('itemLineClaimedQty'); }
   // delta>0 when a line is dropped into a warehouse tier, delta<0 when explicitly
   // undone back to pending. Selling from stock (or restoring a sale) never calls this
   // — that only moves physical qty, it doesn't change what's "claimed" off pending.
@@ -2339,7 +2816,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     else App.itemLineClaimedQty[serverId][lineId] = next;
   }
 
-  function saveItemsServer(){ persist(App.keys.itemsServer, App.itemsServerId); }
+  function saveItemsServer(){ persist(App.keys.itemsServer, App.itemsServerId); cloudQueueKV('itemsServer'); }
   // รายการบอสของผู้ใช้ + เวลาที่จับอยู่ (App.db/App.active) sync กับตาราง user_bosses
   // ใน Supabase โดยตรง แทนการเซฟเป็น blob เดียวใน localStorage แบบเดิม เพื่อให้ข้าม
   // อุปกรณ์ได้ — ฟังก์ชันด้านล่างแทนที่ saveDB()/saveActive() เดิม
@@ -2420,11 +2897,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var b = CATALOG.filter(function(c){ return String(c.id)===String(bossId); })[0];
     return '<div class="log-avatar">'+(b ? bossAvatarHtml(b) : (bossName||'').charAt(0))+'</div>';
   }
-  function saveFarmCostItems(){ persist(App.keys.farmCostItems, App.farmCostItems); }
-  function saveFarmLog(){ persist(App.keys.farmLog, App.farmLog); }
-  function saveFarmServer(){ persist(App.keys.farmServer, App.farmServerId); }
-  function saveFarmExchangeRates(){ persist(App.keys.farmExRate, App.farmExchangeRates); }
-  function saveFarmMapNames(){ persist(App.keys.farmMapNames, App.farmMapNames); }
+  function saveFarmCostItems(){ persist(App.keys.farmCostItems, App.farmCostItems); cloudQueueKV('farmCostItems'); }
+  function saveFarmLog(){ persist(App.keys.farmLog, App.farmLog); cloudQueueEntries('farm'); }
+  function saveFarmServer(){ persist(App.keys.farmServer, App.farmServerId); cloudQueueKV('farmServer'); }
+  function saveFarmExchangeRates(){ persist(App.keys.farmExRate, App.farmExchangeRates); cloudQueueKV('farmExRate'); }
+  function saveFarmMapNames(){ persist(App.keys.farmMapNames, App.farmMapNames); cloudQueueKV('farmMapNames'); }
 
   // ---------- audio ----------
   var actx = null;
@@ -5264,6 +5741,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     // ผิดๆ ตอนกลับมาเป็นผู้เยี่ยมชม — ต้องว่างเปล่าจริงเหมือนบัญชีใหม่เอี่ยม
     App.db = []; App.active = {}; App.markers = {}; App.kills = []; App.partyRoster = [];
     App.viewingHostId = null; App.viewingHostName = null;
+    cloudEnd();
     loadUserData('guest'); // โหลดจาก localStorage namespace 'guest' แยกต่างหาก (ว่างเปล่าเสมอ)
     document.body.classList.add('ro-mode');
     document.getElementById('appScreen').hidden = false;
@@ -5284,6 +5762,9 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       return Promise.all([ loadUserBosses(), loadKills() ]);
     }).then(function(){
       loadUserData(user.email);
+      // ประวัติ/คลัง/การตั้งค่า อยู่บนคลาวด์ — โหลดแล้วรวมกับของในเครื่องก่อนวาดหน้า (ย้ายของเดิมขึ้นให้ครั้งแรก)
+      return cloudBegin(user);
+    }).then(function(){
       pruneServerSelections();
       // ประกาศเป็นกระดานร่วม โหลดแยกแล้วค่อยวาดทับอีกที ไม่บล็อกการเปิดหน้า
       loadAnnouncements().then(function(){

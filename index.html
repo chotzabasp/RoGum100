@@ -1974,7 +1974,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function defaultRateSlots(){ return SERVER_RATES.slice(0,3).map(function(s){ return s.id; }); }
   function defaultRateChipSlots(){ return SERVER_RATES.slice(0,1).map(function(s){ return s.id; }); }
   var MAX_RATE_CHIP_SLOTS = 10;
-  var RATE_ANNOUNCEMENTS_VERSION = 3; // bump to force-clear old test announcements from everyone's storage
   var RATE_MAX_DEVIATION = 0.30; // block a posted price more than ±30% away from the current rate (typo guard)
   var ANNOUNCE_DURATION_OPTIONS = [
     { value:900000,   label:'15 นาที' },
@@ -2004,8 +2003,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       farmCostItems:'mvpwatch_farmcost_'+email, farmLog:'mvpwatch_farmlog_'+email, farmServer:'mvpwatch_farmserver_'+email,
       farmOcHint:'mvpwatch_farmochint_'+email, farmExRate:'mvpwatch_farmexrate_'+email, farmMapNames:'mvpwatch_farmmapnames_'+email,
       tickerServers:'mvpwatch_tickerservers_'+email, tickerSelectedServers:'mvpwatch_tickerselectedservers_'+email,
-      rateAnnouncements:'mvpwatch_rateannouncements_'+email,
-      rateAnnouncementsVer:'mvpwatch_rateannouncementsver_'+email,
       lastRateUpdateTs:'mvpwatch_lastrateupdatets_'+email
     };
   };
@@ -2098,19 +2095,50 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     App.tickerSelectedServers = store(keys.tickerSelectedServers, null) || App.tickerServers.slice();
     App.tickerSelectedServers = App.tickerSelectedServers.filter(function(id){ return App.tickerServers.indexOf(id)!==-1; });
     App.lastRateUpdateTs = store(keys.lastRateUpdateTs, null);
-    if(store(keys.rateAnnouncementsVer, 0) !== RATE_ANNOUNCEMENTS_VERSION){
-      // one-time wipe of old test announcements when this demo's seed data shape changes
-      App.rateAnnouncements = defaultRateAnnouncements();
-      persist(keys.rateAnnouncements, App.rateAnnouncements);
-      persist(keys.rateAnnouncementsVer, RATE_ANNOUNCEMENTS_VERSION);
-    } else {
-      App.rateAnnouncements = store(keys.rateAnnouncements, null) || defaultRateAnnouncements();
-    }
+    // ประกาศ "รับ M" ไม่ได้อยู่ใน localStorage แล้ว — ย้ายไปเก็บใน Supabase ตาราง announcements
+    // (กระดานร่วม ทุกคนเห็นประกาศของกันและกัน) เริ่มจากว่างไว้ก่อน แล้ว loadAnnouncements() เติมให้
+    App.rateAnnouncements = [];
   }
   function saveTickerServers(){ persist(App.keys.tickerServers, App.tickerServers); }
   function saveTickerSelectedServers(){ persist(App.keys.tickerSelectedServers, App.tickerSelectedServers); }
   function saveLastRateUpdateTs(){ persist(App.keys.lastRateUpdateTs, App.lastRateUpdateTs); }
-  function saveRateAnnouncements(){ persist(App.keys.rateAnnouncements, App.rateAnnouncements); }
+
+  // ---------- ประกาศ "รับ M" : กระดานร่วม เก็บใน Supabase ตาราง announcements ----------
+  // RLS: สมาชิกที่ล็อกอินอ่านได้ทุกแถว แต่เขียน/แก้/ลบได้เฉพาะของตัวเอง
+  // แปลงเป็นรูปทรงเดิมที่ทั้งไฟล์ใช้อยู่ ({serverId, buy, userName, userId, ts, expiresAt})
+  // เพื่อไม่ต้องรื้อโค้ด render ทั้งหมด
+  function mapAnnouncement(r){
+    return {
+      id: r.id,
+      serverId: r.server_id,
+      buy: r.buy==null ? null : Number(r.buy),
+      userName: r.user_name,
+      userId: r.user_id,
+      ts: new Date(r.created_at).getTime(),
+      expiresAt: new Date(r.expires_at).getTime(),
+      // ใช้แค่โชว์ในช่อง "ระยะเวลา" (ปิดแก้ไว้) ตอนกดแก้ไขประกาศ
+      durationMs: new Date(r.expires_at).getTime() - new Date(r.created_at).getTime()
+    };
+  }
+  function loadAnnouncements(){
+    if(!App.session){ App.rateAnnouncements = []; return Promise.resolve(); }
+    return supa.from('announcements').select('*')
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending:false })
+      .then(function(res){
+        // ตารางยังไม่ถูกสร้าง / เน็ตหลุด → ปล่อยกระดานว่างไว้ ไม่ทำให้หน้าพัง
+        if(res.error){ console.warn('loadAnnouncements', res.error); return; }
+        App.rateAnnouncements = (res.data||[]).map(mapAnnouncement);
+      });
+  }
+  // โหลดใหม่แล้ววาดใหม่ทั้งแถบ — ใช้หลังลง/แก้/ลบประกาศ และตอน poll ตามรอบ
+  function refreshAnnouncements(){
+    return loadAnnouncements().then(function(){
+      recomputeServerRatesFromAnnouncements();
+      renderRateChips();
+      renderTicker();
+    });
+  }
 
   // The "current buy price" per server tracks what players are actually posting
   // in the ประกาศ รับ M board, refreshed the moment an announcement changes —
@@ -2127,14 +2155,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     });
     App.lastRateUpdateTs = now;
     saveLastRateUpdateTs();
-  }
-  function defaultRateAnnouncements(){
-    var names = ['พ่อค้าตัวอย่าง1','พ่อค้าตัวอย่าง2','พ่อค้าตัวอย่าง3'];
-    var durationMs = 21600000; // 6 ชม. — generous so the seed posts don't vanish right after load
-    return SERVER_RATES.map(function(sv, i){
-      var ts = Date.now()-(i+1)*1800000;
-      return { id:uid(), serverId:sv.id, buy:sv.buy, userName:names[i%names.length], userEmail:'demo-seed', ts:ts, durationMs:durationMs, expiresAt: ts+durationMs };
-    });
   }
   function saveMerchantServers(){ persist(App.keys.merchantServers, App.merchantServers); }
   function saveMerchantItems(){ persist(App.keys.merchantItems, App.merchantItems); }
@@ -2736,12 +2756,9 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var track = document.getElementById('tickerTrack');
     var now = Date.now();
 
-    // prune expired posts so they never linger in storage or in the ticker
-    var live = App.rateAnnouncements.filter(function(a){ return a.expiresAt==null || a.expiresAt>now; });
-    if(live.length !== App.rateAnnouncements.length){
-      App.rateAnnouncements = live;
-      saveRateAnnouncements();
-    }
+    // ตัดประกาศที่หมดอายุออกจากหน่วยความจำ (แถวจริงในฐานข้อมูลถูกกรองด้วย expires_at
+    // ตอน select อยู่แล้ว ตรงนี้ไว้กันอันที่หมดอายุระหว่างที่ยังไม่ได้ poll รอบใหม่)
+    App.rateAnnouncements = App.rateAnnouncements.filter(function(a){ return a.expiresAt==null || a.expiresAt>now; });
 
     var posts = App.rateAnnouncements.filter(function(a){ return App.tickerSelectedServers.indexOf(a.serverId)!==-1; })
                                       .slice().sort(function(a,b){ return b.ts-a.ts; });
@@ -4802,6 +4819,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       return Promise.all([ loadUserBosses(), loadKills() ]);
     }).then(function(){
       loadUserData(user.email);
+      // ประกาศเป็นกระดานร่วม โหลดแยกแล้วค่อยวาดทับอีกที ไม่บล็อกการเปิดหน้า
+      loadAnnouncements().then(function(){
+        recomputeServerRatesFromAnnouncements();
+        renderRateChips();
+        renderTicker();
+      });
       recomputeServerRatesFromAnnouncements();
       document.getElementById('authModal').hidden = true;
       document.getElementById('appScreen').hidden = false;
@@ -6298,7 +6321,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 
     if(entry){
       sel.value = entry.serverId;
-      durSel.value = String(entry.durationMs);
+      // durationMs คำนวณจาก (expires_at - created_at) ซึ่งคลาดจากค่าใน dropdown อยู่หลักมิลลิวินาที
+      // เพราะเวลาเริ่มนับใช้นาฬิกาของเซิร์ฟเวอร์ ไม่ใช่ของเครื่อง — เลยต้องเลือกตัวเลือกที่ใกล้ที่สุด
+      // ไม่งั้นช่องนี้จะโชว์ว่างเปล่าตอนกดแก้ไข
+      durSel.value = String(ANNOUNCE_DURATION_OPTIONS.reduce(function(a,b){
+        return Math.abs(b.value-entry.durationMs) < Math.abs(a.value-entry.durationMs) ? b : a;
+      }).value);
       durSel.disabled = true;
       document.getElementById('postAnnounceTitle').textContent = 'แก้ไขประกาศ';
       document.getElementById('postAnnounceSubmitBtn').textContent = 'บันทึกการแก้ไข';
@@ -6339,27 +6367,33 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         return;
       }
     }
-    if(editingAnnouncementId){
-      var entry = App.rateAnnouncements.filter(function(a){ return a.id===editingAnnouncementId; })[0];
-      if(entry){
-        entry.serverId = serverId;
-        entry.buy = buyVal;
-        // expiresAt / durationMs intentionally untouched — editing does not stop or reset the countdown
-      }
-      saveRateAnnouncements();
+    var btn = this;
+    btn.disabled = true;
+    var done = function(msg){
+      btn.disabled = false;
       closePostAnnouncement();
-      recomputeServerRatesFromAnnouncements();
-      renderTicker();
-      toast('แก้ไขประกาศแล้ว');
+      refreshAnnouncements();
+      toast(msg);
+    };
+    var failed = function(err){
+      btn.disabled = false;
+      console.warn('announcement save', err);
+      toast('บันทึกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง');
+    };
+    if(editingAnnouncementId){
+      // แก้ได้แค่เซิร์ฟเวอร์กับราคา — นาฬิกานับถอยหลังไม่รีเซ็ต (ฝั่ง DB ก็ล็อกไว้ด้วย trigger)
+      supa.from('announcements').update({ server_id:serverId, buy:buyVal })
+        .eq('id', editingAnnouncementId)
+        .then(function(res){ if(res.error) return failed(res.error); done('แก้ไขประกาศแล้ว'); }, failed);
     } else {
       var durationMs = parseInt(document.getElementById('postAnnounceDuration').value, 10);
-      var ts = Date.now();
-      App.rateAnnouncements.push({ id:uid(), serverId:serverId, buy: buyVal, userName: App.profile?App.profile.display_name:'สมาชิก', userEmail: App.session.email, ts:ts, durationMs:durationMs, expiresAt: ts+durationMs });
-      saveRateAnnouncements();
-      closePostAnnouncement();
-      recomputeServerRatesFromAnnouncements();
-      renderTicker();
-      toast('ลงประกาศแล้ว');
+      supa.from('announcements').insert({
+        user_id: App.session.id,
+        user_name: App.profile ? App.profile.display_name : 'สมาชิก',
+        server_id: serverId,
+        buy: buyVal,
+        expires_at: new Date(Date.now()+durationMs).toISOString()
+      }).then(function(res){ if(res.error) return failed(res.error); done('ลงประกาศแล้ว'); }, failed);
     }
   });
 
@@ -6375,9 +6409,9 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 
   function renderMyAnnouncements(){
     var list = document.getElementById('myAnnouncementsList');
-    var mine = App.session ? App.session.email : null;
+    var mine = App.session ? App.session.id : null;
     var now = Date.now();
-    var posts = App.rateAnnouncements.filter(function(a){ return a.userEmail===mine && (a.expiresAt==null || a.expiresAt>now); })
+    var posts = App.rateAnnouncements.filter(function(a){ return a.userId===mine && (a.expiresAt==null || a.expiresAt>now); })
                                       .slice().sort(function(a,b){ return b.ts-a.ts; });
     if(!posts.length){
       list.innerHTML = '<p class="my-announce-empty">คุณยังไม่มีประกาศที่ใช้งานอยู่</p>';
@@ -6419,12 +6453,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(delBtn){
       var id = delBtn.dataset.myAnnounceDel;
       showConfirm('ยืนยันยกเลิกประกาศนี้?', function(){
-        App.rateAnnouncements = App.rateAnnouncements.filter(function(a){ return a.id!==id; });
-        saveRateAnnouncements();
-        recomputeServerRatesFromAnnouncements();
-        renderTicker();
-        renderMyAnnouncements();
-        toast('ยกเลิกประกาศแล้ว');
+        supa.from('announcements').delete().eq('id', id).then(function(res){
+          if(res.error){ console.warn('announcement delete', res.error); toast('ยกเลิกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง'); return; }
+          refreshAnnouncements().then(renderMyAnnouncements);
+          toast('ยกเลิกประกาศแล้ว');
+        }, function(err){ console.warn('announcement delete', err); toast('ยกเลิกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง'); });
       });
     }
   });
@@ -7100,6 +7133,14 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(session) enterApp(session.user); else enterGuestPreview();
   });
   setInterval(function(){ tickTimers(); updateClock(); tickTickerCountdowns(); }, 1000);
+  // กระดานประกาศเป็นของร่วม — ดึงใหม่ทุก 60 วิ เพื่อให้เห็นประกาศที่คนอื่นเพิ่งลง
+  // (ข้ามตอนซ่อนแท็บอยู่ จะได้ไม่ยิงทิ้งเปล่าๆ ตอนเปิดค้างไว้)
+  setInterval(function(){
+    if(App.session && !document.hidden) refreshAnnouncements();
+  }, 60000);
+  document.addEventListener('visibilitychange', function(){
+    if(App.session && !document.hidden) refreshAnnouncements();
+  });
 
   window.addEventListener('pageshow', function(){
     if(!App.session) return;

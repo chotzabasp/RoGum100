@@ -2863,7 +2863,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
             (freeSlotLeft ? '' : ' <span class="rate-chip-cost">'+SERVER_SLOT_COST+' แต้ม</span>')+
           '</span>'+
           // ใช้ไปกี่ช่อง / ซื้อไว้ทั้งหมดกี่ช่อง
-          '<span class="rate-chip-count">('+App.rateSlots.length+' / '+serverQuota()+')</span>'+
+          '<span class="rate-chip-count">('+App.rateSlots.length+'/'+serverQuota()+')</span>'+
         '</button>'
       : '';
     root.innerHTML = cards + addBtn;

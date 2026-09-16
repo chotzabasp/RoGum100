@@ -231,6 +231,9 @@ svg.icon{width:18px;height:18px;display:block}
 .rate-chip-remove:hover{color:var(--danger)}
 .rate-chip-add{border:1px dashed var(--border);background:transparent;color:var(--text-dim);cursor:pointer;align-items:center;justify-content:center;font-size:.8rem}
 .rate-chip-add:hover{border-color:color-mix(in srgb, var(--accent) 50%, var(--border));color:var(--text)}
+.rate-chip-add-label{display:block}
+/* ใช้ไปกี่ช่อง / ซื้อไว้ทั้งหมดกี่ช่อง */
+.rate-chip-count{display:block;margin-top:.2rem;font-size:.72rem;font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;color:var(--text-dim);opacity:.85}
 
 .home-controlbar{display:flex;align-items:center;gap:.6rem;margin-bottom:1.4rem}
 .home-controlbar .search-wrap input{opacity:.6;cursor:not-allowed}
@@ -2064,7 +2067,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         else if(App.rateSlots.length < Math.min(serverQuota(), MAX_RATE_CHIP_SLOTS)) App.rateSlots.push(id);
       });
     }
-    if(!App.rateSlots.length) App.rateSlots = defaultRateSlots();
+    // จำนวนการ์ดห้ามเกินจำนวนช่องที่ซื้อไว้ — กันกรณีโควต้าลดลง หรือมีคนไปแก้ค่าใน
+    // localStorage เพื่อให้ตัวเองมีการ์ดเกินที่จ่ายมา (ตัดท้ายทิ้งให้พอดีโควต้า)
+    var cap = Math.min(serverQuota(), MAX_RATE_CHIP_SLOTS);
+    if(App.rateSlots.length > cap) App.rateSlots = App.rateSlots.slice(0, cap);
+    if(!App.rateSlots.length) App.rateSlots = defaultRateSlots().slice(0, cap);
     saveRateSlots();
     syncMerchantServersWithRateSlots();
     syncTickerServersWithRateSlots();
@@ -2851,8 +2858,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     // ถ้าใช้โควต้าหมดแล้ว = ซื้อโควต้าเพิ่ม 30 แต้ม (ป้ายราคาจะขึ้นให้เห็นก่อนกด)
     var freeSlotLeft = App.rateSlots.length < serverQuota();
     var addBtn = App.rateSlots.length < MAX_RATE_CHIP_SLOTS
-      ? '<button type="button" class="stat-chip rate-chip-add" id="addRateChipBtn">+ เพิ่มเซิร์ฟเวอร์'+
-          (freeSlotLeft ? '' : ' <span class="rate-chip-cost">'+SERVER_SLOT_COST+' แต้ม</span>')+
+      ? '<button type="button" class="stat-chip rate-chip-add" id="addRateChipBtn">'+
+          '<span class="rate-chip-add-label">+ เพิ่มเซิร์ฟเวอร์'+
+            (freeSlotLeft ? '' : ' <span class="rate-chip-cost">'+SERVER_SLOT_COST+' แต้ม</span>')+
+          '</span>'+
+          // ใช้ไปกี่ช่อง / ซื้อไว้ทั้งหมดกี่ช่อง
+          '<span class="rate-chip-count">('+App.rateSlots.length+' / '+serverQuota()+')</span>'+
         '</button>'
       : '';
     root.innerHTML = cards + addBtn;

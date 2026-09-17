@@ -3421,6 +3421,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     // "ยังไม่ขาย" = ของที่ยังค้างตัดสินใจจริงๆ ไม่นับของที่กด "เก็บไว้" แล้ว
     if(applyFilter && lootFilter==='unsold') rows = rows.filter(function(r){ return r.item.soldAmount==null && !r.item.keptAt; });
     if(applyFilter && lootFilter==='kept') rows = rows.filter(function(r){ return !!r.item.keptAt; });
+    // "ทั้งหมด" = ของทุกชิ้นยกเว้นที่กด "เก็บไว้" แล้ว (ย้ายไปอยู่แท็บ "เก็บไว้" แทน ไม่ปนกัน)
+    if(applyFilter && lootFilter==='all') rows = rows.filter(function(r){ return !r.item.keptAt; });
     return rows;
   }
   function currencyLabel(c){ return c==='baht' ? 'บ' : 'z'; }

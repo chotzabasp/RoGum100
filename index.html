@@ -610,43 +610,6 @@ svg.icon{width:18px;height:18px;display:block}
   .mr-tx-calc{grid-column:2;grid-row:2}
   .mr-tx-time{grid-column:3 / span 2;grid-row:2;justify-self:end}
 }
-.mr-dropzone{
-  display:flex;align-items:center;justify-content:center;gap:.5rem;flex-direction:column;
-  border:1.5px dashed var(--border);border-radius:var(--radius-m);padding:1.1rem;
-  color:var(--text-dim);font-size:.8rem;text-align:center;cursor:pointer;
-  background:var(--surface-2);transition:border-color .12s ease, background .12s ease;
-}
-.mr-dropzone:hover,.mr-dropzone:focus-visible{border-color:var(--accent);color:var(--text);background:color-mix(in srgb, var(--accent) 8%, var(--surface-2))}
-.mr-dropzone.dragover{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 14%, var(--surface-2))}
-@keyframes mr-spin{to{transform:rotate(360deg)}}
-/* ---------- รูปไอเทม ---------- */
-/* ปุ่มรูปท้ายช่องชื่อของแต่ละแถว: ว่าง = กรอบประ, มีรูป = รูปย่อ, รูปจากตอนซื้อ = กรอบสีม่วงอ่อน */
-.mr-row-img{flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:var(--radius-s);border:1px dashed var(--border);background:var(--surface-2);color:var(--text-dim);cursor:pointer;overflow:hidden;transition:border-color .12s ease,color .12s ease}
-.mr-row-img:hover,.mr-row-img:focus-visible{border-color:var(--accent);color:var(--text)}
-.mr-row-img .icon{width:16px;height:16px}
-.mr-row-img.has-img{border-style:solid;cursor:zoom-in}
-.mr-row-img.inherited{border-color:color-mix(in srgb, var(--accent) 50%, var(--border))}
-.mr-row-img img{width:100%;height:100%;object-fit:cover;display:block}
-.mr-row-img img:not([src]){visibility:hidden}
-.mr-row-img.loading{border-style:solid;cursor:progress}
-.mr-row-img.loading::after{content:"";width:14px;height:14px;border-radius:50%;border:2px solid color-mix(in srgb, var(--accent) 30%, transparent);border-top-color:var(--accent);animation:mr-spin .7s linear infinite}
-/* ไอคอนรูปหน้าชื่อไอเทมในประวัติ/คลัง — ชี้เมาส์ที่ชื่อ = รูปเด้ง, กดไอคอน = เปิดรูปใหญ่ (มือถือใช้ทางนี้) */
-.item-img-hover{cursor:default}
-.item-img-ico{display:inline-flex;align-items:center;justify-content:center;vertical-align:-2px;width:16px;height:16px;margin-right:.3rem;color:var(--accent);cursor:zoom-in;border-radius:3px}
-.item-img-ico .icon{width:13px;height:13px}
-.item-img-ico:hover{background:color-mix(in srgb, var(--accent) 18%, transparent)}
-.item-img-pop{position:fixed;z-index:120;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);box-shadow:var(--shadow);padding:.3rem;min-width:120px;min-height:44px;display:flex;align-items:center;justify-content:center}
-.item-img-pop img{display:block;max-width:min(360px,60vw);max-height:70vh;border-radius:calc(var(--radius-m) - 4px)}
-.item-img-status{font-size:.74rem;color:var(--text-dim);padding:.4rem .6rem}
-#itemImageLightbox .confirm-backdrop{z-index:92}
-.item-img-lightbox-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:93;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);box-shadow:var(--shadow);padding:2.3rem .9rem .9rem;width:max-content;max-width:92vw;display:flex;flex-direction:column;gap:.7rem;align-items:center}
-.item-img-lightbox-close{position:absolute;top:.35rem;right:.4rem;width:30px;height:30px;border:none;border-radius:var(--radius-s);background:none;color:var(--text-dim);font-size:.95rem;cursor:pointer}
-.item-img-lightbox-close:hover,.item-img-lightbox-close:focus-visible{background:var(--surface-2);color:var(--text)}
-.item-img-lightbox-stage{display:flex;align-items:center;justify-content:center;min-width:180px;min-height:90px}
-.item-img-lightbox-stage img{display:block;max-width:min(86vw,680px);max-height:70vh;border-radius:var(--radius-s)}
-.item-img-lightbox-caption{margin:0;font-size:.82rem;font-weight:600;text-align:center;max-width:46ch;word-break:break-word}
-.item-img-lightbox-box .confirm-actions{width:100%;min-width:240px}
-@media (prefers-reduced-motion: reduce){ .mr-row-img.loading::after{animation:none} }
 .mr-upload-note{font-size:.68rem;color:var(--text-dim);line-height:1.5;margin:0}
 .mr-total-group{display:flex;flex-direction:column;gap:.5rem}
 .mr-total{
@@ -830,7 +793,7 @@ svg.icon{width:18px;height:18px;display:block}
 .expiry-banner .btn{flex:none}
 /* โหมดดูอย่างเดียว: ปุ่ม/ช่องที่ "ทำรายการ" จางลงให้รู้ว่าใช้ไม่ได้ (ตัวกันจริงอยู่ที่ JS) */
 body.ro-mode #postAnnouncementBtn, body.ro-mode .ticker-post-caret, body.ro-mode #mrServerChips, body.ro-mode #mrCategoryToggle, body.ro-mode #mrTypeToggle,
-body.ro-mode #mrExRateInput, body.ro-mode #mrItemRows, body.ro-mode #mrAddRowBtn, body.ro-mode #mrConfirm, body.ro-mode #mrImageInput, body.ro-mode #mrDropzone,
+body.ro-mode #mrExRateInput, body.ro-mode #mrItemRows, body.ro-mode #mrAddRowBtn, body.ro-mode #mrConfirm,
 body.ro-mode #mrHistoryList [data-del], body.ro-mode #mrHistoryList [data-undo-ids],
 body.ro-mode #farmExRateInput, body.ro-mode #farmMapInput, body.ro-mode #farmCostItems, body.ro-mode #farmAddCostRowBtn, body.ro-mode #farmRareItems, body.ro-mode #farmAddRareItemBtn,
 body.ro-mode #farmCountInput, body.ro-mode #farmOcToggle, body.ro-mode #farmEarnedInput, body.ro-mode #farmLogConfirm, body.ro-mode #farmCancelEdit, body.ro-mode [data-farm-edit], body.ro-mode [data-farm-del],
@@ -1299,16 +1262,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
             </div>
           </div>
 
-          <div class="field" id="mrImageField">
-            <label>แนบรูปภาพไอเทม</label>
-            <input type="file" id="mrImageInput" accept="image/*" multiple hidden>
-            <div class="mr-dropzone" id="mrDropzone" tabindex="0">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-              <span>คลิกเลือกรูป ลากมาวาง หรือกด Ctrl+V</span>
-            </div>
-            <p class="mr-upload-note">1 แถวแนบได้ 1 รูป — รูปจะไปอยู่แถวที่ยังไม่มีรูป (ถ้าเต็มแล้วจะเพิ่มแถวใหม่ให้) หรือกดปุ่มรูปท้ายช่องชื่อเพื่อแนบให้แถวนั้นโดยตรง</p>
-          </div>
-
           <div class="field">
             <label>รายการ</label>
             <div class="mr-items" id="mrItemRows"></div>
@@ -1758,25 +1711,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 <div class="chart-tooltip farm-cost-tooltip" id="farmCostTooltip" hidden></div>
 <div class="chart-tooltip farm-cost-tooltip" id="mrEditedTooltip" hidden></div>
 <div class="chart-tooltip farm-cost-tooltip" id="mrRateTooltip" hidden></div>
-
-<!-- รูปไอเทม: กล่องรูปที่เด้งตอนชี้เมาส์ + หน้าต่างดูรูปใหญ่ -->
-<div class="item-img-pop" id="itemImagePop" hidden><img alt="" hidden><span class="item-img-status"></span></div>
-
-<div id="itemImageLightbox" hidden>
-  <div class="confirm-backdrop" data-close-img-lightbox></div>
-  <div class="item-img-lightbox-box" role="dialog" aria-modal="true" aria-label="รูปไอเทม">
-    <button type="button" class="item-img-lightbox-close" id="itemImageLightboxClose" data-close-img-lightbox aria-label="ปิด">✕</button>
-    <div class="item-img-lightbox-stage">
-      <img id="itemImageLightboxImg" alt="" hidden>
-      <span class="item-img-status" id="itemImageLightboxStatus"></span>
-    </div>
-    <p class="item-img-lightbox-caption" id="itemImageLightboxCaption" hidden></p>
-    <div class="confirm-actions" id="itemImageLightboxActions" hidden>
-      <button type="button" class="btn btn-ghost" id="itemImageRemoveBtn">เอารูปออก</button>
-      <button type="button" class="btn btn-gradient" id="itemImageReplaceBtn">เปลี่ยนรูป</button>
-    </div>
-  </div>
-</div>
 
 <div id="confirmOverlay" hidden>
   <div class="confirm-backdrop"></div>
@@ -4846,8 +4780,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
             (isZenyTab
               ? '<input type="text" class="mr-row-name" autocomplete="off" readonly value="'+ZENY_LABEL+'">'
               : '<input type="text" class="mr-row-name" autocomplete="off" maxlength="120" placeholder="'+(App.merchantCategory==='other'?'เช่น : AirTime, สุ่มกาชา, เติมบัตร, จ้างปั้นตัว, อื่นๆ':'เช่น : +5 มัพ (ถ้ามีออฟ+เพิ่มSlot), C.โซฮี, อื่นๆ')+'" value="'+row.name.replace(/"/g,'&quot;')+'">'+
-                '<div class="mr-item-suggest" hidden></div>'+
-                rowImageButtonHtml(row, stockGroups))+
+                '<div class="mr-item-suggest" hidden></div>')+
           '</div>'+
           '<input type="text" inputmode="decimal" class="mr-row-price" placeholder="ราคา" value="'+formatDecimalDisplay(row.price)+'">'+
           '<select class="mr-row-currency" '+(lockFields?'disabled':'')+'>'+currencyOptionsHtml+'</select>'+
@@ -4858,280 +4791,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         slotsHtml+
       '</div>';
     }).join('');
-    hydrateItemThumbs(root);
     updateMerchantTotal();
-  }
-
-  // ---------- รูปไอเทม (แนบได้แถวละ 1 รูป ในรายการซื้อ-ขาย) ----------
-  // ไฟล์รูปเก็บใน Supabase Storage (bucket ส่วนตัว โฟลเดอร์ = user id) ในประวัติเก็บแค่ path ไว้ที่
-  // line.image — ห้ามยัดรูปลง localStorage: จุได้ราว 5MB เต็มเร็ว แล้วประวัติทั้งก้อนจะบันทึกไม่ลงแบบเงียบๆ
-  // ขายจากคลังไม่มีรูปของตัวเอง → ยืมรูปของรายการซื้อต้นทางผ่าน warehouseSale.sourceLines ตอนแสดงผล
-  var ITEM_IMAGE_BUCKET = 'item-images';
-  var ITEM_IMAGE_MAX_SIDE = 1024;                 // ด้านยาวสุดหลังย่อ
-  var ITEM_IMAGE_KEEP_ORIGINAL_BYTES = 250*1024;  // รูปเล็กอยู่แล้ว = เก็บไฟล์เดิม ตัวหนังสือในรูปคมกว่า
-  var ITEM_IMAGE_MAX_BYTES = 1024*1024;           // ต้องตรงกับ file_size_limit ของ bucket
-  var ITEM_IMAGE_ICON = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-  var itemImageUrlCache = {};   // path -> { url, exp } หรือ { promise } ระหว่างรอลิงก์
-  var pendingImageRowId = null; // แถวที่กดปุ่มรูปไว้ รอผู้ใช้เลือกไฟล์
-
-  // ย่อให้ด้านยาวไม่เกิน 1024px แล้วแปลงเป็น WebP (รูป tooltip ในเกมเหลือหลักสิบ KB)
-  function prepareItemImage(file){
-    return new Promise(function(resolve, reject){
-      var src = URL.createObjectURL(file);
-      var img = new Image();
-      img.onload = function(){
-        URL.revokeObjectURL(src);
-        var w = img.naturalWidth, h = img.naturalHeight;
-        var scale = Math.min(1, ITEM_IMAGE_MAX_SIDE/Math.max(w, h));
-        if(scale===1 && file.size<=ITEM_IMAGE_KEEP_ORIGINAL_BYTES && /^image\/(png|jpeg|webp)$/.test(file.type)){
-          resolve(file);
-          return;
-        }
-        var canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(w*scale));
-        canvas.height = Math.max(1, Math.round(h*scale));
-        var ctx = canvas.getContext('2d');
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(function(blob){
-          if(blob && blob.type==='image/webp'){ resolve(blob); return; }
-          // เบราว์เซอร์ที่ทำ WebP ไม่ได้จะคืน PNG (ไฟล์ใหญ่) มาแทน — ถอยไปใช้ JPEG
-          canvas.toBlob(function(jpg){ if(jpg) resolve(jpg); else reject(new Error('encode')); }, 'image/jpeg', 0.9);
-        }, 'image/webp', 0.9);
-      };
-      img.onerror = function(){ URL.revokeObjectURL(src); reject(new Error('decode')); };
-      img.src = src;
-    });
-  }
-  function itemImageExt(type){ return type==='image/png' ? 'png' : (type==='image/jpeg' ? 'jpg' : 'webp'); }
-
-  // ลิงก์ชั่วคราว (1 ชม.) สำหรับเปิดรูปส่วนตัว — จำไว้ใช้ซ้ำ ไม่ขอใหม่ทุกครั้งที่ชี้เมาส์
-  function userItemImageUrl(path){
-    var c = itemImageUrlCache[path];
-    if(c && c.url && c.exp > Date.now()) return Promise.resolve(c.url);
-    if(c && c.promise) return c.promise;
-    if(!App.session) return Promise.reject(new Error('no-session'));
-    var p = supa.storage.from(ITEM_IMAGE_BUCKET).createSignedUrl(path, 3600).then(function(res){
-      if(res.error || !res.data || !res.data.signedUrl) throw (res.error || new Error('no-url'));
-      itemImageUrlCache[path] = { url: res.data.signedUrl, exp: Date.now() + 50*60000 };
-      return res.data.signedUrl;
-    });
-    itemImageUrlCache[path] = { promise: p };
-    p.catch(function(){ delete itemImageUrlCache[path]; });
-    return p;
-  }
-  function hydrateItemThumbs(root){
-    (root || document).querySelectorAll('img[data-thumb-path]:not([src])').forEach(function(img){
-      userItemImageUrl(img.dataset.thumbPath).then(function(url){ if(img.isConnected) img.src = url; }, function(){});
-    });
-  }
-  function removeItemImages(paths){
-    paths = (paths || []).filter(function(p){ return p; });
-    if(!paths.length || !App.session) return;
-    paths.forEach(function(p){ delete itemImageUrlCache[p]; });
-    supa.storage.from(ITEM_IMAGE_BUCKET).remove(paths).then(function(res){
-      if(res.error) console.warn('removeItemImages', res.error);
-    }, function(err){ console.warn('removeItemImages', err); });
-  }
-  function uploadRowImages(rows){
-    var paths = {}, failed = [];
-    return Promise.all(rows.map(function(r){
-      var blob = r.imageBlob;
-      var path = App.session.id+'/'+uid()+'.'+itemImageExt(blob.type);
-      return supa.storage.from(ITEM_IMAGE_BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false })
-        .then(function(res){ if(res.error) throw res.error; paths[r.rid] = path; })
-        .catch(function(err){ console.warn('upload item image', err); failed.push(r.rid); });
-    })).then(function(){ return { paths: paths, failed: failed }; });
-  }
-
-  // รูปของบรรทัดในประวัติ: รูปที่แนบเอง > รูปของรายการซื้อต้นทาง (กรณีขายจากคลัง)
-  function lineImagePath(line){
-    if(!line) return null;
-    if(line.image) return line.image;
-    var sources = line.warehouseSale && line.warehouseSale.sourceLines;
-    if(sources){
-      for(var i=0;i<sources.length;i++){
-        var src = sources[i].lineId ? findMerchantLineById(sources[i].lineId) : null;
-        if(src && src.line.image) return src.line.image;
-      }
-    }
-    return null;
-  }
-  function lineImagePathById(lineId){
-    var found = lineId ? findMerchantLineById(lineId) : null;
-    return found ? lineImagePath(found.line) : null;
-  }
-  function historyGroupImagePath(g){
-    for(var i=0;i<g.tx.length;i++){ var p = lineImagePath(g.tx[i].line); if(p) return p; } // tx เรียงใหม่สุดก่อน
-    return null;
-  }
-  // ล็อตในคลังที่จะถูกขายออกก่อน (เก่าสุด) มีรูปตอนซื้อไหม
-  function stockGroupImagePath(g){
-    if(!g || !g.records) return null;
-    for(var i=0;i<g.records.length;i++){
-      var p = lineImagePathById(g.records[i].lineId);
-      if(p) return p;
-    }
-    return null;
-  }
-  function rowInheritedImagePath(row, stockGroups){
-    if(!row.stockGroupKey || !(App.merchantType==='sell' && App.merchantCategory==='item')) return null;
-    var g = stockGroups
-      ? stockGroups.filter(function(x){ return x.key===row.stockGroupKey; })[0]
-      : findSellableGroup(App.currentServerId, App.merchantCategory, row.stockGroupKey);
-    return stockGroupImagePath(g || row.stockGroup);
-  }
-  function rowAcceptsImage(row){ return !row.imageBlob && !row.imageLoading && !rowInheritedImagePath(row); }
-
-  // ไอคอนรูป + พื้นที่ชี้เมาส์ดูรูป ครอบชื่อไอเทม (ไม่มีรูป = คืนชื่อเดิมตามปกติ)
-  function itemImageNameHtml(path, nameHtml, plainName){
-    if(!path) return nameHtml;
-    return '<span class="item-img-hover" data-img-path="'+escapeHtml(path)+'">'+
-      '<span class="item-img-ico" data-img-view="'+escapeHtml(path)+'" data-img-name="'+escapeHtml(plainName||'')+'" title="ดูรูปไอเทม">'+ITEM_IMAGE_ICON+'</span>'+
-      nameHtml+
-    '</span>';
-  }
-
-  function rowImageButtonHtml(row, stockGroups){
-    if(App.merchantCategory==='zeny') return '';
-    if(row.imageLoading) return '<span class="mr-row-img loading" aria-label="กำลังเตรียมรูป"></span>';
-    if(row.imagePreviewUrl){
-      return '<button type="button" class="mr-row-img has-img" data-row-img="'+row.rid+'" data-img-row="'+row.rid+'" title="ดูรูป / เปลี่ยนรูป" aria-label="ดูรูปที่แนบ"><img src="'+row.imagePreviewUrl+'" alt=""></button>';
-    }
-    var inherited = rowInheritedImagePath(row, stockGroups);
-    if(inherited){
-      return '<button type="button" class="mr-row-img has-img inherited" data-row-img="'+row.rid+'" data-img-path="'+escapeHtml(inherited)+'" title="รูปจากตอนบันทึกซื้อ" aria-label="ดูรูปจากตอนบันทึกซื้อ"><img data-thumb-path="'+escapeHtml(inherited)+'" alt=""></button>';
-    }
-    return '<button type="button" class="mr-row-img empty" data-row-img="'+row.rid+'" title="แนบรูปไอเทมให้แถวนี้" aria-label="แนบรูปไอเทมให้แถวนี้">'+ITEM_IMAGE_ICON+'</button>';
-  }
-
-  // ไฟล์แรกไปที่แถวที่ระบุ (ถ้ามี) ที่เหลือไล่ใส่แถวที่ยังไม่มีรูป เต็มแล้วเพิ่มแถวใหม่ให้
-  function attachImageFiles(files, targetRowId){
-    if(App.merchantCategory==='zeny') return;
-    files = (files || []).filter(function(f){ return f && f.type && f.type.indexOf('image/')===0; });
-    if(!files.length){ toast('รองรับเฉพาะไฟล์รูปภาพ'); return; }
-    var rows = activeRows();
-    var targets = [];
-    var addedRow = false;
-    files.forEach(function(file, i){
-      var row = null;
-      if(i===0 && targetRowId) row = rows.filter(function(r){ return r.rid===targetRowId; })[0] || null;
-      if(!row) row = rows.filter(function(r){ return rowAcceptsImage(r) && targets.indexOf(r)===-1; })[0] || null;
-      if(!row){ row = newItemRow(null, null, null, defaultRowCurrency()); rows.push(row); addedRow = true; }
-      row.imageLoading = true;
-      targets.push(row);
-      prepareItemImage(file).then(function(blob){
-        if(blob.size > ITEM_IMAGE_MAX_BYTES) throw new Error('too-big');
-        if(row.imagePreviewUrl) URL.revokeObjectURL(row.imagePreviewUrl);
-        row.imageBlob = blob;
-        row.imagePreviewUrl = URL.createObjectURL(blob);
-      }).catch(function(err){
-        toast(err && err.message==='too-big' ? 'รูปใหญ่เกิน 1MB แม้ย่อแล้ว — ลองครอปให้เหลือเฉพาะกรอบไอเทม' : 'เปิดไฟล์รูปนี้ไม่ได้');
-      }).then(function(){
-        row.imageLoading = false;
-        refreshRowImageButton(row);
-      });
-    });
-    if(addedRow) renderItemRows();
-    else targets.forEach(refreshRowImageButton);
-  }
-  // เปลี่ยนแค่ปุ่มรูปของแถวนั้น ไม่วาดทั้งฟอร์มใหม่ (กันเคอร์เซอร์หลุดจากช่องที่กำลังพิมพ์)
-  function refreshRowImageButton(row){
-    var rowEl = document.querySelector('#mrItemRows .mr-item-row[data-row-id="'+row.rid+'"]');
-    var old = rowEl && rowEl.querySelector('.mr-row-img');
-    if(!old) return;
-    var tmp = document.createElement('div');
-    tmp.innerHTML = rowImageButtonHtml(row);
-    if(tmp.firstChild) old.parentNode.replaceChild(tmp.firstChild, old);
-    hydrateItemThumbs(rowEl);
-  }
-
-  // ---- กล่องรูปที่เด้งตอนชี้เมาส์ ----
-  var itemImagePopToken = 0;
-  var itemImagePopAnchor = null;
-  function itemImageSourceFor(el){
-    if(el.dataset.imgRow){
-      var row = activeRows().filter(function(r){ return r.rid===el.dataset.imgRow; })[0];
-      return row && row.imagePreviewUrl ? Promise.resolve(row.imagePreviewUrl) : Promise.reject(new Error('no-row'));
-    }
-    return userItemImageUrl(el.dataset.imgPath);
-  }
-  function positionItemImagePop(anchor){
-    var pop = document.getElementById('itemImagePop');
-    var r = anchor.getBoundingClientRect();
-    var pw = pop.offsetWidth, ph = pop.offsetHeight, gap = 12, m = 8;
-    var vw = window.innerWidth, vh = window.innerHeight;
-    var left = r.right + gap;
-    if(left + pw > vw - m) left = r.left - pw - gap;
-    if(left < m) left = Math.max(m, Math.min(vw - pw - m, r.left));
-    var top = Math.max(m, Math.min(vh - ph - m, r.top + r.height/2 - ph/2));
-    pop.style.left = Math.round(left)+'px';
-    pop.style.top = Math.round(top)+'px';
-  }
-  function showItemImagePop(anchor){
-    var pop = document.getElementById('itemImagePop');
-    var img = pop.querySelector('img');
-    var status = pop.querySelector('.item-img-status');
-    var token = ++itemImagePopToken;
-    img.hidden = true;
-    img.removeAttribute('src');
-    status.textContent = 'กำลังโหลดรูป...';
-    status.hidden = false;
-    pop.hidden = false;
-    positionItemImagePop(anchor);
-    itemImageSourceFor(anchor).then(function(url){
-      if(token!==itemImagePopToken) return;
-      img.onload = function(){
-        if(token!==itemImagePopToken) return;
-        status.hidden = true;
-        img.hidden = false;
-        positionItemImagePop(anchor);
-      };
-      img.onerror = function(){ if(token===itemImagePopToken){ status.textContent = 'โหลดรูปไม่ได้'; positionItemImagePop(anchor); } };
-      img.src = url;
-    }).catch(function(){
-      if(token===itemImagePopToken){ status.textContent = 'โหลดรูปไม่ได้'; positionItemImagePop(anchor); }
-    });
-  }
-  function hideItemImagePop(){
-    itemImagePopToken++;
-    itemImagePopAnchor = null;
-    document.getElementById('itemImagePop').hidden = true;
-  }
-
-  // ---- หน้าต่างดูรูปใหญ่ (กดไอคอนรูป / กดรูปย่อในฟอร์ม — ทางหลักบนมือถือที่ไม่มีเมาส์) ----
-  var itemImageLightboxToken = 0;
-  var itemImageLightboxRowId = null;
-  function openItemImageLightbox(opts){
-    hideItemImagePop();
-    var box = document.getElementById('itemImageLightbox');
-    var img = document.getElementById('itemImageLightboxImg');
-    var status = document.getElementById('itemImageLightboxStatus');
-    var caption = document.getElementById('itemImageLightboxCaption');
-    var token = ++itemImageLightboxToken;
-    itemImageLightboxRowId = opts.rowId || null;
-    document.getElementById('itemImageLightboxActions').hidden = !opts.rowId;
-    caption.textContent = opts.caption || '';
-    caption.hidden = !opts.caption;
-    img.hidden = true;
-    img.removeAttribute('src');
-    status.textContent = 'กำลังโหลดรูป...';
-    status.hidden = false;
-    box.hidden = false;
-    (opts.url ? Promise.resolve(opts.url) : userItemImageUrl(opts.path)).then(function(url){
-      if(token!==itemImageLightboxToken) return;
-      img.onload = function(){ if(token===itemImageLightboxToken){ status.hidden = true; img.hidden = false; } };
-      img.onerror = function(){ if(token===itemImageLightboxToken) status.textContent = 'โหลดรูปไม่ได้'; };
-      img.src = url;
-    }).catch(function(){
-      if(token===itemImageLightboxToken) status.textContent = 'โหลดรูปไม่ได้ (รูปอาจถูกลบไปแล้ว)';
-    });
-    document.getElementById('itemImageLightboxClose').focus();
-  }
-  function closeItemImageLightbox(){
-    itemImageLightboxToken++;
-    itemImageLightboxRowId = null;
-    document.getElementById('itemImageLightbox').hidden = true;
   }
 
   function renderNameSuggest(rowEl){
@@ -5172,7 +4832,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     document.querySelectorAll('#mrCategoryToggle .seg-btn').forEach(function(b){
       b.classList.toggle('active', b.dataset.category===cat);
     });
-    document.getElementById('mrImageField').hidden = cat==='zeny';
     document.getElementById('mrExRateField').hidden = cat==='zeny';
     // M is always exactly one fixed row — no "+เพิ่มรายการ" to add more of it.
     document.getElementById('mrAddRowBtn').hidden = cat==='zeny';
@@ -5365,10 +5024,9 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var showZenyTag = (cat==='item' || cat==='other') && isZeny;
     var edited = (e.editHistory && e.editHistory.length) ? ' mr-edited-hover' : '';
     var serverTag = opts.showServer ? ' '+historyServerTag(e.serverId) : '';
-    var imgPath = lineImagePath(l);
     var main = opts.showName
-      ? itemImageNameHtml(imgPath, itemNameWithSlots(l.name||'', l.slots), l.name)+(showZenyTag?zenyNameTag():'')+serverTag
-      : itemImageNameHtml(imgPath, '', l.name)+'<span class="'+edited.trim()+'">'+(opts.timeOnly?fmtTimeShort(e.ts):fmtDateTime(e.ts))+'</span>'+serverTag;
+      ? itemNameWithSlots(l.name||'', l.slots)+(showZenyTag?zenyNameTag():'')+serverTag
+      : '<span class="'+edited.trim()+'">'+(opts.timeOnly?fmtTimeShort(e.ts):fmtDateTime(e.ts))+'</span>'+serverTag;
     var totalHtml = fmtCurrencyAmount(l.total, lineCurrency(l));
     if(isZeny && e.exchangeRate>0) totalHtml += ' <small class="mr-rate-hover">≈ '+fmtNum(farmZenyToBaht(parseFloat(l.total)||0, e.exchangeRate))+' บ</small>';
     return '<div class="mr-tx type-'+t.type+'" data-entry-id="'+e.id+'">'+
@@ -5435,7 +5093,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       '<button type="button" class="mr-ic-head" aria-expanded="'+(open?'true':'false')+'" title="กดเพื่อดูรายการซื้อ-ขายของไอเทมนี้">'+
         '<span class="mr-ic-chev">▸</span>'+
         '<span class="mr-it-namewrap">'+
-          '<span class="mr-it-name">'+itemImageNameHtml(historyGroupImagePath(g), itemNameWithSlots(g.name, g.slots), g.name)+'</span>'+
+          '<span class="mr-it-name">'+itemNameWithSlots(g.name, g.slots)+'</span>'+
           '<span class="mr-it-tags">'+historyCategoryTag(g.category)+(showServer?historyServerTag(g.serverId):'')+'</span>'+
         '</span>'+
       '</button>'+
@@ -5688,8 +5346,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     }, 1800);
   }
 
-  // onCancel (ไม่บังคับ) = เรียกตอนกด "ยกเลิก" หรือกดพื้นหลังปิด
-  function showConfirm(message, onConfirm, onCancel){
+  function showConfirm(message, onConfirm){
     var overlay = document.getElementById('confirmOverlay');
     document.getElementById('confirmMessage').innerHTML = message;
     overlay.hidden = false;
@@ -5699,14 +5356,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     function close(){
       overlay.hidden = true;
       okBtn.removeEventListener('click', onOk);
-      cancelBtn.removeEventListener('click', onCancelClick);
-      backdrop.removeEventListener('click', onCancelClick);
+      cancelBtn.removeEventListener('click', close);
+      backdrop.removeEventListener('click', close);
     }
     function onOk(){ close(); onConfirm(); }
-    function onCancelClick(){ close(); if(onCancel) onCancel(); }
     okBtn.addEventListener('click', onOk);
-    cancelBtn.addEventListener('click', onCancelClick);
-    backdrop.addEventListener('click', onCancelClick);
+    cancelBtn.addEventListener('click', close);
+    backdrop.addEventListener('click', close);
   }
 
   function showFarmRateRequiredPopup(){
@@ -6092,126 +5748,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     renderItemRows();
   });
 
-  // ---------- แนบรูปไอเทม: ช่องใหญ่ด้านบน + ปุ่มรูปท้ายช่องชื่อ + ลากวางบนแถว + Ctrl+V ----------
-  var mrDropzone = document.getElementById('mrDropzone');
-  var mrImageInput = document.getElementById('mrImageInput');
-  function filesFrom(list){ return list ? Array.prototype.slice.call(list) : []; }
-  function dragHasFiles(e){ return !!(e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files')!==-1); }
-  function rowIdForImage(rowEl){
-    var row = rowEl && activeRows().filter(function(r){ return r.rid===rowEl.dataset.rowId; })[0];
-    return row && !rowInheritedImagePath(row) ? row.rid : null;
-  }
-  function openRowImagePicker(rowId){
-    pendingImageRowId = rowId || null;
-    mrImageInput.click();
-  }
-
-  mrDropzone.addEventListener('click', function(){ openRowImagePicker(null); });
-  mrDropzone.addEventListener('keydown', function(e){
-    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openRowImagePicker(null); }
-  });
-  mrImageInput.addEventListener('change', function(e){
-    var files = filesFrom(e.target.files);
-    var target = pendingImageRowId;
-    pendingImageRowId = null;
-    e.target.value = '';
-    if(files.length) attachImageFiles(files, target);
-  });
-  mrDropzone.addEventListener('dragover', function(e){ e.preventDefault(); mrDropzone.classList.add('dragover'); });
-  mrDropzone.addEventListener('dragleave', function(){ mrDropzone.classList.remove('dragover'); });
-  mrDropzone.addEventListener('drop', function(e){
-    e.preventDefault();
-    mrDropzone.classList.remove('dragover');
-    var files = filesFrom(e.dataTransfer && e.dataTransfer.files);
-    if(files.length) attachImageFiles(files, null);
-  });
-  // ลากรูปไปวางบนแถวไหน = แนบให้แถวนั้นเลย
-  document.getElementById('mrItemRows').addEventListener('dragover', function(e){
-    if(App.merchantCategory==='zeny' || !dragHasFiles(e)) return;
-    e.preventDefault();
-  });
-  document.getElementById('mrItemRows').addEventListener('drop', function(e){
-    if(App.merchantCategory==='zeny' || !dragHasFiles(e)) return;
-    e.preventDefault();
-    var files = filesFrom(e.dataTransfer.files);
-    if(files.length) attachImageFiles(files, rowIdForImage(e.target.closest('.mr-item-row')));
-  });
-  document.addEventListener('paste', function(e){
-    if(document.getElementById('view-home').hidden || App.merchantCategory==='zeny') return;
-    if(App.isGuest || isExpiredAccount()) return;
-    if(e.target && e.target.closest && e.target.closest('[id$="Overlay"], #authModal, #itemImageLightbox')) return;
-    var data = e.clipboardData || window.clipboardData;
-    if(!data) return;
-    var items = data.items || [];
-    var files = [], hasText = false;
-    for(var i=0;i<items.length;i++){
-      if(items[i].kind==='file' && items[i].type.indexOf('image/')===0){ var f = items[i].getAsFile(); if(f) files.push(f); }
-      else if(items[i].type==='text/plain') hasText = true;
-    }
-    if(!files.length) return;
-    var active = document.activeElement;
-    var typing = active && /^(INPUT|TEXTAREA)$/.test(active.tagName);
-    // ก๊อปมาทั้งข้อความและรูป (เช่นจากหน้าเว็บ) ระหว่างพิมพ์อยู่ = ตั้งใจวางข้อความ ไม่แย่งไปแนบรูป
-    if(typing && hasText) return;
-    e.preventDefault();
-    // วางตอนเคอร์เซอร์อยู่ในแถวไหน = แนบให้แถวนั้น
-    attachImageFiles(files, rowIdForImage(active && active.closest ? active.closest('#mrItemRows .mr-item-row') : null));
-  });
-
-  // ชี้เมาส์ที่ชื่อไอเทมที่มีรูป = รูปเด้งขึ้นข้างๆ (เฉพาะเมาส์ — จอสัมผัสใช้กดไอคอนแทน)
-  document.addEventListener('pointerover', function(e){
-    if(e.pointerType && e.pointerType!=='mouse') return;
-    var el = e.target.closest ? e.target.closest('[data-img-path],[data-img-row]') : null;
-    if(!el){ if(itemImagePopAnchor) hideItemImagePop(); return; }
-    if(el===itemImagePopAnchor) return;
-    itemImagePopAnchor = el;
-    showItemImagePop(el);
-  });
-  document.addEventListener('pointerout', function(e){
-    if(!itemImagePopAnchor) return;
-    if(e.relatedTarget && itemImagePopAnchor.contains(e.relatedTarget)) return;
-    hideItemImagePop();
-  });
-  document.addEventListener('scroll', function(){ if(itemImagePopAnchor) hideItemImagePop(); }, true);
-
-  // กดไอคอนรูปในประวัติ/คลัง = เปิดรูปใหญ่
-  document.addEventListener('click', function(e){
-    var ico = e.target.closest ? e.target.closest('.item-img-ico') : null;
-    if(!ico) return;
-    e.preventDefault();
-    openItemImageLightbox({ path: ico.dataset.imgView, caption: ico.dataset.imgName });
-  });
-  document.getElementById('itemImageLightbox').addEventListener('click', function(e){
-    if(e.target.closest('[data-close-img-lightbox]')) closeItemImageLightbox();
-  });
-  document.addEventListener('keydown', function(e){
-    if(e.key==='Escape' && !document.getElementById('itemImageLightbox').hidden) closeItemImageLightbox();
-  });
-  document.getElementById('itemImageRemoveBtn').addEventListener('click', function(){
-    var row = activeRows().filter(function(r){ return r.rid===itemImageLightboxRowId; })[0];
-    closeItemImageLightbox();
-    if(!row) return;
-    if(row.imagePreviewUrl) URL.revokeObjectURL(row.imagePreviewUrl);
-    row.imageBlob = null;
-    row.imagePreviewUrl = null;
-    refreshRowImageButton(row);
-  });
-  document.getElementById('itemImageReplaceBtn').addEventListener('click', function(){
-    var rowId = itemImageLightboxRowId;
-    closeItemImageLightbox();
-    openRowImagePicker(rowId);
-  });
-
   document.getElementById('mrItemRows').addEventListener('click', function(e){
-    var imgBtn = e.target.closest('[data-row-img]');
-    if(imgBtn){
-      var imgRow = activeRows().filter(function(r){ return r.rid === imgBtn.dataset.rowImg; })[0];
-      if(!imgRow) return;
-      if(imgRow.imagePreviewUrl) openItemImageLightbox({ url: imgRow.imagePreviewUrl, rowId: imgRow.rid, caption: imgRow.name.trim() });
-      else if(imgBtn.dataset.imgPath) openItemImageLightbox({ path: imgBtn.dataset.imgPath, caption: 'รูปจากตอนบันทึกซื้อ'+(imgRow.name.trim() ? ' · '+imgRow.name.trim() : '') });
-      else openRowImagePicker(imgRow.rid);
-      return;
-    }
     var rmRow = e.target.closest('[data-remove-row]');
     if(rmRow){
       if(rmRow.disabled) return;
@@ -6332,28 +5869,18 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(!e.target.closest('.mr-name-wrap')) hideAllSuggests();
   });
 
-  // บันทึกรายการจริง — แยกออกจากปุ่ม เพราะถ้ามีรูปต้องรออัพรูปเสร็จก่อน
-  // imagePaths = { rid แถว: path รูปที่อัพขึ้นแล้ว } · คืนค่า path ที่ได้ใช้จริง
-  // (บันทึกไม่ผ่าน/แถวนั้นหลุด = ไม่นับ ให้คนเรียกลบรูปที่ไม่ได้ใช้ทิ้ง)
-  function commitMerchantEntry(imagePaths){
-    imagePaths = imagePaths || {};
-    var usedImagePaths = [];
-    var previewUrls = {};
-    if(!App.currentServerId){ toast('เพิ่มเซิร์ฟเวอร์ก่อนบันทึก'); return usedImagePaths; }
+  document.getElementById('mrConfirm').addEventListener('click', function(){
+    if(!App.currentServerId){ toast('เพิ่มเซิร์ฟเวอร์ก่อนบันทึก'); return; }
     var validRows = activeRows().filter(function(r){
       return r.name.trim() && (parseFloat(r.price)>0) && (parseFloat(r.qty)>0);
     });
-    if(!validRows.length){ toast('กรอกชื่อรายการ ราคา และจำนวนอย่างน้อย 1 แถว'); return usedImagePaths; }
+    if(!validRows.length){ toast('กรอกชื่อรายการ ราคา และจำนวนอย่างน้อย 1 แถว'); return; }
     var stockPlans = []; // deferred until after validation — nothing is deducted yet here
     var lines = validRows.map(function(r){
       var name = r.name.trim(), rate = parseFloat(r.price), qty = parseFloat(r.qty), currency = lineCurrency(r);
       var slots = (r.slots || []).map(function(s){ return String(s||'').trim(); }).filter(function(s){ return s; });
       if(App.merchantCategory!=='zeny' && App.merchantItems[App.merchantCategory].indexOf(name)===-1) App.merchantItems[App.merchantCategory].push(name);
       var line = { id: r.lineId||uid(), name:name, rate:rate, qty:qty, currency:currency, total:rate*qty, slots:slots };
-      if(imagePaths[r.rid] && App.merchantCategory!=='zeny'){
-        line.image = imagePaths[r.rid];
-        if(r.imagePreviewUrl) previewUrls[line.image] = r.imagePreviewUrl;
-      }
       if(App.merchantType==='sell' && r.fromStock && r.stockGroupKey){
         // Stock can have grown/shrunk since the row was set to "from stock" (a
         // drop/undo/delete-restore elsewhere touches the same pool/batch) — read it
@@ -6369,7 +5896,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       document.getElementById('mrExRateInput').classList.add('farm-exrate-invalid');
       document.getElementById('mrExRateError').hidden = false;
       showMrRateRequiredPopup();
-      return usedImagePaths;
+      return;
     }
     saveMerchantItems();
 
@@ -6397,12 +5924,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var totalBaht = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?0:l.total); }, 0);
     var totalZeny = lines.reduce(function(s,l){ return s + (l.currency==='zeny'?l.total:0); }, 0);
 
-    lines.forEach(function(l){
-      if(!l.image) return;
-      usedImagePaths.push(l.image);
-      // รูปเพิ่งอัพ: ใช้ไฟล์ในเครื่องโชว์ไปก่อนเลย ไม่ต้องรอขอลิงก์จากเซิร์ฟเวอร์
-      if(previewUrls[l.image]) itemImageUrlCache[l.image] = { url: previewUrls[l.image], exp: Infinity };
-    });
     var newId = uid();
     App.merchantLog.push({ id:newId, ts:Date.now(), serverId:App.currentServerId, lines:lines, totalBaht:totalBaht, totalZeny:totalZeny, exchangeRate: exRate>0 ? exRate : null, type:App.merchantType, category:App.merchantCategory });
     saveMerchantLog();
@@ -6426,40 +5947,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var keepZenyPrice = App.merchantCategory==='zeny' ? activeRows()[0].price : null;
     setActiveRows(App.merchantCategory==='zeny' ? [newZenyRow(keepZenyPrice)] : [newItemRow(null, null, null, defaultRowCurrency())]);
     renderItemRows();
-    return usedImagePaths;
-  }
-
-  var mrSaving = false;
-  function setMrConfirmBusy(busy){
-    var btn = document.getElementById('mrConfirm');
-    btn.disabled = busy;
-    btn.textContent = busy ? 'กำลังอัพรูป...' : 'ยืนยันและบันทึก';
-  }
-  document.getElementById('mrConfirm').addEventListener('click', function(){
-    if(mrSaving) return;
-    function rowIsValid(r){ return r.name.trim() && (parseFloat(r.price)>0) && (parseFloat(r.qty)>0); }
-    var rowsWithImage = App.merchantCategory==='zeny' ? [] : activeRows().filter(function(r){ return r.imageBlob && rowIsValid(r); });
-    // ไม่มีรูปให้อัพ หรือฟอร์มยังบันทึกไม่ได้ → ไปทางเดิม (commit เป็นคนเตือนเองว่าขาดอะไร)
-    if(!rowsWithImage.length || !App.currentServerId){ commitMerchantEntry({}); return; }
-    var needsRate = activeRows().some(function(r){ return rowIsValid(r) && lineCurrency(r)==='zeny'; });
-    if(needsRate && !(merchantExchangeRate(App.currentServerId)>0)){ commitMerchantEntry({}); return; }
-    mrSaving = true;
-    setMrConfirmBusy(true);
-    uploadRowImages(rowsWithImage).then(function(result){
-      mrSaving = false;
-      setMrConfirmBusy(false);
-      var uploaded = Object.keys(result.paths).map(function(k){ return result.paths[k]; });
-      function commitAndCleanup(){
-        var used = commitMerchantEntry(result.paths);
-        removeItemImages(uploaded.filter(function(p){ return used.indexOf(p)===-1; }));
-      }
-      if(!result.failed.length){ commitAndCleanup(); return; }
-      // อัพไม่ขึ้น: ไม่บันทึกเงียบๆ โดยทิ้งรูป — ถามก่อน (ยกเลิก = แถว/รูปยังอยู่ครบ กดบันทึกใหม่ได้)
-      showConfirm('อัพรูปไม่สำเร็จ '+result.failed.length+' จาก '+rowsWithImage.length+' รูป'+
-        '<span class="confirm-detail">ยืนยัน = บันทึกรายการเลย (แถวที่อัพไม่ขึ้นจะไม่มีรูป)<br>ยกเลิก = กลับไปกดบันทึกใหม่อีกครั้ง</span>',
-        commitAndCleanup,
-        function(){ removeItemImages(uploaded); });
-    });
   });
 
   document.getElementById('mrTypeToggle').addEventListener('click', function(e){
@@ -6522,8 +6009,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
           renderItemsPage();
           renderItemRows();
         }
-        // ลบเฉพาะรูปที่แนบกับรายการนี้เอง (รูปที่ยืมมาจากตอนซื้อเป็นของรายการซื้อ ไม่แตะ)
-        if(entry) removeItemImages((entry.lines||[]).map(function(l){ return l.image; }));
         App.merchantLog = App.merchantLog.filter(function(e){ return e.id!==id; });
         saveMerchantLog();
         renderMerchantHistory();
@@ -6552,7 +6037,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // button is handled by the listener above, so it's skipped here.
   document.getElementById('mrHistoryList').addEventListener('click', function(e){
     if(e.target.closest('[data-del]')) return;
-    if(e.target.closest('.item-img-ico')) return; // กดไอคอนรูป = เปิดรูป ไม่ใช่กาง/หุบการ์ด
     var head = e.target.closest('.mr-ic-head');
     if(head){
       var card = head.closest('.mr-ic');
@@ -6668,7 +6152,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         }
         var qty = Math.max(1, Math.round(parseFloat(it.qty)||1));
         groups[key].qty += qty;
-        groups[key].records.push({ id: it.id, qty: qty, ts: it.ts, lineId: it.lineId });
+        groups[key].records.push({ id: it.id, qty: qty, ts: it.ts });
       });
     });
     order.forEach(function(key){ groups[key].records.sort(function(a,b){ return a.ts-b.ts; }); });
@@ -6817,7 +6301,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       var unit = (isZeny && !hasRate) ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
       var showZenyTag = p.category==='item' && isZeny;
       return '<div class="items-pending-row" draggable="true" data-line-id="'+p.lineId+'">'+
-        '<div class="items-pending-row-top"><span class="items-pending-name">'+itemImageNameHtml(lineImagePathById(p.lineId), itemNameWithSlots(p.name, p.slots), p.name)+(showZenyTag?zenyNameTag():'')+'</span><span class="items-pending-amount">'+fmtNum(dispTotal)+' '+unit+'</span></div>'+
+        '<div class="items-pending-row-top"><span class="items-pending-name">'+itemNameWithSlots(p.name, p.slots)+(showZenyTag?zenyNameTag():'')+'</span><span class="items-pending-amount">'+fmtNum(dispTotal)+' '+unit+'</span></div>'+
         '<div class="items-pending-breakdown">'+fmtNum(p.qty)+' x '+fmtNum(dispRate)+' = '+fmtNum(dispTotal)+' '+unit+'</div>'+
         '<div class="items-pending-date">'+fmtDateTime(p.ts)+'</div>'+
       '</div>';
@@ -6859,7 +6343,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         order.push(key);
       }
       var g = groups[key];
-      if(!g.imagePath && found) g.imagePath = lineImagePath(found.line);
       g.qty += Math.max(1, Math.round(parseFloat(it.qty)||1));
       g.recordIds.push(it.id);
       if(it.ts >= g.latestTs){ g.latestTs = it.ts; g.exchangeRate = exchangeRate; }
@@ -6874,7 +6357,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       var total = g.qty * (parseFloat(dispPrice)||0);
       var unit = (isZeny && !hasRate) ? '<span style="color:'+MR_ZENY_COLOR+'">z</span>' : 'บ';
       var zenyBadge = isZeny ? zenyNameTag() : '';
-      return '<div class="items-detail-row"><span>'+(idx+1)+'. '+itemImageNameHtml(g.imagePath, itemNameWithSlots(g.name, g.slots), g.name)+zenyBadge+' <span>x'+fmtNum(g.qty)+' ea</span></span><span class="items-detail-right"><span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(dispPrice)+' = </span><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-ids="'+g.recordIds.join(',')+'" title="ย้อนกลับไปที่รายการที่รอลงคลังทั้งหมด">↩</button></span></div>';
+      return '<div class="items-detail-row"><span>'+(idx+1)+'. '+itemNameWithSlots(g.name, g.slots)+zenyBadge+' <span>x'+fmtNum(g.qty)+' ea</span></span><span class="items-detail-right"><span class="items-detail-breakdown">'+fmtNum(g.qty)+' x '+fmtNum(dispPrice)+' = </span><span class="mono">'+fmtNum(total)+' '+unit+'</span><span class="items-detail-date">'+fmtDateTime(g.latestTs)+'</span><button type="button" class="items-undo-btn" data-undo-tier="'+tier+'" data-undo-ids="'+g.recordIds.join(',')+'" title="ย้อนกลับไปที่รายการที่รอลงคลังทั้งหมด">↩</button></span></div>';
     }).join('');
   }
 
@@ -7302,8 +6785,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     '#mrChartCategoryToggle', '#mrChartServerSelect', '#mrChartTimeframeSelect', '#mrSeriesDropdownBtn', '#mrSeriesDropdown', '#mrSeriesChips', '#mrChartLegend',
     '#historyViewToggle', '#historyServerFilter', '#mrHistorySearch', '#mrHistoryRange', '#mrHistMore', '#mrItSoldToggle', '.mr-ic-head', '.mr-ic-day-head', '.mr-rate-hover', '.mr-edited-hover',
     '#tickerServerChips', '#rateChips',
-    // รูปไอเทม: กดไอคอนดูรูปในประวัติ/คลังได้ (แนบ/เปลี่ยน/เอารูปออกในฟอร์ม = ทำรายการ → กัน)
-    '.item-img-ico', '#itemImageLightbox',
     // ยอดนักฟาม: เปลี่ยนเซิร์ฟเวอร์/หน่วย/ช่วงเวลา/กราฟ/หน้าประวัติ (ไม่รวมฟอร์มบันทึก, ต้นทุน, เรท, แก้/ลบ)
     '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
     '#farmHistoryRange', '#farmHistoryPagination', '.farm-cost-hover', '.farm-profit-hover',

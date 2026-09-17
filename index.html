@@ -698,10 +698,13 @@ svg.icon{width:18px;height:18px;display:block}
 .stat-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center}
 .stat-icon.kills{background:color-mix(in srgb, var(--accent) 18%, transparent);color:var(--accent)}
 .stat-icon.items{background:color-mix(in srgb, var(--success) 18%, transparent);color:var(--success)}
+.stat-icon.sold{background:color-mix(in srgb, var(--warn) 18%, transparent);color:var(--warn)}
+.stat-icon.share{background:color-mix(in srgb, var(--grad-b) 18%, transparent);color:var(--grad-b)}
 .stat-delta{font-size:.7rem;font-weight:700;padding:.1rem .45rem;border-radius:999px;background:var(--surface-2);color:var(--text-dim)}
 .stat-delta.up{color:var(--success);background:color-mix(in srgb, var(--success) 16%, transparent)}
 .stat-tile .num{font-size:1.6rem;font-weight:700;font-family:"JetBrains Mono";font-variant-numeric:tabular-nums}
 .stat-tile .lbl{font-size:.8rem;color:var(--text-dim)}
+.stat-tile .stat-sub{font-size:.78rem;font-weight:600;color:var(--text);font-family:"JetBrains Mono";font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .stat-tile .link{font-size:.74rem;align-self:flex-start;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font-weight:600}
 /* รูปบอส/ไอเทมล่าสุดในการ์ดสถิติ — วางขวาของตัวเลข ไม่มีกรอบ/พื้นหลัง ปล่อยให้รูปลอยเลย */
 .stat-main{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
@@ -1498,11 +1501,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       </div>
       <div class="stat-tile">
         <div class="stat-tile-top">
-          <div class="stat-icon kills"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
-          <span class="stat-delta" id="deltaTodayKills">-</span>
+          <div class="stat-icon sold"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.57 3H4a1 1 0 0 0-1 1v5.57a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.82 0l4.6-4.6a2 2 0 0 0 0-2.82z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div>
+          <span class="stat-delta">ตลอดเวลา</span>
         </div>
-        <div class="stat-main"><div class="stat-main-txt"><span class="num" id="statTodayKills">0</span><span class="lbl">ฆ่าวันนี้</span></div><div class="stat-thumb" id="thumbTodayKills" hidden></div></div>
-        <button class="link" data-open-history="kills-today">ดูทั้งหมด →</button>
+        <div class="stat-main"><div class="stat-main-txt"><span class="num" id="statItemsSold">0</span><span class="lbl">ไอเทมขายแล้ว</span><span class="stat-sub" id="statItemsSoldAmount">0</span></div></div>
+        <button class="link" data-open-history="items-all">ดูทั้งหมด →</button>
       </div>
       <div class="stat-tile">
         <div class="stat-tile-top">
@@ -1514,11 +1517,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       </div>
       <div class="stat-tile">
         <div class="stat-tile-top">
-          <div class="stat-icon items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/><path d="M12 12v8"/></svg></div>
-          <span class="stat-delta" id="deltaTodayItems">-</span>
+          <div class="stat-icon share"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></div>
+          <span class="stat-delta">ตลอดเวลา</span>
         </div>
-        <div class="stat-main"><div class="stat-main-txt"><span class="num" id="statTodayItems">0</span><span class="lbl">ไอเทมวันนี้</span></div><div class="stat-thumb" id="thumbTodayItems" hidden></div></div>
-        <button class="link" data-open-history="items-today">ดูทั้งหมด →</button>
+        <div class="stat-main"><div class="stat-main-txt"><span class="num" id="statMyShare">0</span><span class="lbl">ส่วนแบ่งของฉัน</span><span class="stat-sub" id="statMyShareAmount">0</span></div></div>
+        <button class="link" data-open-history="items-all">ดูทั้งหมด →</button>
       </div>
     </section>
 
@@ -3276,42 +3279,26 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
 
   function computeStats(){
-    var now = Date.now();
-    var today = todayKey(now);
-    var yesterday = todayKey(dayShift(now, -1));
     var totalKills = App.kills.length;
-    var todayKills = App.kills.filter(function(l){ return todayKey(l.ts)===today; }).length;
-    var yestKills = App.kills.filter(function(l){ return todayKey(l.ts)===yesterday; }).length;
     var totalItems = App.kills.reduce(function(s,l){ return s + l.items.length; }, 0);
-    var todayItems = App.kills.filter(function(l){ return todayKey(l.ts)===today; }).reduce(function(s,l){ return s + l.items.length; }, 0);
-    var yestItems = App.kills.filter(function(l){ return todayKey(l.ts)===yesterday; }).reduce(function(s,l){ return s + l.items.length; }, 0);
-    return { totalKills:totalKills, todayKills:todayKills, yestKills:yestKills, totalItems:totalItems, todayItems:todayItems, yestItems:yestItems };
-  }
-
-  function deltaText(today, yesterday){
-    var diff = today - yesterday;
-    if(diff === 0) return { text:'เท่าเมื่อวาน', up:false };
-    return { text:(diff>0?'+':'')+diff+' จากเมื่อวาน', up: diff>0 };
+    var allLootRows = [];
+    App.kills.forEach(function(k){ k.items.forEach(function(it){ allLootRows.push({ kill:k, item:it }); }); });
+    var loot = computeLootTotals(allLootRows);
+    return { totalKills:totalKills, totalItems:totalItems, soldCount:loot.soldCount, sold:loot.sold, mineCount:loot.mineCount, mine:loot.mine };
   }
 
   function renderStats(){
     var s = computeStats();
     document.getElementById('statTotalKills').textContent = s.totalKills;
-    document.getElementById('statTodayKills').textContent = s.todayKills;
     document.getElementById('statTotalItems').textContent = s.totalItems;
-    document.getElementById('statTodayItems').textContent = s.todayItems;
-    var dk = deltaText(s.todayKills, s.yestKills);
-    var di = deltaText(s.todayItems, s.yestItems);
-    var elK = document.getElementById('deltaTodayKills'); elK.textContent = dk.text; elK.className = 'stat-delta'+(dk.up?' up':'');
-    var elI = document.getElementById('deltaTodayItems'); elI.textContent = di.text; elI.className = 'stat-delta'+(di.up?' up':'');
+    document.getElementById('statItemsSold').textContent = s.soldCount;
+    document.getElementById('statItemsSoldAmount').textContent = lootPairText(s.sold);
+    document.getElementById('statMyShare').textContent = s.mineCount;
+    document.getElementById('statMyShareAmount').textContent = lootPairText(s.mine);
     // รูปล่าสุดในการ์ด: การ์ด "ฆ่า" = บอสที่กดฆ่าล่าสุด, การ์ด "ไอเทม" = ไอเทมชิ้นล่าสุด — มีรูปในหลังบ้านถึงจะโชว์ ไม่มีก็ซ่อนช่อง
-    var today = todayKey(Date.now());
     var sorted = App.kills.slice().sort(function(a,b){ return b.ts-a.ts; });
-    var todays = sorted.filter(function(k){ return todayKey(k.ts)===today; });
     setStatThumb('thumbTotalKills', latestBossThumb(sorted));
-    setStatThumb('thumbTodayKills', latestBossThumb(todays));
     setStatThumb('thumbTotalItems', latestItemThumb(sorted));
-    setStatThumb('thumbTodayItems', latestItemThumb(todays));
   }
   function latestBossThumb(kills){
     if(!kills.length) return null;
@@ -3437,20 +3424,29 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     return rows;
   }
   function currencyLabel(c){ return c==='baht' ? 'บ' : 'z'; }
-  function lootSummaryHtml(rows){
-    var sold = { zeny:0, baht:0 }, mine = { zeny:0, baht:0 }, soldCount = 0;
+  // ยอดขาย+ส่วนแบ่งของฉัน คิดจากไอเทมทั้งชุดที่ส่งมา (rows) — ใช้ทั้งในสรุปประวัติการล่า
+  // และการ์ดสถิติหน้าจับเวลาบอส (computeStats ส่ง App.kills ทั้งหมดเข้ามา ไม่กรองตามวัน)
+  function computeLootTotals(rows){
+    var sold = { zeny:0, baht:0 }, mine = { zeny:0, baht:0 }, soldCount = 0, mineCount = 0;
     rows.forEach(function(r){
       var it = r.item;
       if(it.soldAmount==null) return;
       soldCount++;
       sold[it.soldCurrency] += it.soldAmount;
-      if(it.sharedWith.indexOf(App.session.id)!==-1) mine[it.soldCurrency] += it.soldAmount / it.sharedWith.length;
+      if(it.sharedWith.indexOf(App.session.id)!==-1){
+        mineCount++;
+        mine[it.soldCurrency] += it.soldAmount / it.sharedWith.length;
+      }
     });
-    var pair = function(o){ var p=[]; if(o.zeny) p.push(fmtNum(Math.round(o.zeny))+' z'); if(o.baht) p.push(fmtNum(Math.round(o.baht))+' บ'); return p.length ? p.join(' · ') : '0'; };
+    return { sold:sold, mine:mine, soldCount:soldCount, mineCount:mineCount };
+  }
+  function lootPairText(o){ var p=[]; if(o.zeny) p.push(fmtNum(Math.round(o.zeny))+' z'); if(o.baht) p.push(fmtNum(Math.round(o.baht))+' บ'); return p.length ? p.join(' · ') : '0'; }
+  function lootSummaryHtml(rows){
+    var t = computeLootTotals(rows);
     return '<div class="loot-summary">'+
       '<div><span class="lbl">ได้ของทั้งหมด</span><b>'+rows.length+' ชิ้น</b></div>'+
-      '<div><span class="lbl">ขายแล้ว '+soldCount+' ชิ้น</span><b>'+pair(sold)+'</b></div>'+
-      '<div><span class="lbl">ส่วนแบ่งของฉัน</span><b>'+pair(mine)+'</b></div>'+
+      '<div><span class="lbl">ขายแล้ว '+t.soldCount+' ชิ้น</span><b>'+lootPairText(t.sold)+'</b></div>'+
+      '<div><span class="lbl">ส่วนแบ่งของฉัน</span><b>'+lootPairText(t.mine)+'</b></div>'+
     '</div>';
   }
   function lootRowHtml(r){

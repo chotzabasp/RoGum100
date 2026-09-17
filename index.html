@@ -3420,6 +3420,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     entries.forEach(function(k){ k.items.forEach(function(it){ rows.push({ kill:k, item:it }); }); });
     // "ยังไม่ขาย" = ของที่ยังค้างตัดสินใจจริงๆ ไม่นับของที่กด "เก็บไว้" แล้ว
     if(applyFilter && lootFilter==='unsold') rows = rows.filter(function(r){ return r.item.soldAmount==null && !r.item.keptAt; });
+    if(applyFilter && lootFilter==='sold') rows = rows.filter(function(r){ return r.item.soldAmount!=null; });
     if(applyFilter && lootFilter==='kept') rows = rows.filter(function(r){ return !!r.item.keptAt; });
     // "ทั้งหมด" = ของทุกชิ้นยกเว้นที่กด "เก็บไว้" แล้ว (ย้ายไปอยู่แท็บ "เก็บไว้" แทน ไม่ปนกัน)
     if(applyFilter && lootFilter==='all') rows = rows.filter(function(r){ return !r.item.keptAt; });
@@ -3499,9 +3500,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var allRows = lootRows(entries, false);
     var rows = lootRows(entries, true);
     var filterHtml = '<div class="loot-filter">'+
+      '<button type="button" class="'+(lootFilter==='all'?'active':'')+'" data-loot-filter="all">ทั้งหมด</button>'+
       '<button type="button" class="'+(lootFilter==='unsold'?'active':'')+'" data-loot-filter="unsold">ยังไม่ขาย</button>'+
-      '<button type="button" class="'+(lootFilter==='kept'?'active':'')+'" data-loot-filter="kept">เก็บไว้</button>'+
-      '<button type="button" class="'+(lootFilter==='all'?'active':'')+'" data-loot-filter="all">ทั้งหมด</button></div>';
+      '<button type="button" class="'+(lootFilter==='sold'?'active':'')+'" data-loot-filter="sold">ขายแล้ว</button>'+
+      '<button type="button" class="'+(lootFilter==='kept'?'active':'')+'" data-loot-filter="kept">เก็บไว้</button></div>';
     list.innerHTML = lootSummaryHtml(allRows) + filterHtml +
       (rows.length ? rows.map(lootRowHtml).join('') : '<p class="empty-note">ไม่มีไอเทมในช่วงนี้</p>');
   }

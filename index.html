@@ -3045,11 +3045,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
   // ประวัติการฆ่า+ไอเทมของปาร์ตี้ที่กำลังดูอยู่ — ผูกกับหัวปาร์ตี้เหมือน user_bosses
   function loadKills(){
-    return withSkewRetry(function(){ return supa.from('kills').select('id, boss_id, boss_name, killed_at, killed_by, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)')
+    return withSkewRetry(function(){ return supa.from('kills').select('id, boss_id, boss_name, killed_at, killed_by, server_id, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)')
       .eq('host_id', activeOwnerId()).order('killed_at', { ascending:false }).order('created_at', { ascending:false }); }).then(function(res){
       if(res.error){ console.error('loadKills', res.error); App.kills = []; return; }
       App.kills = (res.data||[]).map(function(k){
-        return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(),
+        return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(), serverId:k.server_id || null,
           killedById:k.killed_by || null,
           killedBy:(k.profiles && k.profiles.display_name) || null,
           // เรียงชื่อไอเทมในรอบเดียวกันให้คงที่ — ไม่งั้นหลังแก้ไขแถวจะสลับที่กัน (DB ไม่รับประกันลำดับ)
@@ -3430,7 +3430,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
     list.innerHTML = entries.map(function(l){
       return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body">'+
-        '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+l.killedBy : '')+'</div>'+
+        '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+l.killedBy : '')+killServerTagHtml(l)+'</div>'+
           '<button type="button" class="hist-del" data-del-kill="'+l.id+'" title="ลบรายการนี้">✕</button></div>'+
         '<div class="boss">'+l.bossName+'</div>'+
         '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+itemIconHtml(it.name,'item-ic')+it.name+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div></div>';
@@ -3531,7 +3531,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     return '<div class="log-row loot-row">'+historyAvatarHtml(k.bossId, k.bossName)+'<div class="log-body">'+
       '<div class="loot-head"><div class="boss">'+itemIconHtml(it.name,'item-ic item-ic-lg')+it.name+'</div>'+
         '<div class="loot-head-r">'+pill+action+'<button type="button" class="hist-del" data-del-item="'+it.id+'" title="ลบไอเทมนี้">✕</button></div></div>'+
-      '<div class="when">'+k.bossName+' · '+fmtDateTime(k.ts)+(k.killedBy ? ' · '+k.killedBy : '')+'</div>'+
+      '<div class="when">'+k.bossName+' · '+fmtDateTime(k.ts)+(k.killedBy ? ' · '+k.killedBy : '')+killServerTagHtml(k)+'</div>'+
       bodyHtml+
     '</div></div>';
   }
@@ -3564,6 +3564,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // 'all' = ทุกคน (มีบรรทัด "กดโดย ใคร ×กี่ครั้ง" ใต้ชื่อบอส), 'none' = รอบเก่าที่ไม่รู้ว่าใครกด
   var bossKillerFilter = 'all';
   function killerNameOf(k){ return k.killedById ? (k.killedBy || 'ไม่ทราบชื่อ') : 'ไม่ระบุ'; }
+  // การฆ่าเก่าก่อนมีคอลัมน์ server_id จะไม่มีป้ายนี้ (ไม่เดาให้ กันข้อมูลผิด) — ของใหม่มีตั้งแต่วันที่เพิ่มระบบ
+  function killServerTagHtml(k){ return k.serverId ? ' · '+serverLabel(k.serverId) : ''; }
   function killerOptions(){
     var seen = {}, opts = [];
     (App.partyRoster||[]).forEach(function(p){ if(!seen[p.id]){ seen[p.id] = true; opts.push({ id:p.id, name:p.name }); } });
@@ -8316,7 +8318,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       supa.rpc('record_kill', { p_boss_id: String(boss.id), p_boss_name: boss.name, p_killed_at: new Date(deathTs).toISOString(), p_items: items }).then(function(res){
         if(res.error){ console.error('record_kill', res.error); toast('บันทึกประวัติการฆ่าไม่สำเร็จ: '+res.error.message); return; }
         bossNotifyChanged();
-        loadKills().then(function(){ renderStats(); renderRoster(); });
+        // แปะเซิร์ฟเวอร์ให้การฆ่าที่เพิ่งบันทึก (แค่ไว้โชว์ป้ายในประวัติ ไม่ใช่ตัวตัดสินใจอะไร) — พลาดได้ไม่บล็อกการบันทึกหลัก
+        (App.timersServerId ? supa.rpc('set_kill_server', { p_kill_id: res.data, p_server_id: App.timersServerId }) : Promise.resolve())
+          .then(function(res2){ if(res2 && res2.error) console.error('set_kill_server', res2.error); })
+          .then(function(){ return loadKills(); })
+          .then(function(){ renderStats(); renderRoster(); });
       });
 
       var startedByName = App.profile ? App.profile.display_name : null;

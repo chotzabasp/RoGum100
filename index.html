@@ -3454,7 +3454,9 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function lootRowHtml(r){
     var k = r.kill, it = r.item, roster = App.partyRoster || [];
     var unit = currencyLabel(it.soldCurrency);
-    var shareHtml = roster.length > 1 ? '<div class="loot-line"><span class="loot-lbl">หาร</span>'+roster.map(function(p){
+    // ไม่มีปาร์ตี้ (roster มีแค่ตัวเอง 1 คน) ก็ยังต้องโชว์แถวนี้ ไม่งั้นไม่มีทางติ๊กชื่อตัวเอง
+    // ยอดขายเลยไม่มีวันเข้า "ส่วนแบ่งของฉัน" ได้เลยเพราะ sharedWith ว่างตลอด
+    var shareHtml = roster.length > 0 ? '<div class="loot-line"><span class="loot-lbl">หาร</span>'+roster.map(function(p){
         var on = it.sharedWith.indexOf(p.id)!==-1;
         return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'">'+(on?'✓ ':'')+p.name+'</button>';
       }).join('')+'</div>' : '';

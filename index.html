@@ -3593,10 +3593,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // รวมยอดต่อตัว (ฆ่ากี่ครั้ง/วันนี้/ไอเทมที่เคยได้) เรียงตัวที่ฆ่าล่าสุดขึ้นก่อน
   // killer: null = ไม่แยกคน, 'all' = โชว์บรรทัด "กดโดย", อื่นๆ = กำลังดูคนเดียว (ปุ่ม ✕ ลบเฉพาะรอบของคนนั้น)
   function historyByBossHtml(entries, killer){
+    // แยกการ์ดตาม (บอส, เซิร์ฟเวอร์) ไม่ใช่แค่บอสอย่างเดียว — บอสตัวเดียวกันที่ฆ่าคนละเซิร์ฟ
+    // จะไม่ถูกรวมยอดปนกัน (รอบเก่าที่ไม่มี server_id เก็บไว้ จะรวมเป็นการ์ดเดียวแยกไม่มีป้าย)
     var groups = {}, order = [];
     entries.forEach(function(l){
-      if(!groups[l.bossId]){ groups[l.bossId] = { name:l.bossName, kills:[], items:{}, by:{}, byOrder:[] }; order.push(l.bossId); }
-      var g = groups[l.bossId];
+      var key = l.bossId+''+(l.serverId||'');
+      if(!groups[key]){ groups[key] = { bossId:l.bossId, serverId:l.serverId, name:l.bossName, kills:[], items:{}, by:{}, byOrder:[] }; order.push(key); }
+      var g = groups[key];
       g.kills.push(l);
       var who = killerNameOf(l);
       if(!g.by[who]){ g.by[who] = 0; g.byOrder.push(who); }
@@ -3605,15 +3608,17 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     });
     var today = todayKey(Date.now());
     var delAttr = (killer && killer!=='all') ? ' data-del-killer="'+killer+'"' : '';
-    return order.map(function(id){
-      var g = groups[id];
+    return order.map(function(key){
+      var g = groups[key];
       var todayCount = g.kills.filter(function(l){ return todayKey(l.ts)===today; }).length;
       var names = Object.keys(g.items);
       var byHtml = killer==='all' ? '<div class="hist-by">กดโดย '+g.byOrder.map(function(w){ return escapeHtml(w)+' ×'+g.by[w]; }).join(' · ')+'</div>' : '';
-      return '<div class="log-row">'+historyAvatarHtml(id, g.name)+'<div class="log-body">'+
+      var displayName = g.name+(g.serverId ? ' ('+serverLabel(g.serverId)+')' : '');
+      var svAttr = ' data-del-server="'+(g.serverId||'')+'"';
+      return '<div class="log-row">'+historyAvatarHtml(g.bossId, g.name)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">ฆ่าแล้ว '+g.kills.length+' ครั้ง · วันนี้ '+todayCount+' · ล่าสุด '+fmtDateTime(g.kills[0].ts)+'</div>'+
-          '<button type="button" class="hist-del" data-del-boss="'+String(id).replace(/"/g,'&quot;')+'"'+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>'+
-        '<div class="boss">'+g.name+'</div>'+byHtml+
+          '<button type="button" class="hist-del" data-del-boss="'+String(g.bossId).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>'+
+        '<div class="boss">'+displayName+'</div>'+byHtml+
         '<div class="chip-row">'+(names.length ? names.map(function(it){ return '<span class="chip">'+itemIconHtml(it,'item-ic')+it+(g.items[it]>1 ? ' ×'+g.items[it] : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div></div>';
     }).join('');
   }
@@ -8430,13 +8435,16 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     var db = e.target.closest('[data-del-boss]');
     if(db){
       var bid = db.dataset.delBoss;
+      var sid = db.dataset.delServer || ''; // '' = การ์ดของรอบเก่าที่ไม่มีเซิร์ฟเวอร์เก็บไว้
       var who = db.dataset.delKiller; // ไม่มี = ทุกคน, 'none' = รอบที่ไม่รู้ว่าใครกด, อื่นๆ = uuid ของคนที่กำลังดูอยู่
-      var ks = App.kills.filter(function(k){ return k.bossId===bid && (who==null || (k.killedById||'none')===who); });
+      var ks = App.kills.filter(function(k){ return k.bossId===bid && (k.serverId||'')===sid && (who==null || (k.killedById||'none')===who); });
       if(!ks.length) return;
       var itemCount = ks.reduce(function(s,k){ return s+k.items.length; }, 0);
+      var svText = sid ? ' ('+serverLabel(sid)+')' : '';
       var scopeText = who==null ? ' ทั้งหมด' : ' เฉพาะรอบที่ '+escapeHtml(killerNameOf(ks[0]))+' กด';
-      showConfirm('ลบประวัติ '+ks[0].bossName+scopeText+' '+ks.length+' ครั้ง'+(itemCount ? ' พร้อมไอเทม '+itemCount+' ชิ้น (รวมข้อมูลหาร/ยอดขาย)' : '')+(who==null ? '' : ' (ของคนอื่นยังอยู่)')+'? ลบแล้วกู้คืนไม่ได้', function(){
+      showConfirm('ลบประวัติ '+ks[0].bossName+svText+scopeText+' '+ks.length+' ครั้ง'+(itemCount ? ' พร้อมไอเทม '+itemCount+' ชิ้น (รวมข้อมูลหาร/ยอดขาย)' : '')+(who==null ? '' : ' (ของคนอื่นยังอยู่)')+'? ลบแล้วกู้คืนไม่ได้', function(){
         var q = supa.from('kills').delete().eq('host_id', activeOwnerId()).eq('boss_id', bid);
+        q = sid ? q.eq('server_id', sid) : q.is('server_id', null);
         if(who==='none') q = q.is('killed_by', null); else if(who!=null) q = q.eq('killed_by', who);
         runHistoryDelete(q.select('id'), 'ลบประวัติบอสแล้ว');
       });

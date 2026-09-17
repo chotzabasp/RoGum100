@@ -8422,6 +8422,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       updateKillItem(id, { sold_amount:amt, sold_currency:cur.value, sold_at:new Date().toISOString(), kept_at:null });
     }
   });
+  // ใส่ , คั่นหลักพันให้ช่อง "ขายได้" ระหว่างพิมพ์ เช่น 100000 -> 100,000
+  document.getElementById('historyList').addEventListener('input', function(e){
+    if(!e.target.classList.contains('sold-amount')) return;
+    e.target.value = formatDecimalDisplay(cleanDecimalInput(e.target.value));
+  });
   document.getElementById('todayOnly').addEventListener('change', renderHistory);
 
   // ---------- merchant รับ/ขาย chart controls ----------

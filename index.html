@@ -1128,41 +1128,42 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       <div class="expiry-banner-text" id="expiryBannerText"></div>
       <button type="button" class="btn btn-primary btn-sm" data-go-pricing>สมัครแพ็กเกจ</button>
     </div>
-    <div class="util-bar" id="utilBar">
-      <div class="clock">
-        <div class="time mono" id="clockTime">--:--:--</div>
-        <div class="date" id="clockDate">-</div>
-      </div>
-      <div class="points-chip" id="pointsChip" title="แต้มคงเหลือ — ใช้ซื้อแพ็กเกจได้ (1 บาท = 1 แต้ม)">
-        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <b id="pointsValue">0</b><small>แต้ม</small>
-        <button type="button" class="points-topup-btn" id="pointsTopupBtn" title="เติมแต้ม">+</button>
-      </div>
-      <div class="user-menu" id="userMenu">
-        <div class="avatar" id="userAvatar">?</div>
-        <div class="who">
-          <span class="name" id="userName">-</span>
-          <span class="membership-pill" id="userPill">-</span>
+    <!-- การ์ดเซิร์ฟเวอร์ส่วนกลาง (นาฬิกา/แต้ม/ผู้ใช้ + เลือกเซิร์ฟเวอร์ดูเรต) — โชว์ทุกหน้าเหมือนกัน ไม่ผูกกับหน้าบัญชีนักลงทุนอีกต่อไป -->
+    <div class="home-banner-zone" id="homeBannerZone">
+      <div class="util-bar" id="utilBar">
+        <div class="clock">
+          <div class="time mono" id="clockTime">--:--:--</div>
+          <div class="date" id="clockDate">-</div>
         </div>
-        <button class="icon-btn" id="logoutBtn" title="ออกจากระบบ"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 01-2-2V5a2 2 0 012-2h3"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>
+        <div class="points-chip" id="pointsChip" title="แต้มคงเหลือ — ใช้ซื้อแพ็กเกจได้ (1 บาท = 1 แต้ม)">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <b id="pointsValue">0</b><small>แต้ม</small>
+          <button type="button" class="points-topup-btn" id="pointsTopupBtn" title="เติมแต้ม">+</button>
+        </div>
+        <div class="user-menu" id="userMenu">
+          <div class="avatar" id="userAvatar">?</div>
+          <div class="who">
+            <span class="name" id="userName">-</span>
+            <span class="membership-pill" id="userPill">-</span>
+          </div>
+          <button class="icon-btn" id="logoutBtn" title="ออกจากระบบ"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 01-2-2V5a2 2 0 012-2h3"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>
+        </div>
+        <div class="guest-auth-buttons" id="guestAuthButtons" hidden>
+          <button type="button" class="btn btn-ghost btn-sm" id="guestLoginBtn">เข้าสู่ระบบ</button>
+          <button type="button" class="btn btn-gradient btn-sm" id="guestRegisterBtn">สมัครสมาชิก</button>
+        </div>
       </div>
-      <div class="guest-auth-buttons" id="guestAuthButtons" hidden>
-        <button type="button" class="btn btn-ghost btn-sm" id="guestLoginBtn">เข้าสู่ระบบ</button>
-        <button type="button" class="btn btn-gradient btn-sm" id="guestRegisterBtn">สมัครสมาชิก</button>
+      <div class="hero-row">
+        <div class="hero-greet">
+          <div class="hero-line1">ยินดีต้อนรับกลับมา,</div>
+          <h1 class="hero-line2" id="homeGreetName">นักล่า</h1>
+        </div>
+        <div class="hero-stats" id="rateChips"></div>
       </div>
     </div>
 
     <!-- ===================== HOME VIEW ===================== -->
     <section id="view-home">
-      <div class="home-banner-zone" id="homeBannerZone">
-        <div class="hero-row">
-          <div class="hero-greet">
-            <div class="hero-line1">ยินดีต้อนรับกลับมา,</div>
-            <h1 class="hero-line2" id="homeGreetName">นักล่า</h1>
-          </div>
-          <div class="hero-stats" id="rateChips"></div>
-        </div>
-      </div>
 
       <div class="panel panel-ticker">
         <div class="panel-head">
@@ -1469,6 +1470,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       <div>
         <h1>จับเวลาบอส</h1>
         <p class="sub">ความเคลื่อนไหวและรอบเกิดใหม่ของ MVP ในกิลด์คุณ</p>
+      </div>
+      <div class="topbar-right">
+        <div class="hf-group">
+          <label>เซิร์ฟเวอร์</label>
+          <select id="timersServerSelect"></select>
+        </div>
       </div>
     </div>
 
@@ -2144,6 +2151,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       currentServer:'mvpwatch_currentserver_'+email,
       farmCostItems:'mvpwatch_farmcost_'+email, farmLog:'mvpwatch_farmlog_'+email, farmServer:'mvpwatch_farmserver_'+email,
       farmOcHint:'mvpwatch_farmochint_'+email, farmExRate:'mvpwatch_farmexrate_'+email, farmMapNames:'mvpwatch_farmmapnames_'+email,
+      timersServer:'mvpwatch_timersserver_'+email,
       tickerServers:'mvpwatch_tickerservers_'+email, tickerSelectedServers:'mvpwatch_tickerselectedservers_'+email,
       lastRateUpdateTs:'mvpwatch_lastrateupdatets_'+email
     };
@@ -2153,7 +2161,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
-  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], partyRoster:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], partyRoster:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, timersServerId:null, timersServerIdsWithData:[], tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, crit:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -2244,6 +2252,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     App.farmLog.forEach(function(entry){ if(entry && !entry.id){ entry.id = uid(); farmLogNeedsIdFix = true; } });
     if(farmLogNeedsIdFix) persist(keys.farmLog, App.farmLog);
     App.farmServerId = read('farmServer', null) || (SERVER_RATES[0] && SERVER_RATES[0].id) || null;
+    App.timersServerId = read('timersServer', null);
     App.tickerServers = read('tickerServers', null) || defaultRateSlots();
     App.tickerSelectedServers = read('tickerSelectedServers', null) || App.tickerServers.slice();
     App.tickerSelectedServers = App.tickerSelectedServers.filter(function(id){ return App.tickerServers.indexOf(id)!==-1; });
@@ -2278,6 +2287,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     currentServer:         function(){ return App.currentServerId; },
     farmCostItems:         function(){ return App.farmCostItems; },
     farmServer:            function(){ return App.farmServerId; },
+    timersServer:          function(){ return App.timersServerId; },
     farmExRate:            function(){ return App.farmExchangeRates; },
     farmMapNames:          function(){ return App.farmMapNames; },
     tickerServers:         function(){ return App.tickerServers; },
@@ -2943,6 +2953,32 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
 
   function saveItemsServer(){ persist(App.keys.itemsServer, App.itemsServerId); cloudQueueKV('itemsServer'); }
+  function saveTimersServer(){ persist(App.keys.timersServer, App.timersServerId); cloudQueueKV('timersServer'); }
+  // เซิร์ฟเวอร์ไหนบ้างที่เคยมีบอสบันทึกไว้ (ของบัญชีที่กำลังดูอยู่ — ตัวเองหรือหัวปาร์ตี้)
+  // ใช้เติมตัวเลือกในดรอปดาวน์หน้าจับเวลาบอส รวมเซิร์ฟที่เลิกเล่นไปแล้วแต่ยังมีประวัติ
+  function loadTimersServerIds(){
+    return withSkewRetry(function(){ return supa.from('user_bosses').select('server_id').eq('user_id', activeOwnerId()); }).then(function(res){
+      if(res.error){ console.error('loadTimersServerIds', res.error); App.timersServerIdsWithData = []; return; }
+      var seen = {}, ids = [];
+      (res.data||[]).forEach(function(r){ if(r.server_id && !seen[r.server_id]){ seen[r.server_id] = true; ids.push(r.server_id); } });
+      App.timersServerIdsWithData = ids;
+    });
+  }
+  function timersServerIds(){
+    var ids = myServerIds().slice();
+    (App.timersServerIdsWithData||[]).forEach(function(id){ if(ids.indexOf(id)===-1) ids.push(id); });
+    return ids;
+  }
+  function populateTimersServerSelect(){
+    var sel = document.getElementById('timersServerSelect');
+    var ids = timersServerIds();
+    if(ids.indexOf(App.timersServerId)===-1){
+      App.timersServerId = ids[0] || null;
+      saveTimersServer();
+    }
+    sel.innerHTML = ids.map(function(id){ return '<option value="'+id+'">'+serverLabel(id)+'</option>'; }).join('');
+    sel.value = App.timersServerId;
+  }
   // รายการบอสของผู้ใช้ + เวลาที่จับอยู่ (App.db/App.active) sync กับตาราง user_bosses
   // ใน Supabase โดยตรง แทนการเซฟเป็น blob เดียวใน localStorage แบบเดิม เพื่อให้ข้าม
   // อุปกรณ์ได้ — ฟังก์ชันด้านล่างแทนที่ saveDB()/saveActive() เดิม
@@ -2965,7 +3001,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     });
   }
   function loadUserBosses(){
-    return withSkewRetry(function(){ return supa.from('user_bosses').select('boss_id, target_time, started_by, marker_x, marker_y, bosses(*)').eq('user_id', activeOwnerId()); }).then(function(res){
+    // กันไว้เผื่อถูกเรียกก่อน populateTimersServerSelect() จะรันทัน (เช่นตอนล็อกอินครั้งแรก) —
+    // ใช้เซิร์ฟเวอร์แรกของบัญชีไปพลางก่อน ไม่งั้น query จะกรองด้วย server_id เป็น null ไม่เจอข้อมูลเลย
+    if(!App.timersServerId) App.timersServerId = (App.profile && App.profile.servers && App.profile.servers[0]) || (App.timersServerIdsWithData && App.timersServerIdsWithData[0]) || null;
+    return withSkewRetry(function(){ return supa.from('user_bosses').select('boss_id, target_time, started_by, marker_x, marker_y, bosses(*)').eq('user_id', activeOwnerId()).eq('server_id', App.timersServerId); }).then(function(res){
       if(res.error){ console.error('loadUserBosses', res.error); return; }
       App.db = (res.data||[]).map(function(r){
         var b = r.bosses || {};
@@ -2988,10 +3027,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     });
   }
   function supaAddBoss(bossId){
-    return supa.from('user_bosses').insert({ user_id: activeOwnerId(), boss_id: bossId }).then(bossAfterWrite);
+    return supa.from('user_bosses').insert({ user_id: activeOwnerId(), boss_id: bossId, server_id: App.timersServerId }).then(bossAfterWrite);
   }
   function supaRemoveBoss(bossId){
-    return supa.from('user_bosses').delete().eq('user_id', activeOwnerId()).eq('boss_id', bossId).then(bossAfterWrite);
+    return supa.from('user_bosses').delete().eq('user_id', activeOwnerId()).eq('boss_id', bossId).eq('server_id', App.timersServerId).then(bossAfterWrite);
   }
   function supaSetBossTime(bossId, targetTime, startedBy){
     // จุดปักหมุด (marker) เป็นตำแหน่งที่เจอบอสบนแมพ ไม่ผูกกับรอบจับเวลา จึงไม่ล้าง
@@ -2999,10 +3038,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     return supa.from('user_bosses').update({
       target_time: targetTime==null ? null : new Date(targetTime).toISOString(),
       started_by: targetTime==null ? null : (startedBy||null)
-    }).eq('user_id', activeOwnerId()).eq('boss_id', bossId).then(bossAfterWrite);
+    }).eq('user_id', activeOwnerId()).eq('boss_id', bossId).eq('server_id', App.timersServerId).then(bossAfterWrite);
   }
   function supaSetBossMarker(bossId, x, y){
-    return supa.from('user_bosses').update({ marker_x:x, marker_y:y }).eq('user_id', activeOwnerId()).eq('boss_id', bossId).then(bossAfterWrite);
+    return supa.from('user_bosses').update({ marker_x:x, marker_y:y }).eq('user_id', activeOwnerId()).eq('boss_id', bossId).eq('server_id', App.timersServerId).then(bossAfterWrite);
   }
   // ประวัติการฆ่า+ไอเทมของปาร์ตี้ที่กำลังดูอยู่ — ผูกกับหัวปาร์ตี้เหมือน user_bosses
   function loadKills(){
@@ -5995,11 +6034,16 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     document.body.classList.remove('ro-mode');
     App.session = { id:user.id, email:user.email };
     App.keys = DataKeys(user.email);
+    // โหลดจาก localStorage ก่อนตั้งแต่ตรงนี้เลย (แค่ค่าในเครื่อง ยังไม่รวมคลาวด์) เพื่อให้ App.timersServerId
+    // มีค่าที่จำไว้แล้วพร้อมใช้ก่อน loadUserBosses() รอบแรกด้านล่าง — ไม่งั้นจะโดนรีเซ็ตเป็นค่า default ทุกครั้งที่ล็อกอิน
+    loadUserData(user.email);
     return Promise.all([ refreshProfile(), resolvePartyContext(), serversReady ]).then(function(){
       // จำสถานะข้อมูลบอสก่อนโหลด — เปิดหน้าจับเวลาบอสทีหลังจะได้เทียบว่ามีใครแก้อะไรไประหว่างนั้นไหม
       bossLive.knownState = null; bossLive.stateHost = null;
       var bossHost = activeOwnerId();
       return bossFetchState(bossHost).then(function(state){ bossLive.knownState = state; bossLive.stateHost = bossHost; }, function(){})
+        .then(function(){ return loadTimersServerIds(); })
+        .then(function(){ populateTimersServerSelect(); })
         .then(function(){ return Promise.all([ loadUserBosses(), loadKills() ]); });
     }).then(function(){
       loadUserData(user.email);
@@ -6982,16 +7026,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   }
   // เข้าหน้าแรก: ย้าย util-bar (นาฬิกา/แต้ม/เมนูผู้ใช้) เข้าไปในกรอบ banner ให้เป็นพื้นหลังเดียวกับแถบต้อนรับ
   // ออกจากหน้าแรก: ย้ายกลับตำแหน่งเดิม (หน้า #view-home เองที่เป็นจุดอ้างอิงตำแหน่งเดิม อยู่คงที่เสมอ)
-  function placeUtilBar(onHome){
-    var bar = document.getElementById('utilBar');
-    var zone = document.getElementById('homeBannerZone');
-    var viewHome = document.getElementById('view-home');
-    if(onHome) zone.insertBefore(bar, zone.firstChild);
-    else viewHome.parentNode.insertBefore(bar, viewHome);
-  }
   function switchPage(page){
     persist(App.keys.lastPage, page);
-    placeUtilBar(page === 'home');
     document.getElementById('view-home').hidden = page !== 'home';
     document.getElementById('view-farm').hidden = page !== 'farm';
     document.getElementById('view-timers').hidden = page !== 'timers';
@@ -7309,8 +7345,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     // ยอดนักฟาม: เปลี่ยนเซิร์ฟเวอร์/หน่วย/ช่วงเวลา/กราฟ/หน้าประวัติ (ไม่รวมฟอร์มบันทึก, ต้นทุน, เรท, แก้/ลบ)
     '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
     '#farmHistoryRange', '#farmHistoryPagination', '.farm-cost-hover', '.farm-profit-hover',
-    // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหาได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
-    '#partyPanelToggle', '[data-open-history]', '#searchInput',
+    // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหา/เปลี่ยนเซิร์ฟเวอร์ได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
+    '#partyPanelToggle', '[data-open-history]', '#searchInput', '#timersServerSelect',
     // คลังไอเทม: ดูตามระดับ/เปลี่ยนเซิร์ฟเวอร์
     '[data-view-tier]', '#itemsServerSelect'
   ].join(',');
@@ -7617,8 +7653,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
           if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
           toast('ออกจากปาร์ตี้แล้ว');
           resolvePartyContext().then(function(){
-            Promise.all([ loadUserBosses(), loadKills() ]).then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
-          });
+            // ออกจากปาร์ตี้แล้ว = กลับมาดูข้อมูลของตัวเอง เซิร์ฟเวอร์ที่เคยมีบอสบันทึกไว้อาจไม่เหมือนของหัวปาร์ตี้เดิม
+            // เลยต้องโหลดรายชื่อเซิร์ฟเวอร์ใหม่ด้วย ไม่ใช่แค่โหลดบอส
+            return loadTimersServerIds().then(populateTimersServerSelect).then(function(){
+              return Promise.all([ loadUserBosses(), loadKills() ]);
+            });
+          }).then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
         });
       });
     }
@@ -7833,6 +7873,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     renderFarmHistory();
     // สลับเซิร์ฟแล้วต้องคำนวณใหม่ว่าเซิร์ฟนี้ยังเล่นอยู่ไหม (เปิด/ปิดช่องกรอกตามนั้น)
     renderFarmRetiredState();
+  });
+
+  document.getElementById('timersServerSelect').addEventListener('change', function(e){
+    App.timersServerId = e.target.value;
+    saveTimersServer();
+    loadUserBosses().then(function(){ renderRoster(); });
   });
 
   document.getElementById('farmExRateInput').addEventListener('input', function(){

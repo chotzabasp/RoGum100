@@ -869,6 +869,12 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 .post-announce-check{display:flex;align-items:center;gap:.4rem;font-size:.85rem;color:var(--text);width:76px;flex:none;cursor:pointer}
 .post-announce-row input[type="text"]{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.5rem .6rem;font-size:.85rem}
 .post-announce-note{font-size:.72rem;color:var(--text-dim);margin:.4rem 0 1.1rem;line-height:1.4}
+/* select ปกติลงสีแค่บางส่วนของ option ไม่ได้ เลยใช้ปุ่มแทนเพื่อให้ "(N แต้ม)" ขึ้นสีเตือนได้ */
+.announce-duration-toggle{display:flex;flex-wrap:wrap;gap:.4rem}
+.announce-duration-btn{flex:1 1 auto;min-width:0;padding:.45rem .3rem;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);font-size:.78rem;font-weight:600;cursor:pointer;text-align:center;line-height:1.35}
+.announce-duration-btn.active{background:color-mix(in srgb, var(--accent) 18%, transparent);color:var(--accent);border-color:var(--accent)}
+.announce-duration-btn:disabled{opacity:.5;cursor:not-allowed}
+.announce-duration-cost{display:block;color:var(--warn);font-size:.7rem;font-weight:700;margin-top:.1rem}
 .ticker-post-group{position:relative;display:flex;align-items:stretch}
 .ticker-post-group .btn-sm{border-top-right-radius:0;border-bottom-right-radius:0}
 .ticker-post-caret{background:color-mix(in srgb, #7dd3fc 12%, var(--surface-2));color:#7dd3fc;border:1px solid color-mix(in srgb, #7dd3fc 45%, var(--border));border-top-right-radius:var(--radius-s);border-bottom-right-radius:var(--radius-s);padding:0 .5rem;cursor:pointer;font-size:.7rem}
@@ -1848,7 +1854,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     </div>
     <div class="post-announce-field">
       <label>ระยะเวลาแสดงประกาศ</label>
-      <select id="postAnnounceDuration"></select>
+      <div class="announce-duration-toggle" id="postAnnounceDuration"></div>
     </div>
     <div class="post-announce-field">
       <label>รับ M (บาท)</label>
@@ -7757,32 +7763,44 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     }).join('');
     var durSel = document.getElementById('postAnnounceDuration');
     // แก้ไขประกาศเดิมไม่เสียแต้ม (ระยะเวลาถูกล็อกไว้ไม่ให้แก้อยู่แล้ว) เลยไม่ต้องโชว์ราคาต่อท้าย
-    durSel.innerHTML = ANNOUNCE_DURATION_OPTIONS.map(function(o){ return '<option value="'+o.value+'">'+o.label+(entry ? '' : ' ('+o.cost+' แต้ม)')+'</option>'; }).join('');
+    durSel.innerHTML = ANNOUNCE_DURATION_OPTIONS.map(function(o){
+      return '<button type="button" class="announce-duration-btn" data-value="'+o.value+'">'+o.label+(entry ? '' : '<span class="announce-duration-cost">('+o.cost+' แต้ม)</span>')+'</button>';
+    }).join('');
 
     if(entry){
       sel.value = entry.serverId;
       // durationMs คำนวณจาก (expires_at - created_at) ซึ่งคลาดจากค่าใน dropdown อยู่หลักมิลลิวินาที
       // เพราะเวลาเริ่มนับใช้นาฬิกาของเซิร์ฟเวอร์ ไม่ใช่ของเครื่อง — เลยต้องเลือกตัวเลือกที่ใกล้ที่สุด
       // ไม่งั้นช่องนี้จะโชว์ว่างเปล่าตอนกดแก้ไข
-      durSel.value = String(ANNOUNCE_DURATION_OPTIONS.reduce(function(a,b){
+      setAnnounceDuration(durSel, ANNOUNCE_DURATION_OPTIONS.reduce(function(a,b){
         return Math.abs(b.value-entry.durationMs) < Math.abs(a.value-entry.durationMs) ? b : a;
-      }).value);
-      durSel.disabled = true;
+      }).value, true);
       document.getElementById('postAnnounceTitle').textContent = 'แก้ไขประกาศ';
       document.getElementById('postAnnounceSubmitBtn').textContent = 'บันทึกการแก้ไข';
       document.getElementById('postAnnounceBuyPrice').value = entry.buy!=null ? fmtNum(entry.buy) : '';
     } else {
-      durSel.value = String(ANNOUNCE_DURATION_OPTIONS[2].value); // default 1 ชม.
-      durSel.disabled = false;
+      setAnnounceDuration(durSel, ANNOUNCE_DURATION_OPTIONS[2].value, false); // default 1 ชม.
       document.getElementById('postAnnounceTitle').textContent = 'ลงประกาศราคา';
       document.getElementById('postAnnounceSubmitBtn').textContent = 'ลงประกาศ';
       document.getElementById('postAnnounceBuyPrice').value = '';
     }
     document.getElementById('postAnnouncementOverlay').hidden = false;
   }
+  // เลือกระยะเวลาด้วยปุ่มแทน <select> เพราะ option ปกติลงสีแค่บางส่วนของข้อความไม่ได้
+  function setAnnounceDuration(container, value, disabled){
+    container.dataset.value = value;
+    container.querySelectorAll('.announce-duration-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.value===String(value));
+      b.disabled = !!disabled;
+    });
+  }
+  document.getElementById('postAnnounceDuration').addEventListener('click', function(e){
+    var btn = e.target.closest('.announce-duration-btn');
+    if(!btn || btn.disabled) return;
+    setAnnounceDuration(this, btn.dataset.value, false);
+  });
   function closePostAnnouncement(){
     editingAnnouncementId = null;
-    document.getElementById('postAnnounceDuration').disabled = false;
     document.getElementById('postAnnouncementOverlay').hidden = true;
   }
 
@@ -7826,7 +7844,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         .eq('id', editingAnnouncementId)
         .then(function(res){ if(res.error) return failed(res.error); done('แก้ไขประกาศแล้ว'); }, failed);
     } else {
-      var durationMs = parseInt(document.getElementById('postAnnounceDuration').value, 10);
+      var durationMs = parseInt(document.getElementById('postAnnounceDuration').dataset.value, 10);
       // ลงประกาศใหม่เสียแต้มตามระยะเวลา — หักแต้ม+บันทึกประกาศทำในฟังก์ชันเดียวกันฝั่ง DB (atomic)
       // กันแต้มถูกหักแต่ประกาศไม่ขึ้น หรือประกาศขึ้นฟรีโดยไม่หักแต้ม
       supa.rpc('post_announcement', { p_server_id:serverId, p_buy:buyVal, p_duration_ms:durationMs }).then(function(res){

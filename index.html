@@ -3742,6 +3742,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   var hiddenMrChartSeries = { sell:false, buy:false, profit:false };
   var mrChartTimeframe = '7d';
   var mrChartServerId = null;
+  var mrChartServerUserChanged = false;
   var mrChartCategoryFilter = 'all';
   var mrChartGeom = null; // recomputed on each render; used by the hover handler
 
@@ -3776,12 +3777,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function populateMrChartServerSelect(){
     var sel = document.getElementById('mrChartServerSelect');
     var ids = historyPickerServerIds();
-    if(mrChartServerId!=='all' && (mrChartServerId==null || ids.indexOf(mrChartServerId)===-1)){
-      mrChartServerId = ids.indexOf(App.currentServerId)!==-1 ? App.currentServerId : (ids[0] || null);
-    }
+    var invalid = mrChartServerId!=='all' && (mrChartServerId==null || ids.indexOf(mrChartServerId)===-1);
+    if(!mrChartServerUserChanged || invalid) mrChartServerId = firstMyServerIn(ids);
     sel.innerHTML = ids.map(function(id){
-      var sv = serverRateById(id);
-      return '<option value="'+id+'">'+(sv?sv.name:id)+'</option>';
+      return '<option value="'+id+'">'+serverLabel(id)+'</option>';
     }).join('')+'<option value="all">ALL</option>';
     sel.value = mrChartServerId;
 
@@ -4697,8 +4696,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     // เลือกเซิร์ฟที่กล่องซื้อ-ขาย = ให้ "ประวัติ" กับกราฟกำไรเปลี่ยนตามไปด้วย
     // จะได้ดูตัวเลขของเซิร์ฟที่กำลังบันทึกอยู่ ไม่ต้องไปไล่เปลี่ยน dropdown ทีละอัน
     historyState.serverId = id;
+    historyState.userChangedServer = true;
     historyState.dayLimit = MR_HISTORY_DAY_STEP;
     mrChartServerId = id;
+    mrChartServerUserChanged = true;
     renderMerchantHistory();
     renderMrChart();
   }
@@ -5231,7 +5232,14 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function entryType(e){ return e.type === 'sell' ? 'sell' : 'buy'; }
 
   var MR_HISTORY_DAY_STEP = 30; // rows revealed per "แสดงเพิ่ม" click in the ตามวัน view
-  var historyState = { serverId:'all', view:'item', range:'all', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{}, expandedDays:{}, soldOutOpen:null };
+  var historyState = { serverId:'all', userChangedServer:false, view:'item', range:'all', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{}, expandedDays:{}, soldOutOpen:null };
+  // ค่าเริ่มต้นของตัวกรองเซิร์ฟเวอร์ (ประวัติ+กราฟ) = เซิร์ฟแรกที่ตั้งค่าไว้ในบัญชี ถ้ามีข้อมูล/เลือกได้จริง
+  // ไม่งั้น fallback ไปตัวแรกในลิสต์ที่มีให้เลือก กันกรณีเซิร์ฟแรกของบัญชียังไม่เคยมีประวัติเลย
+  // (userChangedServer กันไว้ไม่ให้ค่าเริ่มต้นทับสิ่งที่ผู้ใช้เลือกเองไปแล้ว เช่นกด "ALL")
+  function firstMyServerIn(ids){
+    var firstMine = myServerIds()[0];
+    return (firstMine && ids.indexOf(firstMine)!==-1) ? firstMine : (ids[0] || null);
+  }
 
   function mrDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 
@@ -5253,13 +5261,15 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function populateHistoryServerFilter(){
     var sel = document.getElementById('historyServerFilter');
     var ids = historyPickerServerIds();
-    if(historyState.serverId!=='all' && ids.indexOf(historyState.serverId)===-1) historyState.serverId = 'all';
-    var key = ids.join('|');
+    var invalid = historyState.serverId!=='all' && ids.indexOf(historyState.serverId)===-1;
+    if(!historyState.userChangedServer || invalid) historyState.serverId = firstMyServerIn(ids) || 'all';
+    // ใส่สถานะพัก/ไม่พักลงไปในคีย์ด้วย ไม่งั้นถ้า labels เปลี่ยน (เช่นโปรไฟล์เพิ่งโหลดเสร็จ)
+    // แต่ ids ชุดเดิม จะไม่รีเฟรช dropdown ให้ ป้าย "(พัก)" จะค้างผิดอยู่แบบนั้นตลอด
+    var key = ids.map(function(id){ return id+(isRetiredServer(id)?'1':'0'); }).join('|');
     if(key !== lastHistoryServerIdsKey){
       lastHistoryServerIdsKey = key;
       sel.innerHTML = ids.map(function(id){
-        var sv = serverRateById(id);
-        return '<option value="'+id+'">'+(sv?sv.name:id)+'</option>';
+        return '<option value="'+id+'">'+serverLabel(id)+'</option>';
       }).join('')+'<option value="all">ALL</option>';
     }
     sel.value = historyState.serverId;
@@ -6642,6 +6652,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function onHistoryServerFilterChange(e){
     try{
       historyState.serverId = e.target.value;
+      historyState.userChangedServer = true;
       historyState.dayLimit = MR_HISTORY_DAY_STEP;
       renderMerchantHistory();
     }catch(err){
@@ -8500,6 +8511,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   });
   document.getElementById('mrChartServerSelect').addEventListener('change', function(e){
     mrChartServerId = e.target.value;
+    mrChartServerUserChanged = true;
     renderMrChart();
   });
   document.getElementById('mrChartCategoryToggle').addEventListener('click', function(e){

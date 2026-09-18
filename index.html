@@ -411,6 +411,8 @@ svg.icon{width:18px;height:18px;display:block}
 .items-tier-count{font-size:1.3rem;font-weight:700;font-family:"JetBrains Mono"}
 .items-tier-viewall{align-self:flex-start;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font-size:.78rem;font-weight:600}
 .items-tier-viewall:hover{text-decoration:underline}
+.items-tier-locked{opacity:.4;pointer-events:none;position:relative}
+.items-tier-locked::after{content:"🔒 ต้องมีแพ็กเกจ \"3 in 1\"";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:.5rem;font-size:.72rem;font-weight:700;color:var(--text);background:color-mix(in srgb, var(--surface) 55%, transparent);border-radius:inherit;z-index:2}
 .items-dropzone{transition:border-color .15s,background .15s}
 .items-dropzone.items-drag-over{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 10%, var(--surface))}
 .items-pending-row{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.55rem .7rem;margin-bottom:.5rem;cursor:grab}
@@ -958,8 +960,8 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .pricing-sub{color:var(--text-dim);font-size:.9rem;max-width:520px;margin:0}
 .pricing-cycle-toggle{margin-top:.3rem}
 .pricing-cycle-toggle .seg-btn{font-size:.8rem;padding:.5rem 1.2rem}
-.pricing-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;align-items:stretch}
-@media (max-width:1300px){ .pricing-grid{grid-template-columns:repeat(3,1fr)} }
+.pricing-promo-banner{margin-top:.9rem;display:inline-flex;align-self:center;padding:.55rem 1.1rem;border-radius:999px;background:var(--gradient-brand);color:#fff;font-weight:700;font-size:.82rem;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;align-items:stretch;max-width:1100px;margin:0 auto}
 .pricing-card{
   position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-l);
   padding:1.5rem 1.2rem 1.2rem;display:flex;flex-direction:column;gap:.9rem;
@@ -977,14 +979,17 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .pricing-card-price{display:flex;align-items:baseline;gap:.3rem;flex-wrap:wrap}
 .pricing-card-amount{font-size:2rem;font-weight:800;font-family:"JetBrains Mono";color:var(--text)}
 .pricing-card-unit{color:var(--text-dim);font-size:.78rem}
+.pricing-original{color:var(--text-dim);font-size:.85rem;text-decoration:line-through;text-decoration-color:var(--danger)}
+.pricing-promo-badge{background:var(--danger);color:#fff;font-size:.66rem;font-weight:800;padding:.15rem .5rem;border-radius:999px;margin-left:.4rem}
 .pricing-perday{font-size:.72rem;color:var(--text-dim)}
+.pricing-feature-divider{list-style:none;font-weight:700;color:var(--text);font-size:.82rem;margin-top:.4rem;padding-top:.6rem;border-top:1px dashed var(--border)}
 .pricing-save{font-size:.7rem;font-weight:700;color:var(--success);background:color-mix(in srgb, var(--success) 16%, transparent);border-radius:999px;padding:.3rem .6rem;display:inline-flex;align-self:flex-start}
 .pricing-save-hidden{visibility:hidden}
 .pricing-features{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem;flex:1}
 .pricing-features li{display:flex;align-items:center;gap:.55rem;font-size:.84rem;color:var(--text-dim)}
 .pricing-check{color:var(--success);font-weight:700;flex:none}
 .pricing-cta{margin-top:.2rem}
-@media (max-width:980px){ .pricing-grid{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:760px){ .pricing-grid{grid-template-columns:1fr} }
 
 .admin-topup-list{display:flex;flex-direction:column;gap:.7rem;margin-top:1rem}
 .admin-topup-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:1rem 1.1rem;display:flex;flex-wrap:wrap;align-items:center;gap:.9rem}
@@ -1628,6 +1633,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
           <button type="button" class="seg-btn active" data-cycle="monthly">รายเดือน</button>
           <button type="button" class="seg-btn" data-cycle="yearly">รายปี</button>
         </div>
+        <div class="pricing-promo-banner">🎉 ฉลองเปิดทดลองใช้งานวันนี้ลดทันที 50% ทุกแพ็กเกจ</div>
       </div>
       <div class="pricing-grid" id="pricingGrid"></div>
       </div>
@@ -3050,7 +3056,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
     });
   }
   function supaAddBoss(bossId){
-    return supa.from('user_bosses').insert({ user_id: activeOwnerId(), boss_id: bossId, server_id: App.timersServerId }).then(bossAfterWrite);
+    return supa.rpc('add_boss_capped', { p_owner: activeOwnerId(), p_boss_id: bossId, p_server_id: App.timersServerId }).then(bossAfterWrite);
   }
   function supaRemoveBoss(bossId){
     return supa.from('user_bosses').delete().eq('user_id', activeOwnerId()).eq('boss_id', bossId).eq('server_id', App.timersServerId).then(bossAfterWrite);
@@ -3422,7 +3428,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
       return res;
     });
   }
-  var PROFILE_COLS = 'display_name, points, role, expires_at, username, birth_date, servers, server_quota, facebook_url';
+  var PROFILE_COLS = 'display_name, points, role, expires_at, username, birth_date, servers, server_quota, facebook_url, legacy_unlimited, plan_bundle_expires_at, plan_timers_expires_at';
   function refreshProfile(){
     return withSkewRetry(function(){ return supa.from('profiles').select(PROFILE_COLS).eq('id', App.session.id).single(); }).then(function(res){
       // กันกรณีที่ยังไม่ได้รัน SQL เพิ่มคอลัมน์ใหม่ๆ — ถ้าไม่ดักไว้ โปรไฟล์จะโหลดไม่ได้เลย
@@ -3437,6 +3443,11 @@ ul.post-announce-note li:last-child{margin-bottom:0}
         PROFILE_COLS = PROFILE_COLS.replace(', server_quota', '');
         return refreshProfile();
       }
+      if(res.error && PROFILE_COLS.indexOf('legacy_unlimited')!==-1 && /legacy_unlimited|plan_bundle_expires_at|plan_timers_expires_at/.test(res.error.message||'')){
+        console.warn('คอลัมน์สิทธิ์แพ็กเกจใหม่ยังไม่มีในฐานข้อมูล — ถือว่าไม่จำกัดสิทธิ์ไปก่อน', res.error);
+        PROFILE_COLS = PROFILE_COLS.replace(', legacy_unlimited, plan_bundle_expires_at, plan_timers_expires_at', '');
+        return refreshProfile();
+      }
       if(res.error){ console.error('refreshProfile', res.error); return; }
       App.profile = res.data;
       document.getElementById('railAdminBtn').hidden = App.profile.role !== 'admin';
@@ -3447,7 +3458,11 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   function renderHistory(){
     var list = document.getElementById('historyList');
     var today = todayKey(Date.now());
-    var onlyToday = document.getElementById('todayOnly').checked;
+    var timersAllowed = hasTimersPlan();
+    var todayOnlyBox = document.getElementById('todayOnly');
+    todayOnlyBox.disabled = !timersAllowed;
+    todayOnlyBox.title = timersAllowed ? '' : 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจ "จับเวลาบอส" เพื่อดูย้อนหลังทั้งหมด';
+    var onlyToday = todayOnlyBox.checked || !timersAllowed;
     var entries = App.kills.filter(function(l){ return !onlyToday || todayKey(l.ts)===today; })
                           .slice().sort(function(a,b){ return b.ts-a.ts; });
     document.getElementById('htabKills').className = App.historyTab==='kills' ? 'active' : '';
@@ -3864,6 +3879,14 @@ ul.post-announce-note li:last-child{margin-bottom:0}
     else if(cfg.months) d.setMonth(d.getMonth()-cfg.months);
     else if(cfg.years) d.setFullYear(d.getFullYear()-cfg.years);
     return d.getTime();
+  }
+  function todayStartTs(){ var d = new Date(); d.setHours(0,0,0,0); return d.getTime(); }
+  // บัญชีฟรี (ไม่มีสิทธิ์ตามพารามิเตอร์ allowed) ดูประวัติย้อนหลังได้แค่วันนี้ — ไม่ว่าตัวกรอง
+  // ช่วงเวลาที่เลือกไว้จะกว้างแค่ไหนก็ตาม (ข้อมูลจริงยังอยู่ครบ แค่ไม่โชว์เกินวันนี้ให้เห็น)
+  function capStartTsForPlan(rawStartTs, allowed){
+    if(allowed) return rawStartTs;
+    var t = todayStartTs();
+    return rawStartTs===null ? t : Math.max(rawStartTs, t);
   }
 
   // TF "ทั้งหมด" บนกราฟไม่มีจำนวนแท่งตายตัว — ย้อนไปถึงรายการแรกสุดที่มีจริง แล้วเลือก
@@ -4300,7 +4323,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
     var list = document.getElementById('farmHistoryList');
     var pag = document.getElementById('farmHistoryPagination');
     // ประวัติการฟามใช้ TF ชุดเดียวกับกราฟ ไม่ต้องเลือกวันที่เริ่ม-สิ้นสุดเองแล้ว
-    var startTs = tfRangeStartTs(farmHistoryRange);
+    var startTs = capStartTsForPlan(tfRangeStartTs(farmHistoryRange), hasBundlePlan());
     var entries = App.farmLog.filter(function(e){
       return e.serverId===App.farmServerId && (startTs===null || e.ts>=startTs);
     });
@@ -4527,6 +4550,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
     renderFarmRareItems();
     renderFarmChart();
     document.getElementById('farmHistoryRange').value = farmHistoryRange;
+    document.getElementById('farmHistoryRange').title = hasBundlePlan() ? '' : 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจ "3 in 1" เพื่อดูย้อนหลังทั้งหมด';
     renderFarmHistory();
     renderFarmRetiredState();
   }
@@ -5333,7 +5357,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   // (server + ช่วงเวลา + ค้นหา). Both views and the summary tiles are built from this, so
   // the tiles always total exactly what's on screen.
   function historyRangeStartTs(){
-    return tfRangeStartTs(historyState.range);
+    return capStartTsForPlan(tfRangeStartTs(historyState.range), hasBundlePlan());
   }
   function historyLineMatches(l){
     if(!historyState.search) return true;
@@ -6938,8 +6962,11 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 
   function renderItemsWarehouseCards(){
     var serverId = App.itemsServerId;
+    var allowed = hasBundlePlan();
     ITEM_WAREHOUSE_TIERS.forEach(function(tier){
       document.getElementById('itemsTierCount'+tier).textContent = fmtNum(warehouseTierCount(serverId, tier)) + ' ชิ้น';
+      var card = document.getElementById('itemsCardTier'+tier);
+      if(card) card.classList.toggle('items-tier-locked', tier!=='A' && !allowed);
     });
   }
 
@@ -6999,6 +7026,10 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   }
 
   function handleItemsDrop(warehouse, lineId){
+    if(warehouse!=='A' && !hasBundlePlan()){
+      toast('คลัง '+itemTierLabel(warehouse)+' ต้องมีแพ็กเกจ "3 in 1" — สมัครเพื่อใช้คลังเพิ่มเติม');
+      return;
+    }
     var serverId = App.itemsServerId;
     var item = itemsPendingList(serverId).filter(function(p){ return p.lineId===lineId; })[0];
     if(!item) return; // already claimed by another drop, or stale drag
@@ -7128,34 +7159,18 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   // คำนวณส่วนลดที่แสดงจากตัวเลขจริงแทนที่จะเขียนตายตัว เผื่อภายหลังปรับราคา
   var PRICING_PLANS = [
     { key:'free', name:'ฟรี', monthly:0, yearly:0, free:true,
-      tagline:'ลองใช้ฟรี เริ่มจับเวลาบอสตัวโปรดได้เลยวันนี้',
+      tagline:'ลองใช้ฟรี ทุกฟังก์ชั่นได้แบบจำกัดวันนี้',
       features:[
-        'ดูประวัติการขายของวันนี้',
-        'คลังไอเทม 1 คลัง (เซิร์ฟเวอร์ A)',
+        'บัญชีนักลงทุน',
+        'คลังไอเทม',
+        'ยอดนักฟาม',
+        'จับเวลาบอส',
+        'ดูประวัติจำกัด 1 วัน',
+        'คลังไอเทม 1 คลัง (A)',
         'จับเวลาบอสได้ 1 ตัว'
       ] },
-    { key:'farm', name:'ยอดนักฟาม', monthly:99, yearly:990,
-      tagline:'รู้ต้นทุน รู้กำไร ทุกกั้มที่ฟาม',
-      features:[
-        'บันทึกต้นทุนต่อกั้ม คำนวณรวมให้อัตโนมัติ',
-        'แปลงต้นทุนเป็นบาท/เซนี่ได้ในคลิกเดียว',
-        'บันทึกไอเทมหายากไว้ก่อน คำนวณราคาทีหลังได้ ไม่ตกหล่น',
-        'เทียบยอดฟามละเอียดยิบ ต่อกั้ม/ชม./วัน/สัปดาห์/เดือน',
-        'รู้ความคุ้มค่าชัดเจน ฟามคุ้มไหมรู้ทันที',
-        'ใช้งานง่าย สะดวก รวดเร็ว'
-      ] },
-    { key:'timers', name:'จับเวลาบอส', monthly:149, yearly:1490,
-      tagline:'ไม่พลาดบอสตัวไหนอีกต่อไป',
-      features:[
-        'จับเวลาบอสได้ไม่จำกัดจำนวน',
-        'บันทึกไอเทมที่ได้รับทันทีตอนฆ่าบอส',
-        'ระบบปาร์ตี้ เห็นตารางเดียวกับเพื่อนร่วมทีม',
-        'เลือกได้ทั้งหารของแบบปาร์ตี้ หรือเก็บไว้ส่วนตัว',
-        'ประวัติไอเทมครบ ได้มา/ขายแล้ว/ยังไม่ขาย ดูง่ายจุดเดียว',
-        'ปักหมุดจุดที่บอสชอบเกิดบนมินิแมพได้เลย'
-      ] },
-    { key:'accountItems', name:'บัญชีนักลงทุน + คลังไอเทม', monthly:199, yearly:1990,
-      tagline:'บริหารร้านค้าแบบมืออาชีพ รู้กำไร-ขาดทุนทุกดีล',
+    { key:'bundle', name:'3 in 1', monthly:199, yearly:1990, promoMonthly:99, promoYearly:995,
+      tagline:'บัญชีนักลงทุน + คลังไอเทม + ยอดนักฟาม — บริหารร้านค้าแบบมืออาชีพ รู้กำไร-ขาดทุนทุกดีล',
       features:[
         'บันทึกรายการขาย M และไอเทมได้ครบทุกรายการ',
         'คำนวณราคาเฉลี่ยต้นทุนให้อัตโนมัติ รู้กำไรจริงทันที',
@@ -7163,14 +7178,25 @@ ul.post-announce-note li:last-child{margin-bottom:0}
         'คลังสินค้าครบ 4 คลัง บริหารสต๊อกเป็นระบบ',
         'เลือกไอเทมจากคลังมาขายได้เลย ไม่ต้องพิมพ์ซ้ำ',
         'เล่นได้มากกว่า 1 เซิร์ฟเวอร์ แยกไอเทมแต่ละเซิร์ฟชัดเจน ไม่ปนกัน',
-        'ดูประวัติย้อนหลังได้ทั้งหมด ไม่มีวันข้อมูลหาย'
+        'ดูประวัติย้อนหลังได้ทั้งหมด ไม่มีวันข้อมูลหาย',
+        { divider:'รู้ต้นทุน รู้กำไร ทุกกั้มที่ฟาม' },
+        'บันทึกต้นทุนต่อกั้ม คำนวณรวมให้อัตโนมัติ',
+        'แปลงต้นทุนเป็นบาท/เซนี่ได้ในคลิกเดียว',
+        'บันทึกไอเทมหายากไว้ก่อน คำนวณราคาทีหลังได้ ไม่ตกหล่น',
+        'เทียบยอดฟามละเอียดยิบ ต่อกั้ม/ชม./วัน/สัปดาห์/เดือน',
+        'รู้ความคุ้มค่าชัดเจน ฟามคุ้ม รู้ทันที',
+        'ใช้งานง่าย สะดวก รวดเร็ว'
       ] },
-    { key:'all', name:'ใช้งานทั้งหมด', monthly:349, yearly:3490, best:true,
-      tagline:'รวมทุกฟีเจอร์ในราคาคุ้มสุด ประหยัดกว่าซื้อแยก',
+    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:995,
+      tagline:'ไม่พลาดบอสตัวไหนอีกต่อไป',
       features:[
-        'รวมสิทธิ์ "ยอดนักฟาม" + "จับเวลาบอส" + "บัญชีนักลงทุน" ครบทุกฟีเจอร์',
-        'ประหยัดกว่าซื้อแยกทีละแพ็กเกจ',
-        'จัดการร้านค้า ฟาม และบอส ครบในที่เดียว'
+        'จับเวลาบอสได้ไม่จำกัดจำนวน',
+        'บันทึกไอเทมที่ได้รับจากบอสทันที',
+        'ระบบปาร์ตี้ เห็นตารางเดียวกับเพื่อนร่วมทีม',
+        'เลือกได้ทั้งหารของแบบปาร์ตี้ หรือเก็บไว้ส่วนตัว',
+        'ประวัติไอเทมครบ ได้มา/ขายแล้ว/ยังไม่ขาย ดูง่ายจุดเดียว',
+        'ประวัติยอดเงินส่วนตัวหรือจะหารแบบปาร์ตี้',
+        'ติ๊กจุดที่บอสตายใน Mini Map ได้เลย'
       ] }
   ];
   var pricingCycle = 'monthly';
@@ -7179,22 +7205,23 @@ ul.post-announce-note li:last-child{margin-bottom:0}
     var grid = document.getElementById('pricingGrid');
     grid.innerHTML = PRICING_PLANS.map(function(p){
       var monthly = pricingCycle==='monthly';
-      var price = monthly ? p.monthly : p.yearly;
       var unit = monthly ? '/ เดือน' : '/ ปี';
-      var features = (p.features||[]).map(function(f){ return '<li><span class="pricing-check">✓</span><span>'+escapeHtml(f)+'</span></li>'; }).join('');
+      var features = (p.features||[]).map(function(f){
+        if(f && f.divider) return '<li class="pricing-feature-divider">'+escapeHtml(f.divider)+'</li>';
+        return '<li><span class="pricing-check">✓</span><span>'+escapeHtml(f)+'</span></li>';
+      }).join('');
       var taglineHtml = p.tagline ? '<div class="pricing-card-tagline">'+escapeHtml(p.tagline)+'</div>' : '';
       var priceHtml, ctaHtml;
       if(p.free){
-        priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">ฟรี</span></div>'+
-          '<div class="pricing-save pricing-save-hidden">-</div>';
+        priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">ฟรี</span></div>';
         ctaHtml = '<button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ใช้งานได้ทันที ไม่ต้องสมัคร</button>';
       } else {
-        var savings = p.monthly*12 - p.yearly;
-        var monthsFree = p.monthly>0 ? Math.round(savings/p.monthly) : 0;
+        var original = monthly ? p.monthly : p.yearly;
+        var price = monthly ? p.promoMonthly : p.promoYearly;
         var perDay = price / (monthly ? 30 : 365);
-        priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
-          '<div class="pricing-perday">เฉลี่ย ~'+perDay.toFixed(1)+' บ/วัน</div>'+
-          '<div class="pricing-save'+(monthly?' pricing-save-hidden':'')+'">ประหยัด '+fmtNum(savings)+' บ (เท่ากับฟรี '+monthsFree+' เดือน)</div>';
+        priceHtml = '<div class="pricing-card-price"><span class="pricing-original">'+fmtNum(original)+' บ'+unit+'</span><span class="pricing-promo-badge">ลด 50%</span></div>'+
+          '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
+          '<div class="pricing-perday">เฉลี่ย ~'+perDay.toFixed(1)+' บ/วัน</div>';
         var ctaLabel = 'สมัคร'+(monthly?'รายเดือน':'รายปี');
         ctaHtml = '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+p.name+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>';
       }
@@ -7233,10 +7260,11 @@ ul.post-announce-note li:last-child{margin-bottom:0}
       openTopup();
       return;
     }
-    var curExp = App.profile && App.profile.expires_at ? new Date(App.profile.expires_at).getTime() : 0;
+    var expCol = planKey === 'bundle' ? 'plan_bundle_expires_at' : 'plan_timers_expires_at';
+    var curExp = App.profile && App.profile[expCol] ? new Date(App.profile[expCol]).getTime() : 0;
     var newExp = Math.max(curExp, Date.now()) + days*86400000;
-    showConfirm('ยืนยันสมัคร "'+planName+'" ('+(cycle==='yearly' ? 'รายปี +365 วัน' : 'รายเดือน +30 วัน')+') ด้วย '+fmtNum(price)+' แต้ม?<br>ใช้งานได้ถึงประมาณ '+fmtDate(newExp), function(){
-      supa.rpc('buy_package', { p_plan_key: planKey, p_cycle: cycle }).then(function(res){
+    showConfirm('ยืนยันสมัคร "'+planName+'" ('+(cycle==='yearly' ? 'รายปี +365 วัน' : 'รายเดือน +30 วัน')+') ด้วย '+fmtNum(price)+' แต้ม (ราคาโปรลด 50%)?<br>ใช้งานได้ถึงประมาณ '+fmtDate(newExp), function(){
+      supa.rpc('buy_plan', { p_plan_key: planKey, p_cycle: cycle }).then(function(res){
         if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
         refreshProfile();
         toast('สมัคร '+planName+' สำเร็จ — ใช้งานได้ถึง '+fmtDate(new Date(res.data).getTime()));
@@ -7458,6 +7486,19 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   function isExpiredAccount(){
     if(!App.profile || App.profile.role === 'admin' || !App.profile.expires_at) return false;
     return new Date(App.profile.expires_at).getTime() <= Date.now();
+  }
+  // สิทธิ์แยกตามแพ็กเกจ (คนละเรื่องกับ isExpiredAccount ด้านบน — นั่นคือ "บัญชีหมดอายุ = อ่าน
+  // อย่างเดียวทั้งหมด" ส่วนนี่คือ "บัญชีฟรี (ไม่เคยซื้อแพ็กเกจนี้) = ใช้ได้แต่จำกัดจำนวน/ช่วงเวลา")
+  // legacy_unlimited === undefined หมายถึงยังไม่ได้รัน SQL เพิ่มคอลัมน์ — fail open ไม่จำกัดไปก่อน
+  function hasBundlePlan(){
+    if(!App.profile) return false;
+    if(App.profile.role === 'admin' || App.profile.legacy_unlimited === undefined || App.profile.legacy_unlimited) return true;
+    return !!(App.profile.plan_bundle_expires_at && new Date(App.profile.plan_bundle_expires_at).getTime() > Date.now());
+  }
+  function hasTimersPlan(){
+    if(!App.profile) return false;
+    if(App.profile.role === 'admin' || App.profile.legacy_unlimited === undefined || App.profile.legacy_unlimited) return true;
+    return !!(App.profile.plan_timers_expires_at && new Date(App.profile.plan_timers_expires_at).getTime() > Date.now());
   }
   // สิ่งที่ยังกดได้ตอนหมดอายุ (นอกจากนี้ = ทำรายการ → กัน)
   var RO_ALLOW = [
@@ -8385,7 +8426,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
         console.error('supaAddBoss', res.error);
         App.db = App.db.filter(function(b){ return b.id!==boss.id; });
         renderRoster();
-        toast('เพิ่ม '+boss.name+' ไม่สำเร็จ ลองใหม่อีกครั้ง');
+        toast(res.error.message || ('เพิ่ม '+boss.name+' ไม่สำเร็จ ลองใหม่อีกครั้ง'));
       }
     });
   });

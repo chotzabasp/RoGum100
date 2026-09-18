@@ -502,6 +502,7 @@ svg.icon{width:18px;height:18px;display:block}
 .panel-farm-cost.server-retired .farm-map-row,
 .panel-farm-cost.server-retired .farm-cost-items,
 .panel-farm-cost.server-retired .farm-exrate-row{opacity:.45}
+.timers-panel.server-retired .toolbar, .timers-panel.server-retired .roster{opacity:.45}
 .mr-entry.just-saved{animation:mr-flash 1.1s ease}
 @keyframes mr-flash{
   0%{background:color-mix(in srgb, var(--success) 35%, var(--surface-2)); border-color:var(--success)}
@@ -1532,6 +1533,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       </div>
     </section>
 
+    <p class="farm-retired-note" id="timersRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักแล้ว ใช้งานจับเวลาบอส (เพิ่ม/ลบ/กดตายแล้ว) ไม่ได้ — ดูรายชื่อบอสที่เคยบันทึกไว้ได้ตามปกติ</p>
+    <div class="timers-panel" id="timersPanel">
     <div class="toolbar">
       <div class="search-wrap">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -1541,6 +1544,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     </div>
 
     <div class="roster" id="roster"></div>
+    </div>
     </div>
     </section>
 
@@ -3246,6 +3250,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 
     if(!ordered.length){
       root.innerHTML = '<p class="empty-note">ยังไม่มีบอสในรายการ — ค้นหาจากช่องด้านบนแล้วกด "+ เพิ่ม"</p>';
+      renderTimersRetiredState();
       return;
     }
 
@@ -3288,6 +3293,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
         '<div class="bc-items"><span class="bc-items-label">ไอเทมที่ดรอป</span>'+boss.items.map(function(it){ return itemChip(boss, it); }).join('')+'</div>'+
       '</div>';
     }).join('');
+    renderTimersRetiredState();
   }
 
   function tickTimers(){
@@ -4501,6 +4507,21 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   // เซิร์ฟที่ไม่ได้อยู่ใน "เซิร์ฟเวอร์ที่เล่น" แล้ว = ดูย้อนหลังได้ แต่กรอก/บันทึกอะไรใหม่ไม่ได้
   // ปิดทุกช่องกรอกในการ์ด "ต้นทุนต่อกั้ม" ทิ้ง แล้วขึ้นป้ายบอกเหตุผล
   // (เรียกท้าย renderFarmPage เสมอ เพราะ renderFarmCostItems วาดปุ่ม/ช่องใหม่ทุกครั้ง)
+  // เซิร์ฟเวอร์ที่พักแล้ว = ห้ามเพิ่ม/ลบ/กดตายแล้วบอสต่อ (ดูรายชื่อ/ประวัติที่เคยบันทึกไว้ได้ตามปกติ)
+  // ปิดผ่าน disabled ครอบคลุมช่องค้นหา+ปุ่มในการ์ดบอสทุกปุ่ม ส่วนคลิกจุดปักหมุดแผนที่/ติ๊กไอเทม
+  // ที่ไม่ใช่ input/button ต้องกันเพิ่มที่ handler เอง (ดู #roster กับ #searchResults click)
+  function renderTimersRetiredState(){
+    var panel = document.getElementById('timersPanel');
+    if(!panel) return;
+    var retired = isRetiredServer(App.timersServerId);
+    panel.classList.toggle('server-retired', retired);
+    panel.querySelectorAll('input, select, textarea, button').forEach(function(el){
+      if(retired) el.setAttribute('disabled','');
+      else el.removeAttribute('disabled');
+    });
+    var note = document.getElementById('timersRetiredNote');
+    if(note) note.hidden = !retired;
+  }
   function renderFarmRetiredState(){
     var panel = document.querySelector('.panel-farm-cost');
     if(!panel) return;
@@ -8248,6 +8269,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   });
 
   searchResults.addEventListener('click', function(e){
+    if(isRetiredServer(App.timersServerId)) return;
     var row = e.target.closest('.search-result-row');
     if(!row || row.classList.contains('added')) return;
     var boss = CATALOG.filter(function(b){ return b.id===row.dataset.catalogId; })[0];
@@ -8273,6 +8295,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 
   // ---------- roster interactions ----------
   document.getElementById('roster').addEventListener('click', function(e){
+    if(isRetiredServer(App.timersServerId)) return;
     var card = e.target.closest('.boss-card');
     if(!card) return;
     var bossId = card.dataset.boss;

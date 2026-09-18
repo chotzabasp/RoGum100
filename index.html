@@ -246,6 +246,8 @@ svg.icon{width:18px;height:18px;display:block}
 .panel-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .ticker-head-title{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
 .ticker-item .poster{color:var(--text-dim);font-size:.68rem;font-weight:400}
+.ticker-item a.poster{color:var(--accent);text-decoration:none;cursor:pointer}
+.ticker-item a.poster:hover{text-decoration:underline}
 .ticker-wrap{overflow:hidden;border-radius:var(--radius-m);background:var(--surface-2);border:1px solid var(--border);padding:1rem 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
 .ticker-track{display:flex;width:max-content;gap:.5rem;animation:ticker-scroll 26s linear infinite}
 .ticker-wrap:hover .ticker-track{animation-play-state:paused}
@@ -1644,6 +1646,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
             <div><span class="lbl">ใช้งานได้ถึง</span><b id="stExpires">-</b></div>
           </div>
           <div class="field"><label for="stDisplayName">ชื่อที่ใช้แสดง</label><input id="stDisplayName" type="text" maxlength="40" placeholder="ชื่อที่เพื่อนในปาร์ตี้จะเห็น"></div>
+          <div class="field"><label for="stFacebookUrl">ลิงก์ Facebook (ไม่บังคับ)</label><input id="stFacebookUrl" type="text" maxlength="200" placeholder="เช่น facebook.com/ชื่อโปรไฟล์"><div class="field-hint">ให้คนอื่นกดชื่อคุณตรงแถบ "ประกาศ รับ M" แล้วไปหน้า Facebook นี้ได้ ต้องขึ้นต้นด้วย facebook.com หรือ fb.com เท่านั้น</div></div>
           <div class="field" id="stBirthField" hidden><label for="stBirthInput">วันเดือนปีเกิด (กรอกได้ครั้งเดียว แก้ไม่ได้)</label><input id="stBirthInput" type="date" min="1900-01-01"></div>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveProfile">บันทึกข้อมูล</button></div>
         </div>
@@ -2850,6 +2853,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       buy: r.buy==null ? null : Number(r.buy),
       userName: r.user_name,
       userId: r.user_id,
+      facebookUrl: r.facebook_url || null,
       ts: new Date(r.created_at).getTime(),
       expiresAt: new Date(r.expires_at).getTime(),
       // ใช้แค่โชว์ในช่อง "ระยะเวลา" (ปิดแก้ไว้) ตอนกดแก้ไขประกาศ
@@ -3408,15 +3412,19 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       return res;
     });
   }
-  var PROFILE_COLS = 'display_name, points, role, expires_at, username, birth_date, servers, server_quota';
+  var PROFILE_COLS = 'display_name, points, role, expires_at, username, birth_date, servers, server_quota, facebook_url';
   function refreshProfile(){
     return withSkewRetry(function(){ return supa.from('profiles').select(PROFILE_COLS).eq('id', App.session.id).single(); }).then(function(res){
-      // กันกรณีที่ยังไม่ได้รัน SQL โควต้าเซิร์ฟเวอร์ (คอลัมน์ server_quota ยังไม่มี)
-      // ถ้าไม่ดักไว้ โปรไฟล์จะโหลดไม่ได้เลยและทั้งแอพจะพัง — ถอยไปใช้คอลัมน์ชุดเดิมแทน
-      // (โควต้าจะถูกมองเป็น 1 ตาม default ของ serverQuota())
+      // กันกรณีที่ยังไม่ได้รัน SQL เพิ่มคอลัมน์ใหม่ๆ — ถ้าไม่ดักไว้ โปรไฟล์จะโหลดไม่ได้เลย
+      // และทั้งแอพจะพัง ถอยไปใช้คอลัมน์ชุดเดิมทีละคอลัมน์แทน
+      if(res.error && PROFILE_COLS.indexOf('facebook_url')!==-1 && /facebook_url/.test(res.error.message||'')){
+        console.warn('profiles.facebook_url ยังไม่มีในฐานข้อมูล — ข้ามไปก่อน', res.error);
+        PROFILE_COLS = PROFILE_COLS.replace(', facebook_url', '');
+        return refreshProfile();
+      }
       if(res.error && PROFILE_COLS.indexOf('server_quota')!==-1 && /server_quota/.test(res.error.message||'')){
         console.warn('profiles.server_quota ยังไม่มีในฐานข้อมูล — ใช้โควต้าเริ่มต้น 1 เซิร์ฟไปก่อน', res.error);
-        PROFILE_COLS = 'display_name, points, role, expires_at, username, birth_date, servers';
+        PROFILE_COLS = PROFILE_COLS.replace(', server_quota', '');
         return refreshProfile();
       }
       if(res.error){ console.error('refreshProfile', res.error); return; }
@@ -3699,9 +3707,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       var parts = [];
       if(a.buy!=null) parts.push('<span class="buy">รับM '+fmtNum(a.buy)+'บ</span>');
       var countdown = a.expiresAt!=null ? '<span class="ticker-countdown" data-expires-at="'+a.expiresAt+'">'+fmtDuration(a.expiresAt-now)+'</span>' : '';
+      // มีลิงก์ Facebook แนบมากับประกาศ (จำสำเนาไว้ตอนลงประกาศ) ให้กดชื่อแล้วไปหน้านั้นได้เลย
+      var posterHtml = a.facebookUrl
+        ? '<a class="poster" href="'+escapeHtml(/^https?:\/\//i.test(a.facebookUrl) ? a.facebookUrl : 'https://'+a.facebookUrl)+'" target="_blank" rel="noopener noreferrer">('+a.userName+')</a>'
+        : '<span class="poster">('+a.userName+')</span>';
       return '<span class="ticker-item" data-announce-id="'+a.id+'">'+
         '<span class="ticker-item-main">'+(sv?sv.name:a.serverId)+' '+parts.join(' / ')+'</span>'+
-        '<span class="ticker-item-sub"><span class="poster">('+a.userName+')</span>'+countdown+'</span>'+
+        '<span class="ticker-item-sub">'+posterHtml+countdown+'</span>'+
       '</span>';
     }).join('');
 
@@ -7183,6 +7195,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     document.getElementById('stBirth').textContent = p.birth_date ? fmtFullDate(p.birth_date+'T00:00:00') : 'ยังไม่ได้กรอก';
     document.getElementById('stExpires').textContent = p.expires_at ? fmtDate(new Date(p.expires_at).getTime()) : '-';
     document.getElementById('stDisplayName').value = p.display_name || '';
+    document.getElementById('stFacebookUrl').value = p.facebook_url || '';
     // บัญชีเก่าที่สมัครก่อนมีช่องวันเกิด: กรอกได้ครั้งเดียว พอมีค่าแล้วช่องจะหายไป
     document.getElementById('stBirthField').hidden = !!p.birth_date;
     if(p.birth_date) document.getElementById('stBirthInput').value = '';
@@ -7323,18 +7336,27 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     document.getElementById('stHistTopup').hidden = true;
   });
   var settingsBusy = false;
+  // ต้องขึ้นต้นด้วย facebook.com หรือ fb.com เท่านั้น (มี/ไม่มี http(s):// หรือ www./m. นำหน้าก็ได้)
+  // ตรวจซ้ำอีกชั้นฝั่ง DB ใน set_my_facebook_url() อยู่แล้ว อันนี้แค่เตือนไวๆ ก่อนส่ง
+  var FB_URL_RE = /^(https?:\/\/)?(www\.|m\.)?(facebook\.com|fb\.com)\/.+/i;
   document.getElementById('stSaveProfile').addEventListener('click', function(){
     if(settingsBusy) return;
     var name = document.getElementById('stDisplayName').value.trim();
     var birthField = document.getElementById('stBirthField');
     var birth = birthField.hidden ? '' : document.getElementById('stBirthInput').value;
+    var fbUrl = document.getElementById('stFacebookUrl').value.trim();
     if(!name){ toast('กรอกชื่อที่ใช้แสดง'); return; }
     if(birth){ var bErr = birthDateError(birth); if(bErr){ toast(bErr); return; } }
+    if(fbUrl && !FB_URL_RE.test(fbUrl)){ toast('ลิงก์ Facebook ต้องขึ้นต้นด้วย facebook.com หรือ fb.com เท่านั้น'); return; }
     var go = function(){
       settingsBusy = true;
-      supa.rpc('update_my_profile', { p_display_name: name, p_birth_date: birth || null }).then(function(res){
+      Promise.all([
+        supa.rpc('update_my_profile', { p_display_name: name, p_birth_date: birth || null }),
+        supa.rpc('set_my_facebook_url', { p_url: fbUrl || null })
+      ]).then(function(results){
         settingsBusy = false;
-        if(res.error){ toast('บันทึกไม่สำเร็จ: '+res.error.message); return; }
+        var failedRes = results.filter(function(r){ return r.error; })[0];
+        if(failedRes){ toast('บันทึกไม่สำเร็จ: '+failedRes.error.message); return; }
         return refreshProfile().then(function(){ renderSettingsPage(); toast('บันทึกข้อมูลแล้ว'); });
       });
     };

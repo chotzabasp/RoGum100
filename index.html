@@ -2024,7 +2024,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     return supa.from('servers').select('*').order('sort_order').then(function(res){
       if(res.error){ console.error('loadServers', res.error); return; }
       SERVER_RATES = (res.data||[]).map(function(s){
-        return { id:s.id, name:s.name, buy:s.buy, sell:s.sell };
+        return { id:s.id, name:s.name, buy:s.buy, sell:s.sell, active:s.active!==false };
       });
     });
   }
@@ -7155,11 +7155,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     loadPurchaseHistory();
   }
   // ---------- เซิร์ฟเวอร์ที่เล่น: ชิปเลือกได้หลายอัน ใช้ทั้ง popup ตอนสมัคร/ล็อกอินครั้งแรก และหน้าตั้งค่า ----------
+  // ปิดให้บริการแล้ว = ไม่โชว์เป็นตัวเลือกใหม่ แต่ถ้าบัญชีนี้มีอยู่แล้วต้องยังเห็น/เอาออกเองได้
   function renderServerChips(root, selected){
     if(!SERVER_RATES.length){ root.innerHTML = '<p class="empty-note">ยังไม่มีเซิร์ฟเวอร์ในระบบ</p>'; return; }
-    root.innerHTML = SERVER_RATES.map(function(s){
+    var visible = SERVER_RATES.filter(function(s){ return s.active || selected.indexOf(s.id)!==-1; });
+    root.innerHTML = visible.map(function(s){
       var on = selected.indexOf(s.id)!==-1;
-      return '<button type="button" class="share-chip'+(on?' on':'')+'" data-server-pick="'+s.id+'">'+(on?'✓ ':'')+escapeHtml(s.name)+'</button>';
+      return '<button type="button" class="share-chip'+(on?' on':'')+'" data-server-pick="'+s.id+'">'+(on?'✓ ':'')+escapeHtml(s.name)+(s.active?'':' (ปิดให้บริการ)')+'</button>';
     }).join('');
     syncServerPickLimit(root);
   }
@@ -8551,7 +8553,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   var serversReady = loadServers().then(function(){
     // dropdown เซิร์ฟเวอร์ในฟอร์มสมัคร (เลือก 1 ตอนสมัคร เพิ่มทีหลังได้ที่ตั้งค่า)
     var sel = document.getElementById('rg-server');
-    sel.innerHTML = '<option value="">— เลือกเซิร์ฟเวอร์ —</option>'+SERVER_RATES.map(function(s){ return '<option value="'+escapeHtml(s.id)+'">'+escapeHtml(s.name)+'</option>'; }).join('');
+    sel.innerHTML = '<option value="">— เลือกเซิร์ฟเวอร์ —</option>'+SERVER_RATES.filter(function(s){ return s.active; }).map(function(s){ return '<option value="'+escapeHtml(s.id)+'">'+escapeHtml(s.name)+'</option>'; }).join('');
   });
   supa.auth.getSession().then(function(res){
     var session = res.data && res.data.session;

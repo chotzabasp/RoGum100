@@ -871,6 +871,9 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 .post-announce-check{display:flex;align-items:center;gap:.4rem;font-size:.85rem;color:var(--text);width:76px;flex:none;cursor:pointer}
 .post-announce-row input[type="text"]{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.5rem .6rem;font-size:.85rem}
 .post-announce-note{font-size:.72rem;color:var(--text-dim);margin:.4rem 0 1.1rem;line-height:1.4}
+ul.post-announce-note{padding-left:1.1rem;list-style:disc}
+ul.post-announce-note li{margin-bottom:.3rem}
+ul.post-announce-note li:last-child{margin-bottom:0}
 /* select ปกติลงสีแค่บางส่วนของ option ไม่ได้ เลยใช้ปุ่มแทนเพื่อให้ "(N แต้ม)" ขึ้นสีเตือนได้ */
 .announce-duration-toggle{display:flex;flex-wrap:wrap;gap:.4rem}
 .announce-duration-btn{flex:1 1 auto;min-width:0;padding:.45rem .3rem;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);font-size:.78rem;font-weight:600;cursor:pointer;text-align:center;line-height:1.35}
@@ -1863,7 +1866,11 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       <label>รับ M (บาท)</label>
       <input type="text" inputmode="numeric" id="postAnnounceBuyPrice" class="mono" placeholder="ราคารับ">
     </div>
-    <p class="post-announce-note" id="postAnnounceNote">ลงประกาศใหม่ใช้แต้มตามระยะเวลาที่เลือก — แก้ไขประกาศเดิม (เซิร์ฟเวอร์/ราคา) ไม่เสียแต้มเพิ่ม</p>
+    <ul class="post-announce-note" id="postAnnounceNote">
+      <li>กรุณา! ใส่ลิงก์หน้า FB ที่ตั้งค่าไว้ก่อนลงประกาศ เพื่อสะดวกในการติดต่อกัน</li>
+      <li>สามารถกดแก้ไขราคา M ได้ตลอด (ก่อนเวลาหมด)</li>
+      <li>เลือกดูประกาศได้มากกว่า 1 เซิร์ฟเวอร์ (+เพิ่มเซิร์ฟเวอร์)</li>
+    </ul>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" id="postAnnounceCancelBtn">ยกเลิก</button>
       <button type="button" class="btn btn-gradient" id="postAnnounceSubmitBtn">ลงประกาศ</button>

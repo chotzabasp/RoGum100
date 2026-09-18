@@ -869,7 +869,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 .post-announce-check{display:flex;align-items:center;gap:.4rem;font-size:.85rem;color:var(--text);width:76px;flex:none;cursor:pointer}
 .post-announce-row input[type="text"]{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.5rem .6rem;font-size:.85rem}
 .post-announce-note{font-size:.72rem;color:var(--text-dim);margin:.4rem 0 1.1rem;line-height:1.4}
-.post-announce-cost{font-size:.76rem;color:var(--warn);margin-top:.35rem;font-weight:600}
 .ticker-post-group{position:relative;display:flex;align-items:stretch}
 .ticker-post-group .btn-sm{border-top-right-radius:0;border-bottom-right-radius:0}
 .ticker-post-caret{background:color-mix(in srgb, #7dd3fc 12%, var(--surface-2));color:#7dd3fc;border:1px solid color-mix(in srgb, #7dd3fc 45%, var(--border));border-top-right-radius:var(--radius-s);border-bottom-right-radius:var(--radius-s);padding:0 .5rem;cursor:pointer;font-size:.7rem}
@@ -1850,7 +1849,6 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     <div class="post-announce-field">
       <label>ระยะเวลาแสดงประกาศ</label>
       <select id="postAnnounceDuration"></select>
-      <div class="post-announce-cost" id="postAnnounceCost"></div>
     </div>
     <div class="post-announce-field">
       <label>รับ M (บาท)</label>
@@ -7758,7 +7756,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       return '<option value="'+id+'">'+(s?s.name:id)+'</option>';
     }).join('');
     var durSel = document.getElementById('postAnnounceDuration');
-    durSel.innerHTML = ANNOUNCE_DURATION_OPTIONS.map(function(o){ return '<option value="'+o.value+'">'+o.label+'</option>'; }).join('');
+    // แก้ไขประกาศเดิมไม่เสียแต้ม (ระยะเวลาถูกล็อกไว้ไม่ให้แก้อยู่แล้ว) เลยไม่ต้องโชว์ราคาต่อท้าย
+    durSel.innerHTML = ANNOUNCE_DURATION_OPTIONS.map(function(o){ return '<option value="'+o.value+'">'+o.label+(entry ? '' : ' ('+o.cost+' แต้ม)')+'</option>'; }).join('');
 
     if(entry){
       sel.value = entry.serverId;
@@ -7779,19 +7778,8 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       document.getElementById('postAnnounceSubmitBtn').textContent = 'ลงประกาศ';
       document.getElementById('postAnnounceBuyPrice').value = '';
     }
-    renderPostAnnounceCost();
     document.getElementById('postAnnouncementOverlay').hidden = false;
   }
-  // แก้ไขประกาศเดิมไม่เสียแต้ม (ระยะเวลาถูกล็อกไว้ไม่ให้แก้อยู่แล้ว) โชว์ป้ายแต้มเฉพาะตอนลงประกาศใหม่
-  function renderPostAnnounceCost(){
-    var durSel = document.getElementById('postAnnounceDuration');
-    var costEl = document.getElementById('postAnnounceCost');
-    if(editingAnnouncementId){ costEl.hidden = true; return; }
-    var opt = ANNOUNCE_DURATION_OPTIONS.filter(function(o){ return String(o.value)===durSel.value; })[0];
-    costEl.hidden = false;
-    costEl.textContent = opt ? 'ใช้ '+opt.cost+' แต้ม' : '';
-  }
-  document.getElementById('postAnnounceDuration').addEventListener('change', renderPostAnnounceCost);
   function closePostAnnouncement(){
     editingAnnouncementId = null;
     document.getElementById('postAnnounceDuration').disabled = false;

@@ -5,22 +5,23 @@
 <link rel="apple-touch-icon" href="logo-gum100.png?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0b0c10;
-  --surface:#15161c;
-  --surface-2:#1c1e26;
-  --surface-hover:#20222c;
-  --border:#262832;
-  --text:#e9eaef;
-  --text-dim:#8b8d98;
-  --accent:#5b8cff;
+  --bg:#101521;
+  --surface:#192233;
+  --surface-2:#202c40;
+  --surface-hover:#28364d;
+  --border:#334158;
+  --text:#f2f5fa;
+  --text-dim:#adb9cd;
+  --accent:#79a7ff;
   --accent-ink:#08101f;
   --warn:#e0ab3c;
   --danger:#ef5a56;
   --success:#3fbd75;
-  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.45);
+  --shadow: 0 2px 6px rgba(0,0,0,.18), 0 16px 40px rgba(0,0,0,.28);
+  --font-ui:"Inter","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
   --radius-s:8px;
   --radius-m:12px;
   --radius-l:16px;
@@ -35,10 +36,11 @@ html,body{margin:0;padding:0}
 body{
   background:var(--bg);
   color:var(--text);
-  font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-family:var(--font-ui);
+  line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
-h1,h2,h3{font-family:"Inter";font-weight:700;text-wrap:balance;letter-spacing:-.01em;margin:0}
+h1,h2,h3{font-family:var(--font-ui);font-weight:700;text-wrap:balance;letter-spacing:0;line-height:1.5;margin:0}
 .mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
 button{font-family:inherit}
 a{color:var(--accent)}
@@ -1091,6 +1093,172 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   .bc-time-block{text-align:left}
   .bc-input{flex:1 1 140px;width:auto}
   .bc-close{margin-left:auto}
+}
+/* ---------- Gum100 presentation refinements ---------- */
+/* Shared typography and controls; existing state and visibility rules remain authoritative. */
+html{color-scheme:dark;scrollbar-color:var(--border) var(--bg)}
+input,select,textarea{font-family:var(--font-ui);color-scheme:dark}
+input::placeholder,textarea::placeholder{color:var(--text-dim);opacity:.8}
+.field label,.hf-group label,.stat-chip-label,.rate-label,.mr-summary-label,
+.settings-group-label,.mr-it-head{letter-spacing:0;text-transform:none;line-height:1.6}
+.field label,.farm-log-field label,.farm-log-field-label{font-size:.82rem;font-weight:500}
+.field-hint,.auth-note,.settings-note,.mr-upload-note,.field .field-hint{font-size:.78rem;line-height:1.7}
+.topbar .sub,.pricing-sub,.auth-tag{line-height:1.75}
+.field{gap:.45rem;margin-bottom:1rem}
+.field input,.field select{min-height:44px;padding:.65rem .8rem;font-size:.95rem}
+.btn{min-height:42px;padding:.6rem 1rem;line-height:1.5;transition:background .15s ease,border-color .15s ease,filter .15s ease}
+.btn-sm{min-height:36px;font-size:.82rem}
+.btn-primary,.seg-btn.active{color:var(--accent-ink)}
+.btn-gradient{background:linear-gradient(110deg,#355fc4,#7950b5);box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.btn-ghost:not(:disabled):hover{border-color:var(--text-dim)}
+.btn:disabled{cursor:not-allowed}
+.btn-primary:disabled,.btn-success:disabled,.btn-ghost:disabled{opacity:.5;filter:none}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid var(--accent);outline-offset:3px;
+}
+.seg-btn{font-size:.78rem;line-height:1.5;padding:.4rem .75rem}
+.chart-tf-select,.hf-group select,.mr-hist-search{min-height:36px;font-size:.8rem}
+.mr-item-row input,.mr-item-row select,.farm-cost-row input,.farm-cost-row select,
+.farm-rare-row input,.farm-rare-row select{min-height:40px;line-height:1.5}
+.mr-item-row-main > *,.mr-name-wrap input{min-width:0}
+
+/* Shell, navigation and the existing illustrated home banner. */
+.rail{padding:1.25rem .75rem;gap:.35rem}
+.rail-brand{padding-bottom:1rem;margin-bottom:.7rem}
+.rail-btn{min-height:46px;padding:.65rem .75rem}
+.rail-btn .tip{font-size:.86rem;line-height:1.6}
+.rail-btn.active{background:color-mix(in srgb,var(--accent) 14%,var(--bg));box-shadow:inset 3px 0 var(--accent)}
+.topbar{margin-bottom:1.5rem}
+.topbar h1{font-size:1.5rem}
+.home-banner-zone{border:1px solid var(--border)}
+.hero-row{padding:1.5rem 1.75rem 1.75rem;gap:1.25rem}
+.hero-line1{color:#dce5f3;line-height:1.6}
+.hero-line2{line-height:1.5;letter-spacing:0;background:none;color:var(--text)}
+#view-home::before,#view-home::after{opacity:.1}
+.stat-chip{padding:.7rem .9rem;gap:.35rem}
+.stat-chip-label,.rate-label{font-size:.74rem}
+.rate-chip{padding:.6rem .7rem}
+.clock .date,.points-chip small{font-size:.76rem}
+.guest-auth-buttons{flex-wrap:wrap}
+
+/* Cards and content hierarchy. No changes to timer-specific components. */
+.home-grid{gap:1.25rem;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}
+.home-left{gap:1.25rem;min-width:0}
+.panel{padding:1.25rem;gap:1rem;min-width:0}
+.panel-head h2{font-size:1.02rem;line-height:1.6}
+.panel-ticker{padding:1.15rem 1.25rem;margin-bottom:1.5rem}
+.panel-farm-revenue .panel-head{flex-wrap:wrap}
+.panel-farm-revenue .panel-head h2{white-space:normal}
+.ticker-wrap{padding:.85rem 0}
+.ticker-item .poster,.ticker-item-sub{font-size:.75rem}
+.mr-summary-item{padding:.7rem .5rem}
+.mr-summary-label{font-size:.73rem}
+.mr-summary-value{font-size:.96rem}
+.mr-total{padding:.8rem}
+.mr-empty,.admin-topup-empty{padding:1.75rem .5rem;line-height:1.75}
+.settings-group-label{font-size:.8rem;margin-top:1.6rem}
+.settings-row{padding:.85rem 0}
+.settings-row-meta{font-size:.8rem}
+.pricing-hero{padding-bottom:2.25rem}
+.pricing-card{padding:1.5rem;gap:1rem}
+.pricing-card-name{font-size:1.08rem}
+.pricing-features li{font-size:.88rem;align-items:flex-start;line-height:1.7}
+.pricing-card-tagline,.pricing-perday{font-size:.8rem}
+
+/* Existing grid-based tables and transaction lists. */
+.mr-it-row{padding:.7rem .75rem;column-gap:.65rem}
+.mr-it-head{background:var(--surface-2);font-size:.75rem;padding:.5rem .75rem}
+.mr-it-name{line-height:1.65}
+.mr-it-cell{line-height:1.6;align-items:flex-end;text-align:right}
+.mr-it-head > span:not(:first-child){text-align:right}
+.mr-it-cell b{font-variant-numeric:tabular-nums}
+.mr-it-cell small{font-size:.72rem;max-width:100%}
+.mr-tx{padding:.6rem .65rem;row-gap:.4rem}
+.mr-it,.mr-tx-list{gap:.5rem}
+.mr-ic-day-head{padding:.6rem .7rem;font-size:.8rem}
+.items-pending-row,.items-detail-row{padding:.8rem .85rem}
+.items-detail-right{flex-wrap:wrap;justify-content:flex-end;min-width:0}
+.items-detail-row > :first-child{min-width:0;overflow-wrap:anywhere}
+.items-pending-date,.items-detail-date,.items-detail-breakdown{font-size:.76rem}
+
+/* Login, registration and shared dialog surfaces. */
+.auth-card{max-width:420px;width:calc(100% - 2rem);padding:2rem;border-color:#435575}
+.auth-modal .auth-card{max-height:calc(100dvh - 2rem);overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--border) var(--surface)}
+.auth-brand{margin-bottom:1.75rem}
+.auth-brand-logo{max-width:220px}
+.auth-modal-close{width:36px;height:36px;align-items:center;justify-content:center;border-radius:var(--radius-s)}
+.auth-modal-close:hover{background:var(--surface-hover)}
+.auth-switch{line-height:1.75}
+.auth-switch button{padding:.3rem .15rem}
+.auth-note{border-top-style:solid;margin-bottom:0;padding-top:1rem}
+.auth-error{line-height:1.6}
+.confirm-box{max-height:calc(100dvh - 2rem);overflow-y:auto;overscroll-behavior:contain}
+.confirm-message{line-height:1.7}
+
+/* Preserve the desktop scrolling shell; stack content before columns become cramped. */
+@media (min-width:761px) and (max-width:1100px){
+  .home-grid{grid-template-columns:1fr}
+  .panel-side{min-height:0}
+  .items-card-c{min-height:320px}
+  .pricing-grid{grid-template-columns:1fr;max-width:620px}
+}
+@media (max-width:760px){
+  .rail{padding:.5rem;gap:.35rem;align-items:stretch;scrollbar-width:thin}
+  .rail-brand{padding:0;margin:0 .35rem;align-self:center}
+  .rail-logo-img{height:32px}
+  .rail-btn{flex:0 0 auto;flex-direction:column;gap:.2rem;width:auto;min-width:80px;min-height:60px;padding:.5rem .65rem}
+  .rail-btn .tip{display:block;font-size:.72rem;line-height:1.5;white-space:nowrap}
+  .rail-btn.active{box-shadow:inset 0 -3px var(--accent)}
+  .rail-badge{position:absolute;top:.15rem;right:.15rem}
+  .content{padding:1rem 1rem 2rem}
+  .home-grid{grid-template-columns:1fr}
+  .panel{padding:1rem}
+  .panel-side{min-height:0}
+  .home-banner-zone .util-bar{padding:1rem}
+  .hero-row{padding:.5rem 1rem 1.25rem}
+  .hero-line2{font-size:1.8rem}
+  .hero-stats{width:100%;gap:.6rem}
+  .hero-stats .stat-chip{flex:1 1 140px;min-width:0}
+  .guest-auth-buttons{gap:.4rem}
+  .guest-auth-buttons .btn{font-size:.82rem;padding:.55rem .75rem}
+  .home-controlbar,.topbar-right{flex-wrap:wrap}
+  .home-controlbar > *{max-width:100%}
+  .panel-farm-revenue .panel-head{gap:.75rem}
+  .farm-series-filter{max-width:100%;flex-wrap:wrap}
+  .items-card-c{min-height:260px}
+  .items-detail-row{flex-wrap:wrap}
+  .items-detail-right{flex:1 1 100%;justify-content:flex-start}
+  .items-pending-row-top{flex-wrap:wrap}
+  .farm-history-pagination{grid-template-columns:1fr;gap:.75rem}
+  .farm-history-pagination .farm-hist-nav{grid-column:1;grid-row:2}
+  .farm-history-pagination .farm-hist-size{justify-self:center}
+  .auth-card{padding:1.75rem 1.25rem}
+  .pricing-card{padding:1.25rem}
+  .pricing-promo-banner{border-radius:var(--radius-m);text-align:center}
+  .field input,.field select,.field textarea,
+  .mr-item-row input,.mr-item-row select,.farm-log-field input,
+  .farm-cost-row input,.farm-cost-row select,.farm-rare-row input,.farm-rare-row select,
+  .mr-hist-search{font-size:1rem}
+}
+@media (max-width:640px){
+  .mr-it-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+  .mr-it-cell{align-items:flex-start;text-align:left;overflow-x:auto}
+  .mr-it-cell i{font-size:.72rem;letter-spacing:0;text-transform:none}
+  .mr-it-cell small{overflow:visible;text-overflow:clip}
+}
+@media (max-width:420px){
+  .content{padding-left:.75rem;padding-right:.75rem}
+  .items-card-a-row-2,.settings-kv{grid-template-columns:1fr}
+  .mr-summary-row{grid-template-columns:1fr}
+  .mr-summary-item{display:flex;align-items:center;justify-content:space-between;gap:.5rem;text-align:left}
+  .mr-summary-label{margin:0}
+  .farm-cost-row,.farm-rare-row{flex-wrap:wrap}
+  .farm-cost-row .farm-cost-name,.farm-rare-row .farm-rare-name{flex-basis:100%}
+  .farm-cost-row .farm-cost-price,.farm-rare-row .farm-rare-price{flex-grow:1}
+  .settings-row{flex-wrap:wrap}
+}
+@media (prefers-reduced-motion:reduce){
+  .btn{transition:none}
 }
 </style>
 

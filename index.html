@@ -958,7 +958,8 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .pricing-sub{color:var(--text-dim);font-size:.9rem;max-width:520px;margin:0}
 .pricing-cycle-toggle{margin-top:.3rem}
 .pricing-cycle-toggle .seg-btn{font-size:.8rem;padding:.5rem 1.2rem}
-.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;align-items:stretch}
+.pricing-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;align-items:stretch}
+@media (max-width:1300px){ .pricing-grid{grid-template-columns:repeat(3,1fr)} }
 .pricing-card{
   position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-l);
   padding:1.5rem 1.2rem 1.2rem;display:flex;flex-direction:column;gap:.9rem;
@@ -972,9 +973,11 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   padding:.3rem .7rem;border-radius:999px;letter-spacing:.02em;box-shadow:0 4px 12px rgba(0,0,0,.35);
 }
 .pricing-card-name{font-size:.95rem;font-weight:700;min-height:2.5em;display:flex;align-items:center}
+.pricing-card-tagline{font-size:.76rem;color:var(--text-dim);font-style:italic;margin-top:-.5rem}
 .pricing-card-price{display:flex;align-items:baseline;gap:.3rem;flex-wrap:wrap}
 .pricing-card-amount{font-size:2rem;font-weight:800;font-family:"JetBrains Mono";color:var(--text)}
 .pricing-card-unit{color:var(--text-dim);font-size:.78rem}
+.pricing-perday{font-size:.72rem;color:var(--text-dim)}
 .pricing-save{font-size:.7rem;font-weight:700;color:var(--success);background:color-mix(in srgb, var(--success) 16%, transparent);border-radius:999px;padding:.3rem .6rem;display:inline-flex;align-self:flex-start}
 .pricing-save-hidden{visibility:hidden}
 .pricing-features{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem;flex:1}
@@ -7124,10 +7127,51 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   // ราคารายปีทุกแพ็กเกจตั้งไว้ที่ 10 เท่าของราคารายเดือน (เท่ากับแถมฟรี 2 เดือน) —
   // คำนวณส่วนลดที่แสดงจากตัวเลขจริงแทนที่จะเขียนตายตัว เผื่อภายหลังปรับราคา
   var PRICING_PLANS = [
-    { key:'accountItems', name:'บัญชีนักลงทุน + คลังไอเทม', monthly:199, yearly:1990 },
-    { key:'farm', name:'ยอดนักฟาม', monthly:99, yearly:990 },
-    { key:'timers', name:'จับเวลาบอส', monthly:149, yearly:1490 },
-    { key:'all', name:'ใช้งานทั้งหมด', monthly:349, yearly:3490, best:true }
+    { key:'free', name:'ฟรี', monthly:0, yearly:0, free:true,
+      tagline:'ลองใช้ฟรี เริ่มจับเวลาบอสตัวโปรดได้เลยวันนี้',
+      features:[
+        'ดูประวัติการขายของวันนี้',
+        'คลังไอเทม 1 คลัง (เซิร์ฟเวอร์ A)',
+        'จับเวลาบอสได้ 1 ตัว'
+      ] },
+    { key:'farm', name:'ยอดนักฟาม', monthly:99, yearly:990,
+      tagline:'รู้ต้นทุน รู้กำไร ทุกกั้มที่ฟาม',
+      features:[
+        'บันทึกต้นทุนต่อกั้ม คำนวณรวมให้อัตโนมัติ',
+        'แปลงต้นทุนเป็นบาท/เซนี่ได้ในคลิกเดียว',
+        'บันทึกไอเทมหายากไว้ก่อน คำนวณราคาทีหลังได้ ไม่ตกหล่น',
+        'เทียบยอดฟามละเอียดยิบ ต่อกั้ม/ชม./วัน/สัปดาห์/เดือน',
+        'รู้ความคุ้มค่าชัดเจน ฟามคุ้มไหมรู้ทันที',
+        'ใช้งานง่าย สะดวก รวดเร็ว'
+      ] },
+    { key:'timers', name:'จับเวลาบอส', monthly:149, yearly:1490,
+      tagline:'ไม่พลาดบอสตัวไหนอีกต่อไป',
+      features:[
+        'จับเวลาบอสได้ไม่จำกัดจำนวน',
+        'บันทึกไอเทมที่ได้รับทันทีตอนฆ่าบอส',
+        'ระบบปาร์ตี้ เห็นตารางเดียวกับเพื่อนร่วมทีม',
+        'เลือกได้ทั้งหารของแบบปาร์ตี้ หรือเก็บไว้ส่วนตัว',
+        'ประวัติไอเทมครบ ได้มา/ขายแล้ว/ยังไม่ขาย ดูง่ายจุดเดียว',
+        'ปักหมุดจุดที่บอสชอบเกิดบนมินิแมพได้เลย'
+      ] },
+    { key:'accountItems', name:'บัญชีนักลงทุน + คลังไอเทม', monthly:199, yearly:1990,
+      tagline:'บริหารร้านค้าแบบมืออาชีพ รู้กำไร-ขาดทุนทุกดีล',
+      features:[
+        'บันทึกรายการขาย M และไอเทมได้ครบทุกรายการ',
+        'คำนวณราคาเฉลี่ยต้นทุนให้อัตโนมัติ รู้กำไรจริงทันที',
+        'รูปไอเทมชัดเจน ดูปุ๊บรู้ปั๊บ ไม่ต้องเดา',
+        'คลังสินค้าครบ 4 คลัง บริหารสต๊อกเป็นระบบ',
+        'เลือกไอเทมจากคลังมาขายได้เลย ไม่ต้องพิมพ์ซ้ำ',
+        'เล่นได้มากกว่า 1 เซิร์ฟเวอร์ แยกไอเทมแต่ละเซิร์ฟชัดเจน ไม่ปนกัน',
+        'ดูประวัติย้อนหลังได้ทั้งหมด ไม่มีวันข้อมูลหาย'
+      ] },
+    { key:'all', name:'ใช้งานทั้งหมด', monthly:349, yearly:3490, best:true,
+      tagline:'รวมทุกฟีเจอร์ในราคาคุ้มสุด ประหยัดกว่าซื้อแยก',
+      features:[
+        'รวมสิทธิ์ "ยอดนักฟาม" + "จับเวลาบอส" + "บัญชีนักลงทุน" ครบทุกฟีเจอร์',
+        'ประหยัดกว่าซื้อแยกทีละแพ็กเกจ',
+        'จัดการร้านค้า ฟาม และบอส ครบในที่เดียว'
+      ] }
   ];
   var pricingCycle = 'monthly';
 
@@ -7137,20 +7181,30 @@ ul.post-announce-note li:last-child{margin-bottom:0}
       var monthly = pricingCycle==='monthly';
       var price = monthly ? p.monthly : p.yearly;
       var unit = monthly ? '/ เดือน' : '/ ปี';
-      var savings = p.monthly*12 - p.yearly;
-      var monthsFree = p.monthly>0 ? Math.round(savings/p.monthly) : 0;
-      var savingsHtml = '<div class="pricing-save'+(monthly?' pricing-save-hidden':'')+'">ประหยัด '+fmtNum(savings)+' บ (เท่ากับฟรี '+monthsFree+' เดือน)</div>';
-      // รายละเอียดสิทธิ์ยังไม่ระบุ — ใส่ "-" ไว้ก่อน 5 แถว รอเนื้อหาจริง
-      var features = '';
-      for(var i=0;i<5;i++) features += '<li><span class="pricing-check">✓</span><span>-</span></li>';
-      var ctaLabel = 'สมัคร'+(monthly?'รายเดือน':'รายปี');
+      var features = (p.features||[]).map(function(f){ return '<li><span class="pricing-check">✓</span><span>'+escapeHtml(f)+'</span></li>'; }).join('');
+      var taglineHtml = p.tagline ? '<div class="pricing-card-tagline">'+escapeHtml(p.tagline)+'</div>' : '';
+      var priceHtml, ctaHtml;
+      if(p.free){
+        priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">ฟรี</span></div>'+
+          '<div class="pricing-save pricing-save-hidden">-</div>';
+        ctaHtml = '<button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ใช้งานได้ทันที ไม่ต้องสมัคร</button>';
+      } else {
+        var savings = p.monthly*12 - p.yearly;
+        var monthsFree = p.monthly>0 ? Math.round(savings/p.monthly) : 0;
+        var perDay = price / (monthly ? 30 : 365);
+        priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
+          '<div class="pricing-perday">เฉลี่ย ~'+perDay.toFixed(1)+' บ/วัน</div>'+
+          '<div class="pricing-save'+(monthly?' pricing-save-hidden':'')+'">ประหยัด '+fmtNum(savings)+' บ (เท่ากับฟรี '+monthsFree+' เดือน)</div>';
+        var ctaLabel = 'สมัคร'+(monthly?'รายเดือน':'รายปี');
+        ctaHtml = '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+p.name+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>';
+      }
       return '<div class="pricing-card'+(p.best?' pricing-card-best':'')+'">'+
         (p.best ? '<span class="pricing-badge-best">คุ้มสุด</span>' : '')+
         '<div class="pricing-card-name">'+p.name+'</div>'+
-        '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
-        savingsHtml+
+        taglineHtml+
+        priceHtml+
         '<ul class="pricing-features">'+features+'</ul>'+
-        '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+p.name+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>'+
+        ctaHtml+
       '</div>';
     }).join('');
   }

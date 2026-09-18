@@ -1260,6 +1260,88 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media (prefers-reduced-motion:reduce){
   .btn{transition:none}
 }
+/* ---------- Home / Dashboard only ---------- */
+#view-home .dashboard-heading{margin:.25rem 0 1rem}
+#view-home .dashboard-heading h2{font-size:1.45rem}
+#view-home .dashboard-help{margin:.35rem 0 0;font-size:.82rem;line-height:1.75;color:var(--text-dim);max-width:76ch}
+#view-home .dashboard-guest-note{display:none;margin:0 0 1rem;padding:.85rem 1rem;border-left:3px solid var(--accent);border-radius:var(--radius-s);background:var(--surface-2);font-size:.85rem;line-height:1.8;color:var(--text-dim)}
+body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{display:block}
+#view-home .dashboard-shortcuts{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.5rem}
+#view-home .dashboard-shortcut{min-height:44px;font-size:.86rem}
+#view-home .dashboard-overview{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-l);padding:1.25rem;margin-bottom:1.5rem}
+#view-home .dashboard-overview-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+#view-home .dashboard-overview-head h2{font-size:1.05rem}
+#view-home .dashboard-overview-head .hf-group{flex:0 0 auto;min-width:130px;max-width:100%}
+#view-home .dashboard-overview-head label{font-size:.78rem}
+#view-home .dashboard-overview-head select{min-height:40px;width:100%;max-width:240px}
+#view-home #mrSummary{margin-bottom:1rem}
+#view-home .mr-summary-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}
+#view-home .mr-summary-item{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:.65rem;padding:1rem 1.1rem;text-align:left;border-top:3px solid var(--border);min-width:0}
+#view-home .mr-summary-item:has(.sell){border-top-color:var(--success)}
+#view-home .mr-summary-item:has(.buy){border-top-color:var(--danger)}
+#view-home .mr-summary-item:has(.profit-pos){border-top-color:var(--accent)}
+#view-home .mr-summary-item:has(.profit-neg){border-top-color:var(--danger)}
+#view-home .mr-summary-label{font-size:.84rem;margin:0;color:var(--text)}
+#view-home .mr-summary-value{font-size:clamp(1.25rem,2vw,1.8rem);line-height:1.4;max-width:100%;overflow-wrap:anywhere}
+#view-home .dashboard-filters{border-top:1px solid var(--border);padding-top:.9rem}
+#view-home .dashboard-filter-label{font-size:.76rem;color:var(--text-dim);margin:0 0 .55rem}
+#view-home .mr-hist-bar{margin-bottom:0;gap:.65rem}
+#view-home .mr-hist-search{flex:1 1 200px;min-height:40px;border-radius:var(--radius-s)}
+#view-home #mrHistoryRange{min-height:40px}
+#view-home #historyViewToggle{flex:none}
+#view-home .home-grid{grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);align-items:start}
+#view-home .home-left{gap:1.25rem}
+#view-home .panel-head{gap:.75rem}
+#view-home .panel-hero .panel-head{align-items:flex-start}
+#view-home .panel-hero .chart-controls{width:100%;gap:.6rem}
+#view-home .panel-hero .chart-controls select{min-height:40px;flex:1;min-width:0;max-width:220px}
+#view-home .panel-hero .ticker-head-title{gap:.65rem 1rem}
+#view-home #mrChartWrap{height:240px;margin-top:.5rem}
+#view-home #mrChartSvg text{font-family:var(--font-ui);fill:var(--text-dim)}
+#view-home .dashboard-chart-empty{position:absolute;inset:15% 8% 18%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;text-align:center;pointer-events:none;background:var(--surface);padding:1rem;font-size:.83rem;line-height:1.75;color:var(--text-dim)}
+#view-home .dashboard-chart-empty strong{color:var(--text);font-size:.95rem}
+#view-home .farm-kpi-row{gap:1rem}
+#view-home .farm-kpi-value{font-size:1.8rem}
+#view-home .farm-kpi-main{min-width:0;flex-wrap:wrap}
+#view-home .farm-series-filter{max-width:100%;flex-wrap:wrap}
+#view-home .mr-history{padding-top:1rem}
+#view-home #mrHistoryList{overflow:visible}
+#view-home .mr-empty{margin:.5rem 0;padding:1.5rem 1rem;border:1px dashed var(--border);border-radius:var(--radius-m);background:var(--surface-2);font-size:.86rem;line-height:1.8}
+#view-home .dashboard-empty-title{display:block;font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:.4rem}
+#view-home .dashboard-empty-detail{display:block;font-weight:400;font-size:.83rem;line-height:1.8;color:var(--text-dim)}
+#view-home #mrEntryPanel{scroll-margin-top:1rem;gap:.9rem}
+#view-home #mrEntryPanel .field{margin-bottom:.4rem}
+#view-home #mrEntryPanel .mr-total{padding:.9rem}
+#view-home #mrEntryPanel .mr-confirm-row{padding-top:.3rem}
+#view-home .panel-ticker{margin:1.5rem 0 0;padding:1rem 1.25rem;gap:.75rem}
+#view-home .panel-ticker h2{font-size:.95rem}
+#view-home .ticker-wrap:has(.dashboard-empty-title){padding:.85rem 1rem;mask-image:none;-webkit-mask-image:none}
+#view-home .ticker-track:has(.dashboard-empty-title){width:100%}
+#view-home .ticker-item:has(.dashboard-empty-title){white-space:normal;border:0;padding:0;gap:0;max-width:100%}
+@media (max-width:1100px){
+  #view-home .home-grid{grid-template-columns:1fr}
+  #view-home .dashboard-overview-head{flex-wrap:wrap}
+}
+@media (max-width:760px){
+  #view-home .dashboard-heading h2{font-size:1.25rem}
+  #view-home .dashboard-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin-bottom:1rem}
+  #view-home .dashboard-shortcut{white-space:normal;padding:.6rem .5rem;font-size:.82rem}
+  #view-home .dashboard-overview{padding:1rem;margin-bottom:1rem}
+  #view-home .dashboard-overview-head .hf-group{width:100%}
+  #view-home .dashboard-overview-head select{max-width:none}
+  #view-home .mr-summary-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
+  #view-home .mr-summary-item{padding:.8rem;gap:.5rem}
+  #view-home .mr-summary-item:last-child{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between}
+  #view-home .mr-summary-value{font-size:1.25rem}
+  #view-home .mr-summary-label{font-size:.78rem}
+  #view-home .mr-hist-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem}
+  #view-home #historyViewToggle{grid-column:1/-1;justify-self:start}
+  #view-home .mr-hist-search{min-width:0;width:100%;font-size:1rem}
+  #view-home #mrHistoryRange{max-width:110px;font-size:1rem}
+  #view-home #mrChartWrap{height:220px}
+  #view-home .dashboard-chart-empty{inset:10% 4% 18%;padding:.5rem}
+  #view-home .panel-ticker{margin-top:1rem;padding:1rem}
+}
 </style>
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
@@ -1352,40 +1434,28 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
     <!-- ===================== HOME VIEW ===================== -->
     <section id="view-home">
-
-      <div class="panel panel-ticker">
-        <div class="panel-head">
-          <div class="ticker-head-title">
-            <h2>ประกาศ รับ M</h2>
-            <div class="chip-row" id="tickerServerChips"></div>
-          </div>
-          <div class="ticker-post-group">
-            <button class="btn btn-gradient btn-sm" id="postAnnouncementBtn">ลงประกาศ</button>
-            <button type="button" class="ticker-post-caret" id="tickerPostMenuToggle">▾</button>
-            <div class="ticker-post-menu" id="tickerPostMenu" hidden>
-              <button type="button" id="openMyAnnouncementsBtn">แก้ไขประกาศ</button>
-            </div>
-          </div>
-        </div>
-        <div class="ticker-wrap">
-          <div class="ticker-track" id="tickerTrack"></div>
-        </div>
-      </div>
-
       <div class="page-scroll">
-      <div class="home-grid">
-        <div class="home-left">
-          <div class="panel">
-            <div class="panel-head">
-              <h2>ประวัติ <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
+        <header class="dashboard-heading">
+          <div><h2>ภาพรวมบัญชีนักลงทุน</h2><p class="dashboard-help">ดูสรุป ติดตามรายการ และบันทึกซื้อ–ขายในที่เดียว</p></div>
+        </header>
+        <p class="dashboard-guest-note">คุณกำลังดูหน้าเว็บในโหมดผู้เยี่ยมชม เข้าสู่ระบบหรือสมัครสมาชิกด้วยปุ่มด้านบนเพื่อดูและบันทึกข้อมูลของคุณ</p>
+        <nav class="dashboard-shortcuts" aria-label="ทางลัดจากแดชบอร์ด">
+          <button type="button" class="btn btn-primary dashboard-shortcut" data-dashboard-section="mrEntryPanel">ไปฟอร์มซื้อ–ขาย</button>
+          <button type="button" class="btn btn-ghost dashboard-shortcut" data-dashboard-page="items">คลังไอเทม</button>
+          <button type="button" class="btn btn-ghost dashboard-shortcut" data-dashboard-page="farm">ยอดนักฟาม</button>
+          <button type="button" class="btn btn-ghost dashboard-shortcut" data-dashboard-page="timers">จับเวลาบอส</button>
+        </nav>
+        <div class="dashboard-overview">
+          <div class="dashboard-overview-head">
+            <div><h2>สรุปซื้อ–ขาย</h2><p class="dashboard-help">อ้างอิงเซิร์ฟเวอร์ ช่วงเวลา และคำค้นในตัวกรองประวัติด้านล่าง</p></div>
               <div class="hf-group">
                 <label>เซิร์ฟเวอร์</label>
                 <select id="historyServerFilter" autocomplete="off"><option value="all">ALL</option></select>
               </div>
-            </div>
-
-            <div class="mr-history">
+          </div>
               <div class="mr-summary" id="mrSummary"></div>
+          <div class="dashboard-filters">
+            <p class="dashboard-filter-label">ตัวกรองสรุปและประวัติ</p>
               <!-- One control row: how to look (ตามไอเทม / ตามวัน), a search box, a time range.
                    หมวดหมู่ shows as a tag on each item, ซื้อ/ขาย as a colored badge on each row,
                    so neither needs its own filter toggle. -->
@@ -1406,9 +1476,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
                   <option value="all" selected>ทั้งหมด</option>
                 </select>
               </div>
-              <div id="mrHistoryList"></div>
-            </div>
           </div>
+        </div>
+      <div class="home-grid">
+        <div class="home-left">
           <div class="panel panel-hero">
             <div class="panel-head">
               <div class="ticker-head-title">
@@ -1434,6 +1505,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
                 </select>
               </div>
             </div>
+            <p class="dashboard-help">กราฟใช้เซิร์ฟเวอร์ หมวดหมู่ และช่วงเวลาที่เลือกในส่วนนี้ แยกจากตัวกรองสรุปและประวัติ</p>
             <div class="farm-kpi-row">
               <div class="farm-kpi-main">
                 <span class="farm-kpi-value" id="mrKpiValue">0 บ</span>
@@ -1448,11 +1520,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
             </div>
             <div class="chart-wrap" id="mrChartWrap">
               <svg id="mrChartSvg" viewBox="0 0 640 220" preserveAspectRatio="none" role="img" aria-label="กราฟแท่งรายรับ-ขายจากการซื้อขาย"></svg>
+              <div class="dashboard-chart-empty" hidden></div>
               <div class="chart-tooltip" id="mrChartTooltip" hidden></div>
             </div>
             <div class="chart-legend" id="mrChartLegend"></div>
             <div class="chart-footer">
               <p class="mr-upload-note">สรุปยอดขาย ยอดรับ และกำไรสุทธิจากรายการซื้อขายที่บันทึกไว้ในแต่ละช่วงเวลา</p>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <h2>ประวัติซื้อ–ขาย <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
+            </div>
+
+            <div class="mr-history">
+              <div id="mrHistoryList"></div>
             </div>
           </div>
         </div>
@@ -1520,6 +1602,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
           <div class="mr-confirm-row">
             <button class="btn btn-gradient btn-block" id="mrConfirm">ยืนยันและบันทึก</button>
           </div>
+        </div>
+      </div>
+      <div class="panel panel-ticker">
+        <div class="panel-head">
+          <div class="ticker-head-title">
+            <h2>ประกาศ รับ M</h2>
+            <div class="chip-row" id="tickerServerChips"></div>
+          </div>
+          <div class="ticker-post-group">
+            <button class="btn btn-gradient btn-sm" id="postAnnouncementBtn">ลงประกาศ</button>
+            <button type="button" class="ticker-post-caret" id="tickerPostMenuToggle">▾</button>
+            <div class="ticker-post-menu" id="tickerPostMenu" hidden>
+              <button type="button" id="openMyAnnouncementsBtn">แก้ไขประกาศ</button>
+            </div>
+          </div>
+        </div>
+        <div class="ticker-wrap">
+          <div class="ticker-track" id="tickerTrack"></div>
         </div>
       </div>
       </div>
@@ -3891,7 +3991,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
                                       .slice().sort(function(a,b){ return b.ts-a.ts; });
     if(!posts.length){
       track.style.animation = 'none';
-      track.innerHTML = '<span class="ticker-item">ยังไม่มีประกาศจากเซิร์ฟเวอร์ที่เลือก — กด "ลงประกาศ" เพื่อลงประกาศแรก</span>';
+      track.innerHTML = '<span class="ticker-item"><span class="dashboard-empty-title">ยังไม่มีประกาศจากเซิร์ฟเวอร์ที่เลือก</span><span class="dashboard-empty-detail">'+(App.isGuest ? 'เข้าสู่ระบบเพื่อเลือกเซิร์ฟเวอร์และลงประกาศรับ M' : 'เลือกเซิร์ฟเวอร์ที่ต้องการดู หรือกด "ลงประกาศ" เพื่อเริ่มประกาศรับ M')+'</span></span>';
       return;
     }
 
@@ -4789,8 +4889,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       parts.push('<text x="'+(xSlot(i)+slotW/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#8b8d98">'+buckets[i].label+'</text>');
     }
     if(!App.merchantLog.some(function(e){ return (mrChartServerId==='all' || e.serverId===mrChartServerId) && (mrChartCategoryFilter==='all' || (e.category||'zeny')===mrChartCategoryFilter); })){
-      parts.push('<text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" font-size="11" fill="#8b8d98">ยังไม่มีประวัติการซื้อขาย — เริ่มบันทึกรายการทางด้านล่าง</text>');
+      var chartEmpty = document.querySelector('#view-home .dashboard-chart-empty');
+      chartEmpty.hidden = false;
+      chartEmpty.innerHTML = '<strong>'+(App.isGuest ? 'เข้าสู่ระบบเพื่อดูกราฟของคุณ' : 'ยังไม่มีข้อมูลสำหรับกราฟนี้')+'</strong><span>'+(App.isGuest ? 'กราฟจะแสดงจากรายการซื้อ–ขายที่บันทึกไว้ในบัญชี' : 'ตรวจสอบเซิร์ฟเวอร์และหมวดหมู่ หรือเริ่มบันทึกในฟอร์มซื้อ–ขาย')+'</span>';
     } else {
+      document.querySelector('#view-home .dashboard-chart-empty').hidden = true;
       var groupPad = n<=1 ? 0.32 : 0.16;
       var groupW = slotW*(1-groupPad*2);
       var barGap = groupW*0.08;
@@ -5578,9 +5681,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     return text;
   }
   function historyEmptyHtml(){
-    if(!App.merchantLog.length) return '<p class="mr-empty">ยังไม่มีประวัติการซื้อ-ขาย</p>';
-    if(historyState.search) return '<p class="mr-empty">ไม่พบไอเทมชื่อ "'+historyEscape(historyState.search)+'"</p>';
-    return '<p class="mr-empty">ไม่มีรายการในช่วงเวลานี้</p>';
+    if(!App.merchantLog.length) return '<p class="mr-empty"><span class="dashboard-empty-title">'+(App.isGuest ? 'ประวัติซื้อ–ขายของคุณอยู่ที่นี่' : 'เริ่มต้นด้วยรายการแรกของคุณ')+'</span><span class="dashboard-empty-detail">'+(App.isGuest ? 'เข้าสู่ระบบด้วยปุ่มด้านบนเพื่อดูข้อมูลของคุณ หรือสมัครสมาชิกหากยังไม่มีบัญชี ตัวเลข 0 ในหน้านี้ยังไม่ใช่ข้อมูลบัญชีของคุณ' : 'ใช้ปุ่ม "ไปฟอร์มซื้อ–ขาย" ด้านบนเพื่อบันทึกรายการ เมื่อบันทึกแล้วจะดูประวัติและยอดสรุปได้ที่นี่')+'</span></p>';
+    if(historyState.search) return '<p class="mr-empty"><span class="dashboard-empty-title">ไม่พบไอเทมชื่อ "'+historyEscape(historyState.search)+'"</span><span class="dashboard-empty-detail">ลองเปลี่ยนคำค้น หรือตรวจสอบเซิร์ฟเวอร์และช่วงเวลาที่เลือกด้านบน</span></p>';
+    return '<p class="mr-empty"><span class="dashboard-empty-title">ไม่มีรายการในช่วงเวลานี้</span><span class="dashboard-empty-detail">ลองเลือกช่วงเวลาที่กว้างขึ้น หรือตรวจสอบเซิร์ฟเวอร์ในตัวกรองด้านบน</span></p>';
   }
 
   // Groups the filtered lines by server+category+item name(+slots) so "ซื้อมาเท่าไหร่,
@@ -8031,6 +8134,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
   document.querySelectorAll('.rail-btn[data-page]').forEach(function(btn){
     btn.addEventListener('click', function(){ switchPage(btn.dataset.page); });
+  });
+  // Dashboard shortcuts only forward existing navigation or reveal the existing form.
+  document.querySelector('#view-home .dashboard-shortcuts').addEventListener('click', function(e){
+    var pageButton = e.target.closest('[data-dashboard-page]');
+    if(pageButton){
+      var navButton = document.querySelector('.rail .rail-btn[data-page="'+pageButton.dataset.dashboardPage+'"]');
+      if(navButton) navButton.click();
+      return;
+    }
+    if(e.target.closest('[data-dashboard-section="mrEntryPanel"]')){
+      document.getElementById('mrEntryPanel').scrollIntoView({ block:'start', behavior:'auto' });
+    }
   });
   // ---------- ticker: which servers' announcements to show (mirrors the rate-chip cards) ----------
   document.getElementById('tickerServerChips').addEventListener('click', function(e){

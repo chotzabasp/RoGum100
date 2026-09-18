@@ -869,6 +869,7 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 .post-announce-check{display:flex;align-items:center;gap:.4rem;font-size:.85rem;color:var(--text);width:76px;flex:none;cursor:pointer}
 .post-announce-row input[type="text"]{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.5rem .6rem;font-size:.85rem}
 .post-announce-note{font-size:.72rem;color:var(--text-dim);margin:.4rem 0 1.1rem;line-height:1.4}
+.post-announce-cost{font-size:.76rem;color:var(--warn);margin-top:.35rem;font-weight:600}
 .ticker-post-group{position:relative;display:flex;align-items:stretch}
 .ticker-post-group .btn-sm{border-top-right-radius:0;border-bottom-right-radius:0}
 .ticker-post-caret{background:color-mix(in srgb, #7dd3fc 12%, var(--surface-2));color:#7dd3fc;border:1px solid color-mix(in srgb, #7dd3fc 45%, var(--border));border-top-right-radius:var(--radius-s);border-bottom-right-radius:var(--radius-s);padding:0 .5rem;cursor:pointer;font-size:.7rem}
@@ -1849,12 +1850,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
     <div class="post-announce-field">
       <label>ระยะเวลาแสดงประกาศ</label>
       <select id="postAnnounceDuration"></select>
+      <div class="post-announce-cost" id="postAnnounceCost"></div>
     </div>
     <div class="post-announce-field">
       <label>รับ M (บาท)</label>
       <input type="text" inputmode="numeric" id="postAnnounceBuyPrice" class="mono" placeholder="ราคารับ">
     </div>
-    <p class="post-announce-note">ช่วงทดสอบลงประกาศได้ฟรี — ในอนาคตจะเริ่มใช้เหรียญสำหรับลงประกาศ (มีระบบเติมเงินในภายหลัง)</p>
+    <p class="post-announce-note" id="postAnnounceNote">ลงประกาศใหม่ใช้แต้มตามระยะเวลาที่เลือก — แก้ไขประกาศเดิม (เซิร์ฟเวอร์/ราคา) ไม่เสียแต้มเพิ่ม</p>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" id="postAnnounceCancelBtn">ยกเลิก</button>
       <button type="button" class="btn btn-gradient" id="postAnnounceSubmitBtn">ลงประกาศ</button>
@@ -2128,14 +2130,13 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
   function defaultRateChipSlots(){ return myServerIds().slice(0,1); }
   var MAX_RATE_CHIP_SLOTS = 10;
   var RATE_MAX_DEVIATION = 0.30; // block a posted price more than ±30% away from the current rate (typo guard)
+  // ลงประกาศใหม่เสียแต้มตามระยะเวลา (แก้ไขประกาศเดิมยังฟรีเหมือนเดิม — ดู postAnnounceSubmitBtn)
+  // ค่า cost ต้องตรงกับที่ฟังก์ชัน post_announcement() ฝั่ง DB คำนวณเป๊ะๆ (เทียบจาก value เป็น ms)
   var ANNOUNCE_DURATION_OPTIONS = [
-    { value:900000,   label:'15 นาที' },
-    { value:1800000,  label:'30 นาที' },
-    { value:3600000,  label:'1 ชม.' },
-    { value:10800000, label:'3 ชม.' },
-    { value:21600000, label:'6 ชม.' },
-    { value:43200000, label:'12 ชม.' },
-    { value:86400000, label:'24 ชม.' }
+    { value:600000,   label:'10 นาที', cost:1 },
+    { value:1800000,  label:'30 นาที', cost:2 },
+    { value:3600000,  label:'1 ชม.',   cost:3 },
+    { value:10800000, label:'3 ชม.',   cost:6 }
   ];
   function serverRateById(id){
     for(var i=0;i<SERVER_RATES.length;i++){ if(SERVER_RATES[i].id===id) return SERVER_RATES[i]; }
@@ -7778,8 +7779,19 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       document.getElementById('postAnnounceSubmitBtn').textContent = 'ลงประกาศ';
       document.getElementById('postAnnounceBuyPrice').value = '';
     }
+    renderPostAnnounceCost();
     document.getElementById('postAnnouncementOverlay').hidden = false;
   }
+  // แก้ไขประกาศเดิมไม่เสียแต้ม (ระยะเวลาถูกล็อกไว้ไม่ให้แก้อยู่แล้ว) โชว์ป้ายแต้มเฉพาะตอนลงประกาศใหม่
+  function renderPostAnnounceCost(){
+    var durSel = document.getElementById('postAnnounceDuration');
+    var costEl = document.getElementById('postAnnounceCost');
+    if(editingAnnouncementId){ costEl.hidden = true; return; }
+    var opt = ANNOUNCE_DURATION_OPTIONS.filter(function(o){ return String(o.value)===durSel.value; })[0];
+    costEl.hidden = false;
+    costEl.textContent = opt ? 'ใช้ '+opt.cost+' แต้ม' : '';
+  }
+  document.getElementById('postAnnounceDuration').addEventListener('change', renderPostAnnounceCost);
   function closePostAnnouncement(){
     editingAnnouncementId = null;
     document.getElementById('postAnnounceDuration').disabled = false;
@@ -7821,19 +7833,19 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
       toast('บันทึกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง');
     };
     if(editingAnnouncementId){
-      // แก้ได้แค่เซิร์ฟเวอร์กับราคา — นาฬิกานับถอยหลังไม่รีเซ็ต (ฝั่ง DB ก็ล็อกไว้ด้วย trigger)
+      // แก้ได้แค่เซิร์ฟเวอร์กับราคา — นาฬิกานับถอยหลังไม่รีเซ็ต (ฝั่ง DB ก็ล็อกไว้ด้วย trigger) ไม่เสียแต้มเพิ่ม
       supa.from('announcements').update({ server_id:serverId, buy:buyVal })
         .eq('id', editingAnnouncementId)
         .then(function(res){ if(res.error) return failed(res.error); done('แก้ไขประกาศแล้ว'); }, failed);
     } else {
       var durationMs = parseInt(document.getElementById('postAnnounceDuration').value, 10);
-      supa.from('announcements').insert({
-        user_id: App.session.id,
-        user_name: App.profile ? App.profile.display_name : 'สมาชิก',
-        server_id: serverId,
-        buy: buyVal,
-        expires_at: new Date(Date.now()+durationMs).toISOString()
-      }).then(function(res){ if(res.error) return failed(res.error); done('ลงประกาศแล้ว'); }, failed);
+      // ลงประกาศใหม่เสียแต้มตามระยะเวลา — หักแต้ม+บันทึกประกาศทำในฟังก์ชันเดียวกันฝั่ง DB (atomic)
+      // กันแต้มถูกหักแต่ประกาศไม่ขึ้น หรือประกาศขึ้นฟรีโดยไม่หักแต้ม
+      supa.rpc('post_announcement', { p_server_id:serverId, p_buy:buyVal, p_duration_ms:durationMs }).then(function(res){
+        if(res.error){ btn.disabled = false; toast(res.error.message); return; }
+        refreshProfile();
+        done('ลงประกาศแล้ว');
+      }, failed);
     }
   });
 

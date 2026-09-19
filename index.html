@@ -2982,7 +2982,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <h3 class="settings-group-label">ประวัติ</h3>
       <div class="settings-grid">
         <div class="panel settings-card settings-wide">
-          <div class="panel-head"><h2>ประวัติ</h2></div>
+          <div class="panel-head"><h2 id="stHistoryTitle">ประวัติการเติมแต้ม</h2></div>
           <div class="h-tabs">
             <button class="active" data-sthtab="topup" id="sthtabTopup">เติมแต้ม</button>
             <button data-sthtab="purchase" id="sthtabPurchase">แพ็กเกจ</button>
@@ -9037,7 +9037,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ---------- หน้า "ตั้งค่า": ข้อมูลบัญชี / เปลี่ยนรหัสผ่าน / ประวัติเติมแต้ม / ประวัติซื้อแพ็กเกจ ----------
   var fmtFullDate = function(v){ return new Date(v).toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' }); };
-  var TOPUP_STATUS = { pending:['รอตรวจสอบ','soon'], approved:['อนุมัติแล้ว','ok'], rejected:['ปฏิเสธ','expired'] };
+  var TOPUP_STATUS = {
+    credited:['สำเร็จ','ok'],
+    pending:['รอชำระ','soon'],
+    expired:['หมดอายุ','expired'],
+    failed:['ไม่สำเร็จ','expired'],
+    manual_review:['รอตรวจสอบ','soon']
+  };
   var HIST_PAGE = 5;
   var stHistExpanded = { topup:false, purchase:false };
   // Display only: derive package rows from existing entitlement expiries.
@@ -9173,18 +9179,20 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function loadTopupHistory(){
     var root = document.getElementById('stTopupList'), sum = document.getElementById('stTopupSummary'), moreWrap = document.getElementById('stTopupMoreWrap');
     root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = ''; moreWrap.hidden = true;
-    supa.from('topup_requests').select('id, amount_baht, points_added, status, created_at')
+    if(!App.session || !App.session.id){ root.innerHTML = '<p class="admin-topup-empty">กรุณาเข้าสู่ระบบ</p>'; return; }
+    supa.from('topup_transactions').select('id, requested_amount, received_amount, points, status, created_at')
       .eq('user_id', App.session.id).order('created_at', { ascending:false }).then(function(res){
         if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+res.error.message+'</p>'; return; }
         var rows = res.data || [];
         if(!rows.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่เคยเติมแต้ม</p>'; return; }
-        var approved = rows.filter(function(r){ return r.status==='approved'; });
-        sum.textContent = 'อนุมัติแล้ว '+approved.length+' ครั้ง · รวม '+fmtNum(approved.reduce(function(s,r){ return s+(r.points_added||0); }, 0))+' แต้ม';
+        var credited = rows.filter(function(r){ return r.status==='credited'; });
+        sum.textContent = 'สำเร็จ '+credited.length+' ครั้ง · รวม '+fmtNum(credited.reduce(function(s,r){ return s+(r.points||0); }, 0))+' แต้ม';
         var shown = stHistExpanded.topup ? rows : rows.slice(0, HIST_PAGE);
         root.innerHTML = shown.map(function(r){
           var st = TOPUP_STATUS[r.status] || [r.status || '-', 'neutral'];
+          var amount = r.status==='credited' && r.received_amount!=null ? r.received_amount : r.requested_amount;
           return '<div class="settings-row"><div class="settings-row-main">'+
-            '<div class="settings-row-title">'+fmtNum(r.amount_baht)+' บาท → +'+fmtNum(r.points_added)+' แต้ม</div>'+
+            '<div class="settings-row-title">'+fmtNum(amount||0)+' บาท · +'+fmtNum(r.points||0)+' แต้ม</div>'+
             '<div class="settings-row-meta">'+fmtDateTime(new Date(r.created_at).getTime())+'</div></div>'+
             '<span class="membership-pill '+st[1]+'">'+st[0]+'</span></div>';
         }).join('');
@@ -9219,12 +9227,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   document.getElementById('stTopupMore').addEventListener('click', function(){ stHistExpanded.topup = !stHistExpanded.topup; loadTopupHistory(); });
   document.getElementById('stPurchaseMore').addEventListener('click', function(){ stHistExpanded.purchase = !stHistExpanded.purchase; loadPurchaseHistory(); });
   document.getElementById('sthtabTopup').addEventListener('click', function(){
+    document.getElementById('stHistoryTitle').textContent = 'ประวัติการเติมแต้ม';
     document.getElementById('sthtabTopup').className = 'active';
     document.getElementById('sthtabPurchase').className = '';
     document.getElementById('stHistTopup').hidden = false;
     document.getElementById('stHistPurchase').hidden = true;
   });
   document.getElementById('sthtabPurchase').addEventListener('click', function(){
+    document.getElementById('stHistoryTitle').textContent = 'ประวัติการซื้อแพ็กเกจ';
     document.getElementById('sthtabPurchase').className = 'active';
     document.getElementById('sthtabTopup').className = '';
     document.getElementById('stHistPurchase').hidden = false;

@@ -1,0 +1,7 @@
+project_id = "jnwckkcjurchnppekhpc"
+
+[functions.tmweasy-create-pay]
+verify_jwt = false
+
+[functions.tmweasy-webhook]
+verify_jwt = false

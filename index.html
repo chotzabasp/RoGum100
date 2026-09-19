@@ -2627,20 +2627,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 (async function(){
   "use strict";
 
-  // Explicit localhost-only staging preview. The normal production client is unchanged.
-  var customPreview = new URLSearchParams(location.search).get('customBossStaging') === '1';
-  if(customPreview && !['127.0.0.1','localhost','[::1]'].includes(location.hostname)){
-    document.body.textContent = 'Custom Boss preview ใช้ได้เฉพาะ localhost staging'; return;
-  }
-  var CustomAPI = null;
-  if(customPreview){
-    try { CustomAPI = await import('./staging/custom-boss-api.js'); }
-    catch(error){ document.body.textContent = 'เริ่ม staging ไม่สำเร็จ: '+error.message; return; }
-  }
-  var supa = CustomAPI ? CustomAPI.client : window.supabase.createClient(
+  var supa = window.supabase.createClient(
     'https://jnwckkcjurchnppekhpc.supabase.co',
     'sb_publishable_Z_xnoeSTMY2t-VqaDfPmKg_FfOCjTOf'
   );
+  var CustomAPI = (await import('./assets/custom-boss-api.js')).createCustomBossAPI(supa);
 
   var pad2 = function(n){ return String(n).padStart(2,'0'); };
   var todayKey = function(ts){ return new Date(ts).toDateString(); };
@@ -9304,7 +9295,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   if(CustomAPI){
     var customAddButton=customNode('button','+ เพิ่มบอส');customAddButton.type='button';customAddButton.className='btn btn-primary';customAddButton.id='addCustomBoss';
     customAddButton.onclick=function(){openCustomBossModal(null);};searchInput.closest('.toolbar').append(customAddButton);
-    document.title+=' · STAGING';
+
   }
 
   function renderSearchResults(){

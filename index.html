@@ -171,6 +171,8 @@ svg.icon{width:18px;height:18px;display:block}
 .user-menu .who{display:flex;flex-direction:column;line-height:1.2;min-width:0}
 /* ชื่อยาว (เช่นบัญชีเก่าที่ชื่อเป็นอีเมล) ตัดด้วย … แทนที่จะดันแถบหัวเว็บล้นจอ */
 .user-menu .name{font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.user-menu .membership-time{font-size:.62rem;line-height:1.3;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.user-menu .membership-time.soon{color:var(--warn);font-weight:600}
 .user-menu .icon-btn{flex:none}
 .membership-pill{font-size:.64rem;padding:.05rem .4rem;border-radius:999px;width:fit-content;font-weight:600}
 .membership-pill.ok{background:color-mix(in srgb, var(--success) 20%, transparent);color:var(--success)}
@@ -247,6 +249,8 @@ svg.icon{width:18px;height:18px;display:block}
 .panel-ticker{margin-bottom:1.4rem;padding:1.3rem 1.4rem}
 .panel-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .ticker-head-title{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.panel-ticker .ticker-head-title h2{display:flex;align-items:center;gap:.4rem}
+.panel-ticker .ticker-heading-icon{width:28px;height:28px;object-fit:contain;flex:none}
 .ticker-item .poster{color:var(--text-dim);font-size:.68rem;font-weight:400}
 .ticker-item a.poster{color:var(--accent);text-decoration:none;cursor:pointer}
 .ticker-item a.poster:hover{text-decoration:underline}
@@ -553,7 +557,7 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-it-cell b{font-family:"JetBrains Mono";font-size:.8rem;font-weight:700;white-space:nowrap}
 .mr-it-cell small{font-size:.66rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mr-it-cell small.mr-it-avg{color:var(--text);opacity:.75}
-.mr-it-cell.buy b{color:var(--danger)}
+.mr-it-cell.buy b,.mr-it-cell.buy small{color:var(--danger)}
 .mr-it-cell.sell b{color:var(--success)}
 .mr-it-cell.left b{color:var(--warn)}
 .mr-it-cell.left.zero b{color:var(--text-dim)}
@@ -869,6 +873,60 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 .topup-method-btn.active{background:color-mix(in srgb, var(--accent) 20%, transparent);border-color:var(--accent);color:var(--accent)}
 .topup-summary{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.6rem .8rem;font-size:.85rem;text-align:center;margin-bottom:.8rem}
 .topup-summary b{color:var(--warn);font-family:"JetBrains Mono";font-size:1.05rem}
+#topupOverlay .topup-box{width:min(400px,calc(100vw - 32px));box-sizing:border-box;padding:1.25rem;max-height:calc(100dvh - 32px);overflow-y:auto}
+#topupOverlay [hidden]{display:none!important}
+#topupOverlay .topup-presets{grid-template-columns:repeat(5,minmax(0,1fr));gap:.35rem;margin-bottom:.8rem}
+#topupOverlay .topup-summary{display:grid;gap:.45rem;text-align:left;padding:.8rem;margin:.85rem 0}
+#topupOverlay .topup-summary > div{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem}
+#topupOverlay .topup-summary b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+#topupOverlay .confirm-actions{display:flex;gap:.5rem;margin-top:.75rem}
+#topupOverlay #topupCreateQrBtn{flex:1;white-space:normal;opacity:1;background:var(--gradient-brand);color:#fff;cursor:pointer}
+#topupOverlay #topupCreateQrBtn:disabled{opacity:.5;cursor:not-allowed}
+#topupOverlay .topup-amount-error{display:block;margin-top:.4rem;font-size:.76rem;color:#ffb4b4}
+#topupOverlay .confirm-backdrop{background:rgba(3,8,18,.72);backdrop-filter:blur(5px)}
+#topupOverlay .topup-box{border:1px solid rgba(104,151,230,.55);border-radius:20px;background:linear-gradient(145deg,rgba(35,55,91,.98),rgba(15,26,46,.99) 66%);box-shadow:inset 0 1px 0 rgba(218,231,255,.1),inset 0 -24px 34px rgba(5,12,28,.2),0 20px 54px rgba(0,0,0,.48),0 0 22px rgba(77,133,231,.12);padding:1.4rem}
+#topupOverlay .topup-title{margin:0;font-size:1.2rem;line-height:1.25;color:#edf5ff;text-shadow:0 1px 0 rgba(0,0,0,.38)}
+#topupOverlay .topup-rate{display:grid;gap:.6rem;margin:.35rem 0 1rem;color:#b9c9df;font-size:.8rem;line-height:1.5}
+#topupOverlay .topup-rate-copy{color:#b9d2ff;font-weight:700}
+#topupOverlay .topup-notice{display:flex;align-items:flex-start;gap:.35rem;padding:.45rem .6rem;border:1px solid rgba(239,182,83,.38);border-radius:9px;background:rgba(129,87,27,.2);color:#f5c878;font-size:.71rem;line-height:1.5}
+#topupOverlay .topup-presets{gap:.45rem;margin:0 0 1rem}
+#topupOverlay .topup-preset-btn{min-height:39px;border-color:rgba(108,148,213,.38);border-radius:9px;background:linear-gradient(145deg,rgba(54,80,126,.28),rgba(20,32,54,.72));color:#d6e5fc;box-shadow:inset 0 1px 0 rgba(198,219,255,.05);transition:transform 170ms ease,border-color 170ms ease,background 170ms ease,box-shadow 170ms ease}
+#topupOverlay .topup-preset-btn:hover{transform:translateY(-1px);border-color:rgba(132,181,255,.7);background:rgba(65,103,167,.35);box-shadow:0 4px 12px rgba(38,84,166,.18)}
+#topupOverlay .topup-preset-btn.active{border-color:rgba(125,169,255,.88);background:linear-gradient(135deg,rgba(78,125,212,.72),rgba(116,92,204,.7));color:#fff;box-shadow:inset 0 1px 0 rgba(232,240,255,.24),0 0 13px rgba(94,145,255,.2)}
+#topupOverlay .post-announce-field{margin-bottom:1rem}
+#topupOverlay .post-announce-field label{color:#b6c8e0;font-size:.76rem;font-weight:600;margin-bottom:.4rem}
+#topupOverlay #topupCustomAmount{box-sizing:border-box;width:100%;min-height:43px;border-color:rgba(111,156,228,.46);border-radius:10px;background:rgba(10,21,39,.7);color:#eef5ff;box-shadow:inset 0 1px 0 rgba(213,228,255,.06);transition:border-color 170ms ease,box-shadow 170ms ease,background 170ms ease}
+#topupOverlay #topupCustomAmount::placeholder{color:#8295b2}
+#topupOverlay #topupCustomAmount:focus{outline:none;border-color:#80b0ff;background:rgba(13,27,50,.9);box-shadow:0 0 0 3px rgba(89,148,255,.16),inset 0 1px 0 rgba(213,228,255,.08)}
+#topupOverlay #topupCustomAmount[aria-invalid="true"]{border-color:rgba(255,116,125,.75);background:rgba(88,30,44,.24);box-shadow:0 0 0 3px rgba(255,91,104,.11)}
+#topupOverlay .topup-summary{gap:.15rem;margin:1rem 0;padding:.75rem .85rem;border:1px solid rgba(96,143,218,.36);border-radius:12px;background:linear-gradient(145deg,rgba(16,31,55,.78),rgba(9,18,33,.92));box-shadow:inset 0 1px 0 rgba(194,218,255,.07)}
+#topupOverlay .topup-summary > div{min-height:30px;padding:.2rem 0;color:#aebfd6;font-size:.78rem}
+#topupOverlay .topup-summary > div+div{border-top:1px solid rgba(148,177,224,.14)}
+#topupOverlay .topup-summary b{font-size:1.2rem;font-weight:800}
+#topupOverlay .topup-summary > div:first-child b{color:#f3c76d;text-shadow:0 0 9px rgba(243,199,109,.13)}
+#topupOverlay .topup-summary > div:last-child b{color:#84d9c0;text-shadow:0 0 9px rgba(92,211,181,.13)}
+#topupOverlay .confirm-actions{gap:.6rem;margin-top:1rem}
+#topupOverlay .confirm-actions .btn{flex:1;min-height:42px;border-radius:10px;font-size:.83rem;font-weight:800}
+#topupOverlay #topupCancelBtn{border-color:rgba(123,153,200,.48);background:rgba(38,55,84,.62);color:#cfdbed}
+#topupOverlay #topupCancelBtn:hover{border-color:rgba(166,195,240,.66);background:rgba(53,75,112,.78)}
+#topupOverlay #topupCreateQrBtn{border:1px solid rgba(171,193,255,.68);background:linear-gradient(105deg,#639aff,#9b7be5);box-shadow:inset 0 1px 0 rgba(243,247,255,.26),0 7px 18px rgba(97,126,236,.25);transition:filter 170ms ease,transform 170ms ease,box-shadow 170ms ease}
+#topupOverlay #topupCreateQrBtn:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(243,247,255,.3),0 9px 22px rgba(108,134,246,.34)}
+#topupOverlay .topup-qr-panel{display:grid;grid-template-columns:138px minmax(0,1fr);gap:.75rem;padding:.8rem;border:1px solid rgba(109,157,231,.4);border-radius:13px;background:rgba(7,17,34,.7);box-shadow:inset 0 1px 0 rgba(210,228,255,.06)}
+#topupOverlay .topup-qr-frame{display:grid;place-items:center;aspect-ratio:1;border-radius:10px;background:#fff;padding:.4rem;overflow:hidden}
+#topupOverlay .topup-qr-frame img{display:block;width:100%;height:100%;object-fit:contain}
+#topupOverlay .topup-qr-details{display:grid;align-content:center;gap:.38rem}
+#topupOverlay .topup-qr-details>div{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;font-size:.7rem;color:#aebfd6}
+#topupOverlay .topup-qr-details b{font-size:.78rem;color:#edf5ff;font-variant-numeric:tabular-nums;text-align:right}
+#topupOverlay .topup-qr-details>div:first-child b{color:#f3c76d}
+#topupOverlay .topup-qr-details>div:nth-child(2) b{color:#84d9c0}
+#topupOverlay .topup-payment-status{grid-column:1/-1;padding:.45rem .6rem;border-radius:9px;text-align:center;font-size:.75rem;font-weight:700}
+#topupOverlay .topup-payment-status.pending{color:#b9d7ff;background:rgba(66,112,181,.2);border:1px solid rgba(105,159,236,.34)}
+#topupOverlay .topup-payment-status.credited{color:#99e6c7;background:rgba(47,143,106,.2);border:1px solid rgba(83,205,155,.4)}
+#topupOverlay .topup-payment-status.failed{color:#ffb4ba;background:rgba(150,47,64,.2);border:1px solid rgba(239,91,106,.4)}
+#topupOverlay .topup-payment-status.review{color:#f5c878;background:rgba(139,94,29,.2);border:1px solid rgba(235,181,82,.4)}
+#topupOverlay .topup-payment-status.expired{color:#c7cfdd;background:rgba(80,92,112,.24);border:1px solid rgba(147,160,183,.32)}
+@media(max-width:480px){#topupOverlay .topup-box{padding:1.05rem;border-radius:18px}#topupOverlay .topup-presets{grid-template-columns:repeat(3,minmax(0,1fr))}#topupOverlay .confirm-actions{flex-direction:column}#topupOverlay .confirm-actions .btn{width:100%}}
+@media(max-width:420px){#topupOverlay .topup-qr-panel{grid-template-columns:1fr}#topupOverlay .topup-qr-frame{width:min(190px,100%);justify-self:center}#topupOverlay .topup-qr-details{width:100%}}
 .points-topup-btn{width:17px;height:17px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:.8rem;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;margin-left:.1rem}
 .points-topup-btn:hover{filter:brightness(1.15)}
 .post-announce-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem}
@@ -884,10 +942,12 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .announce-duration-btn.active{background:color-mix(in srgb, var(--accent) 18%, transparent);color:var(--accent);border-color:var(--accent)}
 .announce-duration-btn:disabled{opacity:.5;cursor:not-allowed}
 .announce-duration-cost{display:block;color:var(--warn);font-size:.7rem;font-weight:700;margin-top:.1rem}
-.ticker-post-group{position:relative;display:flex;align-items:stretch}
+.ticker-post-group{position:relative;display:flex;align-items:stretch;border-radius:var(--radius-s);background:linear-gradient(135deg,#292a29,#1a2434);box-shadow:0 0 0 1px rgba(207,168,82,.6),0 2px 10px rgba(190,144,47,.14)}
 .ticker-post-group .btn-sm{border-top-right-radius:0;border-bottom-right-radius:0}
 .ticker-post-caret{background:color-mix(in srgb, #7dd3fc 12%, var(--surface-2));color:#7dd3fc;border:1px solid color-mix(in srgb, #7dd3fc 45%, var(--border));border-top-right-radius:var(--radius-s);border-bottom-right-radius:var(--radius-s);padding:0 .5rem;cursor:pointer;font-size:.7rem}
-#postAnnouncementBtn:hover,.ticker-post-caret:hover{background:color-mix(in srgb, #7dd3fc 20%, var(--surface-2))}
+#postAnnouncementBtn,#tickerPostMenuToggle{background:linear-gradient(135deg,#b9954d,#d4b66f);color:#201a10;border-color:#d6b568;box-shadow:inset 0 1px 0 rgba(255,235,183,.25);font-weight:700;transition:background .18s ease,box-shadow .18s ease}
+#tickerPostMenuToggle{border-left-color:rgba(65,46,12,.3);display:inline-flex;align-items:center;justify-content:center}
+#postAnnouncementBtn:hover,#tickerPostMenuToggle:hover{background:linear-gradient(135deg,#caaa60,#e1c585);box-shadow:inset 0 1px 0 rgba(255,242,208,.35),0 0 8px rgba(214,181,104,.2);filter:none}
 .ticker-post-menu{position:absolute;top:calc(100% + .4rem);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-s);box-shadow:var(--shadow);padding:.3rem;z-index:20;min-width:140px}
 .ticker-post-menu button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);padding:.5rem .6rem;font-size:.82rem;border-radius:var(--radius-s);cursor:pointer}
 .ticker-post-menu button:hover{background:var(--surface-2)}
@@ -1027,34 +1087,16 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .settings-row-amt{font-family:"JetBrains Mono";font-variant-numeric:tabular-nums;font-size:.9rem;flex:none}
 @media (max-width:760px){ .settings-grid{grid-template-columns:1fr} }
 
-/* ===== โครงแบบ "หัวตรึง เนื้อหาไถ" (เหมือน feed Facebook) — ใช้เฉพาะจอคอม =====
-   บนมือถือปล่อยให้เลื่อนทั้งหน้าตามปกติ เพราะจอสูงน้อยและแถบ URL ของเบราว์เซอร์
-   ทำให้ 100vh เพี้ยน การล็อกความสูงจะยิ่งอึดอัด
-
-   ส่วนที่ตรึง = เมนูซ้าย + แถบบน (นาฬิกา/แต้ม/ผู้ใช้) + หัวของแต่ละหน้า
-   ส่วนที่ไถได้ = .page-scroll ซึ่งครอบเนื้อหาจริงของหน้านั้นๆ ไว้ */
+/* Desktop: keep the rail in place and scroll the right-side content independently. */
 @media (min-width: 761px){
-  #appScreen{height:100vh;overflow:hidden}
-  .rail{height:100vh;overflow-y:auto;scrollbar-width:none}
-  .rail::-webkit-scrollbar{display:none}
-  .content{height:100vh;overflow:hidden;display:flex;flex-direction:column;padding-bottom:0}
-  /* ทุกอย่างที่ไม่ใช่ตัวไถ ห้ามยุบ ไม่งั้นแบนเนอร์/หัวหน้าจะโดนบีบเตี้ยลงเมื่อเนื้อหายาว */
-  .content > *{flex:0 0 auto}
-  .content > section{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
-  .content > section > *{flex:0 0 auto}
+  #appScreen{height:100vh;min-height:0;overflow:hidden;align-items:start}
+  .rail{position:sticky;top:0;height:100vh;overflow-y:auto;overflow-x:hidden}
+  .content{height:100vh;overflow-y:auto;overflow-x:hidden;display:block;padding-bottom:3rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+  .content > section{min-height:0;display:block}
   .content > section[hidden]{display:none}
-  /* ตัวไถ: กินพื้นที่ที่เหลือหลังหัวหน้า แล้วเลื่อนอยู่ในตัวเอง
-     margin/padding ติดลบ-บวกคู่กัน เพื่อดันแถบเลื่อนไปชิดขอบขวาสุดของแอพ
-     ไม่ให้ลอยอยู่กลางช่องว่าง padding ของ .content */
   .content > section > .page-scroll{
-    flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
-    margin:0 -1.75rem;padding:0 1.75rem 3rem;
-    scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+    min-height:0;overflow:visible;margin:0;padding:0;
   }
-  .page-scroll::-webkit-scrollbar{width:10px}
-  .page-scroll::-webkit-scrollbar-track{background:transparent}
-  .page-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;border:3px solid transparent;background-clip:content-box}
-  .page-scroll::-webkit-scrollbar-thumb:hover{background:var(--text-dim);background-clip:content-box}
 }
 
 @media (max-width: 760px){
@@ -1446,7 +1488,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home #mrEntryPanel .mr-entry-image{gap:.45rem;margin:0;font-size:.76rem}
 #view-home #mrEntryPanel .mr-entry-image + .mr-slot-section{padding:0;margin-top:.3rem}
 #view-home #mrEntryPanel .mr-row-img{width:56px;height:36px}
-#view-home #mrEntryPanel .mr-stock-info > strong{color:var(--accent);font-weight:700}
+#view-home #mrEntryPanel .mr-stock-info > strong{color:#f2d18b;font-weight:700}
 #view-home #mrEntryPanel #mrImageField{display:none}
 #view-home #mrEntryPanel .mr-slot-add{min-height:36px;padding:.25rem .5rem;font-size:.75rem}
 #view-home #mrEntryPanel #mrAddRowBtn{align-self:flex-start;width:auto;min-height:32px;padding:.25rem .5rem;font-size:.78rem;border-color:transparent;background:transparent;color:var(--text-dim);box-shadow:none}
@@ -1612,12 +1654,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-farm .home-left{gap:1rem}
 #view-farm .panel:not(.panel-ticker){padding:1rem;gap:.65rem;min-width:0}
 #view-farm .panel-head h2{font-size:1rem}
-#view-farm .panel-farm-cost > .panel-head{display:grid;gap:.6rem}
-#view-farm .panel-farm-cost{container: farm-cost-brand / inline-size}
-#view-farm .panel-farm-cost > .panel-head{position:relative}
-@container farm-cost-brand (min-width:430px){
-  #view-farm .panel-farm-cost > .panel-head::after{content:"";position:absolute;top:calc(50% + 5px);right:48px;width:104px;height:96px;transform:translateY(-50%);background:url("assets/farm-gum100.png") center / contain no-repeat;opacity:.75;pointer-events:none}
-}
+#view-farm .panel-farm-cost > .panel-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;position:static}
+#view-farm .panel-farm-cost > .panel-head h2{margin:0;line-height:1.4}
+#view-farm .panel-farm-cost > .panel-head .farm-exrate-row{justify-content:flex-end;margin:0}
 #view-farm .farm-exrate-row{font-size:.8rem;gap:.4rem}
 #view-farm .farm-exrate-row input{width:100px}
 #view-farm .farm-map-row{font-size:.85rem}
@@ -1645,6 +1684,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 @media(max-width:640px){
   #view-farm .panel:not(.panel-ticker){padding:.85rem}
   #view-farm .topbar{gap:.5rem;flex-wrap:wrap}
+  #view-farm .panel-farm-cost > .panel-head{display:grid;justify-content:stretch;gap:.45rem}
+  #view-farm .panel-farm-cost > .panel-head .farm-exrate-row{justify-content:flex-start}
   #view-farm .farm-cost-row,#view-farm .farm-rare-row{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) 80px 32px;gap:.35rem}
   #view-farm .farm-cost-name,#view-farm .farm-rare-name{grid-column:2/-1}
   #view-farm .farm-cost-row > :first-child,#view-farm .farm-rare-row > :first-child{grid-column:1;grid-row:1}
@@ -1657,13 +1698,67 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-timers .bc-avatar{width:80px;height:80px;background:transparent;border:0;box-shadow:none;border-radius:0}
 #view-timers .bc-map{width:125px;height:125px}
 #view-timers .bc-time-block{width:120px}
-#view-timers .bc-time{font-size:1.5rem;line-height:1.2;font-variant-numeric:tabular-nums}
+#view-timers .bc-time{font-size:1.2rem;line-height:1.2;font-variant-numeric:tabular-nums}
 #view-timers .bc-time:is(.state-warning,.state-critical){color:#f4c95d}
 #view-timers .bc-time-block:has(.state-warning,.state-critical){outline:2px solid #f4c95d;outline-offset:4px;border-radius:6px;background:rgba(244,201,93,.09);box-shadow:0 0 14px rgba(244,201,93,.15)}
 #view-timers .bc-time-block:has(.state-overdue,.state-overdue-long){outline:2px solid var(--danger);outline-offset:4px;border-radius:6px;background:color-mix(in srgb,var(--danger) 9%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--danger) 18%,transparent)}
 #view-timers .boss-card.state-critical{animation:none}
 #view-timers .bc-items{margin-top:.45rem;padding-top:.4rem;gap:.3rem}
 #view-timers .item-chip{padding:.2rem .45rem;font-size:.72rem;gap:.25rem}
+/* Boss roster cards share the dark-fantasy summary language without changing their structure. */
+#view-timers .boss-card{
+  --boss-accent:102,151,255;
+  overflow:hidden;
+  border-color:rgba(var(--boss-accent),.32);
+  background:
+    radial-gradient(ellipse at 4% 0%,rgba(104,145,255,.12),transparent 42%),
+    radial-gradient(ellipse at 100% 100%,rgba(62,123,208,.08),transparent 38%),
+    linear-gradient(145deg,#1d2a42,#152035 62%,#121b2c);
+  box-shadow:inset 0 1px 0 rgba(190,213,255,.08),0 6px 18px rgba(6,15,33,.18);
+  transition:transform 180ms ease,border-color 180ms ease,box-shadow 180ms ease,filter 180ms ease;
+}
+#view-timers .boss-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(var(--boss-accent),.52);
+  box-shadow:inset 0 1px 0 rgba(204,224,255,.13),0 10px 24px rgba(34,83,162,.15),0 0 15px rgba(83,145,255,.08);
+  filter:brightness(1.025);
+}
+#view-timers .bc-rank{background:rgba(67,111,195,.16);border-color:rgba(var(--boss-accent),.38);box-shadow:0 0 11px rgba(var(--boss-accent),.1)}
+#view-timers .bc-title{color:#e9f2ff;text-shadow:0 1px 0 rgba(0,0,0,.34)}
+#view-timers .bc-sub{color:#aebed8}
+#view-timers .bc-killedby{color:#8ec3ff}
+#view-timers .bc-avatar img{filter:drop-shadow(0 5px 8px rgba(86,148,255,.3))}
+#view-timers .bc-map{border-color:rgba(121,165,237,.4);background:#111c2e;box-shadow:inset 0 0 0 1px rgba(203,222,255,.05),0 5px 13px rgba(0,0,0,.2)}
+#view-timers .bc-map::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 18px rgba(36,81,153,.18)}
+#view-timers .bc-time-block{padding:.35rem .45rem;border:1px solid rgba(118,156,222,.25);border-radius:var(--radius-s);background:linear-gradient(145deg,rgba(50,79,126,.16),rgba(23,33,51,.2));box-shadow:inset 0 1px 0 rgba(190,213,255,.06)}
+#view-timers .bc-time.state-normal{color:#f3f6ff;text-shadow:none}
+#view-timers .bc-time-block:has(> .state-warning){display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-color:rgba(244,201,93,.62);background:linear-gradient(145deg,rgba(128,88,26,.22),rgba(38,34,31,.34));box-shadow:inset 0 1px 0 rgba(255,226,156,.14),0 0 14px rgba(244,201,93,.14)}
+#view-timers .bc-time-block:has(> .state-overdue){display:flex;flex-direction:column;align-items:center;text-align:center;border-color:rgba(255,108,116,.58);background:linear-gradient(145deg,rgba(121,41,49,.23),rgba(43,28,35,.34));box-shadow:inset 0 1px 0 rgba(255,177,181,.12),0 0 14px rgba(255,82,94,.16)}
+#view-timers .boss-card.state-shake .bc-time-block{animation:boss-time-shake .9s ease-in-out infinite}
+@keyframes boss-time-shake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-.5px)}20%,40%,60%,80%{transform:translateX(.5px)}}
+#view-timers .boss-card.state-shake{animation:boss-card-shake .9s ease-in-out infinite}
+@keyframes boss-card-shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-.6px)}50%{transform:translateX(.6px)}}
+#view-timers .boss-card.state-warning{animation:boss-card-shake .9s ease-in-out infinite}
+#view-timers .boss-card.state-warning .bc-time-block{animation:boss-time-shake .9s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){#view-timers .boss-card.state-shake,#view-timers .boss-card.state-shake .bc-time-block,#view-timers .boss-card.state-warning,#view-timers .boss-card.state-warning .bc-time-block{animation:none}}
+#view-timers .boss-card:is(.state-warning,.state-spawn){border-color:rgba(244,201,93,.7);box-shadow:inset 0 1px 0 rgba(255,226,156,.14),0 8px 22px rgba(143,99,31,.14),0 0 13px rgba(244,201,93,.08)}
+#view-timers .bc-time-sub{color:#b6c4d9}
+#view-timers .bc-delay-pill{border:1px solid rgba(244,201,93,.32);box-shadow:0 0 9px rgba(244,201,93,.1);transition:background 180ms ease,box-shadow 180ms ease,transform 180ms ease}
+#view-timers .bc-delay-pill:hover{box-shadow:0 0 12px rgba(244,201,93,.22);transform:translateY(-1px)}
+#view-timers .bc-input{border-color:rgba(118,156,222,.38);background:rgba(12,23,40,.64);box-shadow:inset 0 1px 0 rgba(190,213,255,.05)}
+#view-timers .bc-close{border:1px solid transparent;transition:background 180ms ease,border-color 180ms ease,color 180ms ease,transform 180ms ease}
+#view-timers .bc-close:hover{border-color:rgba(255,115,126,.34);background:rgba(159,48,65,.16);transform:scale(1.06)}
+#view-timers .bc-kill-btn.bc-kill-btn-img img{filter:drop-shadow(0 4px 8px rgba(246,174,59,.22))}
+#view-timers .bc-items{border-top-color:rgba(126,162,221,.27)}
+#view-timers .bc-items-label{color:#9eb0ca;letter-spacing:.025em;text-transform:none}
+#view-timers .item-chip{border-color:rgba(104,146,213,.28);background:linear-gradient(145deg,rgba(66,99,150,.18),rgba(17,29,48,.78));color:#c4d3e9;box-shadow:inset 0 1px 0 rgba(188,211,255,.05);transition:transform 170ms ease,border-color 170ms ease,background 170ms ease,box-shadow 170ms ease}
+#view-timers .item-chip:hover{transform:translateY(-1px);border-color:rgba(120,177,255,.58);background:linear-gradient(145deg,rgba(73,119,184,.3),rgba(18,32,55,.9));box-shadow:0 4px 10px rgba(48,104,190,.16)}
+#view-timers .item-chip .dot{border:1px solid rgba(155,190,246,.24);box-shadow:0 0 8px rgba(78,139,235,.1)}
+#view-timers .item-chip.selected{box-shadow:0 0 12px rgba(89,151,255,.18)}
+@media(prefers-reduced-motion:reduce){
+  #view-timers .boss-card,#view-timers .bc-delay-pill,#view-timers .bc-close,#view-timers .item-chip{transition:none}
+  #view-timers .boss-card:hover,#view-timers .bc-delay-pill:hover,#view-timers .bc-close:hover,#view-timers .item-chip:hover{transform:none}
+}
 @media(max-width:1100px){
   #view-timers .bc-row{grid-template-columns:minmax(0,1fr) auto}
   #view-timers .bc-left{grid-column:1;grid-row:1}
@@ -1679,7 +1774,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   #view-timers .bc-left,#view-timers .bc-right{gap:.3rem}
   #view-timers .bc-time-block{width:auto;min-width:86px}
   #view-timers .bc-input{flex-basis:76px;width:76px;padding:.4rem .2rem}
-  #view-timers .bc-time{font-size:1.3rem}
+  #view-timers .bc-time{font-size:1.04rem}
 }
 /* Decorative artwork for the two existing Boss summary cards only. */
 #view-timers .stat-main:has(#statItemsSold)::after,
@@ -1692,9 +1787,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 }
 /* Boss page summary spacing only. */
 #view-timers .stats-row{grid-auto-rows:1fr}
-#view-timers .party-panel{padding:.65rem 1rem;margin-bottom:.85rem;gap:.6rem}
+#view-timers .party-panel{
+  padding:.65rem 1rem;margin-bottom:.85rem;gap:.6rem;
+  border-color:rgba(112,143,225,.42);
+  background:radial-gradient(ellipse at 0% 0%,rgba(91,142,244,.13),transparent 58%),radial-gradient(ellipse at 100% 0%,rgba(155,92,255,.1),transparent 54%),linear-gradient(145deg,#1e2b42,#172133);
+  box-shadow:inset 0 1px 0 rgba(210,226,255,.08),0 4px 14px rgba(42,83,148,.1);
+}
 #view-timers .party-panel > .panel-head{align-items:center;gap:.5rem;flex-wrap:nowrap}
-#view-timers .party-panel > .panel-head h2{font-size:.95rem;white-space:nowrap}
+#view-timers .party-panel > .panel-head h2{display:inline-flex;align-items:center;gap:.5rem;font-size:.95rem;white-space:nowrap;color:#edf3ff;text-shadow:0 1px 0 rgba(0,0,0,.3)}
+#view-timers .party-heading-icon{display:block;width:113px;height:38px;object-fit:contain;flex:none;filter:drop-shadow(0 2px 5px rgba(96,161,255,.3))}
 #view-timers .party-panel-controls{gap:.5rem;flex-wrap:nowrap}
 #view-timers #partyPanelToggle{min-height:34px;padding:.3rem .65rem;font-size:.8rem;white-space:nowrap}
 #view-timers .stat-tile{padding:.75rem 1rem;gap:.3rem}
@@ -1703,12 +1804,49 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-timers .stat-thumb{width:72px;height:72px}
 #view-timers .stat-main:has(#statItemsSold,#statMyShare)::after{flex-basis:64px;height:64px}
 #view-timers .stat-tile .link{min-height:24px;display:inline-flex;align-items:center}
+/* Boss summary cards: four restrained accents matching the dashboard summary language. */
+#view-timers .stats-row > .stat-tile{
+  --stat-accent:112,154,255;
+  position:relative;
+  overflow:hidden;
+  border-color:rgba(var(--stat-accent),.36);
+  background:
+    radial-gradient(circle at 92% 8%,rgba(var(--stat-accent),.12),transparent 42%),
+    linear-gradient(145deg,rgba(var(--stat-accent),.075),rgba(21,31,49,.97) 58%);
+  box-shadow:inset 0 1px 0 rgba(var(--stat-accent),.11),0 6px 18px rgba(var(--stat-accent),.07);
+  transition:transform 180ms ease,border-color 180ms ease,box-shadow 180ms ease,filter 180ms ease;
+}
+#view-timers .stats-row > .stat-tile:nth-child(1){--stat-accent:91,154,255}
+#view-timers .stats-row > .stat-tile:nth-child(1){
+  border-color:rgba(91,154,255,.5);
+  background:
+    radial-gradient(circle at 92% 8%,rgba(69,132,255,.19),transparent 44%),
+    linear-gradient(145deg,rgba(43,83,156,.2),rgba(17,29,49,.99) 62%);
+  box-shadow:inset 0 1px 0 rgba(137,180,255,.16),0 6px 20px rgba(35,91,190,.12);
+}
+#view-timers .stats-row > .stat-tile:nth-child(2){--stat-accent:53,211,153}
+#view-timers .stats-row > .stat-tile:nth-child(3){--stat-accent:245,181,65}
+#view-timers .stats-row > .stat-tile:nth-child(4){--stat-accent:166,105,255}
+#view-timers .stats-row > .stat-tile:hover{
+  transform:translateY(-2px);
+  border-color:rgba(var(--stat-accent),.58);
+  box-shadow:inset 0 1px 0 rgba(var(--stat-accent),.18),0 9px 23px rgba(var(--stat-accent),.13),0 0 12px rgba(var(--stat-accent),.07);
+  filter:brightness(1.035);
+}
+#view-timers .stats-row > .stat-tile .num{color:rgb(var(--stat-accent));text-shadow:0 0 12px rgba(var(--stat-accent),.22)}
+#view-timers .stats-row > .stat-tile .stat-icon{border:1px solid rgba(var(--stat-accent),.22);box-shadow:0 0 12px rgba(var(--stat-accent),.12)}
+#view-timers .stats-row > .stat-tile .stat-thumb,
+#view-timers .stats-row > .stat-tile .stat-main::after{filter:drop-shadow(0 4px 8px rgba(var(--stat-accent),.2))}
+#view-timers .stats-row > .stat-tile .lbl{color:#dce7fa}
+#view-timers .stats-row > .stat-tile .link{color:rgb(var(--stat-accent));transition:color 180ms ease,text-shadow 180ms ease,transform 180ms ease}
+#view-timers .stats-row > .stat-tile .link:hover{color:#fff;text-shadow:0 0 9px rgba(var(--stat-accent),.55);transform:translateX(2px)}
 @media(max-width:1100px){
   #view-timers .stat-thumb{width:46px;height:46px}
   #view-timers .stat-main:has(#statItemsSold,#statMyShare)::after{flex-basis:38px;height:38px}
 }
 @media(max-width:640px){
   #view-timers .party-panel{padding:.6rem .65rem}
+  #view-timers .party-heading-icon{width:95px;height:32px}
   #view-timers .party-panel-summary{font-size:.7rem}
   #view-timers .party-panel-controls{gap:.35rem}
   #view-timers #partyPanelToggle{font-size:.75rem;padding:.3rem .45rem}
@@ -1734,6 +1872,70 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 .custom-boss-dialog small{font-size:.7rem;color:var(--text-dim)}.custom-boss-dialog [role=alert]{color:#ffaaa6;overflow-wrap:anywhere}.custom-boss-dialog [role=alert]:empty{display:none}
 .custom-drop-row{display:flex;gap:.4rem;margin-bottom:.4rem}.custom-modal-actions{display:flex;justify-content:flex-end;gap:.5rem;position:sticky;bottom:0;background:var(--surface);padding-top:.6rem}
 #addCustomBoss{white-space:nowrap;flex:none}
+#view-timers .boss-sound-control{position:relative;display:inline-flex;align-items:stretch;flex:none;border:1px solid rgba(92,149,239,.48);border-radius:9px;background:linear-gradient(135deg,rgba(28,49,85,.96),rgba(17,31,58,.96));box-shadow:inset 0 1px 0 rgba(174,207,255,.1),0 4px 13px rgba(5,13,31,.2);overflow:visible}
+#view-timers .boss-sound-control button{border:0;background:transparent;color:#a8cbff;min-width:37px;height:36px;display:grid;place-items:center;cursor:pointer;transition:background .18s ease,color .18s ease,box-shadow .18s ease}
+#view-timers .boss-sound-control button:hover,#view-timers .boss-sound-control button:focus-visible{background:rgba(91,151,255,.14);color:#f0f6ff;outline:none}
+#view-timers .boss-sound-toggle{border-radius:8px 0 0 8px}
+#view-timers .boss-sound-menu-toggle{min-width:26px!important;border-left:1px solid rgba(117,165,241,.23)!important;border-radius:0 8px 8px 0;font-size:.78rem}
+#view-timers .boss-sound-toggle.is-muted{color:#8c9ab1;background:rgba(15,23,41,.34)}
+#view-timers .boss-sound-toggle svg{width:18px;height:18px;filter:drop-shadow(0 0 5px rgba(94,165,255,.3))}
+#view-timers .boss-sound-popover{position:absolute;z-index:35;top:calc(100% + .55rem);right:0;width:242px;padding:.78rem;border:1px solid rgba(90,150,238,.52);border-radius:11px;background:linear-gradient(145deg,rgba(25,44,78,.99),rgba(13,25,50,.99));box-shadow:0 14px 30px rgba(2,8,23,.46),inset 0 1px 0 rgba(180,214,255,.11)}
+#view-timers .boss-sound-popover[hidden]{display:none}
+#view-timers .boss-sound-popover-head{font-size:.82rem;font-weight:800;color:#e6f0ff;margin-bottom:.7rem}
+#view-timers .boss-sound-enable-row,#view-timers .boss-sound-volume-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;color:#c6d4ea;font-size:.78rem}
+#view-timers .boss-sound-enable-row{padding-bottom:.62rem;border-bottom:1px solid rgba(117,157,214,.2)}
+#view-timers .boss-sound-enable-row input{accent-color:#69a6ff;width:16px;height:16px;margin:0}
+#view-timers .boss-sound-volume-row{display:block;padding-top:.62rem}
+#view-timers .boss-sound-volume-head output{color:#ffd779;font-weight:800;font-variant-numeric:tabular-nums}
+#view-timers .boss-sound-volume-row input{display:block;width:100%;margin:.62rem 0 .12rem;accent-color:#70adff;cursor:pointer}
+#view-timers .boss-sound-preview{width:100%;margin-top:.72rem;padding:.47rem .6rem;border:1px solid rgba(116,175,255,.48);border-radius:7px;background:linear-gradient(135deg,rgba(61,111,196,.2),rgba(31,58,109,.18));color:#d9eaff;font:inherit;font-size:.75rem;font-weight:700;cursor:pointer;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease}
+#view-timers .boss-sound-preview:hover,#view-timers .boss-sound-preview:focus-visible{background:rgba(85,143,236,.28);border-color:#82b7ff;box-shadow:0 0 11px rgba(70,143,255,.18);outline:none}
+@media(max-width:640px){#view-timers .boss-sound-popover{width:min(242px,calc(100vw - 1.5rem))}#view-timers .boss-sound-control button{height:35px}}
+
+/* Header status cards: points, profile, and selected server share the summary-card language. */
+#homeBannerZone .points-chip,
+#homeBannerZone .user-menu,
+#homeBannerZone .rate-chip{
+  border:1px solid rgba(113,151,218,.42);
+  border-radius:17px;
+  background:linear-gradient(145deg,rgba(40,62,102,.9),rgba(19,30,49,.96));
+  box-shadow:inset 0 1px 0 rgba(211,226,255,.09),inset 0 -9px 18px rgba(4,10,25,.16),0 7px 18px rgba(2,8,20,.22);
+  transition:border-color 180ms ease,box-shadow 180ms ease,filter 180ms ease,transform 180ms ease;
+}
+#homeBannerZone .points-chip:hover,
+#homeBannerZone .user-menu:hover,
+#homeBannerZone .rate-chip:hover{
+  border-color:rgba(148,187,255,.68);
+  box-shadow:inset 0 1px 0 rgba(225,237,255,.14),0 9px 22px rgba(29,83,161,.24),0 0 14px rgba(88,145,237,.12);
+  filter:brightness(1.04);
+  transform:translateY(-1px);
+}
+#homeBannerZone .points-chip{min-height:48px;padding:.42rem .62rem .42rem .7rem;gap:.38rem;border-color:rgba(216,174,74,.52);background:linear-gradient(145deg,rgba(84,67,31,.72),rgba(29,33,39,.96));}
+#homeBannerZone .points-chip:hover{border-color:rgba(246,204,100,.75);box-shadow:inset 0 1px 0 rgba(255,235,177,.13),0 9px 22px rgba(141,101,26,.2),0 0 14px rgba(238,186,66,.12)}
+#homeBannerZone .points-chip .icon{width:18px;height:18px;color:#f6c85f;filter:drop-shadow(0 0 5px rgba(246,200,95,.38))}
+#homeBannerZone .points-chip b{font-size:1.08rem;color:#fff1bf;text-shadow:0 0 10px rgba(246,200,95,.18)}
+#homeBannerZone .points-chip small{font-size:.66rem;color:#d8c788}
+#homeBannerZone .points-topup-btn{width:22px;height:22px;margin-left:.18rem;border:1px solid rgba(255,224,142,.62);border-radius:50%;background:linear-gradient(145deg,#d6a63d,#a97721);color:#fff8dc;box-shadow:inset 0 1px 0 rgba(255,245,202,.35),0 0 9px rgba(236,181,57,.22);font-size:1rem;line-height:1}
+#homeBannerZone .points-topup-btn:hover{filter:brightness(1.13);transform:scale(1.05)}
+#homeBannerZone .user-menu{min-height:52px;padding:.35rem .5rem .35rem .4rem;gap:.5rem;border-color:rgba(89,189,185,.42);background:linear-gradient(145deg,rgba(31,72,91,.86),rgba(18,33,51,.97));}
+#homeBannerZone .user-menu .avatar{width:31px;height:31px;background:linear-gradient(145deg,#75b6ff,#4d78d8);border:1px solid rgba(190,232,255,.5);box-shadow:0 0 0 3px rgba(88,180,180,.1),0 0 12px rgba(86,173,226,.23);font-size:.82rem}
+#homeBannerZone .user-menu .name{font-size:.8rem;color:#eef7ff;font-weight:800}
+#homeBannerZone .user-menu .membership-pill{font-size:.58rem;padding:.08rem .34rem;line-height:1.2}
+#homeBannerZone .user-menu .membership-time{font-size:.61rem;color:#b7d1d8}
+#homeBannerZone .user-menu .membership-time.soon{color:#f3bd62}
+#homeBannerZone .user-menu .icon-btn{border:1px solid rgba(136,184,227,.24);border-radius:9px;color:#a7c1da;padding:.28rem;background:rgba(14,28,46,.38)}
+#homeBannerZone .user-menu .icon-btn:hover{color:#ffb0b7;border-color:rgba(255,126,137,.45);background:rgba(116,39,54,.24)}
+#homeBannerZone .rate-chip{min-width:142px;min-height:62px;padding:.5rem .68rem;gap:.3rem;border-color:rgba(103,151,232,.5);background:linear-gradient(145deg,rgba(40,70,121,.84),rgba(17,32,57,.98));}
+#homeBannerZone .rate-chip .rate-select{width:100%;padding:0 .8rem .28rem 0;border-bottom-color:rgba(140,182,244,.32);color:#e5f0ff;font-size:.78rem;letter-spacing:.01em}
+#homeBannerZone .rate-chip .rate-values{gap:.45rem}
+#homeBannerZone .rate-chip .rate-label{font-size:.6rem;color:#a8bdd7;letter-spacing:.06em}
+#homeBannerZone .rate-chip .rate-num{font-size:1.08rem;color:#ff9e65;text-shadow:0 0 9px rgba(255,139,89,.16)}
+@media(max-width:760px){
+  #homeBannerZone .points-chip{min-height:42px;padding:.32rem .5rem}
+  #homeBannerZone .user-menu{min-height:48px}
+  #homeBannerZone .user-menu .name,#homeBannerZone .user-menu .membership-time{max-width:112px}
+  #homeBannerZone .rate-chip{min-width:126px;min-height:56px}
+}
 
 /* Pricing-only presentation: preserve package controls and purchase hooks. */
 .content:has(#view-pricing:not([hidden])) #homeBannerZone{margin-bottom:.65rem}
@@ -1750,12 +1952,29 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-cycle-toggle .seg-btn.active{background:#344766;color:#fff;box-shadow:0 2px 8px #0003}
 #view-pricing .pricing-promo-banner{margin:.15rem 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:.25rem .7rem;padding:.55rem 1rem;border-radius:10px;background:#202839;border:1px solid #3a4760;box-shadow:none;color:#c6cedc;font-size:.76rem;font-weight:400}
 #view-pricing .pricing-promo-banner strong{color:#efcf89;font-weight:700}
+#view-pricing .pricing-promo-banner{width:fit-content;max-width:100%;box-sizing:border-box;align-items:center;justify-content:center;gap:.5rem 1rem;padding:.55rem .8rem;border-radius:9px;background:#192333;border-color:#3a4760;text-align:left}
+#view-pricing .pricing-promo-copy{flex:0 0 auto;line-height:1.4}
+#view-pricing .pricing-promo-copy strong{font-size:.85rem}
+#view-pricing .pricing-promo-clock{display:flex;align-items:center;gap:.45rem;min-width:0}
+#view-pricing .pricing-promo-status{font-size:.75rem;color:#c6cedc}
+#view-pricing .pricing-promo-digits{display:flex;gap:.25rem}
+#view-pricing .pricing-promo-digits[hidden]{display:none}
+#view-pricing .pricing-promo-unit{display:flex;align-items:baseline;justify-content:center;gap:.2rem;padding:.2rem .35rem;background:#111b2b;border:1px solid #34435b;border-radius:5px;box-sizing:border-box;white-space:nowrap}
+#view-pricing .pricing-promo-unit b{font-size:1.1rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2;color:#ffe0a1}
+#view-pricing .pricing-promo-unit small{font-size:.65rem;color:#aebdd2;margin:0}
+@media(max-width:600px){
+  #view-pricing .pricing-promo-banner{padding:.6rem .5rem;gap:.45rem}
+  #view-pricing .pricing-promo-clock{width:100%;justify-content:center;flex-wrap:wrap;gap:.3rem}
+  #view-pricing .pricing-promo-status{font-size:.68rem}
+  #view-pricing .pricing-promo-unit{padding:.2rem .25rem}
+}
 #view-pricing .pricing-grid{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1120px;gap:1rem;padding-top:.4rem}
 #view-pricing .pricing-card{min-width:0;padding:1.35rem;gap:.7rem;background:#192231;border:1px solid #364155;border-radius:20px}
-#view-pricing .pricing-card-best{border:2px solid #96a7ff;padding:calc(1.35rem - 1px);background:linear-gradient(150deg,#2b3453,#1c253a 65%);box-shadow:0 0 28px #7a8cff24}
+#view-pricing .pricing-card-best{border:2px solid #d9b75d;padding:calc(1.35rem - 1px);background:linear-gradient(150deg,#2b3453,#1c253a 65%);box-shadow:0 0 28px rgba(217,183,93,.18)}
 #view-pricing .pricing-badge-best{top:-.8rem;right:1rem;padding:.35rem .85rem;font-size:.75rem;background:linear-gradient(100deg,#8aaeff,#b49bf2);color:#111b32;box-shadow:0 4px 16px #0003}
 #view-pricing .pricing-card-name{min-height:0;font-size:1.2rem;line-height:1.5;font-weight:800}
 #view-pricing .pricing-card-tagline{min-height:4.8em;margin:0;font-size:.82rem;line-height:1.6;font-style:normal;color:#b8c4d7}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-tagline{display:inline;min-height:0;margin:0;font-size:1rem;line-height:1.85;font-weight:600;color:#d3ddef;letter-spacing:normal;word-spacing:normal;word-break:normal;overflow-wrap:normal}
 #view-pricing .pricing-card-price{gap:.45rem}
 #view-pricing .pricing-card-amount{font-family:inherit;font-variant-numeric:tabular-nums;font-size:2.85rem;line-height:1.1;letter-spacing:-.03em}
 #view-pricing .pricing-card-best .pricing-card-amount{color:#d6ddff}
@@ -1763,7 +1982,23 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-badge-secondary{background:#344159;color:#d1dced;box-shadow:none}
 #view-pricing .pricing-pending-note{font-size:.72rem;color:#b6c1d2;margin-top:.7rem}
 #view-pricing .pricing-original{font-size:.75rem;color:#96a4b8;text-decoration-color:currentColor}
-#view-pricing .pricing-promo-badge{background:#35405a;color:#d5def3;font-size:.65rem;margin-left:0}
+#view-pricing .pricing-promo-badge{position:absolute;top:1.25rem;right:1rem;margin:0;padding:.3rem .65rem;border:1px solid #ff737b;border-radius:5px;background:#c92e3c;color:#fff;font-size:.8rem;line-height:1.4;font-weight:900;white-space:nowrap;box-shadow:0 3px 10px #0003}
+#view-pricing .pricing-card:has(.pricing-promo-badge) .pricing-card-name{padding-right:5.25rem}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name{display:block;padding-right:0}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-promo-badge{position:static;transform:none}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-name{display:block;padding-right:0}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-promo-badge{position:static}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-tagline{min-height:0}
+#view-pricing .pricing-promo-heading{min-height:5rem;display:flex;flex-direction:column;gap:.7rem}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-original{font-size:1.2rem;font-weight:500;color:#b9c4d5}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-original{font-size:1.2rem;font-weight:500;color:#b9c4d5}
+#view-pricing .pricing-card-best .pricing-card-name{display:block;padding-right:0}
+#view-pricing .pricing-card-best .pricing-card-tagline{display:block;min-height:0;margin:0;font-size:.85rem;line-height:1.6;font-weight:500;color:#d3ddef;letter-spacing:normal;word-spacing:normal}
+#view-pricing .pricing-card-best .pricing-promo-badge{position:static}
+#view-pricing .pricing-card-best .pricing-original{font-size:1.2rem;font-weight:500;color:#b9c4d5}
+#view-pricing .pricing-bundle-price{display:flex;flex-direction:column;align-items:center;gap:.5rem;text-align:center}
+#view-pricing .pricing-bundle-price .pricing-card-price{flex-wrap:nowrap;white-space:nowrap;justify-content:center;gap:.45rem}
+#view-pricing .pricing-bundle-price .pricing-perday{margin:0}
 #view-pricing .pricing-perday{font-size:.75rem;margin-top:-.3rem}
 #view-pricing .pricing-features{border-top:1px solid #ffffff14;padding-top:1rem;gap:.65rem;margin-top:.25rem}
 #view-pricing .pricing-features li{font-size:.84rem;line-height:1.55;align-items:flex-start;color:#c9d3e2;gap:.5rem}
@@ -1771,12 +2006,348 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-cta{min-height:46px;margin-top:1rem;border-radius:11px;font-size:.93rem;font-weight:800;border:1px solid #637baf;background:#293b5d;color:#edf2ff}
 #view-pricing .pricing-card-best .pricing-cta{background:linear-gradient(100deg,#8aaeff,#b49bf2);color:#111b32;border-color:#b6baff;box-shadow:0 5px 18px #839df52b}
 #view-pricing .pricing-cta:hover:not(:disabled){filter:brightness(1.1)}
+#view-pricing .pricing-card:has([data-plan-key="timers"]),
+#view-pricing .pricing-card:has([data-plan-key="bundle"]){
+  background:linear-gradient(150deg,rgba(38,54,83,.72),rgba(25,35,56,.96) 68%);
+  border-color:rgba(126,155,214,.5);
+  box-shadow:inset 0 1px 0 rgba(190,213,255,.08),0 8px 22px rgba(25,48,95,.16)
+}
+#view-pricing .pricing-card:has([data-plan-key="timers"]):hover,
+#view-pricing .pricing-card:has([data-plan-key="bundle"]):hover{border-color:rgba(143,180,240,.72);box-shadow:inset 0 1px 0 rgba(210,226,255,.12),0 10px 26px rgba(45,83,150,.24)}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-amount,
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-amount{color:#c2d6ff}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-cta,
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-cta{background:linear-gradient(100deg,#344f7d,#3b5f91);border-color:#6f8fca;box-shadow:0 4px 14px rgba(61,102,173,.18)}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-check,
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-check{color:#82d5c0}
 #view-pricing .pricing-cta:focus-visible,#view-pricing .seg-btn:focus-visible{outline:3px solid #c1d3ff;outline-offset:3px}
 #view-pricing .pricing-cta:disabled{opacity:1;color:#aebace;background:#222c3b;border-color:#3b4658;cursor:default}
+#view-pricing .pricing-card:nth-child(n+4){padding-block:1rem;gap:.5rem}
+#view-pricing .pricing-card:nth-child(n+4) .pricing-card-tagline{min-height:0}
+#view-pricing .pricing-card:nth-child(n+4) > .pricing-bundle-price,
+#view-pricing .pricing-card:nth-child(4) > .pricing-card-price{margin-top:.65rem}
+#view-pricing .pricing-card:nth-child(n+4) .pricing-features{padding-top:.75rem;margin-top:.15rem}
+#view-pricing .pricing-card:nth-child(n+4) .pricing-cta{margin-top:.5rem}
+#view-pricing .pricing-card:nth-child(4) > .pricing-card-price{justify-content:center;min-height:4.85rem}
+@media(min-width:901px){
+  #view-pricing .pricing-grid{grid-template-rows:auto auto}
+}
 @media(max-width:900px){
   #view-pricing .pricing-grid{grid-template-columns:1fr;grid-auto-rows:auto;max-width:540px;gap:1.5rem}
   #view-pricing .pricing-card-tagline{min-height:0}
   #view-pricing .pricing-hero{padding-bottom:1.4rem}
+}
+/* Compact Settings only */
+#view-settings .topbar{margin-bottom:1rem}
+#view-settings .settings-card{padding:1rem;gap:.65rem;border-radius:12px}
+#view-settings .panel-head{margin:0;gap:.6rem;flex-wrap:wrap}
+#view-settings .panel-head h2{font-size:1rem}
+#view-settings .settings-card .field{margin:0;gap:.3rem}
+#view-settings .settings-card input{padding:.55rem .7rem;min-width:0}
+#view-settings .settings-note{margin:0;font-size:.75rem}
+#view-settings .settings-actions .btn{min-height:40px;padding:.5rem .85rem}
+#view-settings .settings-kv{grid-template-columns:1fr 1.5fr 1fr;gap:.75rem;padding-bottom:.65rem;border-bottom:1px solid var(--border)}
+#view-settings .settings-kv>div{background:none;border:0;padding:0}
+#view-settings .settings-kv>div[hidden]{display:none}
+#view-settings .settings-kv b{font-size:.8rem}
+#view-settings .settings-grid{gap:.8rem}
+#view-settings .settings-group-label{margin:1rem 0 .5rem}
+#view-settings .server-pick-list{margin:.2rem 0;gap:.45rem}
+#view-settings .settings-package{margin-bottom:.8rem;border-color:#46577b}
+#view-settings .settings-package{position:relative;overflow:hidden;padding:1rem 1.15rem;background:linear-gradient(145deg,rgba(39,61,101,.82),rgba(21,33,55,.97) 68%);border-color:rgba(105,151,228,.52);box-shadow:inset 0 1px 0 rgba(212,227,255,.1),inset 0 -22px 30px rgba(5,12,27,.16),0 9px 22px rgba(14,36,77,.16)}
+#view-settings .settings-package::before{content:"";position:absolute;top:0;left:1.15rem;right:1.15rem;height:2px;background:linear-gradient(90deg,rgba(130,177,255,.05),rgba(130,177,255,.72),rgba(130,177,255,.05));pointer-events:none}
+#view-settings .settings-package .panel-head{margin-bottom:.5rem}
+#view-settings .settings-package .panel-head h2{font-size:1.04rem;color:#eef5ff;display:flex;align-items:center;gap:.5rem}
+#view-settings .settings-package .panel-head h2::before{content:"";width:4px;height:18px;border-radius:999px;background:linear-gradient(#87b5ff,#71d5c0);box-shadow:0 0 10px rgba(103,182,255,.34)}
+#view-settings .settings-package-list{display:grid;gap:.65rem}
+#view-settings .settings-package-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:.15rem 0}
+#view-settings .settings-package-name{font-size:1.1rem;font-weight:800;color:#f1f6ff}
+#view-settings .settings-package-meta{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-top:.2rem}
+#view-settings .settings-package-time{font-size:.94rem;font-weight:700;font-variant-numeric:tabular-nums;color:#8dd9c4}
+#view-settings .settings-package-time.soon{color:#f5bd62}
+#view-settings .settings-package-expiry{font-size:.72rem;color:#a7b9d1}
+#view-settings .settings-package-link{font-size:.78rem;text-decoration:none;white-space:nowrap;min-height:36px;padding:.4rem .7rem}
+#view-settings .settings-package-upgrade{background:linear-gradient(135deg,#8c6724,#bb9347);border-color:#d2ae63;color:#fff3cf;box-shadow:inset 0 1px 0 rgba(255,239,188,.28),0 4px 12px rgba(167,120,36,.2)}
+#view-settings .settings-package-upgrade:hover{background:linear-gradient(135deg,#a77b2c,#d0a554);border-color:#e3c277;color:#fff8e6;box-shadow:inset 0 1px 0 rgba(255,244,205,.34),0 6px 15px rgba(190,142,43,.3)}
+#view-settings .settings-package #stPackageAccessNote{margin:.35rem 0 0;padding-top:.45rem;border-top:1px solid rgba(157,188,236,.15);font-size:.7rem;color:#9db0c9;opacity:.85}
+#view-settings .settings-security{grid-column:2;grid-row:1}
+#view-settings .settings-servers{grid-column:1/-1}
+#view-settings .settings-servers{padding:1rem 1.1rem .9rem}
+#view-settings .settings-servers .panel-head{align-items:center;margin-bottom:.15rem}
+#view-settings .settings-servers .panel-head h2{font-size:1rem}
+#view-settings .settings-servers .panel-head .party-panel-summary{font-size:.78rem;color:#a9c4f5;font-weight:700;white-space:nowrap}
+#view-settings .settings-servers .settings-note:not(.server-quota-hint){margin:.15rem 0 .65rem;font-size:.72rem}
+#view-settings .settings-servers .server-pick-list{gap:.35rem;margin-bottom:.55rem}
+#view-settings .settings-servers .server-pick-list .share-chip{font-size:.78rem;padding:.28rem .62rem}
+#view-settings .settings-servers .server-quota-hint{margin:.35rem 0 0;font-size:.72rem;color:var(--text-dim);order:1}
+#view-settings .settings-servers .settings-actions{display:flex;justify-content:flex-end;margin-top:-1.35rem;position:relative;z-index:1}
+#view-settings .settings-servers .settings-actions .btn{padding:.42rem .75rem;min-height:36px;font-size:.78rem}
+@media(max-width:760px){
+ #view-settings .settings-security{grid-column:auto;grid-row:3}
+ #view-settings .settings-servers{grid-row:2}
+ #view-settings .settings-servers .settings-actions{margin-top:.6rem}
+ #view-settings .settings-servers .settings-actions .btn{width:100%}
+ #view-settings .settings-kv{grid-template-columns:1fr 1fr}
+ #view-settings .settings-kv>div:nth-child(2){grid-column:1/-1;grid-row:2}
+ #view-settings .settings-package-row{align-items:flex-start;gap:.65rem}
+ #view-settings .settings-package-link{white-space:normal}
+}
+/* Dashboard summary: original GIF bytes, decorative and separate from values. */
+#view-home .mr-summary-item{--summary-rgb:88,196,249;--summary-image:url('assets/Marin.gif')}
+#view-home .mr-summary-item:has(.sell){--summary-rgb:82,211,153;--summary-image:url('assets/Poporing.gif')}
+#view-home .mr-summary-item:has(.buy){--summary-rgb:248,127,151;--summary-image:url('assets/Poring.gif')}
+#view-home .mr-summary-item,#view-home .mr-summary-item:last-child{
+ position:relative;isolation:isolate;overflow:hidden;justify-content:flex-start;
+ padding:.8rem .9rem;gap:.35rem;border:1px solid rgba(var(--summary-rgb),.3);border-radius:12px;
+ background:radial-gradient(ellipse at 100% 0%,rgba(var(--summary-rgb),.14),transparent 75%),linear-gradient(145deg,#1d293b,#172131);
+ box-shadow:inset 0 1px 0 rgba(var(--summary-rgb),.13),0 3px 12px rgba(0,0,0,.12);
+ transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+#view-home .mr-summary-item::after{content:"";position:absolute;right:.8rem;top:.65rem;width:40px;height:40px;background:var(--summary-image) center/contain no-repeat;opacity:.95;filter:drop-shadow(0 2px 5px rgba(var(--summary-rgb),.28));pointer-events:none}
+#view-home .mr-summary-item .mr-summary-label{display:flex;align-items:center;min-height:32px;width:100%;padding-right:46px;box-sizing:border-box;font-size:.8rem;line-height:1.45;color:#d8e4f1;letter-spacing:0}
+#view-home .mr-summary-item .mr-summary-value{width:100%;font-size:clamp(1.25rem,1.8vw,1.65rem);line-height:1.4;font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#view-home .mr-summary-item .sell{color:#79e6b4}
+#view-home .mr-summary-item .buy{color:#ff9daf}
+#view-home .mr-summary-item .profit-pos{color:#83d8ff}
+@media(hover:hover){#view-home .mr-summary-item:hover{transform:translateY(-2px);border-color:rgba(var(--summary-rgb),.6);box-shadow:0 5px 16px rgba(var(--summary-rgb),.1)}}
+@media(max-width:600px){
+ #view-home .mr-summary-row{grid-template-columns:1fr;gap:.55rem}
+ #view-home .mr-summary-item,#view-home .mr-summary-item:last-child{padding:.65rem .85rem;gap:.15rem}
+ #view-home .mr-summary-item::after{width:36px;height:36px;top:.6rem}
+ #view-home .mr-summary-item .mr-summary-label{min-height:28px}
+}
+@media(prefers-reduced-motion:reduce){#view-home .mr-summary-item{transition:none}#view-home .mr-summary-item:hover{transform:none}}
+/* Announcement widget: shared wherever the existing widget is displayed. */
+:is(#view-home,#view-farm) .panel-ticker{padding:.85rem 1rem;gap:.7rem;border:1px solid rgba(205,172,99,.48);border-radius:12px;background:radial-gradient(ellipse at 100% 0%,rgba(194,151,65,.13),transparent 65%),linear-gradient(145deg,#202c3e,#172131);box-shadow:inset 0 1px 0 rgba(241,210,148,.12),0 3px 14px rgba(177,131,43,.07)}
+:is(#view-home,#view-farm) .panel-ticker .panel-head{margin:0;gap:.65rem}
+:is(#view-home,#view-farm) .panel-ticker .ticker-head-title{flex-wrap:wrap;gap:.3rem .55rem}
+:is(#view-home,#view-farm) .panel-ticker h2{font-size:1rem;font-weight:700;color:#f4e7cb}
+:is(#view-home,#view-farm) .panel-ticker #tickerServerChips .chip{background:rgba(216,180,103,.07);border-color:rgba(216,180,103,.25);color:#d9c9a9}
+:is(#view-home,#view-farm) .panel-ticker #tickerServerChips .chip.selected{background:rgba(216,180,103,.15);border-color:rgba(216,180,103,.5);color:#f6dfaf}
+:is(#view-home,#view-farm) .panel-ticker .ticker-wrap{padding:.1rem 0 .2rem}
+:is(#view-home,#view-farm) .panel-ticker .ticker-item{padding:.5rem .75rem;gap:.3rem;border-color:rgba(199,174,119,.2);background:linear-gradient(135deg,rgba(221,183,103,.07),rgba(12,21,35,.4));border-radius:9px}
+:is(#view-home,#view-farm) .panel-ticker .ticker-item-main{font-size:.75rem;color:#b8c5d7;gap:.5rem}
+:is(#view-home,#view-farm) .panel-ticker .ticker-item .poster{font-size:.78rem;color:#b7d9f9}
+:is(#view-home,#view-farm) .panel-ticker .ticker-item-sub{gap:.65rem;align-items:center}
+:is(#view-home,#view-farm) .panel-ticker .ticker-item-sub .buy{font-size:1.1rem;line-height:1.35;font-weight:700;color:#f2d18b}
+:is(#view-home,#view-farm) .panel-ticker .ticker-countdown{font-size:.78rem;color:#c4cedc;background:rgba(8,17,29,.4);padding:.1rem .4rem;border-radius:5px}
+:is(#view-home,#view-farm) .panel-ticker .buy + .ticker-countdown::before{content:none}
+:is(#view-home,#view-farm) .panel-ticker .ticker-item:has(.dashboard-empty-title){width:100%;box-sizing:border-box;padding:.65rem .8rem;border:1px dashed rgba(199,174,119,.22);border-radius:9px;background:rgba(12,21,35,.2);gap:.15rem}
+:is(#view-home,#view-farm) .panel-ticker .dashboard-empty-title{font-size:.8rem;color:#d5deeb;font-weight:500}
+:is(#view-home,#view-farm) .panel-ticker .dashboard-empty-detail{display:block;font-size:.72rem;line-height:1.6;color:#9dacc1}
+@media(max-width:600px){
+ :is(#view-home,#view-farm) .panel-ticker{padding:.75rem;gap:.6rem}
+ :is(#view-home,#view-farm) .panel-ticker .panel-head{flex-wrap:wrap}
+ :is(#view-home,#view-farm) .panel-ticker .ticker-head-title{flex:1 1 175px}
+ :is(#view-home,#view-farm) .panel-ticker h2{font-size:.9rem}
+ :is(#view-home,#view-farm) .panel-ticker .ticker-post-group{margin-left:auto}
+}
+/* Matching book-header panels for the Home trading workspace. */
+#view-home :is(#mrEntryPanel,.home-left>.panel){
+ border:1px solid rgba(130,153,213,.32);border-radius:12px;padding:1rem;gap:.75rem;
+ background:radial-gradient(ellipse at 100% 0%,rgba(100,116,201,.11),transparent 65%),linear-gradient(145deg,#1e2a3e,#172131);
+ box-shadow:inset 0 1px 0 rgba(175,194,248,.1),0 3px 14px rgba(9,15,32,.18);
+}
+#view-home :is(#mrEntryPanel,.home-left>.panel)>.panel-head{margin:0;gap:.65rem;align-items:center;flex-wrap:wrap}
+#view-home :is(#mrEntryPanel,.home-left>.panel)>.panel-head h2{display:flex;align-items:center;flex-wrap:wrap;gap:.45rem;font-size:1rem;font-weight:700;line-height:1.5;color:#e4eafa;letter-spacing:0}
+#view-home .dashboard-book-icon{width:28px;height:28px;object-fit:contain;flex:none;filter:drop-shadow(0 1px 3px rgba(126,140,230,.2))}
+#view-home .home-left>.panel>.panel-head>.ticker-head-title{align-self:stretch;width:100%;justify-content:flex-start}
+#view-home :is(#mrEntryPanel,.home-left>.panel) .mr-chart-server-tags{font-size:.72rem;font-weight:500}
+@media(max-width:600px){
+ #view-home :is(#mrEntryPanel,.home-left>.panel){padding:.8rem;gap:.65rem}
+ #view-home :is(#mrEntryPanel,.home-left>.panel)>.panel-head h2{font-size:.95rem;gap:.35rem}
+ #view-home .dashboard-book-icon{width:26px;height:26px}
+}
+#view-home #mrEntryPanel>.panel-head{display:flex;flex-wrap:nowrap;justify-content:space-between;gap:.6rem}
+#view-home #mrEntryPanel>.panel-head>.ticker-head-title{min-width:0;flex:none}
+#view-home #mrEntryPanel>.panel-head>.field{flex:1;min-width:0;margin:0}
+#view-home #mrEntryPanel>.panel-head h2{flex-wrap:nowrap;white-space:nowrap}
+#view-home #mrEntryPanel>.panel-head #mrCategoryToggle{width:100%;box-sizing:border-box;gap:.15rem}
+#view-home #mrEntryPanel>.panel-head #mrCategoryToggle .seg-btn{padding:.4rem .45rem;white-space:nowrap}
+@media(max-width:400px){
+ #view-home #mrEntryPanel>.panel-head{gap:.3rem}
+ #view-home #mrEntryPanel>.panel-head h2{font-size:.85rem;gap:.2rem}
+ #view-home #mrEntryPanel>.panel-head #mrCategoryToggle .seg-btn{padding:.35rem .25rem;font-size:.78rem}
+}
+/* Inventory tier cards: one navy system with a distinct accent per warehouse. */
+#view-items .items-card-a-sub{
+ --tier-rgb:115,185,255;
+ position:relative;isolation:isolate;overflow:hidden;
+ border:1px solid rgba(var(--tier-rgb),.34);border-radius:12px;
+ background:radial-gradient(ellipse at 100% 0%,rgba(var(--tier-rgb),.16),transparent 70%),linear-gradient(145deg,#202d43,#172131);
+ box-shadow:inset 0 1px 0 rgba(220,232,255,.08),0 5px 16px rgba(var(--tier-rgb),.07);
+ transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+#view-items #itemsCardTierA{--tier-rgb:82,211,153}
+#view-items #itemsCardTierB{--tier-rgb:248,127,151}
+#view-items #itemsCardTierC{--tier-rgb:115,185,255}
+#view-items #itemsCardTierS{--tier-rgb:184,145,255}
+#view-items .items-card-a-sub::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(110deg,rgba(var(--tier-rgb),.07),transparent 42%);opacity:.8}
+#view-items .items-card-a-sub .panel-head,
+#view-items .items-card-a-sub .items-tier-count,
+#view-items .items-card-a-sub .items-tier-viewall{z-index:1}
+#view-items .items-card-a-sub .panel-head h2{font-size:1rem;font-weight:750;letter-spacing:0;color:#e4eafa}
+#view-items .items-card-a-sub .items-tier-count{font-family:inherit;font-size:1.7rem;line-height:1.25;font-weight:800;font-variant-numeric:tabular-nums;color:rgb(var(--tier-rgb));text-shadow:0 0 14px rgba(var(--tier-rgb),.18)}
+#view-items .items-card-a-sub .items-tier-viewall{color:rgb(var(--tier-rgb));font-size:.8rem;transition:color .16s ease,text-shadow .16s ease}
+#view-items .items-card-a-sub .items-tier-viewall:hover{color:#fff;text-decoration:none;text-shadow:0 0 10px rgba(var(--tier-rgb),.55)}
+#view-items .items-card-a-sub .items-card-a-art{opacity:.42;filter:drop-shadow(0 3px 9px rgba(var(--tier-rgb),.35));transition:opacity .18s ease,transform .18s ease,filter .18s ease}
+#view-items .items-card-a-sub:hover{border-color:rgba(var(--tier-rgb),.62);box-shadow:inset 0 1px 0 rgba(220,232,255,.12),0 7px 20px rgba(var(--tier-rgb),.14);transform:translateY(-2px)}
+#view-items .items-card-a-sub:hover .items-card-a-art{opacity:.58;filter:drop-shadow(0 4px 11px rgba(var(--tier-rgb),.5));transform:translateY(-50%) scale(1.03)}
+@media(max-width:640px){
+ #view-items .items-card-a-sub .items-tier-count{font-size:1.55rem}
+ #view-items .items-card-a-sub:hover{transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+ #view-items .items-card-a-sub,#view-items .items-card-a-sub .items-card-a-art{transition:none}
+ #view-items .items-card-a-sub:hover{transform:none}
+}
+/* Inventory detail surfaces: treasure-led headers with separate warm/cool accents. */
+#view-items .inventory-heading-icon{width:30px;height:30px;object-fit:contain;flex:none;filter:drop-shadow(0 2px 5px rgba(245,190,94,.35))}
+#view-items .items-card-b,#view-items .items-card-c{position:relative;isolation:isolate;overflow:hidden;border-radius:12px}
+#view-items .items-card-b{--detail-rgb:128,166,255;--detail-heading:#e8edff;border-color:rgba(var(--detail-rgb),.5);background:radial-gradient(ellipse at 100% 0%,rgba(var(--detail-rgb),.19),transparent 68%),linear-gradient(145deg,#222f4c,#172131);box-shadow:inset 0 1px 0 rgba(210,224,255,.12),0 6px 20px rgba(var(--detail-rgb),.14);transition:border-color .24s ease,box-shadow .24s ease,background .24s ease}
+#view-items .items-card-b.items-detail-tier-a{--detail-rgb:82,211,153;--detail-heading:#d9ffeb}
+#view-items .items-card-b.items-detail-tier-b{--detail-rgb:248,127,151;--detail-heading:#ffe0e6}
+#view-items .items-card-b.items-detail-tier-c{--detail-rgb:115,185,255;--detail-heading:#e0efff}
+#view-items .items-card-b.items-detail-tier-s{--detail-rgb:184,145,255;--detail-heading:#eee3ff}
+#view-items .items-card-c{border-color:rgba(224,164,76,.46);background:radial-gradient(ellipse at 100% 0%,rgba(236,163,65,.17),transparent 68%),linear-gradient(145deg,#302a38,#1b2433);box-shadow:inset 0 1px 0 rgba(255,224,156,.11),0 5px 18px rgba(207,139,36,.1)}
+#view-items .items-card-b::before,#view-items .items-card-c::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(110deg,rgba(255,255,255,.04),transparent 38%)}
+#view-items .items-card-b>.panel-head,#view-items .items-card-c>.panel-head,#view-items .items-card-b>*,#view-items .items-card-c>*{position:relative;z-index:1}
+#view-items .items-card-b>.panel-head,#view-items .items-card-c>.panel-head{align-items:center}
+#view-items .items-card-b>.panel-head h2,#view-items .items-card-c>.panel-head h2{display:flex;align-items:center;gap:.5rem;font-size:1rem;font-weight:750;color:#e8edff}
+#view-items .items-card-b>.panel-head h2{color:var(--detail-heading);transition:color .24s ease}
+#view-items .items-card-c>.panel-head h2{color:#fff0d0}
+#view-items .items-card-b .inventory-heading-icon{filter:drop-shadow(0 2px 6px rgba(var(--detail-rgb),.55));transition:filter .24s ease}
+#view-items .items-card-b #itemsDetailList{border-top:1px solid rgba(var(--detail-rgb),.2);padding-top:.25rem;transition:border-color .24s ease}
+#view-items .items-card-b .items-detail-row,#view-items .items-card-b>[aria-hidden="true"]{border-color:rgba(var(--detail-rgb),.28);transition:border-color .24s ease,background .24s ease}
+#view-items .items-card-b .items-detail-right .mono{color:rgb(var(--detail-rgb));transition:color .24s ease}
+#view-items .items-card-b .items-undo-btn:hover{color:rgb(var(--detail-rgb))}
+#view-items .items-card-c .items-pending-row{border-color:rgba(225,173,92,.28);background:rgba(32,34,48,.6)}
+#view-items .items-card-c .items-pending-amount{color:#f5ca78}
+#view-items .items-card-b .items-detail-row:hover,#view-items .items-card-b .items-detail-row:focus-within{background:rgba(var(--detail-rgb),.1)}
+#view-items .items-card-c .items-pending-row:hover{background:rgba(219,155,56,.1)}
+#view-items .items-card-a-sub.items-tier-selected{border-color:rgba(var(--tier-rgb),.86);box-shadow:inset 0 0 0 1px rgba(var(--tier-rgb),.24),0 0 18px rgba(var(--tier-rgb),.18);transform:translateY(-1px)}
+@media(max-width:640px){
+ #view-items .inventory-heading-icon{width:27px;height:27px}
+ #view-items .items-card-b>.panel-head h2,#view-items .items-card-c>.panel-head h2{font-size:.95rem}
+}
+/* Farm panels: a shared blue-violet surface that carries the dashboard visual system. */
+#view-farm .panel-farm-history,#view-farm .panel-farm-revenue,#view-farm .panel-farm-cost{
+  position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(112,160,227,.3);border-radius:12px;
+  background:radial-gradient(ellipse at 100% 0%,rgba(90,167,255,.09),transparent 62%),linear-gradient(145deg,#1d293b,#151f2e);
+  box-shadow:inset 0 1px 0 rgba(218,235,255,.065),0 4px 14px rgba(38,78,130,.07);
+}
+#view-farm .panel-farm-history::before,#view-farm .panel-farm-revenue::before,#view-farm .panel-farm-cost::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(112deg,rgba(127,190,255,.035),transparent 40%);
+}
+#view-farm .panel-farm-history>* ,#view-farm .panel-farm-revenue>* ,#view-farm .panel-farm-cost>*{position:relative;z-index:1}
+#view-farm .panel-farm-history>.panel-head,#view-farm .panel-farm-revenue>.panel-head,#view-farm .panel-farm-cost>.panel-head{padding-bottom:.55rem;border-bottom:1px solid rgba(119,165,226,.14)}
+#view-farm .panel-farm-history>.panel-head h2,#view-farm .panel-farm-revenue>.panel-head h2,#view-farm .panel-farm-cost>.panel-head h2{display:flex;align-items:center;gap:.45rem;color:#e7effc;text-shadow:0 1px 0 rgba(0,0,0,.28)}
+#view-farm .farm-heading-icon{width:39px;height:39px;object-fit:contain;flex:none;filter:drop-shadow(0 2px 4px rgba(92,181,255,.38))}
+#view-farm .panel-farm-history:hover,#view-farm .panel-farm-revenue:hover,#view-farm .panel-farm-cost:hover{border-color:rgba(132,186,255,.42);box-shadow:inset 0 1px 0 rgba(218,235,255,.09),0 6px 17px rgba(38,78,130,.1)}
+@media(max-width:640px){
+  #view-farm .farm-heading-icon{width:37px;height:37px}
+}
+@media(prefers-reduced-motion:reduce){
+  #view-farm .panel-farm-history,#view-farm .panel-farm-revenue,#view-farm .panel-farm-cost{transition:none}
+}
+/* Merchant history: classes are emitted by historyItemRowHtml in displayed order. */
+#view-home #mrHistoryList .mr-it-row.mr-ic{grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem 1rem;align-items:start}
+#view-home #mrHistoryList .mr-ic>.mr-ic-head{grid-column:1/-1;align-items:center}
+#view-home #mrHistoryList .mr-it-namewrap{flex-direction:row;align-items:center;flex-wrap:wrap;gap:.4rem .6rem}
+#view-home #mrHistoryList .mr-it-name{display:block;overflow:visible;overflow-wrap:anywhere}
+#view-home #mrHistoryList .mr-it-row.mr-ic>.mr-ic-head>.mr-ic-chev{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:1.15rem;height:1.15rem;margin-top:0;font-size:1.4rem;line-height:1;
+  color:#a9bfff;text-shadow:0 0 7px rgba(111,148,255,.42);
+}
+#view-home #mrHistoryList .mr-it-cell{align-items:flex-start;text-align:left;gap:.15rem;overflow:visible}
+#view-home #mrHistoryList .mr-it-cell i{display:block;font-style:normal;font-size:.72rem;color:var(--text-dim)}
+#view-home #mrHistoryList .mr-it-cell b{font-size:.92rem;white-space:normal;overflow-wrap:anywhere}
+#view-home #mrHistoryList .mr-it-cell small{white-space:normal;overflow:visible;overflow-wrap:anywhere;text-overflow:clip}
+#view-home #mrHistoryList .mr-it-cell .mr-it-avg,#view-home #mrHistoryList .mr-it-cell.profit small{font-size:.6rem;opacity:.65}
+#view-home #mrHistoryList .mr-it-cell.profit .mr-profit-sale-note{font-size:.7rem;opacity:.75}
+#view-home #mrHistoryList .mr-it-cell.left b{color:var(--warn)}
+@container home-history (max-width:440px){
+ #view-home #mrHistoryList .mr-it-row.mr-ic{grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+ #view-home #mrHistoryList .mr-it-row.mr-ic>.mr-ic-head>.mr-ic-chev{font-size:1.4rem}
+}
+#view-home #mrHistoryList .mr-it-row.mr-ic{margin-top:.65rem;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,filter .18s ease}
+#view-home #mrHistoryList .mr-it-row.mr-ic.history-alt-odd{
+  background:linear-gradient(135deg,rgba(31,42,70,.92),rgba(39,50,82,.9));
+  border-color:rgba(120,150,255,.38);
+  box-shadow:inset 0 1px 0 rgba(201,214,255,.075),0 2px 8px rgba(8,16,34,.16);
+}
+#view-home #mrHistoryList .mr-it-row.mr-ic.history-alt-even{
+  background:linear-gradient(135deg,rgba(31,42,70,.92),rgba(39,50,82,.9));
+  border-color:rgba(120,150,255,.38);
+  box-shadow:inset 0 1px 0 rgba(201,214,255,.075),0 2px 8px rgba(8,16,34,.16);
+}
+#view-home #mrHistoryList .mr-it-row.mr-ic.history-alt-odd:hover{border-color:rgba(152,178,255,.56);box-shadow:inset 0 1px 0 rgba(214,225,255,.11),0 4px 12px rgba(46,85,175,.18);filter:brightness(1.035)}
+#view-home #mrHistoryList .mr-it-row.mr-ic.history-alt-even:hover{border-color:rgba(152,178,255,.56);box-shadow:inset 0 1px 0 rgba(214,225,255,.11),0 4px 12px rgba(46,85,175,.18);filter:brightness(1.035)}
+@media(prefers-reduced-motion:reduce){
+  #view-home #mrHistoryList .mr-it-row.mr-ic{transition:none}
+}
+/* Farm history: ordered session records without changing any underlying values. */
+#view-farm .panel-farm-history>.panel-head h2{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+#view-farm .farm-history-summary{display:inline-flex;align-items:center;gap:.35rem;flex-wrap:wrap;margin:0;font-size:.74rem;font-weight:600}
+#view-farm .farm-history-summary-count{padding:.14rem .45rem;border:1px solid rgba(201,168,240,.35);border-radius:999px;background:rgba(201,168,240,.1);color:#dbc7fb;white-space:nowrap}
+#view-farm .farm-history-summary-profit{white-space:nowrap}
+#view-farm .farm-history-entry{padding:.75rem .8rem;display:grid;gap:.6rem;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,filter .18s ease}
+#view-farm .farm-history-entry.farm-history-alt-odd{background:linear-gradient(135deg,rgba(31,40,76,.96),rgba(38,48,88,.94));border-color:rgba(112,126,220,.5);box-shadow:inset 0 1px 0 rgba(205,210,255,.07),0 2px 8px rgba(30,39,100,.16)}
+#view-farm .farm-history-entry.farm-history-alt-even{background:linear-gradient(135deg,rgba(22,50,78,.97),rgba(27,65,98,.94));border-color:rgba(70,160,220,.55);box-shadow:inset 0 1px 0 rgba(194,228,255,.075),0 2px 8px rgba(20,79,124,.17)}
+#view-farm .farm-history-entry.farm-history-alt-odd:hover{border-color:rgba(136,151,239,.62);box-shadow:inset 0 1px 0 rgba(218,222,255,.1),0 3px 11px rgba(50,63,154,.2);filter:brightness(1.035)}
+#view-farm .farm-history-entry.farm-history-alt-even:hover{border-color:rgba(91,184,235,.66);box-shadow:inset 0 1px 0 rgba(211,237,255,.1),0 3px 11px rgba(28,105,158,.2);filter:brightness(1.035)}
+#view-farm .farm-history-entry-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:.65rem}
+#view-farm .farm-history-meta{display:flex;align-items:center;gap:.35rem .45rem;flex-wrap:wrap;min-width:0}
+#view-farm .farm-history-time{font-size:.82rem;font-weight:700;color:#e7edf8;font-variant-numeric:tabular-nums}
+#view-farm .farm-history-chip{display:inline-flex;align-items:center;min-height:24px;padding:.12rem .45rem;border:1px solid rgba(143,165,208,.32);border-radius:999px;background:rgba(102,129,185,.1);font-size:.7rem;font-weight:700;line-height:1.25;white-space:nowrap}
+#view-farm .farm-history-count{color:#ddcaff;border-color:rgba(201,168,240,.38);background:rgba(201,168,240,.1)}
+#view-farm .farm-history-map{max-width:100%;overflow:hidden;text-overflow:ellipsis;color:#b9d8ff}
+#view-farm .farm-history-actions{align-self:start;gap:.2rem;padding:.1rem;border:1px solid rgba(143,165,208,.24);border-radius:7px;background:rgba(10,17,29,.3)}
+#view-farm .farm-history-actions button{display:grid;place-items:center;width:28px;height:28px;border-radius:5px;padding:0}
+#view-farm .farm-history-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid rgba(119,146,192,.2);border-radius:9px;overflow:hidden;background:rgba(10,17,29,.24)}
+#view-farm .farm-history-metric{display:grid;gap:.14rem;min-width:0;padding:.5rem .6rem;border-right:1px solid rgba(119,146,192,.2)}
+#view-farm .farm-history-metric:last-child{border-right:0}
+#view-farm .farm-history-metric>span,#view-farm .farm-history-earned>span,#view-farm .farm-history-rares>span{font-size:.67rem;font-weight:700;color:#aebbd0}
+#view-farm .farm-history-metric b,#view-farm .farm-history-earned b{min-width:0;overflow-wrap:anywhere;font-size:.84rem;line-height:1.35;font-variant-numeric:tabular-nums;color:#ecf1fb}
+#view-farm .farm-history-metric small,#view-farm .farm-history-earned small{font-size:.7rem;line-height:1.35;color:#9cacc4;font-variant-numeric:tabular-nums}
+#view-farm .farm-history-metric small:empty,#view-farm .farm-history-earned small:empty{display:none}
+#view-farm .farm-history-revenue b{color:var(--success)}
+#view-farm .farm-history-metric.farm-profit-pos b,#view-farm .farm-history-metric.farm-profit-pos small{color:var(--success)}
+#view-farm .farm-history-metric.farm-profit-neg b,#view-farm .farm-history-metric.farm-profit-neg small{color:var(--danger)}
+#view-farm .farm-history-earned{display:flex;align-items:baseline;gap:.35rem .5rem;flex-wrap:wrap;padding:.05rem .1rem 0}
+#view-farm .farm-history-earned b{color:#f3d48e}
+#view-farm .farm-history-rares{display:flex;align-items:flex-start;gap:.45rem;flex-wrap:wrap;padding-top:.5rem;border-top:1px dashed rgba(119,146,192,.28)}
+#view-farm .farm-history-rares>div{display:flex;gap:.3rem;flex-wrap:wrap;min-width:0}
+#view-farm .farm-history-rares .farm-rare-tag{white-space:normal;line-height:1.4}
+@media(max-width:640px){
+ #view-farm .farm-history-entry{padding:.65rem;gap:.55rem}
+ #view-farm .farm-history-entry-head{gap:.45rem}
+ #view-farm .farm-history-time{flex-basis:100%}
+ #view-farm .farm-history-metrics{grid-template-columns:1fr}
+ #view-farm .farm-history-metric{grid-template-columns:68px minmax(0,1fr);align-items:baseline;border-right:0;border-bottom:1px solid rgba(119,146,192,.2)}
+ #view-farm .farm-history-metric:last-child{border-bottom:0}
+ #view-farm .farm-history-metric small{grid-column:2}
+ #view-farm .farm-history-rares{gap:.35rem}
+}
+@media(prefers-reduced-motion:reduce){
+ #view-farm .farm-history-entry{transition:none}
+}
+/* Stronger frame hierarchy only within the three trading panels. */
+#view-home :is(#mrEntryPanel,.home-left>.panel){
+ --border:#4b5e80;
+ border-color:#536788;
+ box-shadow:inset 0 0 0 1px rgba(151,178,231,.04),0 0 8px rgba(88,118,187,.035),0 3px 12px rgba(9,15,32,.14);
+}
+/* Keep warehouse choices readable without allowing long item labels to widen the entry form. */
+#view-home #mrEntryPanel .mr-sell-source .mr-stock-select{
+ min-width:0;width:100%;max-width:100%;font-size:.78rem;line-height:1.35;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#view-home #mrEntryPanel .mr-sell-source .mr-stock-select option{font-size:.78rem}
+@media(max-width:600px){
+ #view-home #mrEntryPanel .mr-sell-source .mr-stock-select,
+ #view-home #mrEntryPanel .mr-sell-source .mr-stock-select option{font-size:.74rem}
 }
 </style>
 
@@ -1851,6 +2422,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <div class="who">
             <span class="name" id="userName">-</span>
             <span class="membership-pill" id="userPill">-</span>
+            <span class="membership-time" id="userExpiry">-</span>
           </div>
           <button class="icon-btn" id="logoutBtn" title="ออกจากระบบ"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 01-2-2V5a2 2 0 012-2h3"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>
         </div>
@@ -1874,12 +2446,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <div class="panel panel-ticker">
         <div class="panel-head">
           <div class="ticker-head-title">
-            <h2>ประกาศ รับ M</h2>
+            <h2><img class="ticker-heading-icon" src="assets/Megaphone.png" width="28" height="28" alt="" aria-hidden="true">ประกาศ รับ M</h2>
             <div class="chip-row" id="tickerServerChips"></div>
           </div>
           <div class="ticker-post-group">
             <button class="btn btn-gradient btn-sm" id="postAnnouncementBtn">ลงประกาศ</button>
-            <button type="button" class="ticker-post-caret" id="tickerPostMenuToggle">▾</button>
+            <button type="button" class="ticker-post-caret" id="tickerPostMenuToggle" aria-label="เมนูประกาศ"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 3-.6 2.2-1.7 1-2.2-.6-2.5 4.3 1.6 1.6v2L2.5 15 5 19.3l2.2-.6 1.7 1 .6 2.3h5l.6-2.3 1.7-1 2.2.6 2.5-4.3-1.6-1.5v-2L21.5 10 19 5.6l-2.2.6-1.7-1-.6-2.2z"/><circle cx="12" cy="12.5" r="3"/></svg></button>
             <div class="ticker-post-menu" id="tickerPostMenu" hidden>
               <button type="button" id="openMyAnnouncementsBtn">แก้ไขประกาศ</button>
             </div>
@@ -1912,9 +2484,17 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         <div class="panel panel-side panel-merchant-entry" id="mrEntryPanel">
           <div class="panel-head">
             <div class="ticker-head-title">
-              <h2>รายการซื้อ-ขาย</h2>
+              <h2><img class="dashboard-book-icon" src="assets/Bible.png" width="28" height="28" alt="" aria-hidden="true">รายการซื้อ-ขาย</h2>
               <p class="mr-entry-intro">เลือกซื้อหรือขาย แล้วกรอกข้อมูลรายการ</p>
             </div>
+          <div class="field">
+            <label>ประเภท</label>
+            <div class="seg-toggle" id="mrCategoryToggle" role="group" aria-label="ประเภทรายการ">
+              <button type="button" class="seg-btn active" data-category="zeny">M</button>
+              <button type="button" class="seg-btn" data-category="item">ไอเทม</button>
+              <button type="button" class="seg-btn" data-category="other">อื่น ๆ</button>
+            </div>
+          </div>
           </div>
           <div class="farm-log-divider"></div>
 
@@ -1923,14 +2503,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             <div class="mr-type-toggle" id="mrTypeToggle" role="group" aria-label="ซื้อหรือขาย">
               <button type="button" class="mr-type-btn" data-type="buy">ซื้อ</button>
               <button type="button" class="mr-type-btn" data-type="sell">ขาย</button>
-            </div>
-          </div>
-          <div class="field">
-            <label>ประเภท</label>
-            <div class="seg-toggle" id="mrCategoryToggle" role="group" aria-label="ประเภทรายการ">
-              <button type="button" class="seg-btn active" data-category="zeny">M</button>
-              <button type="button" class="seg-btn" data-category="item">ไอเทม</button>
-              <button type="button" class="seg-btn" data-category="other">อื่น ๆ</button>
             </div>
           </div>
           <div class="field">
@@ -1982,7 +2554,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         <div class="home-left">
           <div class="panel">
             <div class="panel-head">
-              <h2>ประวัติซื้อ–ขาย <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
+              <h2><img class="dashboard-book-icon" src="assets/Bible.png" width="28" height="28" alt="" aria-hidden="true">ประวัติซื้อ–ขาย <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
             </div>
 
           <div class="dashboard-filters">
@@ -2001,14 +2573,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
                 </div>
                 <input type="search" class="mr-hist-search" aria-label="ค้นหาประวัติ" id="mrHistorySearch" placeholder="ค้นหาไอเทม…" autocomplete="off">
                 <select class="chart-tf-select" aria-label="ช่วงเวลาของยอดสรุปและประวัติ" id="mrHistoryRange">
-                  <option value="today">วันนี้</option>
+                  <option value="today" selected>วันนี้</option>
                   <option value="7d">7วัน</option>
-                  <option value="15d">15วัน</option>
-                  <option value="1m">1เดือน</option>
-                  <option value="3m">3เดือน</option>
-                  <option value="6m">6เดือน</option>
-                  <option value="1y">1ปี</option>
-                  <option value="all" selected>ทั้งหมด</option>
+                  <option value="30d">30วัน</option>
+                  <option value="all">ทั้งหมด</option>
                 </select>
               </div>
           </div>
@@ -2019,7 +2587,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <div class="panel panel-hero">
             <div class="panel-head">
               <div class="ticker-head-title">
-                <h2>กราฟกำไรสุทธิ <span class="mr-chart-server-tags" id="mrChartServerTag"></span></h2>
+                <h2><img class="dashboard-book-icon" src="assets/Bible.png" width="28" height="28" alt="" aria-hidden="true">กราฟกำไรสุทธิ <span class="mr-chart-server-tags" id="mrChartServerTag"></span></h2>
               </div>
               <div class="chart-controls">
                 <select class="chart-tf-select" aria-label="เซิร์ฟเวอร์ของกราฟ" id="mrChartServerSelect"></select>
@@ -2030,8 +2598,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
                   <button type="button" class="seg-btn" data-categoryfilter="other">อื่นๆ</button>
                 </div>
                 <select class="chart-tf-select" aria-label="ช่วงเวลาของกราฟ" id="mrChartTimeframeSelect">
-                  <option value="today">วันนี้</option>
-                  <option value="7d" selected>7วัน</option>
+                  <option value="today" selected>วันนี้</option>
+                  <option value="7d">7วัน</option>
                   <option value="15d">15วัน</option>
                   <option value="1m">1เดือน</option>
                   <option value="3m">3เดือน</option>
@@ -2071,6 +2639,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
     <!-- ===================== FARM VIEW ===================== -->
     <section id="view-farm" hidden>
+      <div class="page-scroll">
       <div class="topbar">
         <div>
           <h1>ยอดนักฟาม</h1>
@@ -2083,21 +2652,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           </div>
         </div>
       </div>
-
-      <div class="page-scroll">
       <div class="home-grid">
         <div class="home-left">
           <div class="panel panel-farm-history">
             <div class="panel-head">
-              <h2>ประวัติการฟาม <span class="farm-history-summary" id="farmHistorySummary"></span></h2>
+              <h2><img class="farm-heading-icon" src="assets/warehouse/bubble-gum.png" alt="" aria-hidden="true"><span>ประวัติการฟาม</span> <span class="farm-history-summary" id="farmHistorySummary"></span></h2>
               <select class="chart-tf-select" id="farmHistoryRange">
                 <option value="today" selected>วันนี้</option>
                 <option value="7d">7วัน</option>
-                <option value="15d">15วัน</option>
-                <option value="1m">1เดือน</option>
-                <option value="3m">3เดือน</option>
-                <option value="6m">6เดือน</option>
-                <option value="1y">1ปี</option>
+                <option value="30d">30วัน</option>
                 <option value="all">ทั้งหมด</option>
               </select>
             </div>
@@ -2108,7 +2671,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <div class="panel panel-farm-revenue">
             <div class="panel-head">
               <div class="farm-revenue-title">
-                <h2>กำไรสุทธิ <span class="farm-revenue-server" id="farmRevenueServerTag"></span></h2>
+                <h2><img class="farm-heading-icon" src="assets/warehouse/bubble-gum.png" alt="" aria-hidden="true"><span>กำไรสุทธิ</span> <span class="farm-revenue-server" id="farmRevenueServerTag"></span></h2>
                 <div class="seg-toggle" id="farmUnitToggle">
                   <button type="button" class="seg-btn active" data-unit="zeny">Zeny</button>
                   <button type="button" class="seg-btn" data-unit="baht">บาท</button>
@@ -2116,13 +2679,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
               </div>
               <div class="chart-controls">
                 <select class="chart-tf-select" id="farmTimeframeSelect">
-                  <option value="today">วันนี้</option>
-                  <option value="7d" selected>7วัน</option>
-                  <option value="15d">15วัน</option>
-                  <option value="1m">1เดือน</option>
-                  <option value="3m">3เดือน</option>
-                  <option value="6m">6เดือน</option>
-                  <option value="1y">1ปี</option>
+                  <option value="today" selected>วันนี้</option>
+                  <option value="7d">7วัน</option>
+                  <option value="30d">30วัน</option>
                   <option value="all">ทั้งหมด</option>
                 </select>
               </div>
@@ -2150,7 +2709,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
         <div class="panel panel-farm-cost">
           <div class="panel-head">
-            <h2>ต้นทุนต่อกั้ม</h2>
+            <h2><img class="farm-heading-icon" src="assets/warehouse/bubble-gum.png" alt="" aria-hidden="true"><span>ต้นทุนต่อกั้ม</span></h2>
             <div class="farm-exrate-row">
               <span>อัตราแลกเปลี่ยน 1 M =</span>
               <input type="text" inputmode="numeric" id="farmExRateInput" class="mono" placeholder="เช่น 1,000">
@@ -2214,7 +2773,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     <div class="page-scroll">
     <div class="panel party-panel" id="partyPanel">
       <div class="panel-head">
-        <h2>ปาร์ตี้</h2>
+        <h2><span>ปาร์ตี้</span><img class="party-heading-icon" src="assets/party.png" alt="" aria-hidden="true"></h2>
         <div class="party-panel-controls">
           <span class="party-panel-summary" id="partyPanelSummary">กำลังโหลด...</span>
           <button type="button" class="btn btn-ghost btn-sm" id="partyPanelToggle">จัดการปาร์ตี้</button>
@@ -2272,6 +2831,16 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         <input id="searchInput" placeholder="ค้นหาบอสที่จะเพิ่ม..." autocomplete="off">
         <div class="search-results" id="searchResults" hidden></div>
       </div>
+      <div class="boss-sound-control" id="bossSoundControl">
+        <button type="button" class="boss-sound-toggle" id="bossSoundToggle" aria-label="เสียงแจ้งเตือน" aria-pressed="true" title="เสียงแจ้งเตือน"></button>
+        <button type="button" class="boss-sound-menu-toggle" id="bossSoundMenuToggle" aria-label="ตั้งค่าเสียงแจ้งเตือน" aria-expanded="false" aria-controls="bossSoundPopover" title="ตั้งค่าเสียง">⌄</button>
+        <div class="boss-sound-popover" id="bossSoundPopover" role="dialog" aria-label="การตั้งค่าเสียงแจ้งเตือน" hidden>
+          <div class="boss-sound-popover-head">เสียงแจ้งเตือน</div>
+          <label class="boss-sound-enable-row"><span>เปิดเสียง</span><input type="checkbox" id="bossSoundEnable" role="switch"></label>
+          <label class="boss-sound-volume-row"><span class="boss-sound-volume-head"><span>ระดับเสียง</span><output id="bossSoundVolumeOutput">80%</output></span><input type="range" id="bossSoundVolume" min="0" max="100" step="1" value="80" aria-label="ระดับเสียงแจ้งเตือน"></label>
+          <button type="button" class="boss-sound-preview" id="bossSoundBellPreview">ลองฟังเสียงกระดิ่ง</button>
+        </div>
+      </div>
     </div>
 
     <div class="roster" id="roster"></div>
@@ -2322,14 +2891,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             </div>
           </div>
           <div class="panel items-card-b">
-            <div class="panel-head"><h2 id="itemsDetailTitle">รายการในคลัง</h2></div>
+            <div class="panel-head"><h2 id="itemsDetailTitle"><img class="inventory-heading-icon" src="assets/treasure.png" alt="" aria-hidden="true"><span id="itemsDetailTitleText">รายการในคลัง</span></h2></div>
             <div aria-hidden="true"><span>ชื่อไอเทม</span><span>จำนวน</span><span>มูลค่า</span><span>วันที่/เวลา</span><span>คืน</span></div>
             <div id="itemsDetailList"><p class="mr-empty">เลือกคลังเพื่อดูไอเทม</p></div>
           </div>
         </div>
         <div class="panel panel-side items-card-c">
           <div class="panel-head">
-            <h2>รายการรอลงคลัง</h2>
+            <h2><img class="inventory-heading-icon" src="assets/treasure.png" alt="" aria-hidden="true">รายการรอลงคลัง</h2>
             <select class="chart-tf-select" id="itemsServerSelect"></select>
           </div>
           <div class="farm-log-divider"></div>
@@ -2350,7 +2919,18 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <button type="button" class="seg-btn active" data-cycle="monthly">รายเดือน</button>
           <button type="button" class="seg-btn" data-cycle="yearly">รายปี</button>
         </div>
-        <div class="pricing-promo-banner"><strong>ราคาโปรโมชันเปิดตัว</strong><span>แพ็กแบบชำระเงินเริ่มต้น 99 บาท/เดือน · ดูราคาตามรอบที่เลือกด้านล่าง</span></div>
+        <div class="pricing-promo-banner">
+          <div class="pricing-promo-copy"><strong>ราคาโปรโมชันเปิดตัว</strong></div>
+          <div class="pricing-promo-clock" role="timer" aria-live="off" aria-label="เวลาคงเหลือของโปรโมชั่น">
+            <span class="pricing-promo-status" id="pricingPromoStatus">รอกำหนดวันสิ้นสุดโปรโมชั่น</span>
+            <div class="pricing-promo-digits" id="pricingPromoDigits" hidden>
+              <span class="pricing-promo-unit"><b id="pricingPromoDays">00</b><small>วัน</small></span>
+              <span class="pricing-promo-unit"><b id="pricingPromoHours">00</b><small>ชม.</small></span>
+              <span class="pricing-promo-unit"><b id="pricingPromoMinutes">00</b><small>นาที</small></span>
+              <span class="pricing-promo-unit"><b id="pricingPromoSeconds">00</b><small>วินาที</small></span>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="pricing-grid" id="pricingGrid"></div>
       </div>
@@ -2364,7 +2944,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <p class="sub">ข้อมูลบัญชี รหัสผ่าน และประวัติการเติมแต้ม/ซื้อแพ็กเกจของคุณ</p>
         </div>
       </div>
-      <h3 class="settings-group-label">บัญชี</h3>
+      <div class="panel settings-card settings-package">
+        <div class="panel-head"><h2>แพ็กเกจของฉัน</h2></div>
+        <div id="stPackageList" class="settings-package-list"></div>
+        <p id="stPackageAccessNote" class="settings-note" hidden></p>
+      </div>
       <div class="settings-grid">
         <div class="panel settings-card">
           <div class="panel-head"><h2>ข้อมูลบัญชี</h2></div>
@@ -2372,24 +2956,24 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             <div><span class="lbl">Username</span><b id="stUsername">-</b></div>
             <div><span class="lbl">อีเมล</span><b id="stEmail">-</b></div>
             <div><span class="lbl">วันเกิด</span><b id="stBirth">-</b></div>
-            <div><span class="lbl">ใช้งานได้ถึง</span><b id="stExpires">-</b></div>
+            <div hidden><span class="lbl">ใช้งานได้ถึง</span><b id="stExpires">-</b></div>
           </div>
           <div class="field"><label for="stDisplayName">ชื่อที่ใช้แสดง</label><input id="stDisplayName" type="text" maxlength="40" placeholder="ชื่อที่เพื่อนในปาร์ตี้จะเห็น"></div>
           <div class="field"><label for="stFacebookUrl">ลิงก์ Facebook (ไม่บังคับ)</label><input id="stFacebookUrl" type="text" maxlength="200" placeholder="เช่น facebook.com/ชื่อโปรไฟล์"><div class="field-hint">ไว้ลิงก์กับชื่อตอนประกาศ รับ M เพื่อความสะดวกในการติดต่อกัน</div></div>
           <div class="field" id="stBirthField" hidden><label for="stBirthInput">วันเดือนปีเกิด (กรอกได้ครั้งเดียว แก้ไม่ได้)</label><input id="stBirthInput" type="date" min="1900-01-01"></div>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveProfile">บันทึกข้อมูล</button></div>
         </div>
-        <div class="panel settings-card">
-          <div class="panel-head"><h2>เปลี่ยนรหัสผ่าน</h2></div>
+        <div class="panel settings-card settings-security">
+          <div class="panel-head"><h2>ความปลอดภัย</h2></div>
           <div class="field"><label for="stPassOld">รหัสผ่านเดิม</label><input id="stPassOld" type="password" autocomplete="current-password" placeholder="••••••••"></div>
           <div class="field"><label for="stPassNew">รหัสผ่านใหม่</label><input id="stPassNew" type="password" autocomplete="new-password" placeholder="อย่างน้อย 6 ตัวอักษร"></div>
           <div class="field"><label for="stPassNew2">ยืนยันรหัสผ่านใหม่</label><input id="stPassNew2" type="password" autocomplete="new-password" placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง"></div>
           <p class="settings-note">เปลี่ยนแล้วเครื่องอื่นที่ล็อกอินบัญชีนี้ค้างอยู่จะถูกออกจากระบบ</p>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSavePass">เปลี่ยนรหัสผ่าน</button></div>
         </div>
-        <div class="panel settings-card settings-wide">
+        <div class="panel settings-card settings-wide settings-servers">
           <div class="panel-head"><h2>เซิร์ฟเวอร์ที่เล่น</h2><span class="party-panel-summary" id="stServersSummary"></span></div>
-          <p class="settings-note">แตะเพื่อเลือก/เอาออก ต้องมีอย่างน้อย 1 เซิร์ฟเวอร์</p>
+          <p class="settings-note">เลือกอย่างน้อย 1 เซิร์ฟเวอร์</p>
           <div class="server-pick-list" id="stServerList"></div>
           <p class="settings-note server-quota-hint" data-server-quota-hint></p>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveServers">บันทึกเซิร์ฟเวอร์</button></div>
@@ -2579,7 +3163,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 <div id="postAnnouncementOverlay" hidden>
   <div class="confirm-backdrop"></div>
   <div class="confirm-box post-announce-box">
-    <h3 class="post-announce-title" id="postAnnounceTitle">ลงประกาศราคา</h3>
+    <h3 class="post-announce-title" id="postAnnounceTitle" style="display:flex;align-items:center;gap:.45rem"><img src="assets/Megaphone.png" width="28" height="28" alt="" aria-hidden="true" style="object-fit:contain;flex:none"><span>ลงประกาศ รับ M</span></h3>
     <div class="post-announce-field">
       <label>เซิร์ฟเวอร์</label>
       <select id="postAnnounceServer"></select>
@@ -2593,7 +3177,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <input type="text" inputmode="numeric" id="postAnnounceBuyPrice" class="mono" placeholder="ราคารับ">
     </div>
     <ul class="post-announce-note" id="postAnnounceNote">
-      <li>กรุณา! ใส่ลิงก์หน้า FB ที่ตั้งค่าไว้ก่อนลงประกาศ เพื่อสะดวกในการติดต่อกัน</li>
+      <li>กรุณา! ใส่ลิงก์หน้า FB ที่ "ตั้งค่า" ไว้ก่อนลงประกาศ เพื่อสะดวกในการติดต่อกัน</li>
       <li>สามารถกดแก้ไขราคา M ได้ตลอด (ก่อนเวลาหมด)</li>
       <li>เลือกดูประกาศได้มากกว่า 1 เซิร์ฟเวอร์ (+เพิ่มเซิร์ฟเวอร์)</li>
     </ul>
@@ -2618,34 +3202,46 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 <div id="topupOverlay" hidden>
   <div class="confirm-backdrop"></div>
   <div class="confirm-box topup-box">
-    <h3 class="post-announce-title">เติมแต้ม</h3>
-    <p class="topup-rate">1 บาท = 1 แต้ม</p>
+    <h3 class="post-announce-title topup-title">เติมแต้ม</h3>
+    <p class="topup-rate"><span class="topup-rate-copy">1 บาท = 1 แต้ม</span><span class="topup-notice">⚠ ช่วงเวลา 00:00 - 02:00 ระบบล่าช้า ติดต่อ Admin เพจ FB</span></p>
     <div class="topup-presets" id="topupPresets">
+      <button type="button" class="topup-preset-btn" data-amount="20">20 บ</button>
+      <button type="button" class="topup-preset-btn" data-amount="50">50 บ</button>
       <button type="button" class="topup-preset-btn" data-amount="100">100 บ</button>
       <button type="button" class="topup-preset-btn" data-amount="300">300 บ</button>
       <button type="button" class="topup-preset-btn active" data-amount="500">500 บ</button>
-      <button type="button" class="topup-preset-btn" data-amount="1000">1,000 บ</button>
     </div>
     <div class="post-announce-field">
-      <label>หรือระบุจำนวนเงินเอง (บาท)</label>
-      <input type="text" inputmode="numeric" id="topupCustomAmount" class="mono" placeholder="เช่น 250">
+      <label for="topupCustomAmount">หรือระบุจำนวนเงินเอง (บาท)</label>
+      <input type="number" inputmode="numeric" min="20" step="1" id="topupCustomAmount" class="mono" placeholder="ระบุจำนวน (ขั้นต่ำ 20 บาท)" aria-describedby="topupAmountError">
+      <small class="topup-amount-error" id="topupAmountError" role="status" hidden></small>
     </div>
-    <div class="post-announce-field">
+    <div class="post-announce-field" hidden>
       <label>ช่องทางชำระเงิน</label>
       <div class="topup-methods" id="topupMethods">
         <button type="button" class="topup-method-btn active" data-method="promptpay">พร้อมเพย์ / QR</button>
         <button type="button" class="topup-method-btn" data-method="card">บัตรเครดิต/เดบิต</button>
       </div>
     </div>
-    <div class="post-announce-field">
+    <div class="post-announce-field" hidden>
       <label>แนบรูปสลิปโอนเงิน</label>
       <input type="file" accept="image/*" id="topupSlipInput">
     </div>
-    <div class="topup-summary">จะได้รับ <b id="topupPointsPreview">500</b> แต้ม (หลังแอดมินตรวจสอบ)</div>
-    <p class="post-announce-note">แนบสลิปแล้วกดส่งคำขอ ทีมงานจะตรวจสอบและเติมแต้มให้เร็วที่สุด</p>
+    <div class="topup-summary"><div><span>ยอดเติม:</span><span><b id="topupBahtPreview">500</b> บาท</span></div><div><span>ได้รับ:</span><span><b id="topupPointsPreview">500</b> แต้ม</span></div></div>
+    <div class="topup-qr-panel" id="topupQrPanel" hidden>
+      <div class="topup-qr-frame"><img id="topupQrImage" alt="QR PromptPay สำหรับเติมแต้ม"></div>
+      <div class="topup-qr-details">
+        <div><span>ยอดชำระจริง</span><b><span id="topupQrAmount">0</span> บาท</b></div>
+        <div><span>แต้มที่จะได้รับ</span><b><span id="topupQrPoints">0</span> แต้ม</b></div>
+        <div><span>QR หมดอายุใน</span><b class="mono" id="topupQrExpiry">--:--</b></div>
+      </div>
+      <div class="topup-payment-status pending" id="topupPaymentStatus" role="status" aria-live="polite">กำลังรอการชำระเงิน...</div>
+    </div>
+    <p class="post-announce-note" hidden>แนบสลิปแล้วกดส่งคำขอ ทีมงานจะตรวจสอบและเติมแต้มให้เร็วที่สุด</p>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" id="topupCancelBtn">ยกเลิก</button>
-      <button type="button" class="btn btn-gradient" id="topupSubmitBtn">ส่งคำขอเติมเงิน</button>
+      <button type="button" class="btn btn-gradient" id="topupSubmitBtn" hidden>ส่งคำขอเติมเงิน</button>
+      <button type="button" class="btn btn-gradient" id="topupCreateQrBtn" disabled title="สร้าง QR PromptPay สำหรับยอดที่เลือก">สร้าง QR PromptPay</button>
     </div>
   </div>
 </div>
@@ -2908,7 +3504,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
   var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], partyRoster:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, timersServerId:null, timersServerIdsWithData:[], tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
-  var fired = { warn:{}, crit:{} };
+  var fired = { warn:{}, threeMin:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
   var RATE_SLOTS_VERSION = 2; // bump to force a one-time reset to the new 1-card default
@@ -3850,6 +4446,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     });
   }
   function loadUserBosses(){
+    if(!App.session || !App.session.id){ App.db = []; App.active = {}; App.markers = {}; return Promise.resolve(); }
     // กันไว้เผื่อถูกเรียกก่อน populateTimersServerSelect() จะรันทัน (เช่นตอนล็อกอินครั้งแรก) —
     // ใช้เซิร์ฟเวอร์แรกของบัญชีไปพลางก่อน ไม่งั้น query จะกรองด้วย server_id เป็น null ไม่เจอข้อมูลเลย
     if(!App.timersServerId) App.timersServerId = (App.profile && App.profile.servers && App.profile.servers[0]) || (App.timersServerIdsWithData && App.timersServerIdsWithData[0]) || null;
@@ -3899,6 +4496,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   // ประวัติการฆ่า+ไอเทมของปาร์ตี้ที่กำลังดูอยู่ — ผูกกับหัวปาร์ตี้เหมือน user_bosses
   function loadKills(){
+    if(!App.session || !App.session.id){ App.kills = []; return Promise.resolve(); }
     return withSkewRetry(function(){ return supa.from('kills').select('id, boss_id, boss_name, killed_at, killed_by, server_id, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)')
       .eq('host_id', activeOwnerId()).order('killed_at', { ascending:false }).order('created_at', { ascending:false }); }).then(function(res){
       if(res.error){ console.error('loadKills', res.error); App.kills = []; return; }
@@ -4035,18 +4633,110 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ---------- audio ----------
   var actx = null;
-  function beep(){
+  var BOSS_SOUND_SETTINGS_KEY = 'gum100:bossSoundSettings';
+  var bossSound = (function(){
+    var saved = store(BOSS_SOUND_SETTINGS_KEY, {});
+    var volume = Math.max(0, Math.min(100, Number(saved.volume)));
+    if(!isFinite(volume)) volume = 80;
+    var lastVolume = Math.max(1, Math.min(100, Number(saved.lastVolume)));
+    if(!isFinite(lastVolume)) lastVolume = volume > 0 ? volume : 80;
+    return { enabled:saved.enabled !== false && volume > 0, volume:volume, lastVolume:lastVolume };
+  })();
+  function saveBossSound(){ persist(BOSS_SOUND_SETTINGS_KEY, bossSound); }
+  function bossSoundAudible(){ return bossSound.enabled && bossSound.volume > 0; }
+  function bossSoundIcon(muted){
+    return muted
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m19 9-6 6M13 9l6 6"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+  }
+  function renderBossSoundControl(){
+    var toggle = document.getElementById('bossSoundToggle');
+    var enabled = document.getElementById('bossSoundEnable');
+    var volume = document.getElementById('bossSoundVolume');
+    var output = document.getElementById('bossSoundVolumeOutput');
+    if(!toggle || !enabled || !volume || !output) return;
+    var muted = !bossSoundAudible();
+    toggle.innerHTML = bossSoundIcon(muted);
+    toggle.classList.toggle('is-muted', muted);
+    toggle.setAttribute('aria-pressed', String(!muted));
+    toggle.setAttribute('aria-label', muted ? 'เปิดเสียงแจ้งเตือน' : 'ปิดเสียงแจ้งเตือน');
+    toggle.title = muted ? 'ปิดเสียงอยู่' : 'เสียงแจ้งเตือน';
+    enabled.checked = !muted;
+    volume.value = bossSound.volume;
+    output.textContent = bossSound.volume+'%';
+  }
+  function closeBossSoundPopover(){
+    var popover = document.getElementById('bossSoundPopover');
+    var menu = document.getElementById('bossSoundMenuToggle');
+    if(popover) popover.hidden = true;
+    if(menu) menu.setAttribute('aria-expanded','false');
+  }
+  function initBossSoundControl(){
+    var control = document.getElementById('bossSoundControl');
+    var toggle = document.getElementById('bossSoundToggle');
+    var menu = document.getElementById('bossSoundMenuToggle');
+    var popover = document.getElementById('bossSoundPopover');
+    var enabled = document.getElementById('bossSoundEnable');
+    var volume = document.getElementById('bossSoundVolume');
+    var bellPreview = document.getElementById('bossSoundBellPreview');
+    if(!control || !toggle || !menu || !popover || !enabled || !volume || !bellPreview) return;
+    renderBossSoundControl();
+    toggle.addEventListener('click', function(){
+      if(bossSoundAudible()) bossSound.enabled = false;
+      else { bossSound.enabled = true; if(bossSound.volume <= 0) bossSound.volume = bossSound.lastVolume || 80; }
+      saveBossSound(); renderBossSoundControl();
+    });
+    menu.addEventListener('click', function(){
+      var opening = popover.hidden;
+      popover.hidden = !opening;
+      menu.setAttribute('aria-expanded', String(opening));
+    });
+    enabled.addEventListener('change', function(){
+      bossSound.enabled = enabled.checked;
+      if(bossSound.enabled && bossSound.volume <= 0) bossSound.volume = bossSound.lastVolume || 80;
+      saveBossSound(); renderBossSoundControl();
+    });
+    volume.addEventListener('input', function(){
+      bossSound.volume = Math.max(0, Math.min(100, Number(volume.value)));
+      if(bossSound.volume > 0){ bossSound.lastVolume = bossSound.volume; bossSound.enabled = true; }
+      else bossSound.enabled = false;
+      saveBossSound(); renderBossSoundControl();
+    });
+    bellPreview.addEventListener('click', function(){ playBellPreview(); });
+    document.addEventListener('click', function(e){ if(!e.target.closest('#bossSoundControl')) closeBossSoundPopover(); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeBossSoundPopover(); });
+  }
+  function unlockAudio(){
     try{
       actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-      var o = actx.createOscillator(), g = actx.createGain();
-      o.type='sine'; o.frequency.value=880;
-      g.gain.setValueAtTime(0.0001, actx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.18, actx.currentTime+0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+0.5);
-      o.connect(g); g.connect(actx.destination);
-      o.start(); o.stop(actx.currentTime+0.55);
+      if(actx.state==='suspended') actx.resume().catch(function(){});
     }catch(e){}
   }
+  document.addEventListener('pointerdown', unlockAudio, {once:true,passive:true});
+  document.addEventListener('keydown', unlockAudio, {once:true});
+  function beep(){
+    try{
+      if(!bossSoundAudible()) return;
+      playBellSound(3);
+    }catch(e){}
+  }
+  function playBellSound(seconds){
+    try{
+      var volume = Math.max(0.02, bossSound.volume/100), repeats = Math.max(1, Math.ceil(seconds/.72));
+      actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+      if(actx.state==='suspended') actx.resume().catch(function(){});
+      for(var hit=0;hit<repeats;hit++) [1318.5, 1661.2, 2093].forEach(function(freq, index){
+        var o = actx.createOscillator(), g = actx.createGain(), start = actx.currentTime + hit*.72 + index*.035;
+        o.type = 'sine'; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.075*volume/(index+1), start+.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, start+.62);
+        o.connect(g); g.connect(actx.destination); o.start(start); o.stop(start+.67);
+      });
+    }catch(e){}
+  }
+  function playBellPreview(){ playBellSound(1); }
+  initBossSoundControl();
 
   // ---------- map svg ----------
   function mapSVG(type){
@@ -4071,10 +4761,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ---------- state helpers ----------
   function timerState(remaining){
-    // เกิดไปแล้วเกิน 5 นาที = หยุดกระพริบ เหลือตัวเลขแดงค้างไว้จนกว่าจะกดฆ่า
-    if(remaining<=-300000) return 'overdue-long';
+    // ใช้ targetTime จริงเสมอ: เมื่อถึงเวลาเกิดแล้วให้คงสถานะแดงจนกว่าจะฆ่าบอสใหม่
     if(remaining<=0) return 'overdue';
-    if(remaining<=60000) return 'critical';
     if(remaining<=300000) return 'warning';
     return 'normal';
   }
@@ -4091,6 +4779,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ---------- rendering ----------
   function renderRoster(){
+    if(!App.session || !App.session.id) return;
     var root = document.getElementById('roster');
     var now = Date.now();
     var rows = App.db.map(function(boss){ return { boss:boss, act: App.active[boss.id] || null }; });
@@ -4112,7 +4801,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var st = act ? timerState(remaining) : null;
       var timeHtml, subHtml, delayHtml = '';
       if(act){
-        timeHtml = '<div class="bc-time mono state-'+st+'" data-time>'+fmtDuration(remaining)+'</div>';
+        timeHtml = '<div class="bc-time mono state-'+st+'" data-time>'+(st==='overdue' ? fmtDuration(remaining).replace(/^\+/,'') : fmtDuration(remaining))+'</div>';
         var approxMin = Math.max(0, Math.ceil(remaining/60000));
         subHtml = '<div class="bc-time-sub" data-sub>'+(remaining>0 ? 'อีก ~'+approxMin+' นาที' : 'เกิดมาแล้ว')+'</div>';
         // ปุ่มนี้โผล่ทุกครั้งที่มีการจับเวลาอยู่ (ไม่ใช่แค่ตอนแก้เวลาตายเอง) เพราะเป็น
@@ -4125,7 +4814,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var killedByHtml = (act && act.startedBy) ? '<div class="bc-killedby">🏹 ฆ่าโดย '+escapeHtml(act.startedBy)+'</div>' : '';
       var metaLine ='เกิดใหม่ทุก '+boss.minutes+' นาที • '+escapeHtml(boss.loc) + (act ? ' • เกิดเวลา '+fmtClock(act.targetTime) : '');
 
-      return '<div class="boss-card'+(st==='critical'?' state-critical':'')+(st==='overdue'?' state-overdue':'')+'" data-boss="'+boss.id+'">'+
+      var shake = act && st==='overdue' && remaining <= 0 && remaining >= -600000;
+      return '<div class="boss-card'+(st==='warning'?' state-warning':'')+(st==='overdue'?' state-spawn':'')+(shake?' state-shake':'')+'" data-boss="'+boss.id+'">'+
         '<div class="bc-row">'+
           '<div class="bc-left">'+
             rankHtml+
@@ -4150,6 +4840,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
 
   function tickTimers(){
+    if(!App.session || !App.session.id) return;
     document.querySelectorAll('.boss-card').forEach(function(card){
       var bossId = card.dataset.boss;
       var act = App.active[bossId];
@@ -4158,21 +4849,24 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var st = timerState(remaining);
       var timeEl = card.querySelector('[data-time]');
       var subEl = card.querySelector('[data-sub]');
-      if(timeEl){ timeEl.className = 'bc-time mono state-'+st; timeEl.textContent = fmtDuration(remaining); }
+      if(timeEl){ timeEl.className = 'bc-time mono state-'+st; timeEl.textContent = st==='overdue' ? fmtDuration(remaining).replace(/^\+/,'') : fmtDuration(remaining); }
       if(subEl){ subEl.textContent = remaining>0 ? 'อีก ~'+Math.max(0,Math.ceil(remaining/60000))+' นาที' : 'เกิดมาแล้ว'; }
-      card.classList.toggle('state-critical', st==='critical');
-      card.classList.toggle('state-overdue', st==='overdue');
+      card.classList.toggle('state-warning', st==='warning');
+      card.classList.toggle('state-spawn', st==='overdue');
+      card.classList.toggle('state-shake', st==='overdue' && remaining <= 0 && remaining >= -600000);
+      card.classList.remove('state-critical','state-overdue');
 
       if(st==='warning' && !fired.warn[bossId]){
         fired.warn[bossId] = true;
         card.classList.add('shake');
         setTimeout(function(){ card.classList.remove('shake'); }, 550);
       }
-      if(st==='critical' && !fired.crit[bossId]){
-        fired.crit[bossId] = true;
+      // แจ้งเสียงหนึ่งครั้งเมื่อเข้าสู่ช่วง 3 นาทีก่อนบอสเกิด โดยไม่เปลี่ยนสี warning ของ UI
+      if(remaining>0 && remaining<=180000 && !fired.threeMin[bossId]){
+        fired.threeMin[bossId] = true;
         beep();
       }
-      if(st==='normal'){ fired.warn[bossId]=false; fired.crit[bossId]=false; }
+      if(st==='normal'){ fired.warn[bossId]=false; fired.threeMin[bossId]=false; }
     });
   }
 
@@ -4190,6 +4884,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
 
   function renderStats(){
+    if(!App.session || !App.session.id) return;
     var s = computeStats();
     document.getElementById('statTotalKills').textContent = s.totalKills;
     document.getElementById('statTotalItems').textContent = s.totalItems;
@@ -4230,7 +4925,23 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.getElementById('homeGreetName').textContent = 'นักล่า';
     document.getElementById('pointsValue').textContent = '0';
   }
+  function userPackageChipInfo(profile){
+    var now = Date.now();
+    var rows = settingsPackageRows(profile, now);
+    var plan = rows[0] || {name:'ฟรี',expiry:0};
+    // บัญชีรุ่นเดิมที่ยังมีวันหมดอายุรวม แต่ไม่มีข้อมูลแพ็กเกจแยก
+    var legacyExpiry = new Date((profile && profile.expires_at)||0).getTime() || 0;
+    if(!plan.expiry && legacyExpiry > now) plan = {name:'แพ็กเกจสมาชิก',expiry:legacyExpiry};
+    if(!plan.expiry && profile && (profile.role==='admin' || profile.legacy_unlimited)) plan = {name:'4 in 1 — ครบทั้ง 4 ระบบ',expiry:0};
+    return plan;
+  }
+  function packageTimeText(expiry){
+    if(!expiry) return 'ใช้งานได้ไม่จำกัด';
+    var remaining = Math.max(0, expiry-Date.now());
+    return 'เหลือ '+Math.floor(remaining/86400000)+' วัน '+(Math.floor(remaining/3600000)%24)+' ชม.';
+  }
   function renderUser(){
+    renderSettingsPackages();
     if(App.isGuest){ renderGuestChip(); return; }
     document.getElementById('userMenu').hidden = false;
     document.getElementById('guestAuthButtons').hidden = true;
@@ -4241,12 +4952,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.getElementById('userName').textContent = name;
     document.getElementById('homeGreetName').textContent = name + '!';
     document.getElementById('pointsValue').textContent = fmtNum(acc.points||0);
-    var expiresAt = new Date(acc.expires_at).getTime();
-    var daysLeft = Math.ceil((expiresAt - Date.now())/86400000);
     var pill = document.getElementById('userPill');
-    if(daysLeft <= 0){ pill.textContent = 'หมดอายุแล้ว'; pill.className='membership-pill expired'; }
-    else if(daysLeft <= 7){ pill.textContent = 'เหลือ '+daysLeft+' วัน'; pill.className='membership-pill soon'; }
-    else { pill.textContent = 'ใช้งานได้ถึง '+fmtDate(expiresAt); pill.className='membership-pill ok'; }
+    var expiry = document.getElementById('userExpiry');
+    var packageInfo = userPackageChipInfo(acc);
+    var remaining = packageInfo.expiry ? packageInfo.expiry-Date.now() : 0;
+    var soon = packageInfo.expiry && remaining <= 7*86400000;
+    pill.textContent = packageInfo.expiry ? packageInfo.name : (packageInfo.name==='ฟรี' ? 'แพ็กเกจฟรี' : packageInfo.name);
+    pill.className = 'membership-pill '+(soon?'soon':packageInfo.expiry?'ok':'neutral');
+    expiry.textContent = packageInfo.expiry ? packageTimeText(packageInfo.expiry) : 'ใช้งานได้ไม่จำกัด';
+    expiry.className = 'membership-time'+(soon?' soon':'');
     renderExpiryState();
   }
 
@@ -4707,7 +5421,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   var MR_CHART_SERIES_COLOR = { sell:'#3fbd75', buy:'#ef5a56', profit:'#5b8ef4' };
   var MR_LOSS_COLOR = '#ef5a56';
   var hiddenMrChartSeries = { sell:false, buy:false, profit:false };
-  var mrChartTimeframe = '7d';
+  var mrChartTimeframe = 'today';
   var mrChartServerId = null;
   var mrChartServerUserChanged = false;
   var mrChartCategoryFilter = 'all';
@@ -4781,6 +5495,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   var CHART_TIMEFRAME_CONFIG = {
     'today': { unit:'day', count:1, label:'วันนี้', days:1 },
     '7d': { unit:'day', count:7, label:'7วัน', days:7 },
+    '30d': { unit:'day', count:30, label:'30วัน', days:30 },
     '15d': { unit:'day', count:15, label:'15วัน', days:15 },
     '1m': { unit:'week', count:5, label:'1เดือน', months:1 },
     '3m': { unit:'month', count:3, label:'3เดือน', months:3 },
@@ -4844,7 +5559,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     return tfConfigFor(tf, tf==='all' ? mrEarliestTs(serverId, categoryFilter) : null);
   }
   var hiddenFarmSeries = { earned:false, cost:false, profit:false, avgPerSession:false };
-  var farmTimeframe = '7d';
+  var farmTimeframe = 'today';
   var farmChartUnit = 'zeny';
   var farmChartGeom = null;
 
@@ -5231,6 +5946,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   var farmHistoryPage = 0;
   var farmHistoryRange = 'today';
+  function resetFarmTimeframes(){
+    farmHistoryRange = 'today';
+    farmTimeframe = 'today';
+    farmHistoryPage = 0;
+    var historyRangeEl = document.getElementById('farmHistoryRange');
+    var timeframeEl = document.getElementById('farmTimeframeSelect');
+    if(historyRangeEl) historyRangeEl.value = 'today';
+    if(timeframeEl) timeframeEl.value = 'today';
+  }
   var editingFarmId = null;
   var farmEditCostBackup = null;
   var farmOcActive = false;
@@ -5258,7 +5982,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var summaryBahtText = summaryHasRate ? ' = '+(summaryProfit>=0?'+':'')+fmtNum(summaryBaht)+' บ' : '';
     var summaryEl = document.getElementById('farmHistorySummary');
     if(entries.length){
-      summaryEl.innerHTML = summaryCount+' กั้ม · กำไร <span style="color:'+(summaryProfit>=0?'var(--success)':'var(--danger)')+'">'+(summaryProfit>=0?'+':'')+fmtNum(summaryProfit)+' z'+summaryBahtText+'</span>';
+      summaryEl.innerHTML = '<span class="farm-history-summary-count">'+summaryCount+' กั้ม</span><span class="farm-history-summary-profit '+(summaryProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(summaryProfit>=0?'+':'')+fmtNum(summaryProfit)+' z'+summaryBahtText+'</span>';
     } else {
       summaryEl.textContent = '';
     }
@@ -5274,14 +5998,16 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(farmHistoryPage < 0) farmHistoryPage = 0;
     var pageRows = entries.slice(farmHistoryPage*FARM_HISTORY_PAGE_SIZE, farmHistoryPage*FARM_HISTORY_PAGE_SIZE+FARM_HISTORY_PAGE_SIZE);
 
-    list.innerHTML = pageRows.map(function(e){
+    list.innerHTML = pageRows.map(function(e, pageIndex){
       var pos = e.profit>=0;
       var count = e.count || 1;
       var hasRate = e.exchangeRate>0;
       var costBahtText = hasRate ? ' = '+fmtNum(farmZenyToBaht(e.cost, e.exchangeRate))+' บ' : '';
       var profitBahtText = hasRate ? ' = '+(pos?'+':'')+fmtNum(farmZenyToBaht(e.profit, e.exchangeRate))+' บ' : '';
       var earnedBahtText = hasRate ? ' = '+fmtNum(farmZenyToBaht(e.earned, e.exchangeRate))+' บ' : '';
-      var mapText = e.mapName ? ' · Map: '+escapeHtml(e.mapName) : '';
+      var farmGained = e.earnedBase!=null ? e.earnedBase : e.earned;
+      var farmGainedBahtText = hasRate ? ' = '+fmtNum(farmZenyToBaht(farmGained, e.exchangeRate))+' บ' : '';
+      var mapChip = e.mapName ? '<span class="farm-history-chip farm-history-map">Map: '+escapeHtml(e.mapName)+'</span>' : '';
       var rareTag = (e.rareItems||[]).filter(function(r){ return r.name; }).map(function(r){
         var qtySuffix = r.qty>1 ? ' x'+r.qty : '';
         var rareUnit = (r.currency||'zeny')==='baht' ? 'บ' : 'z';
@@ -5289,16 +6015,20 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           ? '<span class="farm-rare-tag sold">🎁 '+r.name+qtySuffix+' +'+fmtNum(r.price*r.qty)+' '+rareUnit+'</span>'
           : '<span class="farm-rare-tag pending">🎁 '+r.name+qtySuffix+' (รอขาย)</span>';
       }).join('');
-      return '<div class="mr-entry'+(e.id===editingFarmId?' editing':'')+'" data-farm-entry-id="'+e.id+'">'+
-        '<div class="mr-entry-top"><span>'+fmtDateTime(e.ts)+' · <span style="color:#c9a8f0">'+count+' กั้ม</span>'+mapText+' · <span class="farm-cost-hover" data-farm-cost-id="'+e.id+'">ต้นทุน '+fmtNum(e.cost)+' z'+costBahtText+'</span></span>'+
-          '<span style="display:flex;align-items:center;gap:.6rem">'+
-            '<b class="'+(pos?'farm-profit-pos':'farm-profit-neg')+'"><span class="farm-profit-hover" data-farm-profit-id="'+e.id+'">'+(pos?'+':'')+fmtNum(e.profit)+' z</span>'+profitBahtText+'</b>'+
-            '<span class="mr-entry-actions">'+
-              '<button type="button" class="mr-edit" data-farm-edit="'+e.id+'" title="แก้ไข">✎</button>'+
-              '<button type="button" class="mr-del" data-farm-del="'+e.id+'" title="ลบ">🗑</button>'+
-            '</span>'+
+      var displayIndex = farmHistoryPage*FARM_HISTORY_PAGE_SIZE + pageIndex;
+      return '<div class="mr-entry farm-history-entry farm-history-alt-'+(displayIndex%2===0?'odd':'even')+(e.id===editingFarmId?' editing':'')+'" data-farm-entry-id="'+e.id+'">'+
+        '<div class="farm-history-entry-head"><div class="farm-history-meta"><span class="farm-history-time">'+fmtDateTime(e.ts)+'</span><span class="farm-history-chip farm-history-count">'+count+' กั้ม</span>'+mapChip+'</div>'+
+          '<span class="mr-entry-actions farm-history-actions">'+
+            '<button type="button" class="mr-edit" data-farm-edit="'+e.id+'" title="แก้ไข">✎</button>'+
+            '<button type="button" class="mr-del" data-farm-del="'+e.id+'" title="ลบ">🗑</button>'+
           '</span></div>'+
-        '<div class="mr-entry-sub farm-entry-sub"><span>ฟามได้ '+fmtNum(e.earned)+' z'+earnedBahtText+'</span>'+rareTag+'</div>'+
+        '<div class="farm-history-metrics">'+
+          '<div class="farm-history-metric farm-history-revenue"><span>รายได้</span><b>'+fmtNum(e.earned)+' z</b><small>'+earnedBahtText+'</small></div>'+
+          '<div class="farm-history-metric farm-history-cost"><span>ต้นทุน</span><b class="farm-cost-hover" data-farm-cost-id="'+e.id+'">'+fmtNum(e.cost)+' z</b><small>'+costBahtText+'</small></div>'+
+          '<div class="farm-history-metric '+(pos?'farm-profit-pos':'farm-profit-neg')+'"><span>กำไร</span><b class="farm-profit-hover" data-farm-profit-id="'+e.id+'">'+(pos?'+':'')+fmtNum(e.profit)+' z</b><small>'+profitBahtText+'</small></div>'+
+        '</div>'+
+        '<div class="farm-history-earned"><span>ฟามได้</span><b>'+fmtNum(farmGained)+' z</b><small>'+farmGainedBahtText+'</small></div>'+
+        (rareTag ? '<div class="farm-history-rares"><span>ไอเทม</span><div>'+rareTag+'</div></div>' : '')+
       '</div>';
     }).join('');
 
@@ -5404,7 +6134,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.getElementById('farmOcToggle').classList.remove('active');
   }
 
+  function preserveFarmViewport(x, y){
+    window.scrollTo(x, y);
+    requestAnimationFrame(function(){ window.scrollTo(x, y); });
+  }
+
   function cancelFarmEdit(){
+    var scrollX = window.scrollX, scrollY = window.scrollY;
     if(farmEditCostBackup){
       App.farmCostItems[farmEditCostBackup.serverId] = farmEditCostBackup.rows;
       App.farmExchangeRates[farmEditCostBackup.serverId] = farmEditCostBackup.exchangeRate;
@@ -5419,9 +6155,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     resetFarmEditState();
     renderFarmHistory();
     renderFarmChart();
+    preserveFarmViewport(scrollX, scrollY);
   }
 
   function startEditFarmEntry(id){
+    var scrollX = window.scrollX, scrollY = window.scrollY;
     var entry = App.farmLog.filter(function(e){ return e.id===id; })[0];
     if(!entry) return;
     farmOcHintAcknowledged = false;
@@ -5460,11 +6198,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     renderFarmChart();
     farmHistoryPage = 0;
     renderFarmHistory();
-    var editFormEl = document.querySelector('.farm-log-form');
-    if(editFormEl) editFormEl.scrollIntoView({ behavior:'auto', block:'center' });
+    preserveFarmViewport(scrollX, scrollY);
   }
 
   function renderFarmPage(){
+    if(!App.session || !App.session.id) return;
     populateFarmServerSelect();
     renderFarmExchangeRate();
     renderFarmMapName();
@@ -5472,6 +6210,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     renderFarmRareItems();
     renderFarmChart();
     document.getElementById('farmHistoryRange').value = farmHistoryRange;
+    document.getElementById('farmTimeframeSelect').value = farmTimeframe;
     document.getElementById('farmHistoryRange').title = hasFarmPlan() ? '' : 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจที่มีสิทธิ์ยอดนักฟามเพื่อดูย้อนหลังทั้งหมด';
     renderFarmHistory();
     renderFarmRetiredState();
@@ -5489,6 +6228,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var retired = isRetiredServer(App.timersServerId);
     panel.classList.toggle('server-retired', retired);
     panel.querySelectorAll('input, select, textarea, button').forEach(function(el){
+      if(el.closest('#bossSoundControl')) return;
       if(retired) el.setAttribute('disabled','');
       else el.removeAttribute('disabled');
     });
@@ -5694,7 +6434,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     // จะได้ดูตัวเลขของเซิร์ฟที่กำลังบันทึกอยู่ ไม่ต้องไปไล่เปลี่ยน dropdown ทีละอัน
     historyState.serverId = id;
     historyState.userChangedServer = true;
-    historyState.dayLimit = MR_HISTORY_DAY_STEP;
+    resetMerchantHistoryRange();
     mrChartServerId = id;
     mrChartServerUserChanged = true;
     renderMerchantHistory();
@@ -6245,7 +6985,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function entryType(e){ return e.type === 'sell' ? 'sell' : 'buy'; }
 
   var MR_HISTORY_DAY_STEP = 30; // rows revealed per "แสดงเพิ่ม" click in the ตามวัน view
-  var historyState = { serverId:'all', userChangedServer:false, view:'item', range:'all', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{}, expandedDays:{}, soldOutOpen:null };
+  var historyState = { serverId:'all', userChangedServer:false, view:'item', range:'today', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{}, expandedDays:{}, soldOutOpen:null };
+  function resetMerchantHistoryRange(){
+    historyState.range = 'today';
+    historyState.dayLimit = MR_HISTORY_DAY_STEP;
+    var rangeEl = document.getElementById('mrHistoryRange');
+    if(rangeEl) rangeEl.value = 'today';
+  }
   // ค่าเริ่มต้นของตัวกรองเซิร์ฟเวอร์ (ประวัติ+กราฟ) = เซิร์ฟแรกที่ตั้งค่าไว้ในบัญชี ถ้ามีข้อมูล/เลือกได้จริง
   // ไม่งั้น fallback ไปตัวแรกในลิสต์ที่มีให้เลือก กันกรณีเซิร์ฟแรกของบัญชียังไม่เคยมีประวัติเลย
   // (userChangedServer กันไว้ไม่ให้ค่าเริ่มต้นทับสิ่งที่ผู้ใช้เลือกเองไปแล้ว เช่นกด "ALL")
@@ -6454,8 +7200,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // The tx list inside an expanded item card is grouped by day (its own mini "ตามวัน"),
   // each day collapsible — an item like M can span dozens of transactions over weeks, and
-  // a flat list of all of them makes the card unreadably long. The most recent day starts
-  // open; older days start collapsed but can be expanded on demand.
+  // a flat list of all of them makes the card unreadably long. Days start collapsed
+  // and retain the open/closed state explicitly chosen by the user.
   function historyTxGroupedByDayHtml(g){
     var order = [], byDay = {};
     g.tx.forEach(function(t){
@@ -6468,7 +7214,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var d = byDay[dayKey];
       var dayGroupKey = g.key+'|'+dayKey;
       var open = historyState.expandedDays[dayGroupKey];
-      if(open===undefined) open = (idx===0); // most recent day defaults open
+      if(open===undefined) open = false; // only a user click opens a day
       var tot = [];
       if(d.sell) tot.push('<span class="sell">ขาย '+fmtNum(d.sell)+' บ</span>');
       if(d.buy) tot.push('<span class="buy">ซื้อ '+fmtNum(d.buy)+' บ</span>');
@@ -6486,7 +7232,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     }).join('');
   }
 
-  function historyItemRowHtml(g, showServer){
+  function historyItemRowHtml(g, showServer, displayIndex){
     // หน่วย: หมวด M นับเป็น "M", ที่เหลือนับเป็น "ชิ้น"
     var unit = g.category==='zeny' ? 'M' : 'ชิ้น';
     var over = g.remaining<0 ? -g.remaining : 0;        // ขายเกินกว่าที่บันทึกซื้อไว้
@@ -6496,13 +7242,17 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
                 : (left>0 ? 'ทุนค้าง ~'+fmtNum(Math.round(g.leftCost))+' บ' : (g.buyQty>0 ? 'ขายหมดแล้ว' : '—'));
     // "เฉลี่ย X บ/หน่วย" under a cell — lets ซื้อมา vs ขายไป price-per-unit be compared at a glance.
     var avgLine = function(baht, qty, u){
-      return qty>0 ? '<small class="mr-it-avg">เฉลี่ย '+fmtNum(baht/qty)+' บ/'+u+'</small>' : '';
+      return qty>0 ? '<small class="mr-it-avg" title="เฉลี่ย '+fmtNum(baht/qty)+' บ/'+u+'">เฉลี่ย '+fmtNum(Math.round(baht/qty))+'บ/'+u+'</small>' : '';
     };
+    var buyDisplay = function(value){
+      return value ? '-'+fmtNum(Math.abs(value)) : fmtNum(0);
+    };
+    var buyAvgLine = avgLine(g.buyBaht, g.buyQty, unit);
     var profitCell = g.sellQty<=0
       ? '<span class="mr-it-cell profit none"><i>กำไร</i><b>—</b><small>ยังไม่ได้ขาย</small></span>'
       : '<span class="mr-it-cell profit"><i>กำไร</i><b class="'+(g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</b>'+
-        '<small>จากที่ขายไป '+fmtNum(g.sellQty)+' '+unit+'</small></span>';
-    return '<div class="mr-it-row mr-ic'+(open?' open':'')+'" data-key="'+encodeURIComponent(g.key)+'">'+
+        '<small class="mr-profit-sale-note">ขายไป '+fmtNum(g.sellQty)+' '+unit+'</small></span>';
+    return '<div class="mr-it-row mr-ic history-alt-'+(displayIndex%2===0?'odd':'even')+(open?' open':'')+'" data-key="'+encodeURIComponent(g.key)+'">'+
       '<button type="button" class="mr-ic-head" aria-expanded="'+(open?'true':'false')+'" title="กดเพื่อดูรายการซื้อ-ขายของไอเทมนี้">'+
         '<span class="mr-ic-chev">▸</span>'+
         '<span class="mr-it-namewrap">'+
@@ -6510,7 +7260,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           '<span class="mr-it-tags">'+historyCategoryTag(g.category)+(showServer?historyServerTag(g.serverId):'')+'</span>'+
         '</span>'+
       '</button>'+
-      '<span class="mr-it-cell buy"><i>ซื้อมา</i><b>'+fmtNum(g.buyQty)+' '+unit+'</b><small>'+fmtNum(g.buyBaht)+' บ</small>'+avgLine(g.buyBaht, g.buyQty, unit)+'</span>'+
+      '<span class="mr-it-cell buy"><i>ซื้อมา</i><b>'+fmtNum(g.buyQty)+' '+unit+'</b><small>'+buyDisplay(g.buyBaht)+' บ</small>'+buyAvgLine+'</span>'+
       '<span class="mr-it-cell sell"><i>ขายไป</i><b>'+fmtNum(g.sellQty)+' '+unit+'</b><small>'+fmtNum(g.sellBaht)+' บ</small>'+avgLine(g.sellBaht, g.sellQty, unit)+'</span>'+
       '<span class="mr-it-cell left'+(left>0?'':' zero')+'"><i>เหลือ</i><b>'+fmtNum(left)+' '+unit+'</b><small>'+leftSub+'</small>'+(left>0?avgLine(g.leftCost, left, unit):'')+'</span>'+
       profitCell+
@@ -6528,8 +7278,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var active = groups.filter(function(g){ return !isSoldOut(g); });
     var soldOut = groups.filter(isSoldOut);
     var html = '<div class="mr-it">'+
-      '<div class="mr-it-row mr-it-head"><span>รายการ</span><span>ซื้อมา</span><span>ขายไป</span><span>เหลือ</span><span>กำไร</span></div>'+
-      active.map(function(g){ return historyItemRowHtml(g, showServer); }).join('');
+      active.map(function(g, idx){ return historyItemRowHtml(g, showServer, idx); }).join('');
     if(soldOut.length){
       var soldOpen = historyState.soldOutOpen==null ? !active.length : historyState.soldOutOpen;
       var soldProfit = soldOut.reduce(function(s,g){ return s+g.profit; }, 0);
@@ -6537,7 +7286,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         '<span class="mr-ic-chev">▸</span>ขายหมดแล้ว '+soldOut.length+' รายการ'+
         '<span class="mr-it-group-profit '+(soldProfit>=0?'profit-pos':'profit-neg')+'">กำไรรวม '+(soldProfit>=0?'+':'')+fmtNum(soldProfit)+' บ</span>'+
       '</button>'+
-      '<div class="mr-it" id="mrItSoldList"'+(soldOpen?'':' hidden')+'>'+soldOut.map(function(g){ return historyItemRowHtml(g, showServer); }).join('')+'</div>';
+      '<div class="mr-it" id="mrItSoldList"'+(soldOpen?'':' hidden')+'>'+soldOut.map(function(g, idx){ return historyItemRowHtml(g, showServer, active.length+idx); }).join('')+'</div>';
     }
     list.innerHTML = html+'</div>';
   }
@@ -6563,10 +7312,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var tot = [];
       if(d.sell) tot.push('<span class="sell">ขาย '+fmtNum(d.sell)+' บ</span>');
       if(d.buy) tot.push('<span class="buy">ซื้อ '+fmtNum(d.buy)+' บ</span>');
-      return '<div class="mr-day">'+
-        '<div class="mr-day-head"><span>'+historyDayLabel(d.ts)+'</span><span class="mr-day-tot">'+tot.join(' · ')+'</span></div>'+
+      var dayGroupKey = 'day-view|'+historyState.serverId+'|'+k;
+      var open = !!historyState.expandedDays[dayGroupKey];
+      return '<div class="mr-day mr-ic-day'+(open?' open':'')+'" data-day-key="'+encodeURIComponent(dayGroupKey)+'">'+
+        '<button type="button" class="mr-day-head mr-ic-day-head" aria-expanded="'+(open?'true':'false')+'"><span class="mr-ic-chev">▸</span><span>'+historyDayLabel(d.ts)+' · '+d.rows.length+' รายการ</span><span class="mr-day-tot">'+tot.join(' · ')+'</span></button>'+
+        '<div class="mr-tx-list"'+(open?'':' hidden')+'> '+
         d.rows.map(function(t){ return historyTxRowHtml(t, { showName:true, showTime:true, showServer:showServer }); }).join('')+
-      '</div>';
+      '</div></div>';
     }).join('');
     if(rows.length > shown.length){
       html += '<button type="button" class="farm-hist-page-btn mr-more-btn" id="mrHistMore">แสดงเพิ่ม (เหลืออีก '+(rows.length-shown.length)+' รายการ)</button>';
@@ -6582,40 +7334,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     else renderHistoryItemView(list);
   }
 
-  // Finds a just-saved entry's row and, in the ตามไอเทม view, opens the card it sits in so
-  // the "just saved" flash is actually visible. Returns the row (or null if filtered out).
-  function revealHistoryEntry(id){
-    var el = document.querySelector('[data-entry-id="'+id+'"]');
-    if(!el) return null;
-    var soldList = el.closest('#mrItSoldList');
-    if(soldList && soldList.hidden){
-      historyState.soldOutOpen = true;
-      soldList.hidden = false;
-      var tg = document.getElementById('mrItSoldToggle');
-      if(tg){ tg.classList.add('open'); tg.setAttribute('aria-expanded', 'true'); }
-    }
-    var card = el.closest('.mr-ic');
-    if(card && !card.classList.contains('open')){
-      historyState.expanded[decodeURIComponent(card.dataset.key)] = true;
-      card.classList.add('open');
-      card.querySelector('.mr-ic-body').hidden = false;
-      card.querySelector('.mr-ic-head').setAttribute('aria-expanded', 'true');
-    }
-    var dayEl = el.closest('.mr-ic-day');
-    if(dayEl && !dayEl.classList.contains('open')){
-      historyState.expandedDays[decodeURIComponent(dayEl.dataset.dayKey)] = true;
-      dayEl.classList.add('open');
-      dayEl.querySelector('.mr-tx-list').hidden = false;
-      dayEl.querySelector('.mr-ic-day-head').setAttribute('aria-expanded', 'true');
-    }
-    return el;
-  }
-
   function summaryTilesHtml(buyTotal, sellTotal, unit){
     var profit = sellTotal - buyTotal;
     return '<div class="mr-summary-row">'+
       '<div class="mr-summary-item"><span class="mr-summary-label">ขายทั้งหมด</span><span class="mr-summary-value sell">'+fmtNum(sellTotal)+' '+unit+'</span></div>'+
-      '<div class="mr-summary-item"><span class="mr-summary-label">ซื้อทั้งหมด</span><span class="mr-summary-value buy">'+fmtNum(buyTotal)+' '+unit+'</span></div>'+
+      '<div class="mr-summary-item"><span class="mr-summary-label">ซื้อทั้งหมด</span><span class="mr-summary-value buy">'+(buyTotal ? '-'+fmtNum(Math.abs(buyTotal)) : fmtNum(0))+' '+unit+'</span></div>'+
       '<div class="mr-summary-item"><span class="mr-summary-label">กำไรสุทธิ</span><span class="mr-summary-value '+(profit>=0?'profit-pos':'profit-neg')+'">'+(profit>=0?'+':'')+fmtNum(profit)+' '+unit+'</span></div>'+
     '</div>';
   }
@@ -6713,6 +7436,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
 
   function renderAll(){
+    if(!App.session || !App.session.id){ renderUser(); return; }
     renderUser(); renderStats(); renderRoster(); renderRateChips(); renderTickerServerChips();
     renderMerchantServers();
     renderMrExchangeRate();
@@ -7488,12 +8212,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     updateItemsRailBadge();
     var isWarehouseBuy = App.merchantType==='buy' && (App.merchantCategory==='zeny' || App.merchantCategory==='item');
     toast(isWarehouseBuy ? 'รายการซื้อถูกส่งไปคลังไอเทมแล้ว' : 'บันทึก '+lines.length+' รายการแล้ว');
-    var newEntryEl = revealHistoryEntry(newId);
-    if(newEntryEl){
-      newEntryEl.scrollIntoView({block:'nearest'});
-      newEntryEl.classList.add('just-saved');
-      setTimeout(function(){ newEntryEl.classList.remove('just-saved'); }, 1100);
-    }
+    // Preserve user-selected history expansion and scroll position after saving.
     // Clear the entered rows after a successful save — keep the current
     // เซิร์ฟเวอร์/ประเภท/หมวดหมู่ selection, just don't leave stale text sitting
     // in the fields for the next entry. M is the one exception: its ราคา (the M↔baht
@@ -7666,7 +8385,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     try{
       historyState.serverId = e.target.value;
       historyState.userChangedServer = true;
-      historyState.dayLimit = MR_HISTORY_DAY_STEP;
+      resetMerchantHistoryRange();
       renderMerchantHistory();
     }catch(err){
       console.error('historyServerFilter change failed', err);
@@ -7912,15 +8631,23 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
 
   function renderItemsDetail(){
-    var title = document.getElementById('itemsDetailTitle');
+    var titleText = document.getElementById('itemsDetailTitleText');
     var list = document.getElementById('itemsDetailList');
     var tier = App.itemsSelectedTier;
+    var detailCard = document.querySelector('#view-items .items-card-b');
+    // Visual-only link between the selected warehouse and its detail panel.
+    // Item data stays in the existing tier state and rendering path.
+    ['a','b','c','s'].forEach(function(key){ detailCard.classList.toggle('items-detail-tier-'+key, tier===key.toUpperCase()); });
+    ITEM_WAREHOUSE_TIERS.forEach(function(tierKey){
+      var card = document.getElementById('itemsCardTier'+tierKey);
+      if(card) card.classList.toggle('items-tier-selected', tierKey===tier);
+    });
     if(!tier){
-      title.textContent = 'รายการในคลัง';
+      titleText.textContent = 'รายการในคลัง';
       list.innerHTML = '<p class="mr-empty">เลือกคลังเพื่อดูไอเทม</p>';
       return;
     }
-    title.textContent = 'รายการในคลัง '+itemTierLabel(tier);
+    titleText.textContent = 'รายการในคลัง '+itemTierLabel(tier);
     var items = warehouseStockFor(App.itemsServerId)[tier];
     if(!items.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีไอเทมในคลังนี้</p>'; return; }
     var groups = {};
@@ -7959,6 +8686,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
 
   function renderItemsPage(){
+    if(!App.session || !App.session.id) return;
     populateItemsServerSelect();
     renderItemsPendingList();
     renderItemsWarehouseCards();
@@ -8064,10 +8792,22 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   // เข้าหน้าแรก: ย้าย util-bar (นาฬิกา/แต้ม/เมนูผู้ใช้) เข้าไปในกรอบ banner ให้เป็นพื้นหลังเดียวกับแถบต้อนรับ
   // ออกจากหน้าแรก: ย้ายกลับตำแหน่งเดิม (หน้า #view-home เองที่เป็นจุดอ้างอิงตำแหน่งเดิม อยู่คงที่เสมอ)
+  var merchantTfPage = null, merchantTfUser = null;
+  var farmTfPage = null, farmTfUser = null;
   function switchPage(page){
+    if(!App.session || !App.session.id) page = 'home';
+    var tfUser = App.session ? App.session.id : null;
+    var resetMerchantTf = page==='home' && (merchantTfPage!=='home' || merchantTfUser!==tfUser);
+    merchantTfPage = page;
+    merchantTfUser = tfUser;
+    if(resetMerchantTf){
+      resetMerchantHistoryRange();
+      mrChartTimeframe = 'today';
+      document.getElementById('mrChartTimeframeSelect').value = 'today';
+    }
     // Share the existing announcement element without copying its IDs or handlers.
     var announcementPanel = document.getElementById('tickerTrack').closest('.panel-ticker');
-    var announcementTarget = document.querySelector(page==='farm' ? '#view-farm' : '#view-home .page-scroll');
+    var announcementTarget = document.querySelector(page==='farm' ? '#view-farm .page-scroll' : '#view-home .page-scroll');
     if(announcementPanel.parentElement!==announcementTarget){
       announcementTarget.insertBefore(announcementPanel, announcementTarget.firstChild);
     }
@@ -8080,13 +8820,22 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.getElementById('view-admin').hidden = page !== 'admin';
     document.getElementById('view-settings').hidden = page !== 'settings';
     if(page==='home') refreshAnnouncementsIfChanged();
+    if(resetMerchantTf){ renderMerchantHistory(); renderMrChart(); }
+    var resetFarmTf = page==='farm' && (farmTfPage!=='farm' || farmTfUser!==tfUser);
+    farmTfPage = page;
+    farmTfUser = tfUser;
+    if(resetFarmTf){
+      resetFarmTimeframes();
+    }
     bossLiveSync();
-    if(page==='farm') renderFarmPage();
-    if(page==='items') renderItemsPage();
-    if(page==='pricing') renderPricingPage();
-    if(page==='admin') renderAdminTopups();
-    if(page==='settings') renderSettingsPage();
-    if(page==='timers') renderPartyPanel();
+    if(App.session && App.session.id){
+      if(page==='farm') renderFarmPage();
+      if(page==='items') renderItemsPage();
+      if(page==='pricing') renderPricingPage();
+      if(page==='admin') renderAdminTopups();
+      if(page==='settings') renderSettingsPage();
+      if(page==='timers') renderPartyPanel();
+    }
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);
     });
@@ -8114,68 +8863,119 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       ] },
     // New monthly-only packages are supported by Production buy_plan.
     { key:'farm', name:'1 in 1 — ยอดนักฟาม', monthly:99, promoMonthly:99, badge:'สายฟาร์ม',
-      tagline:'เลือกใช้เฉพาะระบบยอดนักฟาม', features:['ยอดนักฟาม'] },
-    { key:'accountItems', name:'2 in 1', monthly:149, promoMonthly:149, badge:'จัดการซื้อขาย',
-      tagline:'บัญชีและคลังไอเทมสำหรับสายซื้อขาย', features:['บัญชีนักลงทุน','คลังไอเทม'] },
-    { key:'bundle', name:'3 in 1', monthly:199, yearly:1990, promoMonthly:99, promoYearly:995, badge:'ยอดนิยม',
+      tagline:'เลือกใช้เฉพาะระบบยอดนักฟาม', features:[
+        'บันทึกยอดฟามที่ได้รับในแต่ละรอบ',
+        'คำนวณต้นทุนต่อกั้มและกำไรสุทธิ',
+        'บันทึกไอเทมหายากที่ได้จากการฟาม',
+        'ดูสรุปรายวัน / รายสัปดาห์ / รายเดือน',
+        'ดูกราฟยอดฟามและสถิติย้อนหลัง',
+        'แยกดูข้อมูลตามเซิร์ฟเวอร์ในอดีตได้'
+      ] },
+    { key:'accountItems', name:'2 in 1 — บัญชีนักลงทุน + คลังไอเทม', monthly:149, promoMonthly:149, badge:'จัดการซื้อขาย',
+      tagline:'สำหรับสายซื้อขาย พ่อค้าแม่ค้าหัวเครดิตและคนทั่วไป', features:[
+        'บันทึกรายการซื้อ–ขาย M และไอเทม',
+        'ดูสรุปยอดซื้อ ยอดขาย และกำไรสุทธิ',
+        'ดูประวัติและกราฟย้อนหลัง',
+        'จัดการคลังไอเทม A / B / C / อื่น ๆ',
+        'ตัดสต็อกอัตโนมัติเมื่อขายไอเทม',
+        'คืนไอเทมกลับเข้าคลังเมื่อยกเลิกรายการ',
+        'ดูจำนวนและมูลค่าไอเทมคงเหลือ',
+        'แยกดูข้อมูลตามเซิร์ฟเวอร์ในอดีตได้'
+      ] },
+    { key:'bundle', name:'3 in 1', monthly:199, yearly:990, promoMonthly:99, promoYearly:990, badge:'ยอดนิยม',
       tagline:'คุ้มสุดสำหรับบัญชีนักลงทุน คลังไอเทม และยอดฟาร์มครบทั้ง 3 ระบบ',
       features:[
-        'บันทึกซื้อ–ขาย M และไอเทม',
-        'คำนวณต้นทุนเฉลี่ยและกำไรอัตโนมัติ',
-        'ครบ 4 คลัง • เลือกไอเทมขายจากคลัง',
-        'แยกข้อมูลตามเซิร์ฟเวอร์',
-        'ดูประวัติย้อนหลังทั้งหมด',
-        'สรุปต้นทุนต่อกั้มและยอดฟาร์ม',
-        'บันทึกไอเทมหายากและเทียบกำไร'
+        'บันทึกซื้อ–ขาย M และไอเทม พร้อมคำนวณกำไรสุทธิ',
+        'ดูสรุปยอดซื้อ ยอดขาย และกราฟย้อนหลัง',
+        'จัดการคลังไอเทม 4 คลัง พร้อมตัด–คืนสต็อกอัตโนมัติ',
+        'เลือกไอเทมจากคลังมาบันทึกขายได้ทันที',
+        'บันทึกยอดฟาร์ม ต้นทุนต่อกั้ม และกำไรแต่ละรอบ',
+        'บันทึกไอเทมหายากและมูลค่าที่ได้จากการฟาร์ม',
+        'ดูสรุปรายวัน / รายสัปดาห์ / รายเดือน',
+        'แยกดูข้อมูลและประวัติตามเซิร์ฟเวอร์ในอดีตได้'
       ] },
-    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:995, badge:'สายล่าบอส',
+    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:990, promoMonthly:99, promoYearly:990, badge:'สายล่าบอส',
       tagline:'เหมาะสำหรับสายล่าบอสโดยเฉพาะ',
       features:[
         'จับเวลาบอสได้ไม่จำกัดจำนวน',
         'บันทึกไอเทมดรอปจากบอส',
         'แชร์ตารางบอสกับปาร์ตี้',
-        'แบ่งของในปาร์ตี้หรือเก็บส่วนตัว',
+        'ระบบหารเงินในปาร์ตี้หรือเก็บส่วนตัว',
         'ดูประวัติไอเทมและยอดขาย',
         'ติดตามส่วนแบ่งของสมาชิก',
         'ปักจุดบอสตายบนแผนที่'
       ] },
-    { key:'all', name:'4 in 1', monthly:349, promoMonthly:175, best:true, badge:'คุ้มที่สุด',
-      tagline:'ครบทั้งซื้อขาย คลังไอเทม ฟาร์ม และล่าบอส',
-      features:['บัญชีนักลงทุน','คลังไอเทม','ยอดนักฟาม','จับเวลาบอส'] }
+    { key:'all', name:'4 in 1 — ครบทั้ง 4 ระบบ', monthly:349, yearly:3490, promoMonthly:175, promoYearly:1750, best:true, badge:'คุ้มที่สุด',
+      tagline:'บัญชีนักลงทุน • คลังไอเทม • ยอดนักฟาม • จับเวลาบอส',
+      features:[
+        'บันทึกซื้อ–ขาย M และไอเทม พร้อมสรุปกำไรสุทธิ',
+        'จัดการคลังไอเทม 4 คลัง พร้อมตัด–คืนสต็อกอัตโนมัติ',
+        'บันทึกยอดฟาร์ม ต้นทุนต่อกั้ม และไอเทมหายาก',
+        'ดูสรุปและกราฟย้อนหลัง แยกตามเซิร์ฟเวอร์',
+        'จับเวลาบอสได้ไม่จำกัด พร้อมปักจุดบนแผนที่',
+        'แชร์ตารางบอสและหารเงินในปาร์ตี้ หรือเก็บส่วนตัว',
+        'บันทึกไอเทมดรอป ยอดขาย และส่วนแบ่งของสมาชิก'
+      ] }
   ];
   var pricingCycle = 'monthly';
 
+  // Set one confirmed deadline, including timezone, e.g. '2026-10-01T23:59:59+07:00'.
+  // Display only: expiration does not change package prices or purchase behavior.
+  var PROMO_END_AT = '2026-10-31T23:59:59+07:00';
+  function updatePricingPromoCountdown(){
+    var status = document.getElementById('pricingPromoStatus');
+    var digits = document.getElementById('pricingPromoDigits');
+    var end = PROMO_END_AT ? Date.parse(PROMO_END_AT) : NaN;
+    if(!Number.isFinite(end)){
+      status.textContent = 'รอกำหนดวันสิ้นสุดโปรโมชั่น';
+      digits.hidden = true;
+      return;
+    }
+    var remaining = Math.max(0, Math.ceil((end-Date.now())/1000));
+    digits.hidden = remaining===0;
+    status.textContent = remaining===0 ? 'โปรโมชั่นสิ้นสุดแล้ว' : 'เหลือเวลาอีก';
+    var values = [Math.floor(remaining/86400),Math.floor(remaining/3600)%24,Math.floor(remaining/60)%60,remaining%60];
+    ['Days','Hours','Minutes','Seconds'].forEach(function(unit,i){
+      document.getElementById('pricingPromo'+unit).textContent = String(values[i]).padStart(2,'0');
+    });
+  }
+  updatePricingPromoCountdown();
+  setInterval(updatePricingPromoCountdown,1000);
+
   function renderPricingPage(){
     var grid = document.getElementById('pricingGrid');
-    grid.innerHTML = PRICING_PLANS.map(function(p){
-      var monthly = pricingCycle==='monthly' || p.yearly == null;
+    grid.innerHTML = [PRICING_PLANS[4],PRICING_PLANS[3],PRICING_PLANS[5]].concat(PRICING_PLANS.slice(0,3)).map(function(p){
+      var monthly = pricingCycle==='monthly' || (p.yearly == null && p.displayYearly == null);
       var unit = monthly ? '/ เดือน' : '/ ปี';
       var features = (p.features||[]).map(function(f){
         if(f && f.divider) return '<li class="pricing-feature-divider">'+escapeHtml(f.divider)+'</li>';
         return '<li><span class="pricing-check">✓</span><span>'+escapeHtml(f)+'</span></li>';
       }).join('');
       var taglineHtml = p.tagline ? '<div class="pricing-card-tagline">'+escapeHtml(p.tagline)+'</div>' : '';
+      if(p.key==='bundle') taglineHtml = '';
       var priceHtml, ctaHtml;
       if(p.free){
         priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">ฟรี</span></div>';
         ctaHtml = '<button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>เริ่มใช้ฟรี</button>';
       } else {
-        var original = monthly ? p.monthly : p.yearly;
-        var price = monthly ? p.promoMonthly : p.promoYearly;
+        var original = monthly ? p.monthly : (p.yearly == null ? p.displayYearly : p.yearly);
+        var price = monthly ? p.promoMonthly : (p.yearly == null ? p.displayPromoYearly : p.promoYearly);
         var perDay = price / (monthly ? 30 : 365);
         priceHtml = (original > price ? '<div class="pricing-card-price"><span class="pricing-original">'+fmtNum(original)+' บ'+unit+'</span><span class="pricing-promo-badge">ลด 50%</span></div>' : '')+
           '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
           '<div class="pricing-perday">เฉลี่ย ~'+perDay.toFixed(1)+' บ/วัน</div>';
         var ctaLabel = p.best ? 'เลือกแพ็กนี้' : 'ซื้อแพ็กนี้';
         ctaHtml = p.yearly==null && pricingCycle==='yearly'
-          ? '<small class="pricing-pending-note">แสดงราคาต่อเดือน · ยังไม่มีแพ็กรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>รองรับเฉพาะรายเดือน</button>'
+          ? (p.displayYearly != null ? '<small class="pricing-pending-note">รอเปิดใช้งานการซื้อรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ยังไม่เปิดซื้อรายปี</button>' : '<small class="pricing-pending-note">แสดงราคาต่อเดือน · ยังไม่มีแพ็กรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>รองรับเฉพาะรายเดือน</button>')
           : '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+p.name+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>';
       }
       return '<div class="pricing-card'+(p.best?' pricing-card-best':'')+'">'+
         (p.badge ? '<span class="pricing-badge-best'+(p.best?'':' pricing-badge-secondary')+'">'+escapeHtml(p.badge)+'</span>' : '')+
-        '<div class="pricing-card-name">'+p.name+'</div>'+
+        (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '<div class="pricing-promo-heading">' : '')+
+        '<div class="pricing-card-name">'+p.name+(p.key==='bundle' ? ' <span class="pricing-card-tagline">'+escapeHtml(p.tagline)+'</span>' : '')+'</div>'+
         taglineHtml+
-        priceHtml+
+        (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '</div>' : '')+
+        (p.key==='bundle' || p.key==='timers' || p.key==='all' || p.key==='farm' || p.key==='accountItems' ? '<div class="pricing-bundle-price">'+priceHtml+'</div>' : priceHtml)+
         '<ul class="pricing-features">'+features+'</ul>'+
         ctaHtml+
       '</div>';
@@ -8215,12 +9015,18 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var timersExp = new Date(profile.plan_timers_expires_at||0).getTime() || 0;
     var expiries = {bundle:bundleExp,timers:timersExp,farm:Math.max(bundleExp,new Date(scoped.farm||0).getTime()||0),accountItems:Math.max(bundleExp,new Date(scoped.accountItems||0).getTime()||0),all:Math.min(bundleExp,timersExp)};
     var curExp = expiries[planKey] || 0;
-    var newExp = Math.max(curExp, Date.now()) + days*86400000;
+    function addCycle(base){
+      var d=new Date(Math.max(base,Date.now()));
+      if(cycle==='yearly') d.setFullYear(d.getFullYear()+1);
+      else d.setDate(d.getDate()+30);
+      return d.getTime();
+    }
+    var newExp = addCycle(curExp);
     var expiryText = planKey==='all'
-      ? '3 ระบบ: ถึงประมาณ '+fmtDate(Math.max(bundleExp,Date.now())+days*86400000)+'<br>จับเวลาบอส: ถึงประมาณ '+fmtDate(Math.max(timersExp,Date.now())+days*86400000)
+      ? '3 ระบบ: ถึงประมาณ '+fmtDate(addCycle(bundleExp))+'<br>จับเวลาบอส: ถึงประมาณ '+fmtDate(addCycle(timersExp))
       : 'ใช้งานได้ถึงประมาณ '+fmtDate(newExp);
     var discounted = (cycle==='yearly'?selectedPlan.yearly:selectedPlan.monthly)>price;
-    showConfirm('ยืนยันสมัคร "'+escapeHtml(planName)+'" ('+(cycle==='yearly' ? 'รายปี +365 วัน' : 'รายเดือน +30 วัน')+') ด้วย '+fmtNum(price)+' แต้ม'+(discounted?' (ราคาโปรลด 50%)':'')+'?<br>'+expiryText, function(){
+    showConfirm('ยืนยันสมัคร "'+escapeHtml(planName)+'" ('+(cycle==='yearly' ? 'รายปี +1 ปี' : 'รายเดือน +30 วัน')+') ด้วย '+fmtNum(price)+' แต้ม'+(discounted?' (ราคาโปรลด 50%)':'')+'?<br>'+expiryText, function(){
       supa.rpc('buy_plan', { p_plan_key: planKey, p_cycle: cycle }).then(function(res){
         if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
         refreshProfile();
@@ -8234,7 +9040,50 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   var TOPUP_STATUS = { pending:['รอตรวจสอบ','soon'], approved:['อนุมัติแล้ว','ok'], rejected:['ปฏิเสธ','expired'] };
   var HIST_PAGE = 5;
   var stHistExpanded = { topup:false, purchase:false };
+  // Display only: derive package rows from existing entitlement expiries.
+  function settingsPackageRows(profile, now){
+    var p=profile||{}, scoped=p.feature_expiries||{};
+    var expiry=function(value){ var t=new Date(value||0).getTime(); return t>now?t:0; };
+    var bundle=expiry(p.plan_bundle_expires_at), timers=expiry(p.plan_timers_expires_at), rows=[];
+    if(bundle && timers && bundle===timers) rows.push({name:'4 in 1 — ครบทั้ง 4 ระบบ',expiry:bundle});
+    else {
+      if(bundle) rows.push({name:'3 in 1',expiry:bundle});
+      if(timers) rows.push({name:'จับเวลาบอส',expiry:timers});
+    }
+    [['farm','1 in 1 — ยอดนักฟาม'],['accountItems','2 in 1 — บัญชีนักลงทุน + คลังไอเทม']].forEach(function(pair){
+      var end=expiry(scoped[pair[0]]);
+      if(end>bundle) rows.push({name:pair[1],expiry:end});
+    });
+    return rows.length?rows:[{name:'ฟรี',expiry:0}];
+  }
+  function renderSettingsPackages(){
+    var root=document.getElementById('stPackageList');
+    if(!root) return;
+    var p=App.profile||{}, now=Date.now();
+    root.replaceChildren();
+    settingsPackageRows(p,now).forEach(function(plan){
+      var row=document.createElement('div'); row.className='settings-package-row';
+      var info=document.createElement('div');
+      var name=document.createElement('div'); name.className='settings-package-name'; name.textContent=plan.name;
+      var meta=document.createElement('div'); meta.className='settings-package-meta';
+      var remaining=Math.max(0,plan.expiry-now), soon=plan.expiry && remaining<=7*86400000;
+      var badge=document.createElement('span'); badge.className='membership-pill '+(soon?'soon':plan.expiry?'ok':'neutral');
+      badge.textContent=plan.expiry?(soon?'ใกล้หมดอายุ':'ใช้งานอยู่'):'ใช้งานฟรี';
+      var time=document.createElement('span'); time.className='settings-package-time'+(soon?' soon':'');
+      time.textContent=plan.expiry?'คงเหลือ '+Math.floor(remaining/86400000)+' วัน '+(Math.floor(remaining/3600000)%24)+' ชม.':'คงเหลือ: ไม่จำกัด';
+      meta.append(badge,time);
+      if(plan.expiry){ var date=document.createElement('span'); date.className='settings-package-expiry'; date.textContent='หมดอายุ: '+fmtDate(plan.expiry); meta.append(date); }
+      info.append(name,meta);
+      var link=document.createElement('a'); link.className='btn btn-ghost btn-sm settings-package-link'+(plan.expiry?'':' settings-package-upgrade'); link.href='#pricing'; link.textContent=plan.expiry?'ดูแพ็กเกจ / ต่ออายุ':'อัปเกรดแพ็กเกจ';
+      row.append(info,link); root.append(row);
+    });
+    var note=document.getElementById('stPackageAccessNote');
+    note.hidden=!(p.role==='admin'||p.legacy_unlimited);
+    note.textContent=p.role==='admin'?'บัญชีนี้มีสิทธิ์ผู้ดูแลระบบเพิ่มเติมจากแพ็กเกจที่แสดง':'บัญชีนี้มีสิทธิ์เดิมแบบไม่จำกัดเพิ่มเติมจากแพ็กเกจที่แสดง';
+  }
+  setInterval(function(){ if(!document.getElementById('view-settings').hidden) renderSettingsPackages(); },60000);
   function renderSettingsPage(){
+    renderSettingsPackages();
     var p = App.profile || {};
     document.getElementById('stUsername').textContent = p.username || '-';
     document.getElementById('stEmail').textContent = App.session ? App.session.email : '-';
@@ -8280,8 +9129,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   function updateServersSummary(){
     var el = document.getElementById('stServersSummary');
-    var names = (App.profile && App.profile.servers || []).map(function(id){ var s = serverRateById(id); return s ? s.name : id; });
-    el.textContent = names.length ? 'เล่นอยู่ '+names.length+' เซิร์ฟเวอร์: '+names.join(', ') : 'ยังไม่ได้เลือก';
+    var count = (App.profile && App.profile.servers || []).length;
+    el.textContent = 'เล่นอยู่ '+count+'/'+serverQuota();
   }
   document.addEventListener('click', function(e){
     var chip = e.target.closest('[data-server-pick]');
@@ -8480,7 +9329,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
     '#farmHistoryRange', '#farmHistoryPagination', '.farm-cost-hover', '.farm-profit-hover',
     // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหา/เปลี่ยนเซิร์ฟเวอร์ได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
-    '#partyPanelToggle', '[data-open-history]', '#searchInput', '#timersServerSelect',
+    '#partyPanelToggle', '[data-open-history]', '#searchInput', '#timersServerSelect', '#bossSoundControl',
     // คลังไอเทม: ดูตามระดับ/เปลี่ยนเซิร์ฟเวอร์
     '[data-view-tier]', '#itemsServerSelect'
   ].join(',');
@@ -8587,18 +9436,130 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // เปิดแอปค้างไว้ข้ามวัน: เช็คทุกนาที แถบ/โหมดดูอย่างเดียวจะอัปเดตเอง
   setInterval(function(){ if(App.session && App.profile){ renderExpiryState(); checkExpiryReminder(); } }, 60000);
 
-  // ---------- เติมแต้ม: ส่งคำขอ + แนบสลิป รอแอดมินตรวจสอบก่อนได้แต้มจริง ----------
+  // ---------- เติมแต้ม: QR PromptPay ผ่าน TMWEASY Edge Function ----------
   var topupAmount = 500;
+  var TOPUP_MIN_AMOUNT = 20;
+  var topupQrPollTimer = null;
+  var topupQrClockTimer = null;
+  var topupQrTransactionId = null;
+  var topupQrExpiresAt = 0;
+  document.getElementById('topupCustomAmount').min = String(TOPUP_MIN_AMOUNT);
+  function stopTopupQrWatch(){
+    clearInterval(topupQrPollTimer); clearInterval(topupQrClockTimer);
+    topupQrPollTimer = null; topupQrClockTimer = null;
+  }
+  function setTopupPaymentStatus(kind, text){
+    var el = document.getElementById('topupPaymentStatus');
+    el.className = 'topup-payment-status '+kind;
+    el.textContent = text;
+  }
+  function resetTopupQrPanel(){
+    stopTopupQrWatch();
+    topupQrTransactionId = null; topupQrExpiresAt = 0;
+    document.getElementById('topupQrPanel').hidden = true;
+    document.getElementById('topupQrImage').removeAttribute('src');
+    document.getElementById('topupQrExpiry').textContent = '--:--';
+    setTopupPaymentStatus('pending','กำลังรอการชำระเงิน...');
+  }
+  function topupQrSource(value){
+    var qr = String(value||'').trim();
+    if(!qr) return '';
+    if(/^data:image\//i.test(qr) || /^(https?:|blob:)/i.test(qr)) return qr;
+    return 'data:image/png;base64,'+qr.replace(/^base64,/i,'').replace(/\s+/g,'');
+  }
+  function topupPayload(data){
+    var outer = data && typeof data==='object' ? data : {};
+    return outer.data && typeof outer.data==='object' ? Object.assign({},outer,outer.data) : outer;
+  }
+  function readTopupCreateResult(data){
+    var payload = topupPayload(data), tx = payload.transaction && typeof payload.transaction==='object' ? payload.transaction : {};
+    var qrData = payload.qr && typeof payload.qr==='object' ? payload.qr : {};
+    var timeout = Number(payload.time_out!=null ? payload.time_out : tx.time_out);
+    var expiryRaw = payload.expires_at || payload.qr_expires_at || tx.expires_at || tx.qr_expires_at;
+    var expiry = new Date(expiryRaw||0).getTime() || 0;
+    if(!expiry && isFinite(timeout) && timeout>0) expiry = Date.now()+timeout*1000;
+    var amount = payload.amount_baht!=null ? payload.amount_baht : payload.amount!=null ? payload.amount : tx.amount_baht!=null ? tx.amount_baht : null;
+    if(amount==null && payload.amount_check!=null) amount=Number(payload.amount_check)/100;
+    return {
+      id:payload.transaction_id || payload.transactionId || payload.topup_transaction_id || tx.id || payload.id || payload.id_pay || '',
+      qr:payload.qr_image_base64 || payload.qr_base64_image || payload.qr_code_base64 || payload.qr_image || payload.qr_url || payload.qrCode || qrData.image_base64 || qrData.url || tx.qr_image_base64 || tx.qr_code || '',
+      amount:Number(amount==null ? topupAmount : amount),
+      points:Number(payload.points_added!=null ? payload.points_added : payload.points!=null ? payload.points : tx.points_added!=null ? tx.points_added : topupAmount),
+      expiresAt:expiry
+    };
+  }
+  function updateTopupQrClock(){
+    if(!topupQrExpiresAt) return;
+    var remaining = Math.max(0,topupQrExpiresAt-Date.now());
+    var totalSeconds = Math.ceil(remaining/1000);
+    document.getElementById('topupQrExpiry').textContent = pad2(Math.floor(totalSeconds/60))+':'+pad2(totalSeconds%60);
+    if(remaining<=0){
+      stopTopupQrWatch();
+      setTopupPaymentStatus('expired','QR หมดอายุ กรุณาสร้างใหม่');
+      var button=document.getElementById('topupCreateQrBtn'); button.disabled=false; button.textContent='สร้าง QR ใหม่';
+    }
+  }
+  function handleTopupTransaction(row){
+    if(!row) return;
+    if(!topupQrExpiresAt){
+      var rowExpiry=new Date(row.expires_at||row.qr_expires_at||0).getTime()||0;
+      if(rowExpiry){ topupQrExpiresAt=rowExpiry; updateTopupQrClock(); }
+    }
+    var status=String(row.status||'pending').toLowerCase();
+    if(status==='credited'){
+      stopTopupQrWatch();
+      setTopupPaymentStatus('credited','เติมแต้มสำเร็จ');
+      document.getElementById('topupCreateQrBtn').disabled=true;
+      refreshProfile().then(function(){ renderUser(); loadTopupHistory(); });
+    } else if(status==='failed'){
+      stopTopupQrWatch();
+      setTopupPaymentStatus('failed','เติมแต้มไม่สำเร็จ กรุณาลองใหม่หรือติดต่อ Admin');
+      var failedButton=document.getElementById('topupCreateQrBtn'); failedButton.disabled=false; failedButton.textContent='สร้าง QR ใหม่';
+    } else if(status==='manual_review'){
+      setTopupPaymentStatus('review','รายการกำลังรอตรวจสอบโดย Admin');
+    } else if(status==='expired'){
+      stopTopupQrWatch();
+      setTopupPaymentStatus('expired','QR หมดอายุ กรุณาสร้างใหม่');
+      var expiredButton=document.getElementById('topupCreateQrBtn'); expiredButton.disabled=false; expiredButton.textContent='สร้าง QR ใหม่';
+    } else {
+      setTopupPaymentStatus('pending','กำลังรอการชำระเงิน...');
+    }
+  }
+  function pollTopupTransaction(){
+    if(!topupQrTransactionId || !App.session){ stopTopupQrWatch(); return; }
+    supa.from('topup_transactions').select('*').eq('id',topupQrTransactionId).eq('user_id',App.session.id).maybeSingle().then(function(res){
+      if(res.error){ console.warn('poll topup_transactions',res.error); return; }
+      handleTopupTransaction(res.data);
+    });
+  }
+  function startTopupQrWatch(){
+    stopTopupQrWatch();
+    updateTopupQrClock(); pollTopupTransaction();
+    topupQrClockTimer=setInterval(updateTopupQrClock,1000);
+    topupQrPollTimer=setInterval(pollTopupTransaction,3000);
+  }
   function updateTopupPreview(){
+    var input = document.getElementById('topupCustomAmount');
+    var error = document.getElementById('topupAmountError');
+    var valid = Number.isSafeInteger(topupAmount) && topupAmount>=TOPUP_MIN_AMOUNT;
+    var hasInput = input.value!=='' || input.validity.badInput;
+    var message = hasInput && !valid ? 'กรุณาระบุจำนวนเต็มตั้งแต่ '+TOPUP_MIN_AMOUNT+' บาทขึ้นไป' : '';
+    error.textContent = message;
+    error.hidden = !message;
+    input.setAttribute('aria-invalid',message ? 'true' : 'false');
+    document.getElementById('topupCreateQrBtn').disabled = !valid;
+    document.getElementById('topupBahtPreview').textContent = fmtNum(topupAmount);
     document.getElementById('topupPointsPreview').textContent = fmtNum(topupAmount);
   }
   function openTopup(){
+    resetTopupQrPanel();
     topupAmount = 500;
     document.getElementById('topupCustomAmount').value = '';
     document.getElementById('topupSlipInput').value = '';
     document.querySelectorAll('.topup-preset-btn').forEach(function(b){ b.classList.toggle('active', parseInt(b.dataset.amount,10)===topupAmount); });
     document.querySelectorAll('.topup-method-btn').forEach(function(b, i){ b.classList.toggle('active', i===0); });
     updateTopupPreview();
+    var createButton=document.getElementById('topupCreateQrBtn'); createButton.textContent='สร้าง QR PromptPay';
     document.getElementById('topupOverlay').hidden = false;
   }
   function closeTopup(){ document.getElementById('topupOverlay').hidden = true; }
@@ -8615,17 +9576,43 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     updateTopupPreview();
   });
   document.getElementById('topupCustomAmount').addEventListener('input', function(){
-    var digits = this.value.replace(/[^\d]/g,'');
-    this.value = digits;
-    var n = parseInt(digits, 10);
+    var raw = this.value;
+    var n = /^\d+$/.test(raw) ? Number(raw) : NaN;
     document.querySelectorAll('.topup-preset-btn').forEach(function(b){ b.classList.remove('active'); });
-    topupAmount = n>0 ? n : 0;
+    topupAmount = Number.isSafeInteger(n) && n>0 ? n : 0;
     updateTopupPreview();
   });
   document.getElementById('topupMethods').addEventListener('click', function(e){
     var btn = e.target.closest('[data-method]');
     if(!btn) return;
     document.querySelectorAll('.topup-method-btn').forEach(function(b){ b.classList.toggle('active', b===btn); });
+  });
+  document.getElementById('topupCreateQrBtn').addEventListener('click', function(){
+    var button=this;
+    if(topupBusy || button.disabled) return;
+    if(!App.session){ toast('กรุณาเข้าสู่ระบบก่อนเติมแต้ม'); return; }
+    if(!Number.isSafeInteger(topupAmount) || topupAmount<TOPUP_MIN_AMOUNT){ updateTopupPreview(); return; }
+    topupBusy=true; resetTopupQrPanel();
+    button.disabled=true; button.textContent='กำลังสร้าง QR...';
+    supa.functions.invoke('tmweasy-create-pay',{body:{amount:topupAmount,amount_baht:topupAmount}}).then(function(res){
+      if(res.error) throw res.error;
+      if(res.data && (res.data.status===0 || res.data.success===false)) throw new Error(res.data.msg||res.data.message||'สร้างรายการชำระเงินไม่สำเร็จ');
+      var result=readTopupCreateResult(res.data), src=topupQrSource(result.qr);
+      if(!result.id) throw new Error((res.data&&res.data.msg)||'Edge Function ไม่ได้ส่ง transaction_id กลับมา');
+      if(!src) throw new Error((res.data&&res.data.msg)||'Edge Function ไม่ได้ส่งรูป QR กลับมา');
+      topupQrTransactionId=result.id; topupQrExpiresAt=result.expiresAt;
+      document.getElementById('topupQrImage').src=src;
+      document.getElementById('topupQrAmount').textContent=fmtNum(result.amount);
+      document.getElementById('topupQrPoints').textContent=fmtNum(result.points);
+      document.getElementById('topupQrPanel').hidden=false;
+      setTopupPaymentStatus('pending','กำลังรอการชำระเงิน...');
+      button.textContent='กำลังรอชำระเงิน';
+      startTopupQrWatch();
+    }).catch(function(err){
+      button.disabled=false; button.textContent='สร้าง QR PromptPay';
+      toast('สร้าง QR ไม่สำเร็จ: '+(err.message||err));
+      console.error('tmweasy-create-pay',err);
+    }).finally(function(){ topupBusy=false; });
   });
   var topupBusy = false;
   document.getElementById('topupSubmitBtn').addEventListener('click', function(){
@@ -8719,6 +9706,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   function renderPartyPanel(){
     var listEl = document.getElementById('myPartyList');
+    if(!App.session || !App.session.id){
+      partyPanelMemberCount = 0;
+      if(listEl) listEl.innerHTML = '';
+      updatePartyPanelSummary();
+      return;
+    }
     listEl.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';
     var amHost = !App.viewingHostId;
     var contextHostId = App.viewingHostId || App.session.id;
@@ -8875,12 +9868,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       setAnnounceDuration(durSel, ANNOUNCE_DURATION_OPTIONS.reduce(function(a,b){
         return Math.abs(b.value-entry.durationMs) < Math.abs(a.value-entry.durationMs) ? b : a;
       }).value, true);
-      document.getElementById('postAnnounceTitle').textContent = 'แก้ไขประกาศ';
+      document.querySelector('#postAnnounceTitle span').textContent = 'แก้ไขประกาศ';
       document.getElementById('postAnnounceSubmitBtn').textContent = 'บันทึกการแก้ไข';
       document.getElementById('postAnnounceBuyPrice').value = entry.buy!=null ? fmtNum(entry.buy) : '';
     } else {
       setAnnounceDuration(durSel, ANNOUNCE_DURATION_OPTIONS[2].value, false); // default 1 ชม.
-      document.getElementById('postAnnounceTitle').textContent = 'ลงประกาศราคา';
+      document.querySelector('#postAnnounceTitle span').textContent = 'ลงประกาศ รับ M';
       document.getElementById('postAnnounceSubmitBtn').textContent = 'ลงประกาศ';
       document.getElementById('postAnnounceBuyPrice').value = '';
     }
@@ -9024,11 +10017,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   document.getElementById('farmServerSelect').addEventListener('change', function(e){
     App.farmServerId = e.target.value;
     saveFarmServer();
+    resetFarmTimeframes();
     renderFarmExchangeRate();
     renderFarmMapName();
     renderFarmCostItems();
     renderFarmChart();
-    farmHistoryPage = 0;
     renderFarmHistory();
     // สลับเซิร์ฟแล้วต้องคำนวณใหม่ว่าเซิร์ฟนี้ยังเล่นอยู่ไหม (เปิด/ปิดช่องกรอกตามนั้น)
     renderFarmRetiredState();
@@ -9271,6 +10264,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var totalEarned = val + rareTotal;
 
     function commitFarmLog(){
+      var scrollX = window.scrollX, scrollY = window.scrollY;
       if(editingFarmId){
         var entry = App.farmLog.filter(function(e){ return e.id===editingFarmId; })[0];
         if(entry){
@@ -9290,6 +10284,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         resetFarmEditState();
         renderFarmHistory();
         renderFarmChart();
+        preserveFarmViewport(scrollX, scrollY);
         toast('แก้ไขรายการแล้ว');
       } else {
         App.farmLog.push({ id:uid(), ts:Date.now(), serverId:App.farmServerId, count:count, cost:cost, earnedBase:val, ocApplied:farmOcActive, rareItems: rareItemsSnapshot, earned:totalEarned, profit:totalEarned-cost, costItems: farmSnapshotCostRows(App.farmServerId), exchangeRate: farmExchangeRate(App.farmServerId) || null, mapName: App.farmMapNames[App.farmServerId] || '' });
@@ -9492,7 +10487,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         customTask(function(){
           return CustomAPI.record(customRef(bossId), activeOwnerId(), App.timersServerId, App.session.id,
             new Date(deathTs).toISOString(), items, JSON.stringify([rawTimeInput, items.slice().sort()]), App.profile && App.profile.display_name);
-        }, function(){ delete App.pendingItems[bossId]; fired.warn[bossId]=false; fired.crit[bossId]=false; });
+        }, function(){ delete App.pendingItems[bossId]; fired.warn[bossId]=false; fired.threeMin[bossId]=false; });
         return;
       }
       supa.rpc('record_kill', { p_boss_id: String(boss.id), p_boss_name: boss.name, p_killed_at: new Date(deathTs).toISOString(), p_items: items }).then(function(res){
@@ -9506,10 +10501,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       });
 
       var startedByName = App.profile ? App.profile.display_name : null;
-      var targetTime = deathTs + boss.minutes*60000;
+      // ชดเชยเวลา UI เล็กน้อยทุกครั้งที่กด "MVP ตายแล้ว" ให้รอบใหม่เร็วขึ้น 3 วินาที
+      // โดยคง timestamp เวลาตายจริงและข้อมูลประวัติเดิมไว้
+      var targetTime = deathTs + boss.minutes*60000 - 3000;
       App.active[bossId] = { targetTime: targetTime, startedBy: startedByName };
       delete App.pendingItems[bossId];
-      fired.warn[bossId] = false; fired.crit[bossId] = false;
+      fired.warn[bossId] = false; fired.threeMin[bossId] = false;
       renderRoster(); renderStats();
       toast('บันทึกการฆ่า '+boss.name+' แล้ว — เริ่มจับเวลารอบใหม่');
       supaSetBossTime(bossId, targetTime, startedByName).then(function(res){
@@ -9519,7 +10516,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       // ล้างเวลาที่จับอยู่ทั้งหมด กลับไปเป็น "ยังไม่ได้ฆ่า" — ไม่ใช่แค่เอาส่วนที่ปรับ
       // เวลาออก แต่เลิกจับเวลารอบนี้ทั้งรอบ (เผื่อกดผิดหรืออยากเริ่มนับใหม่)
       delete App.active[bossId];
-      fired.warn[bossId] = false; fired.crit[bossId] = false;
+      fired.warn[bossId] = false; fired.threeMin[bossId] = false;
       renderRoster(); renderStats();
       toast('เคลียร์เวลาของ '+boss.name+' แล้ว');
       supaSetBossTime(bossId, null, null).then(function(res){
@@ -9543,7 +10540,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var deathTs = parseDeathTimeInput(raw);
     if(deathTs==null){ showFieldTip(input, 'รูปแบบเวลาไม่ถูกต้อง เช่น 14.35 หรือ 1435'); return; }
     act.targetTime = deathTs + boss.minutes*60000;
-    fired.warn[bossId] = false; fired.crit[bossId] = false;
+    fired.warn[bossId] = false; fired.threeMin[bossId] = false;
     renderRoster();
     toast('ปรับเวลาแล้ว');
     supaSetBossTime(bossId, act.targetTime, act.startedBy).then(function(res){

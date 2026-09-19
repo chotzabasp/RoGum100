@@ -3747,8 +3747,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var minutes=field('Respawn (นาที) *','number',record?record.respawn_minutes:120);minutes.required=true;minutes.min=1;minutes.max=2147483647;minutes.step=1;
     var map=field('Map (ไม่บังคับ)','text',record&&record.map_location);map.maxLength=120;
     var bossImage=field('รูปบอส (ไม่บังคับ)','file'),mapImage=field('รูปแผนที่ (ไม่บังคับ)','file');
-    bossImage.accept=mapImage.accept='image/png,image/jpeg,image/webp';
-    form.append(customNode('small','PNG / JPEG / WebP ไม่เกิน 1 MiB ต่อรูป'));
+    bossImage.accept=mapImage.accept='image/png,image/jpeg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif';
+    form.append(customNode('small','PNG / JPEG / WebP / GIF ไม่เกิน 1 MiB ต่อรูป'));
     var drops=customNode('div');form.append(customNode('label','ไอเทมที่ดรอป'),drops);
     function addDrop(value){
       if(drops.children.length>=50)return;

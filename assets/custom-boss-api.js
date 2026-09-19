@@ -68,11 +68,11 @@ async function record(boss, owner, server, user, killedAt, items, draftKey, disp
 const bucket = () => client.storage.from('custom-boss-images');
 function validateImage(file) {
   if (!file) return;
-  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 1048576) throw new Error('รูปต้องเป็น PNG, JPEG หรือ WebP ขนาดไม่เกิน 1 MiB');
+  if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || file.size > 1048576) throw new Error('รูปต้องเป็น PNG, JPEG, WebP หรือ GIF ขนาดไม่เกิน 1 MiB');
 }
 async function upload(owner, bossId, file) {
   validateImage(file);
-  const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[file.type];
+  const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' }[file.type];
   const path = `${owner}/${bossId}/${crypto.randomUUID()}.${ext}`;
   await result(bucket().upload(path, file, { contentType: file.type, upsert: false }));
   return path;

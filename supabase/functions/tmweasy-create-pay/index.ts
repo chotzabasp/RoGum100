@@ -66,6 +66,10 @@ Deno.serve(async (req) => {
 
     if (txError || !tx) {
       console.error("Create transaction failed:", txError?.message);
+      // trigger topup_rate_guard ในฐานข้อมูลจำกัดสร้าง QR ไม่เกิน 5 ครั้งต่อชั่วโมง — ส่งข้อความนี้กลับให้เข้าใจ (ไม่บังคับ deploy: หน้าเว็บเช็กก่อนอยู่แล้ว)
+      if (txError?.message?.includes("ทำรายการมากเกินไป")) {
+        return json({ ok: false, error: "คุณทำรายการมากเกินไป ติดต่อแอดมินเพื่อทำรายการ", code: "rate_limited" }, 429);
+      }
       return json({ ok: false, error: "ไม่สามารถสร้างรายการเติมเงินได้" }, 500);
     }
 

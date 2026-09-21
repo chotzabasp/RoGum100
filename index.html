@@ -1081,6 +1081,8 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .admin-grant-card input{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);color:var(--text);padding:.6rem .75rem;font-size:.9rem}
 #adminGrantFound{display:flex;flex-direction:column;gap:.6rem}
 #adminGrantFound[hidden]{display:none}
+.admin-grant-mode{margin:0}
+.admin-grant-recent{font-size:.8rem;display:flex;flex-direction:column;gap:.2rem}
 .admin-grant-member{padding:.7rem .85rem;border-radius:var(--radius-s);background:color-mix(in srgb, var(--success) 12%, transparent);border:1px solid color-mix(in srgb, var(--success) 35%, var(--border));font-size:.86rem;line-height:1.6}
 
 /* หน้า "ตั้งค่า" */
@@ -3007,6 +3009,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <div class="h-tabs">
             <button class="active" data-sthtab="topup" id="sthtabTopup">เติมแต้ม</button>
             <button data-sthtab="purchase" id="sthtabPurchase">แพ็กเกจ</button>
+            <button data-sthtab="points" id="sthtabPoints">ใช้แต้ม</button>
           </div>
           <div id="stHistTopup">
             <p class="settings-note" id="stTopupSummary"></p>
@@ -3017,6 +3020,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             <p class="settings-note" id="stPurchaseSummary"></p>
             <div id="stPurchaseList" class="settings-list"></div>
             <div class="settings-actions" id="stPurchaseMoreWrap" hidden><button type="button" class="btn btn-sm btn-ghost" id="stPurchaseMore">ดูทั้งหมด</button></div>
+          </div>
+          <div id="stHistPoints" hidden>
+            <p class="settings-note" id="stPointsSummary"></p>
+            <div id="stPointsList" class="settings-list"></div>
+            <div class="settings-actions" id="stPointsMoreWrap" hidden><button type="button" class="btn btn-sm btn-ghost" id="stPointsMore">ดูทั้งหมด</button></div>
           </div>
         </div>
       </div>
@@ -3061,6 +3069,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           </div>
           <div id="adminGrantFound" hidden>
             <div class="admin-grant-member" id="adminGrantMember"></div>
+            <div class="admin-grant-recent" id="adminGrantRecent"></div>
+            <div class="h-tabs admin-grant-mode" id="adminGrantMode">
+              <button type="button" class="active" data-grant-mode="grant">เติมแต้ม</button>
+              <button type="button" data-grant-mode="deduct">หักแต้ม</button>
+            </div>
             <input id="adminGrantPoints" type="text" inputmode="numeric" autocomplete="off" placeholder="จำนวนแต้ม (1 บาท = 1 แต้ม)">
             <input id="adminGrantNote" type="text" maxlength="200" autocomplete="off" placeholder="หมายเหตุ (จำเป็น) เช่น โอนผ่านเพจ FB วันที่ 21 ก.ย. 500 บาท">
             <button type="button" class="btn btn-primary" id="adminGrantSubmit">เติมแต้ม</button>
@@ -8960,7 +8973,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         'ดูจำนวนและมูลค่าไอเทมคงเหลือ',
         'แยกดูข้อมูลตามเซิร์ฟเวอร์ในอดีตได้'
       ] },
-    { key:'bundle', name:'3 in 1', monthly:199, yearly:990, promoMonthly:99, promoYearly:990, badge:'ยอดนิยม',
+    { key:'bundle', name:'3 in 1', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'ยอดนิยม',
       tagline:'คุ้มสุดสำหรับบัญชีนักลงทุน คลังไอเทม และยอดฟาร์มครบทั้ง 3 ระบบ',
       features:[
         'บันทึกซื้อ–ขาย M และไอเทม พร้อมคำนวณกำไรสุทธิ',
@@ -8972,7 +8985,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         'ดูสรุปรายวัน / รายสัปดาห์ / รายเดือน',
         'แยกดูข้อมูลและประวัติตามเซิร์ฟเวอร์ในอดีตได้'
       ] },
-    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:990, promoMonthly:99, promoYearly:990, badge:'สายล่าบอส',
+    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'สายล่าบอส',
       tagline:'เหมาะสำหรับสายล่าบอสโดยเฉพาะ',
       features:[
         'จับเวลาบอสได้ไม่จำกัดจำนวน',
@@ -9129,13 +9142,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   var fmtFullDate = function(v){ return new Date(v).toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' }); };
   var TOPUP_STATUS = {
     credited:['สำเร็จ','ok'],
+    reversed:['ยกเลิกแล้ว','expired'],
     pending:['รอชำระ','soon'],
     expired:['หมดอายุ','expired'],
     failed:['ไม่สำเร็จ','expired'],
     manual_review:['รอตรวจสอบ','soon']
   };
   var HIST_PAGE = 5;
-  var stHistExpanded = { topup:false, purchase:false };
+  var stHistExpanded = { topup:false, purchase:false, points:false };
   // Display only: derive package rows from existing entitlement expiries.
   function settingsPackageRows(profile, now){
     var p=profile||{}, scoped=p.feature_expiries||{};
@@ -9194,6 +9208,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     updateServersSummary();
     loadTopupHistory();
     loadPurchaseHistory();
+    loadPointsHistory();
   }
   // ---------- เซิร์ฟเวอร์ที่เล่น: ชิปเลือกได้หลายอัน ใช้ทั้ง popup ตอนสมัคร/ล็อกอินครั้งแรก และหน้าตั้งค่า ----------
   // ปิดให้บริการแล้ว = ไม่โชว์เป็นตัวเลือกใหม่ แต่ถ้าบัญชีนี้มีอยู่แล้วต้องยังเห็น/เอาออกเองได้
@@ -9314,21 +9329,54 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         }
       });
   }
+  // ประวัติการใช้แต้ม: ทุกครั้งที่แต้มเปลี่ยน (เติม/ซื้อแพ็กเกจ/ที่นั่งปาร์ตี้/ช่องเซิร์ฟเวอร์/ลงประกาศ/แอดมินปรับ) ฐานข้อมูลบันทึกให้เอง
+  var POINTS_REASON = {
+    topup:'เติมแต้ม (QR PromptPay)', slip_topup:'เติมแต้ม (สลิป)', admin_confirm_topup:'เติมแต้ม (แอดมินยืนยันรับเงิน)',
+    admin_grant:'แอดมินเติมแต้มให้', admin_reverse:'แอดมินยกเลิกรายการเติมเงิน', admin_deduct:'แอดมินหักแต้ม',
+    plan_purchase:'ซื้อแพ็กเกจ', server_slot:'ซื้อช่องเซิร์ฟเวอร์เพิ่ม', party_slot:'เพิ่มสมาชิกปาร์ตี้',
+    announcement:'ลงประกาศรับ M', spend:'ใช้แต้ม', other:'ปรับแต้ม'
+  };
+  function loadPointsHistory(){
+    var root = document.getElementById('stPointsList'), sum = document.getElementById('stPointsSummary'), moreWrap = document.getElementById('stPointsMoreWrap');
+    root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = ''; moreWrap.hidden = true;
+    if(!App.session || !App.session.id){ root.innerHTML = '<p class="admin-topup-empty">กรุณาเข้าสู่ระบบ</p>'; return; }
+    supa.from('points_ledger').select('id, delta, balance_after, reason, created_at')
+      .eq('user_id', App.session.id).order('created_at', { ascending:false }).limit(200).then(function(res){
+        if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
+        var rows = res.data || [];
+        if(!rows.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่มีรายการเปลี่ยนแปลงแต้ม (เริ่มบันทึกตั้งแต่เปิดระบบนี้)</p>'; return; }
+        sum.textContent = 'รายการล่าสุด '+fmtNum(rows.length)+' รายการ · แต้มคงเหลือหลังรายการล่าสุด '+fmtNum(rows[0].balance_after)+' แต้ม';
+        var shown = stHistExpanded.points ? rows : rows.slice(0, HIST_PAGE);
+        root.innerHTML = shown.map(function(r){
+          var plus = r.delta > 0;
+          return '<div class="settings-row"><div class="settings-row-main">'+
+            '<div class="settings-row-title">'+escapeHtml(POINTS_REASON[r.reason] || POINTS_REASON.other)+'</div>'+
+            '<div class="settings-row-meta">'+fmtDateTime(new Date(r.created_at).getTime())+' · คงเหลือ '+fmtNum(r.balance_after)+' แต้ม</div></div>'+
+            '<b class="settings-row-amt" style="color:var(--'+(plus?'success':'danger')+')">'+(plus?'+':'')+fmtNum(r.delta)+' แต้ม</b></div>';
+        }).join('');
+        if(rows.length > HIST_PAGE){
+          moreWrap.hidden = false;
+          document.getElementById('stPointsMore').textContent = stHistExpanded.points ? 'ย่อ' : 'ดูทั้งหมด ('+rows.length+')';
+        }
+      });
+  }
   document.getElementById('stTopupMore').addEventListener('click', function(){ stHistExpanded.topup = !stHistExpanded.topup; loadTopupHistory(); });
   document.getElementById('stPurchaseMore').addEventListener('click', function(){ stHistExpanded.purchase = !stHistExpanded.purchase; loadPurchaseHistory(); });
-  document.getElementById('sthtabTopup').addEventListener('click', function(){
-    document.getElementById('stHistoryTitle').textContent = 'ประวัติการเติมแต้ม';
-    document.getElementById('sthtabTopup').className = 'active';
-    document.getElementById('sthtabPurchase').className = '';
-    document.getElementById('stHistTopup').hidden = false;
-    document.getElementById('stHistPurchase').hidden = true;
-  });
-  document.getElementById('sthtabPurchase').addEventListener('click', function(){
-    document.getElementById('stHistoryTitle').textContent = 'ประวัติการซื้อแพ็กเกจ';
-    document.getElementById('sthtabPurchase').className = 'active';
-    document.getElementById('sthtabTopup').className = '';
-    document.getElementById('stHistPurchase').hidden = false;
-    document.getElementById('stHistTopup').hidden = true;
+  document.getElementById('stPointsMore').addEventListener('click', function(){ stHistExpanded.points = !stHistExpanded.points; loadPointsHistory(); });
+  var ST_HIST_TABS = {
+    topup:['ประวัติการเติมแต้ม','sthtabTopup','stHistTopup'],
+    purchase:['ประวัติการซื้อแพ็กเกจ','sthtabPurchase','stHistPurchase'],
+    points:['ประวัติการใช้แต้ม','sthtabPoints','stHistPoints']
+  };
+  function setStHistTab(tab){
+    document.getElementById('stHistoryTitle').textContent = ST_HIST_TABS[tab][0];
+    Object.keys(ST_HIST_TABS).forEach(function(k){
+      document.getElementById(ST_HIST_TABS[k][1]).className = k===tab ? 'active' : '';
+      document.getElementById(ST_HIST_TABS[k][2]).hidden = k!==tab;
+    });
+  }
+  Object.keys(ST_HIST_TABS).forEach(function(k){
+    document.getElementById(ST_HIST_TABS[k][1]).addEventListener('click', function(){ setStHistTab(k); });
   });
   var settingsBusy = false;
   // ต้องขึ้นต้นด้วย facebook.com หรือ fb.com เท่านั้น (มี/ไม่มี http(s):// หรือ www./m. นำหน้าก็ได้)
@@ -9697,7 +9745,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(!Number.isSafeInteger(topupAmount) || topupAmount<TOPUP_MIN_AMOUNT){ updateTopupPreview(); return; }
     topupBusy=true; resetTopupQrPanel();
     button.disabled=true; button.textContent='กำลังสร้าง QR...';
-    supa.functions.invoke('tmweasy-create-pay',{body:{amount:topupAmount,amount_baht:topupAmount}}).then(function(res){
+    // สร้าง QR ได้ไม่เกิน 5 ครั้งต่อชั่วโมง (ฐานข้อมูลบังคับจริง) — เช็กก่อนตรงนี้เพื่อขึ้นข้อความให้เข้าใจ
+    // ถ้าเช็กไม่ได้ (เช่นฟังก์ชันยังไม่ถูกสร้าง) ปล่อยผ่านไปให้ฐานข้อมูลตัดสินเอง
+    supa.rpc('topup_attempts_left').then(function(lim){
+      if(!lim.error && typeof lim.data==='number' && lim.data<=0){ var limitErr = new Error('TOPUP_LIMIT'); limitErr.limit = true; throw limitErr; }
+      return supa.functions.invoke('tmweasy-create-pay',{body:{amount:topupAmount,amount_baht:topupAmount}});
+    }).then(function(res){
       if(res.error) throw res.error;
       if(res.data && (res.data.status===0 || res.data.success===false)) throw new Error(res.data.msg||res.data.message||'สร้างรายการชำระเงินไม่สำเร็จ');
       var result=readTopupCreateResult(res.data), src=topupQrSource(result.qr);
@@ -9713,6 +9766,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       startTopupQrWatch();
     }).catch(function(err){
       button.disabled=false; button.textContent='สร้าง QR PromptPay';
+      if(err && err.limit){ showConfirm('<b>คุณทำรายการมากเกินไป</b><br>ติดต่อแอดมินเพื่อทำรายการ', function(){}); return; }
       toast('สร้าง QR ไม่สำเร็จ: '+(err.message||err));
       console.error('tmweasy-create-pay',err);
     }).finally(function(){ topupBusy=false; });
@@ -9803,13 +9857,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // ---------- แอดมิน: จัดการเติมเงิน (รายการ QR + เติมแต้มให้สมาชิกโดยตรง) ----------
   // ทุกการกระทำทำที่ฐานข้อมูลผ่านฟังก์ชัน admin_* (ตรวจสิทธิ์แอดมิน + ล็อกแถว + เติมครั้งเดียว) หน้านี้เป็นแค่ตัวสั่งงาน
   var ADMIN_TOPUP_STATUS = {
-    credited:['สำเร็จ','ok'], pending:['รอชำระ','soon'], paid:['ชำระแล้ว รอเติมแต้ม','soon'],
+    credited:['สำเร็จ','ok'], reversed:['ยกเลิกแล้ว','expired'], pending:['รอชำระ','soon'], paid:['ชำระแล้ว รอเติมแต้ม','soon'],
     manual_review:['รอตรวจสอบ','soon'], expired:['หมดอายุ / ปิดแล้ว','expired'], failed:['ไม่สำเร็จ','expired']
   };
   // ช่องกรอง: "ต้องดำเนินการ" = รายการที่ยังรออยู่ (รอชำระ/ชำระแล้วรอเติม/รอตรวจสอบ) — เปิดหน้ามาเจอช่องนี้ก่อน
-  var ADMIN_QR_FILTERS = [['attention','ต้องดำเนินการ'],['all','ทั้งหมด'],['pending','รอชำระ'],['manual_review','รอตรวจสอบ'],['credited','สำเร็จ'],['manual','แอดมินเติมให้'],['expired','หมดอายุ / ปิดแล้ว'],['failed','ไม่สำเร็จ']];
+  var ADMIN_QR_FILTERS = [['attention','ต้องดำเนินการ'],['all','ทั้งหมด'],['pending','รอชำระ'],['manual_review','รอตรวจสอบ'],['credited','สำเร็จ'],['manual','แอดมินเติมให้'],['reversed','ยกเลิกแล้ว'],['expired','หมดอายุ / ปิดแล้ว'],['failed','ไม่สำเร็จ']];
   var ADMIN_QR_PAGE = 50;
-  var ADMIN_QR_COLS = 'id, provider, ref1, provider_payment_id, requested_amount, received_amount, points, status, created_at, credited_at, manual:provider_payload->manual, profiles!user_id(display_name)';
+  var ADMIN_QR_COLS = 'id, provider, ref1, provider_payment_id, requested_amount, received_amount, points, status, created_at, credited_at, profiles!user_id(display_name)';
   var adminBadgeState = { qr:0, slip:0 };
   var adminQrRows = [], adminQrTotal = 0, adminQrCounts = {}, adminQrFilter = 'attention', adminQrTerm = '', adminQrRange = 'all';
   var adminQrBusy = false, adminQrSeq = 0, adminQrSearchTimer = null;
@@ -9844,11 +9898,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var notes = '';
     if(!isManual && recv!=null && recv!==req) notes += '<div class="admin-topup-meta admin-topup-warn">TMWEASY แจ้งรับเงินจริง '+fmtNum(recv)+' บาท ไม่ตรงกับยอดที่ขอ '+fmtNum(req)+' บาท</div>';
     if(m){
-      var act = m.action==='grant' ? 'แอดมินเติมแต้มให้โดยตรง' : (m.action==='confirm' ? 'ยืนยันรับเงินโดยแอดมิน' : 'ปิดรายการโดยแอดมิน');
+      var act = ({grant:'แอดมินเติมแต้มให้โดยตรง', confirm:'ยืนยันรับเงินโดยแอดมิน', close:'ปิดรายการโดยแอดมิน', reverse:'ยกเลิกรายการโดยแอดมิน (หักแต้มคืน)'})[m.action] || 'แอดมินดำเนินการ';
       notes += '<div class="admin-topup-meta">'+act+' • '+fmtDateTime(new Date(m.at).getTime())+(m.note ? ' • หมายเหตุ: '+escapeHtml(m.note) : '')+'</div>';
     } else if(r.status==='credited' && r.credited_at){
       notes += '<div class="admin-topup-meta">เติมแต้มอัตโนมัติ • '+fmtDateTime(new Date(r.credited_at).getTime())+'</div>';
     }
+    var canReverse = r.status==='credited';
     var canConfirm = !isManual && ['pending','paid','manual_review','expired','failed'].indexOf(r.status)!==-1;
     var canClose = !isManual && (r.status==='pending' || r.status==='manual_review');
     return '<div class="admin-topup-row" data-tx-id="'+escapeHtml(r.id)+'">'+
@@ -9858,7 +9913,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         (refs ? '<div class="admin-topup-meta">'+escapeHtml(refs)+'</div>' : '')+
         notes+
       '</div>'+
-      ((canConfirm || canClose) ? '<div class="admin-topup-actions">'+
+      ((canConfirm || canClose || canReverse) ? '<div class="admin-topup-actions">'+
+        (canReverse ? '<button type="button" class="btn btn-ghost" data-admin-qr-act="reverse">ยกเลิกรายการ</button>' : '')+
         (canClose ? '<button type="button" class="btn btn-ghost" data-admin-qr-act="close">ปิดรายการ</button>' : '')+
         (canConfirm ? '<button type="button" class="btn btn-primary" data-admin-qr-act="confirm">ยืนยันรับเงิน</button>' : '')+
       '</div>' : '')+
@@ -9932,17 +9988,33 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       if(seq !== adminQrSeq) return;
       var res = rs[0];
       if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
-      adminQrRows = append ? adminQrRows.concat(res.data || []) : (res.data || []);
+      var fresh = res.data || [];
+      adminQrRows = append ? adminQrRows.concat(fresh) : fresh;
       adminQrTotal = res.count!=null ? res.count : adminQrRows.length;
       if(rs[1]){ adminQrCounts = {}; ADMIN_QR_FILTERS.forEach(function(f, i){ adminQrCounts[f[0]] = rs[1][i]; }); }
       paintAdminQr();
+      adminQrAttachLogs(fresh);
     }).catch(function(err){
       if(seq === adminQrSeq) root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(err && err.message || err)+'</p>';
     });
   }
-  function runAdminQrAction(fn, id, onDone){
+  // บันทึกของแอดมิน (ใครทำอะไรกับรายการนี้ + หมายเหตุ) เก็บในตาราง topup_admin_log ที่สมาชิกอ่านไม่ได้ — ดึงมาแปะทีหลังรายการวาดเสร็จแล้ว
+  function adminQrAttachLogs(rows){
+    var ids = rows.map(function(r){ return r.id; });
+    if(!ids.length) return;
+    var seq = adminQrSeq;
+    supa.from('topup_admin_log').select('transaction_id, action, points, note, created_at').in('transaction_id', ids)
+      .order('created_at', { ascending:true }).then(function(res){
+        if(res.error || seq !== adminQrSeq) return;   // ยังไม่มีตาราง/รอบเก่าไปแล้ว → แสดงต่อโดยไม่มีบันทึก
+        var byTx = {};
+        (res.data || []).forEach(function(l){ byTx[l.transaction_id] = { action:l.action, points:l.points, note:l.note, at:l.created_at }; });
+        rows.forEach(function(r){ r.manual = byTx[r.id] || null; });
+        paintAdminQr();
+      });
+  }
+  function runAdminQrAction(fn, id, onDone, note){
     adminQrBusy = true;
-    supa.rpc(fn, { p_transaction_id: id, p_note: null }).then(function(res){
+    supa.rpc(fn, { p_transaction_id: id, p_note: note==null ? null : note }).then(function(res){
       adminQrBusy = false;
       if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); loadAdminQr(); return; }
       onDone(res);
@@ -9987,7 +10059,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(!r) return;
     var name = (r.profiles && r.profiles.display_name) || 'ไม่ทราบชื่อ';
     var req = Number(r.requested_amount), recv = r.received_amount!=null ? Number(r.received_amount) : null;
-    if(btn.dataset.adminQrAct==='confirm'){
+    if(btn.dataset.adminQrAct==='reverse'){
+      showConfirm('<b>ยกเลิกรายการเติมเงิน</b> ของ "'+escapeHtml(name)+'" ยอด '+fmtNum(req)+' บาท?<br>จะ <b>หัก '+fmtNum(adminQrPoints(r))+' แต้ม</b> ออกจากสมาชิก (ถ้าสมาชิกใช้แต้มไปแล้วจนไม่พอ ระบบจะไม่ยอมหัก)<br>'+
+        '<input type="text" id="adminReverseNote" maxlength="200" autocomplete="off" placeholder="หมายเหตุ (จำเป็น) เช่น โอนผิดยอด คืนเงินลูกค้าแล้ว" style="width:100%;margin-top:.7rem;padding:.55rem .7rem;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text)">', function(){
+        var note = ((document.getElementById('adminReverseNote') || {}).value || '').trim();
+        if(note.length < 3){ toast('ต้องใส่หมายเหตุอย่างน้อย 3 ตัวอักษร กด "ยกเลิกรายการ" อีกครั้ง'); return; }
+        runAdminQrAction('admin_reverse_topup', id, function(res){ toast('ยกเลิกรายการแล้ว หัก '+fmtNum(res.data.points)+' แต้ม'); }, note);
+      });
+    } else if(btn.dataset.adminQrAct==='confirm'){
       showConfirm('<b>ยืนยันรับเงิน</b> รายการของ "'+escapeHtml(name)+'"?<br>ยอดที่ขอ '+fmtNum(req)+' บาท'+(recv!=null && recv!==req ? '<br>ยอดที่ TMWEASY แจ้งรับจริง '+fmtNum(recv)+' บาท' : '')+
         '<br>จะเติมให้ <b>'+fmtNum(adminQrPoints(r))+' แต้ม</b><br><small>กดเฉพาะเมื่อตรวจยอดโอนเข้าบัญชีจริงแล้วเท่านั้น รายการหนึ่งเติมแต้มได้ครั้งเดียว</small>', function(){
         runAdminQrAction('admin_confirm_topup', id, function(res){ toast('เติม '+fmtNum(res.data.points)+' แต้มให้ '+name+' แล้ว'); });
@@ -10014,8 +10093,37 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       document.getElementById('adminGrantPoints').value = '';
       document.getElementById('adminGrantNote').value = '';
       found.hidden = false;
+      adminGrantSetMode('grant');
+      adminGrantLoadRecent(res.data.id);
     }).catch(function(err){ adminGrantBusy = false; toast('ค้นหาไม่สำเร็จ: '+(err && err.message || err)); });
   }
+  // โหมด "เติมแต้ม / หักแต้ม" และประวัติแต้มล่าสุดของสมาชิกที่เจอ (ไว้ตอบลูกค้าที่ถามว่าแต้มหายไปไหน)
+  var adminGrantMode = 'grant';
+  function adminGrantSetMode(mode){
+    adminGrantMode = mode;
+    document.querySelectorAll('#adminGrantMode button').forEach(function(b){ b.classList.toggle('active', b.dataset.grantMode===mode); });
+    document.getElementById('adminGrantSubmit').textContent = mode==='deduct' ? 'หักแต้ม' : 'เติมแต้ม';
+    document.getElementById('adminGrantPoints').placeholder = mode==='deduct' ? 'จำนวนแต้มที่จะหัก' : 'จำนวนแต้ม (1 บาท = 1 แต้ม)';
+  }
+  function adminGrantLoadRecent(userId){
+    var box = document.getElementById('adminGrantRecent');
+    box.innerHTML = '<div class="admin-topup-meta">กำลังโหลดความเคลื่อนไหวแต้ม...</div>';
+    supa.from('points_ledger').select('delta, balance_after, reason, created_at').eq('user_id', userId)
+      .order('created_at', { ascending:false }).limit(8).then(function(res){
+        if(!adminGrantTarget || adminGrantTarget.id !== userId) return;
+        if(res.error){ box.innerHTML = ''; return; }
+        var rows = res.data || [];
+        box.innerHTML = rows.length
+          ? '<div class="admin-topup-meta"><b>ความเคลื่อนไหวแต้มล่าสุด</b></div>'+rows.map(function(r){
+              return '<div class="admin-topup-meta">'+fmtDateTime(new Date(r.created_at).getTime())+' · '+escapeHtml(POINTS_REASON[r.reason] || POINTS_REASON.other)+' · <b style="color:var(--'+(r.delta>0 ? 'success' : 'danger')+')">'+(r.delta>0 ? '+' : '')+fmtNum(r.delta)+'</b> (คงเหลือ '+fmtNum(r.balance_after)+')</div>';
+            }).join('')
+          : '<div class="admin-topup-meta">ยังไม่มีบันทึกความเคลื่อนไหวแต้ม</div>';
+      });
+  }
+  document.getElementById('adminGrantMode').addEventListener('click', function(e){
+    var b = e.target.closest('[data-grant-mode]');
+    if(b) adminGrantSetMode(b.dataset.grantMode);
+  });
   document.getElementById('adminGrantFind').addEventListener('click', adminGrantFind);
   document.getElementById('adminGrantIdent').addEventListener('keydown', function(e){ if(e.key==='Enter') adminGrantFind(); });
   // แก้ช่องค้นหาแล้ว ต้องค้นใหม่ก่อนถึงจะเติมได้ (กันเติมผิดคน)
@@ -10030,12 +10138,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(!(pts>=1 && pts<=100000)){ toast('จำนวนแต้มต้องเป็นเลขจำนวนเต็ม 1 - 100,000'); return; }
     if(note.length < 3){ toast('กรุณาใส่หมายเหตุอย่างน้อย 3 ตัวอักษร'); return; }
     var t = adminGrantTarget;
-    showConfirm('เติม <b>'+fmtNum(pts)+' แต้ม</b> ให้<br><b>'+escapeHtml(t.display_name||'-')+'</b> (@'+escapeHtml(t.username||'-')+') ?<br><small>หมายเหตุ: '+escapeHtml(note)+'<br>เติมแล้วยกเลิกย้อนหลังในหน้านี้ไม่ได้ ตรวจยอดโอนให้ตรงก่อนกดยืนยัน</small>', function(){
+    var deduct = adminGrantMode==='deduct';
+    showConfirm((deduct ? 'หัก' : 'เติม')+' <b>'+fmtNum(pts)+' แต้ม</b> '+(deduct ? 'ออกจาก' : 'ให้')+'<br><b>'+escapeHtml(t.display_name||'-')+'</b> (@'+escapeHtml(t.username||'-')+') ?<br><small>หมายเหตุ: '+escapeHtml(note)+'<br>'+(deduct ? 'ตรวจให้แน่ใจก่อนหักแต้มของสมาชิก (หักได้ไม่เกินแต้มคงเหลือ)' : 'เติมผิดแก้ได้ด้วยการหักแต้มภายหลัง แต่ตรวจยอดโอนให้ตรงก่อนกดยืนยัน')+'</small>', function(){
       adminGrantBusy = true;
-      supa.rpc('admin_grant_points', { p_user_id: t.id, p_points: pts, p_note: note }).then(function(res){
+      supa.rpc(deduct ? 'admin_deduct_points' : 'admin_grant_points', { p_user_id: t.id, p_points: pts, p_note: note }).then(function(res){
         adminGrantBusy = false;
         if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
-        toast('เติม '+fmtNum(res.data.points)+' แต้มให้ '+(t.display_name||'สมาชิก')+' แล้ว (คงเหลือ '+fmtNum(res.data.balance)+')');
+        toast((deduct ? 'หัก ' : 'เติม ')+fmtNum(res.data.points)+' แต้ม'+(deduct ? 'จาก ' : 'ให้ ')+(t.display_name||'สมาชิก')+' แล้ว (คงเหลือ '+fmtNum(res.data.balance)+')');
         adminGrantTarget = null;
         document.getElementById('adminGrantFound').hidden = true;
         document.getElementById('adminGrantIdent').value = '';

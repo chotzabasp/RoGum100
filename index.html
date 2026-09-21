@@ -4931,7 +4931,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var plan = rows[0] || {name:'ฟรี',expiry:0};
     // บัญชีรุ่นเดิมที่ยังมีวันหมดอายุรวม แต่ไม่มีข้อมูลแพ็กเกจแยก
     var legacyExpiry = new Date((profile && profile.expires_at)||0).getTime() || 0;
-    if(!plan.expiry && legacyExpiry > now) plan = {name:'แพ็กเกจสมาชิก',expiry:legacyExpiry};
+    if(!plan.expiry && legacyExpiry > now && !isNoExpiry(legacyExpiry)) plan = {name:'แพ็กเกจสมาชิก',expiry:legacyExpiry};
     if(!plan.expiry && profile && (profile.role==='admin' || profile.legacy_unlimited)) plan = {name:'4 in 1 — ครบทั้ง 4 ระบบ',expiry:0};
     return plan;
   }
@@ -5029,7 +5029,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
     list.innerHTML = entries.map(function(l){
       return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body">'+
-        '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+l.killedBy : '')+killServerTagHtml(l)+'</div>'+
+        '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+escapeHtml(l.killedBy) : '')+killServerTagHtml(l)+'</div>'+
           '<button type="button" class="hist-del" data-del-kill="'+l.id+'" title="ลบรายการนี้">✕</button></div>'+
         '<div class="boss">'+escapeHtml(l.bossName)+'</div>'+
         '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+itemIconHtml(it.name,'item-ic')+escapeHtml(it.name)+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div></div>';
@@ -5097,7 +5097,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     // ยอดขายเลยไม่มีวันเข้า "ส่วนแบ่งของฉัน" ได้เลยเพราะ sharedWith ว่างตลอด
     var shareHtml = roster.length > 0 ? '<div class="loot-line"><span class="loot-lbl">หาร</span>'+roster.map(function(p){
         var on = it.sharedWith.indexOf(p.id)!==-1;
-        return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'">'+(on?'✓ ':'')+p.name+'</button>';
+        return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'">'+(on?'✓ ':'')+escapeHtml(p.name)+'</button>';
       }).join('')+'</div>' : '';
     var soldHtml;
     if(it.soldAmount!=null && lootEditing!==it.id){
@@ -5130,7 +5130,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     return '<div class="log-row loot-row">'+historyAvatarHtml(k.bossId, k.bossName)+'<div class="log-body">'+
       '<div class="loot-head"><div class="boss">'+itemIconHtml(it.name,'item-ic item-ic-lg')+escapeHtml(it.name)+'</div>'+
         '<div class="loot-head-r">'+pill+action+'<button type="button" class="hist-del" data-del-item="'+it.id+'" title="ลบไอเทมนี้">✕</button></div></div>'+
-      '<div class="when">'+escapeHtml(k.bossName)+' · '+fmtDateTime(k.ts)+(k.killedBy ? ' · '+k.killedBy : '')+killServerTagHtml(k)+'</div>'+
+      '<div class="when">'+escapeHtml(k.bossName)+' · '+fmtDateTime(k.ts)+(k.killedBy ? ' · '+escapeHtml(k.killedBy) : '')+killServerTagHtml(k)+'</div>'+
       bodyHtml+
     '</div></div>';
   }
@@ -5386,8 +5386,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var countdown = a.expiresAt!=null ? '<span class="ticker-countdown" data-expires-at="'+a.expiresAt+'">'+fmtDuration(a.expiresAt-now)+'</span>' : '';
       // มีลิงก์ Facebook แนบมากับประกาศ (จำสำเนาไว้ตอนลงประกาศ) ให้กดชื่อแล้วไปหน้านั้นได้เลย
       var posterHtml = a.facebookUrl
-        ? '<a class="poster" href="'+escapeHtml(/^https?:\/\//i.test(a.facebookUrl) ? a.facebookUrl : 'https://'+a.facebookUrl)+'" target="_blank" rel="noopener noreferrer">('+a.userName+')</a>'
-        : '<span class="poster">('+a.userName+')</span>';
+        ? '<a class="poster" href="'+escapeHtml(/^https?:\/\//i.test(a.facebookUrl) ? a.facebookUrl : 'https://'+a.facebookUrl)+'" target="_blank" rel="noopener noreferrer">('+escapeHtml(a.userName)+')</a>'
+        : '<span class="poster">('+escapeHtml(a.userName)+')</span>';
       return '<span class="ticker-item" data-announce-id="'+a.id+'">'+
         '<span class="ticker-item-main">'+(sv?sv.name:a.serverId)+' '+posterHtml+'</span>'+
         '<span class="ticker-item-sub">'+parts.join(' / ')+countdown+'</span>'+
@@ -6012,8 +6012,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         var qtySuffix = r.qty>1 ? ' x'+r.qty : '';
         var rareUnit = (r.currency||'zeny')==='baht' ? 'บ' : 'z';
         return r.price
-          ? '<span class="farm-rare-tag sold">🎁 '+r.name+qtySuffix+' +'+fmtNum(r.price*r.qty)+' '+rareUnit+'</span>'
-          : '<span class="farm-rare-tag pending">🎁 '+r.name+qtySuffix+' (รอขาย)</span>';
+          ? '<span class="farm-rare-tag sold">🎁 '+escapeHtml(r.name)+qtySuffix+' +'+fmtNum(r.price*r.qty)+' '+rareUnit+'</span>'
+          : '<span class="farm-rare-tag pending">🎁 '+escapeHtml(r.name)+qtySuffix+' (รอขาย)</span>';
       }).join('');
       var displayIndex = farmHistoryPage*FARM_HISTORY_PAGE_SIZE + pageIndex;
       return '<div class="mr-entry farm-history-entry farm-history-alt-'+(displayIndex%2===0?'odd':'even')+(e.id===editingFarmId?' editing':'')+'" data-farm-entry-id="'+e.id+'">'+
@@ -6069,7 +6069,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         } else {
           valText = fmtNum(lineTotal)+' z';
         }
-        return '<div class="ct-row"><span class="ct-key">'+(it.name||'-')+'</span><span class="ct-val">'+valText+'</span></div>';
+        return '<div class="ct-row"><span class="ct-key">'+escapeHtml(it.name||'-')+'</span><span class="ct-val">'+valText+'</span></div>';
       }).join('');
       if(entry.exchangeRate){
         rows += '<div class="ct-row"><span class="ct-key" style="color:var(--text-dim)">เรทที่ใช้ตอนนั้น</span><span class="ct-val" style="color:var(--text-dim)">1M = '+fmtNum(entry.exchangeRate)+'บ</span></div>';
@@ -6101,7 +6101,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         var rareValText = isRareBaht
           ? '+'+fmtNum(rareTotal)+' บ'+(hasRate ? ' (= '+fmtNum(farmBahtToZeny(rareTotal, entry.exchangeRate))+' z)' : '')
           : '+'+fmtNum(rareTotal)+' z'+bahtSuffix(rareTotal);
-        rows += '<div class="ct-row"><span class="ct-key">🎁 '+r.name+(r.qty>1?' x'+r.qty:'')+'</span><span class="ct-val" style="color:var(--success)">'+rareValText+'</span></div>';
+        rows += '<div class="ct-row"><span class="ct-key">🎁 '+escapeHtml(r.name)+(r.qty>1?' x'+r.qty:'')+'</span><span class="ct-val" style="color:var(--success)">'+rareValText+'</span></div>';
       });
       rows += '<div class="ct-row"><span class="ct-key">ต้นทุน</span><span class="ct-val" style="color:var(--danger)">-'+fmtNum(entry.cost)+' z'+bahtSuffix(entry.cost)+'</span></div>';
       if(hasRate){
@@ -6548,17 +6548,18 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   function itemNameWithSlots(name, slots){
     var hasSlots = slots && slots.length;
-    if(!hasSlots) return '<span class="mr-item-name">'+name+'</span>';
+    var safeName = escapeHtml(name);
+    if(!hasSlots) return '<span class="mr-item-name">'+safeName+'</span>';
     var parts = [];
     slots.forEach(function(s){
       String(s).split(',').forEach(function(p){
         p = p.trim();
-        if(p) parts.push(p);
+        if(p) parts.push(escapeHtml(p));
       });
     });
-    if(!parts.length) return '<span class="mr-item-name">'+name+'</span>';
+    if(!parts.length) return '<span class="mr-item-name">'+safeName+'</span>';
     var slotStr = '| '+parts.join(' | ')+' |';
-    return '<span class="mr-item-name-slots"><span class="mr-item-name">'+name+'</span><span class="mr-item-slots-inline"> : '+slotStr+'</span></span>';
+    return '<span class="mr-item-name-slots"><span class="mr-item-name">'+safeName+'</span><span class="mr-item-slots-inline"> : '+slotStr+'</span></span>';
   }
 
   function renderItemRows(){
@@ -7626,6 +7627,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       if(!server){ errEl.textContent = 'เลือกเซิร์ฟเวอร์ที่เล่นก่อน'; return; }
       if(!name || !username || !email || !pass || !pass2 || !birth){ errEl.textContent = 'กรอกข้อมูลให้ครบทุกช่อง'; return; }
       if(!USERNAME_RE.test(username)){ errEl.textContent = 'Username ใช้ได้เฉพาะ a-z 0-9 _ . ยาว 3-20 ตัว'; return; }
+      if(/[<>]/.test(name)){ errEl.textContent = 'ชื่อที่ใช้แสดงห้ามมีเครื่องหมาย < หรือ >'; return; }
       if(pass.length < 6){ errEl.textContent = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'; return; }
       if(pass !== pass2){ errEl.textContent = 'รหัสผ่านทั้งสองช่องไม่ตรงกัน'; return; }
       var bErr = birthDateError(birth);
@@ -8919,10 +8921,22 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   ];
   var pricingCycle = 'monthly';
 
-  // Set one confirmed deadline, including timezone, e.g. '2026-10-01T23:59:59+07:00'.
-  // Display only: expiration does not change package prices or purchase behavior.
+  // วันสิ้นสุดโปร (ระบุเขตเวลา) — หลังจากนี้หน้าเว็บแสดงราคาปกติ และเซิร์ฟเวอร์ (buy_plan → promo_active) หักราคาปกติ
+  // ฝั่งเซิร์ฟเวอร์ตั้งให้สิ้นสุดช้ากว่านี้ 5 นาที กันนาฬิกาเครื่องผู้ใช้เร็วกว่าแล้วโดนหักแพงกว่าราคาที่เห็น
+  // ถ้าจะเลื่อนวันโปร ต้องแก้ทั้งค่านี้และฟังก์ชัน promo_active ในฐานข้อมูลให้ตรงกัน
   var PROMO_END_AT = '2026-10-31T23:59:59+07:00';
+  function isPromoActive(){
+    var end = PROMO_END_AT ? Date.parse(PROMO_END_AT) : NaN;
+    return Number.isFinite(end) ? Date.now() <= end : true;
+  }
+  var promoWasActive = null;
   function updatePricingPromoCountdown(){
+    var promoActive = isPromoActive();
+    var promoBanner = document.querySelector('#view-pricing .pricing-promo-banner');
+    if(promoBanner) promoBanner.style.display = promoActive ? '' : 'none';
+    // โปรหมดตอนเปิดหน้านี้ค้างอยู่ → วาดการ์ดราคาใหม่เป็นราคาปกติทันที
+    if(promoWasActive !== null && promoWasActive !== promoActive) renderPricingPage();
+    promoWasActive = promoActive;
     var status = document.getElementById('pricingPromoStatus');
     var digits = document.getElementById('pricingPromoDigits');
     var end = PROMO_END_AT ? Date.parse(PROMO_END_AT) : NaN;
@@ -8959,7 +8973,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         ctaHtml = '<button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>เริ่มใช้ฟรี</button>';
       } else {
         var original = monthly ? p.monthly : (p.yearly == null ? p.displayYearly : p.yearly);
-        var price = monthly ? p.promoMonthly : (p.yearly == null ? p.displayPromoYearly : p.promoYearly);
+        var price = isPromoActive() ? (monthly ? p.promoMonthly : (p.yearly == null ? p.displayPromoYearly : p.promoYearly)) : original;
         var perDay = price / (monthly ? 30 : 365);
         priceHtml = (original > price ? '<div class="pricing-card-price"><span class="pricing-original">'+fmtNum(original)+' บ'+unit+'</span><span class="pricing-promo-badge">ลด 50%</span></div>' : '')+
           '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
@@ -9094,7 +9108,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.getElementById('stUsername').textContent = p.username || '-';
     document.getElementById('stEmail').textContent = App.session ? App.session.email : '-';
     document.getElementById('stBirth').textContent = p.birth_date ? fmtFullDate(p.birth_date+'T00:00:00') : 'ยังไม่ได้กรอก';
-    document.getElementById('stExpires').textContent = p.expires_at ? fmtDate(new Date(p.expires_at).getTime()) : '-';
+    document.getElementById('stExpires').textContent = p.expires_at ? (isNoExpiry(p.expires_at) ? 'ไม่จำกัด' : fmtDate(new Date(p.expires_at).getTime())) : '-';
     document.getElementById('stDisplayName').value = p.display_name || '';
     document.getElementById('stFacebookUrl').value = p.facebook_url || '';
     // บัญชีเก่าที่สมัครก่อนมีช่องวันเกิด: กรอกได้ครั้งเดียว พอมีค่าแล้วช่องจะหายไป
@@ -9182,7 +9196,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(!App.session || !App.session.id){ root.innerHTML = '<p class="admin-topup-empty">กรุณาเข้าสู่ระบบ</p>'; return; }
     supa.from('topup_transactions').select('id, requested_amount, received_amount, points, status, created_at')
       .eq('user_id', App.session.id).order('created_at', { ascending:false }).then(function(res){
-        if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+res.error.message+'</p>'; return; }
+        if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
         var rows = res.data || [];
         if(!rows.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่เคยเติมแต้ม</p>'; return; }
         var credited = rows.filter(function(r){ return r.status==='credited'; });
@@ -9207,7 +9221,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = ''; moreWrap.hidden = true;
     supa.from('package_purchases').select('id, plan_name, cycle, points_spent, days_added, expires_after, created_at')
       .eq('user_id', App.session.id).order('created_at', { ascending:false }).then(function(res){
-        if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+res.error.message+'</p>'; return; }
+        if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
         var rows = res.data || [];
         if(!rows.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่เคยซื้อแพ็กเกจ</p>'; return; }
         sum.textContent = rows.length+' รายการ · ใช้ไป '+fmtNum(rows.reduce(function(s,r){ return s+(r.points_spent||0); }, 0))+' แต้ม';
@@ -9251,6 +9265,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var birth = birthField.hidden ? '' : document.getElementById('stBirthInput').value;
     var fbUrl = document.getElementById('stFacebookUrl').value.trim();
     if(!name){ toast('กรอกชื่อที่ใช้แสดง'); return; }
+    if(/[<>]/.test(name)){ toast('ชื่อที่ใช้แสดงห้ามมีเครื่องหมาย < หรือ >'); return; }
     if(birth){ var bErr = birthDateError(birth); if(bErr){ toast(bErr); return; } }
     if(fbUrl && !FB_URL_RE.test(fbUrl)){ toast('ลิงก์ Facebook ต้องขึ้นต้นด้วย facebook.com หรือ fb.com เท่านั้น'); return; }
     var go = function(){
@@ -9295,6 +9310,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // ---------- บัญชีหมดอายุ = โหมดดูอย่างเดียว + แจ้งเตือนก่อนหมดอายุ 3/2/1 วัน ----------
   // แอดมินไม่ติดกติกา · ยังทำได้: เติมแต้ม ซื้อแพ็กเกจ ตั้งค่า ออกจากระบบ และการเปลี่ยนมุมมอง/ตัวกรองทุกอย่าง
   // การเขียนข้อมูลบอส/ประวัติ/ปาร์ตี้ถูกกันซ้ำที่ฐานข้อมูล (is_active()) ส่วนข้อมูลในเครื่อง (นักลงทุน/ฟาม/คลัง) กันที่นี่
+  // วันหมดอายุบัญชีตั้งเป็นปี 2099 = ไม่จำกัด (คอลัมน์ profiles.expires_at ห้ามเป็นค่าว่าง จึงใช้วันไกลๆ แทน)
+  function isNoExpiry(ts){ return !ts || new Date(ts).getFullYear() >= 2090; }
   function accountDaysLeft(){
     if(!App.profile || !App.profile.expires_at) return null;
     return Math.ceil((new Date(App.profile.expires_at).getTime() - Date.now())/86400000);
@@ -9660,7 +9677,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
       .then(function(res){
-        if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+res.error.message+'</p>'; return; }
+        if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
         var rows = res.data || [];
         var badge = document.getElementById('railAdminBadge');
         badge.hidden = !rows.length;
@@ -9670,9 +9687,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           var name = (r.profiles && r.profiles.display_name) || 'ไม่ทราบชื่อ';
           return '<div class="admin-topup-row" data-request-id="'+r.id+'">'+
             '<div class="admin-topup-main">'+
-              '<div class="admin-topup-user">'+name+'</div>'+
+              '<div class="admin-topup-user">'+escapeHtml(name)+'</div>'+
               '<div class="admin-topup-meta">'+fmtNum(r.amount_baht)+' บ → +'+fmtNum(r.points_added)+' แต้ม • '+fmtDateTime(new Date(r.created_at).getTime())+'</div>'+
-              '<a href="#" class="admin-topup-slip-link" data-slip-path="'+r.slip_image_url+'">ดูสลิป</a>'+
+              '<a href="#" class="admin-topup-slip-link" data-slip-path="'+escapeHtml(r.slip_image_url)+'">ดูสลิป</a>'+
             '</div>'+
             '<div class="admin-topup-actions">'+
               '<button type="button" class="btn btn-ghost" data-approve-action="reject">ปฏิเสธ</button>'+
@@ -9728,20 +9745,20 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var contextHostName = App.viewingHostId ? App.viewingHostName : ((App.profile && App.profile.display_name) || '-');
 
     supa.from('party_members').select('member_id, profiles!member_id(display_name)').eq('host_id', contextHostId).is('removed_at', null).then(function(res){
-      if(res.error){ listEl.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+res.error.message+'</p>'; return; }
+      if(res.error){ listEl.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
       var members = res.data || [];
       partyPanelMemberCount = members.length + 1;
       updatePartyPanelSummary();
 
       var hostRow = '<div class="admin-topup-row party-member-row">'+
-        '<div class="admin-topup-main"><div class="admin-topup-user">'+contextHostName+' <span class="party-role-tag">หัวปาร์ตี้'+(amHost?' · คุณ':'')+'</span></div></div>'+
+        '<div class="admin-topup-main"><div class="admin-topup-user">'+escapeHtml(contextHostName)+' <span class="party-role-tag">หัวปาร์ตี้'+(amHost?' · คุณ':'')+'</span></div></div>'+
         '<div class="admin-topup-actions">'+(!amHost ? '<button type="button" class="btn btn-ghost btn-sm" data-leave-party="'+contextHostId+'">ออกจากปาร์ตี้</button>' : '')+'</div>'+
       '</div>';
       var memberRows = members.map(function(m){
         var name = (m.profiles && m.profiles.display_name) || 'ไม่ทราบชื่อ';
         var isMe = m.member_id === App.session.id;
         return '<div class="admin-topup-row party-member-row">'+
-          '<div class="admin-topup-main"><div class="admin-topup-user">'+name+(isMe?' <span class="party-role-tag">คุณ</span>':'')+'</div></div>'+
+          '<div class="admin-topup-main"><div class="admin-topup-user">'+escapeHtml(name)+(isMe?' <span class="party-role-tag">คุณ</span>':'')+'</div></div>'+
           '<div class="admin-topup-actions">'+(amHost ? '<button type="button" class="btn btn-ghost btn-sm" data-remove-member="'+m.member_id+'">เอาออก</button>' : '')+'</div>'+
         '</div>';
       }).join('');

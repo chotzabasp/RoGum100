@@ -418,7 +418,7 @@ svg.icon{width:18px;height:18px;display:block}
 .items-tier-viewall{align-self:flex-start;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font-size:.78rem;font-weight:600}
 .items-tier-viewall:hover{text-decoration:underline}
 .items-tier-locked{opacity:.4;pointer-events:none;position:relative}
-.items-tier-locked::after{content:"🔒 ต้องมีแพ็กเกจ \"3 in 1\"";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:.5rem;font-size:.72rem;font-weight:700;color:var(--text);background:color-mix(in srgb, var(--surface) 55%, transparent);border-radius:inherit;z-index:2}
+.items-tier-locked::after{content:"🔒 เติมแพ็กเกจ คลังไอเทม เพื่อปลดล็อก";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:.5rem;font-size:.72rem;font-weight:700;color:var(--text);background:color-mix(in srgb, var(--surface) 55%, transparent);border-radius:inherit;z-index:2}
 .items-dropzone{transition:border-color .15s,background .15s}
 .items-dropzone.items-drag-over{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 10%, var(--surface))}
 .items-pending-row{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:.55rem .7rem;margin-bottom:.5rem;cursor:grab}
@@ -4975,27 +4975,44 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     });
   }
   var PROFILE_COLS = 'display_name, points, role, expires_at, username, birth_date, servers, server_quota, facebook_url, legacy_unlimited, plan_bundle_expires_at, plan_timers_expires_at';
+  // อ่านโปรไฟล์ตัวเองผ่านฟังก์ชัน my_profile — ฐานข้อมูลไม่ให้สมาชิกปาร์ตี้อ่านวันเกิด/แต้มของกันได้แล้ว
+  // (ตาราง profiles เปิดอ่านได้แค่ id กับ display_name) จึงอ่านคอลัมน์ส่วนตัวตรงๆ ไม่ได้อีก
   function refreshProfile(){
+    return withSkewRetry(function(){ return supa.rpc('my_profile'); }).then(function(res){
+      // ยังไม่ได้รัน SQL สร้างฟังก์ชัน → ใช้วิธีอ่านตารางตรงแบบเดิมไปก่อน (กันหน้าเว็บพังระหว่างอัปเดต)
+      if(res.error && /my_profile|PGRST202/.test((res.error.message||'')+' '+(res.error.code||''))){
+        console.warn('ยังไม่มีฟังก์ชัน my_profile — อ่านโปรไฟล์แบบเดิมไปก่อน', res.error);
+        return refreshProfileLegacy();
+      }
+      if(res.error || !res.data){ console.error('refreshProfile', res.error); return; }
+      return applyProfile(res.data);
+    });
+  }
+  function refreshProfileLegacy(){
     return withSkewRetry(function(){ return supa.from('profiles').select(PROFILE_COLS).eq('id', App.session.id).single(); }).then(function(res){
       // กันกรณีที่ยังไม่ได้รัน SQL เพิ่มคอลัมน์ใหม่ๆ — ถ้าไม่ดักไว้ โปรไฟล์จะโหลดไม่ได้เลย
       // และทั้งแอพจะพัง ถอยไปใช้คอลัมน์ชุดเดิมทีละคอลัมน์แทน
       if(res.error && PROFILE_COLS.indexOf('facebook_url')!==-1 && /facebook_url/.test(res.error.message||'')){
         console.warn('profiles.facebook_url ยังไม่มีในฐานข้อมูล — ข้ามไปก่อน', res.error);
         PROFILE_COLS = PROFILE_COLS.replace(', facebook_url', '');
-        return refreshProfile();
+        return refreshProfileLegacy();
       }
       if(res.error && PROFILE_COLS.indexOf('server_quota')!==-1 && /server_quota/.test(res.error.message||'')){
         console.warn('profiles.server_quota ยังไม่มีในฐานข้อมูล — ใช้โควต้าเริ่มต้น 1 เซิร์ฟไปก่อน', res.error);
         PROFILE_COLS = PROFILE_COLS.replace(', server_quota', '');
-        return refreshProfile();
+        return refreshProfileLegacy();
       }
       if(res.error && PROFILE_COLS.indexOf('legacy_unlimited')!==-1 && /legacy_unlimited|plan_bundle_expires_at|plan_timers_expires_at/.test(res.error.message||'')){
         console.warn('คอลัมน์สิทธิ์แพ็กเกจใหม่ยังไม่มีในฐานข้อมูล — ถือว่าไม่จำกัดสิทธิ์ไปก่อน', res.error);
         PROFILE_COLS = PROFILE_COLS.replace(', legacy_unlimited, plan_bundle_expires_at, plan_timers_expires_at', '');
-        return refreshProfile();
+        return refreshProfileLegacy();
       }
       if(res.error){ console.error('refreshProfile', res.error); return; }
-      App.profile = res.data;
+      return applyProfile(res.data);
+    });
+  }
+  function applyProfile(data){
+      App.profile = data;
       document.getElementById('railAdminBtn').hidden = App.profile.role !== 'admin';
       var packageProfile = App.profile;
       packageProfile.feature_expiries = {};
@@ -5007,7 +5024,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         });
         renderUser();
       }).catch(function(){ if(App.profile===packageProfile) renderUser(); });
-    });
   }
 
   function renderHistory(){

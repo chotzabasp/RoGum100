@@ -1,6 +1,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gum100</title>
+<!-- คำอธิบาย + การ์ดตัวอย่างตอนแชร์ลิงก์ (Facebook / LINE / Messenger / Discord) — รูปอยู่ที่ og-image.jpg (1200x630)
+     ถ้าเปลี่ยนรูปหรือข้อความ แพลตฟอร์มจะจำการ์ดเก่าไว้ ต้องกดล้างแคชในเครื่องมือของแต่ละที่ (เช่น Facebook Sharing Debugger) -->
+<meta name="description" content="จับเวลาบอส บันทึกซื้อ–ขาย คลังไอเทม และยอดฟาร์ม ครบในที่เดียว สำหรับผู้เล่น Ragnarok Online">
+<link rel="canonical" href="https://gum100.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Gum100">
+<meta property="og:locale" content="th_TH">
+<meta property="og:url" content="https://gum100.com/">
+<meta property="og:title" content="Gum100 เครื่องมือช่วยเล่น Ragnarok Online">
+<meta property="og:description" content="จับเวลาบอส บันทึกซื้อ–ขาย คลังไอเทม และยอดฟาร์ม ครบในที่เดียว">
+<meta property="og:image" content="https://gum100.com/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Gum100 เครื่องมือช่วยเล่น Ragnarok Online">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Gum100 เครื่องมือช่วยเล่น Ragnarok Online">
+<meta name="twitter:description" content="จับเวลาบอส บันทึกซื้อ–ขาย คลังไอเทม และยอดฟาร์ม ครบในที่เดียว">
+<meta name="twitter:image" content="https://gum100.com/og-image.jpg">
 <link rel="icon" type="image/png" href="logo-gum100.png?v=2">
 <link rel="apple-touch-icon" href="logo-gum100.png?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -830,7 +849,7 @@ svg.icon{width:18px;height:18px;display:block}
 /* บัญชีหมดอายุ / ใกล้หมดอายุ */
 #expiryOverlay .confirm-backdrop{z-index:85}
 #expiryOverlay .confirm-box{z-index:86}
-.expiry-msg{margin:0 0 1.1rem;font-size:.88rem;line-height:1.55;color:var(--text)}
+.expiry-msg{margin:0 0 1.1rem;font-size:.88rem;line-height:1.55;color:var(--text);white-space:pre-line}
 /* เลือกเซิร์ฟเวอร์ที่เล่น (ตอนสมัคร + หน้าตั้งค่า) */
 #serverPickOverlay .confirm-backdrop{z-index:87}
 #serverPickOverlay .confirm-box{z-index:88}
@@ -2408,7 +2427,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
 <!-- ===================== APP SCREEN ===================== -->
 <!-- โชว์เสมอตั้งแต่เปิดเว็บ ไม่รอล็อกอิน — ถ้ายังไม่ล็อกอินจะเป็นโหมด "ผู้เยี่ยมชม" (App.isGuest)
-     ดูได้ทุกหน้าแต่กดอะไรไม่ได้เลย กดแล้วเด้ง popup login แทน (ดู enterGuestPreview/guestBlock) -->
+     เดินดูได้ทุกหน้า (เมนูซ้าย/หน้าเติมแพ็กเกจ/ค้นหาบอส) ส่วนปุ่มที่ทำรายการกดแล้วเด้ง popup login แทน (ดู enterGuestPreview/guestBlock/GUEST_VIEW_ALLOW) -->
 <div id="appScreen">
   <nav class="rail">
     <div class="rail-brand">
@@ -3409,6 +3428,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       CATALOG = (res.data||[]).map(function(b){
         return { id:b.id, name:b.name, glyph:b.glyph, imageUrl:b.image_url, map:b.map, mapImageUrl:b.map_image_url, loc:b.map_location, minutes:b.respawn_minutes, items:b.items||[] };
       });
+      if(App.isGuest) renderRoster(); // ผู้เยี่ยมชม: แคตตาล็อกมาถึงแล้วค่อยวางการ์ดตัวอย่าง
     });
   }
   // รูปไอเทมจากตาราง items (ชื่อ → ลิงก์รูป) แอดมินใส่ผ่าน Table Editor เหมือนรูปบอส/แมพ
@@ -3423,7 +3443,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       if(res.error){ console.error('loadItemImages', res.error); return; }
       ITEM_IMAGES = {};
       (res.data||[]).forEach(function(r){ if(r.image_url) ITEM_IMAGES[(r.name||'').trim().toLowerCase()] = r.image_url; });
-      if(App.session){ renderRoster(); renderStats(); }
+      if(App.session){ renderRoster(); renderStats(); } else if(App.isGuest) renderRoster();
     });
   }
   function bossAvatarHtml(boss){
@@ -3557,7 +3577,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     return {
       db:'mvpwatch_db_'+email, active:'mvpwatch_active_'+email,
       lastPage:'mvpwatch_lastpage_'+email,
-      expiryWarn:'mvpwatch_expirywarn_'+email,
+      expiryWarn:'mvpwatch_expirywarn_'+email, pkgWarn:'mvpwatch_pkgwarn_'+email, pkgExpiredSeen:'mvpwatch_pkgexpired_'+email,
       rateSlots:'mvpwatch_rateslots_'+email, rateSlotsVer:'mvpwatch_rateslotsver_'+email, merchantLog:'mvpwatch_merchantlog_'+email,
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
@@ -4852,10 +4872,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ---------- rendering ----------
   function renderRoster(){
-    if(!App.session || !App.session.id) return;
+    var guestView = !App.session || !App.session.id;
+    if(guestView && !App.isGuest) return;
+    // ผู้เยี่ยมชม (ยังไม่ล็อกอิน): โชว์การ์ด Baphomet 1 ใบเป็นตัวอย่าง — กดอะไรก็เด้ง login (guestBlock) ไม่ใช่ข้อมูลของใครและไม่เก็บอะไรไว้
+    var guestDemo = guestView ? (CATALOG.filter(function(c){ return c.id==='baphomet'; })[0] || null) : null;
     var root = document.getElementById('roster');
+    if(guestView && !guestDemo){ root.innerHTML = ''; return; }
     var now = Date.now();
-    var rows = App.db.map(function(boss){ return { boss:boss, act: App.active[boss.id] || null }; });
+    var rows = guestDemo ? [{ boss:guestDemo, act:null }] : App.db.map(function(boss){ return { boss:boss, act: App.active[boss.id] || null }; });
 
     var activeRows = rows.filter(function(r){ return r.act; }).sort(function(a,b){ return a.act.targetTime - b.act.targetTime; });
     var idleRows = rows.filter(function(r){ return !r.act; });
@@ -4908,7 +4932,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         '<div class="bc-items"><span class="bc-items-label">ไอเทมที่ดรอป</span>'+boss.items.map(function(it){ return itemChip(boss, it); }).join('')+'</div>'+
         (boss.custom && boss.ownerId===App.session.id && activeOwnerId()===App.session.id ? '<div class="custom-boss-actions"><button class="btn btn-ghost btn-sm" data-action="custom-edit">แก้ไข</button><button class="btn btn-ghost btn-sm" data-action="custom-archive">ลบออก</button></div>' : '')+
       '</div>';
-    }).join('');
+    }).join('') + (guestDemo ? '<p style="margin:.7rem 0 0;text-align:center;font-size:.82rem;color:var(--text-dim)">ตัวอย่างการ์ดบอส — เข้าสู่ระบบเพื่อเริ่มจับเวลาบอสของคุณ</p>' : '');
     renderTimersRetiredState();
   }
 
@@ -5006,6 +5030,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var legacyExpiry = new Date((profile && profile.expires_at)||0).getTime() || 0;
     if(!plan.expiry && legacyExpiry > now && !isNoExpiry(legacyExpiry)) plan = {name:'แพ็กเกจสมาชิก',expiry:legacyExpiry};
     if(!plan.expiry && profile && (profile.role==='admin' || profile.legacy_unlimited)) plan = {name:'4 in 1 — ครบทั้ง 4 ระบบ',expiry:0};
+    // มีหลายแพ็กเกจพร้อมกัน (เช่น จับเวลาบอส + 1 in 1): ป้ายโชว์ตัวแรก + "+N" และรายชื่อทั้งหมดอยู่ใน tooltip
+    if(plan===rows[0] && plan.expiry && rows.length>1){
+      plan = {name:plan.name, expiry:plan.expiry, extra:rows.length-1,
+        all:rows.map(function(r){ return r.name+' — หมดอายุ '+fmtDate(r.expiry); })};
+    }
     return plan;
   }
   function packageTimeText(expiry){
@@ -5030,7 +5059,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var packageInfo = userPackageChipInfo(acc);
     var remaining = packageInfo.expiry ? packageInfo.expiry-Date.now() : 0;
     var soon = packageInfo.expiry && remaining <= 7*86400000;
-    pill.textContent = packageInfo.expiry ? packageInfo.name : (packageInfo.name==='ฟรี' ? 'แพ็กเกจฟรี' : packageInfo.name);
+    pill.textContent = (packageInfo.expiry ? packageInfo.name : (packageInfo.name==='ฟรี' ? 'แพ็กเกจฟรี' : packageInfo.name)) + (packageInfo.extra ? ' +'+packageInfo.extra : '');
+    pill.title = packageInfo.all ? packageInfo.all.join('\n') : '';
     pill.className = 'membership-pill '+(soon?'soon':packageInfo.expiry?'ok':'neutral');
     expiry.textContent = packageInfo.expiry ? packageTimeText(packageInfo.expiry) : 'ใช้งานได้ไม่จำกัด';
     expiry.className = 'membership-time'+(soon?' soon':'');
@@ -7852,7 +7882,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   });
 
   // ---------- โหมดผู้เยี่ยมชม: ยังไม่ได้ล็อกอิน แต่เห็นหน้าตาแอพเหมือนจริงได้ (ข้อมูลว่างเปล่าตามจริง
-  // เพราะไม่มีสิทธิ์ดึงข้อมูลของใคร) กดอะไรก็ตามในหน้าโดนกันด้วย guestBlock แล้วเด้ง popup login แทน ----------
+  // เพราะไม่มีสิทธิ์ดึงข้อมูลของใคร) กดเมนูดูหน้าอื่นได้ แต่ทุกอย่างที่ไม่อยู่ใน GUEST_VIEW_ALLOW โดนกันด้วย guestBlock แล้วเด้ง popup login ----------
   function enterGuestPreview(){
     App.session = null;
     App.profile = null;
@@ -7867,6 +7897,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.body.classList.add('ro-mode');
     document.getElementById('appScreen').hidden = false;
     renderAll();
+    renderRoster();
     var hashPage = pageFromHash();
     var page = (NAV_PAGES.indexOf(hashPage) !== -1 && hashPage !== 'admin') ? hashPage : 'home';
     switchPage(page);
@@ -7912,6 +7943,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       updateClock();
       renderExpiryState();
       checkExpiryReminder();
+      checkPackageReminder();
       // บัญชีเก่าก่อนมีช่องเซิร์ฟเวอร์ตอนสมัคร (ยังว่าง) → บังคับเลือกครั้งเดียวก่อนใช้งาน (บัญชีใหม่เลือกจากฟอร์มสมัครแล้ว)
       if(!App.profile || !(App.profile.servers||[]).length) openServerPick();
     });
@@ -8885,8 +8917,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // ออกจากหน้าแรก: ย้ายกลับตำแหน่งเดิม (หน้า #view-home เองที่เป็นจุดอ้างอิงตำแหน่งเดิม อยู่คงที่เสมอ)
   var merchantTfPage = null, merchantTfUser = null;
   var farmTfPage = null, farmTfUser = null;
+  // หน้าที่ผู้เยี่ยมชม (ยังไม่ล็อกอิน) เดินดูได้ — ตั้งค่า/แอดมินต้องล็อกอิน (ถูกพากลับหน้าแรก)
+  var GUEST_PAGES = ['home','farm','timers','items','pricing'];
   function switchPage(page){
-    if(!App.session || !App.session.id) page = 'home';
+    if((!App.session || !App.session.id) && GUEST_PAGES.indexOf(page)===-1) page = 'home';
     var tfUser = App.session ? App.session.id : null;
     var resetMerchantTf = page==='home' && (merchantTfPage!=='home' || merchantTfUser!==tfUser);
     merchantTfPage = page;
@@ -8926,7 +8960,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       if(page==='admin') openAdminPage();
       if(page==='settings') renderSettingsPage();
       if(page==='timers') renderPartyPanel();
-    }
+    } else if(page==='pricing') renderPricingPage();
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);
     });
@@ -9518,11 +9552,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(isExpiredAccount() && e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) && !roAllowed(e.target) && e.key !== 'Tab' && e.key !== 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); }
   }, true);
 
-  // ---------- โหมดผู้เยี่ยมชม (ยังไม่ล็อกอิน): กันทุกการกระทำ ไม่มี allow-list เลย
-  // (ต่างจากบัญชีหมดอายุที่ยังดูตัวกรอง/สลับหน้าได้ — guest กดอะไรก็เด้ง popup login ทันที) ----------
+  // ---------- โหมดผู้เยี่ยมชม (ยังไม่ล็อกอิน): ดูได้เฉพาะที่ระบุไว้ ที่เหลือกดแล้วเด้ง popup login ทันที ----------
+  // GUEST_ALLOW = ตัวฟอร์มล็อกอิน/สมัคร · GUEST_VIEW_ALLOW = ที่ผู้เยี่ยมชมกดดูได้: เมนูซ้ายทุกหน้า (ยกเว้นตั้งค่า),
+  // สลับรายเดือน/รายปีในหน้าเติมแพ็กเกจ, ช่องค้นหาบอส · ปุ่มซื้อแพ็กเกจ/บันทึก/เพิ่มบอส/ตัวกรอง ยังเด้งล็อกอิน
+  // (เพิ่มรายการที่ให้ผู้เยี่ยมชมกดได้ ต้องเพิ่มที่นี่เท่านั้น — ค่าเริ่มต้นคือกันทั้งหมด)
   var GUEST_ALLOW = '#authModal, #forgotPasswordOverlay, #recoveryPasswordOverlay, #guestLoginBtn, #guestRegisterBtn';
+  var GUEST_VIEW_ALLOW = '.rail-btn:not([data-page="settings"]), #pricingCycleToggle, #searchInput';
   function guestBlock(e){
-    if(!App.isGuest || e.target.closest(GUEST_ALLOW)) return;
+    if(!App.isGuest || e.target.closest(GUEST_ALLOW) || e.target.closest(GUEST_VIEW_ALLOW)) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     openAuthModal(false);
@@ -9533,7 +9570,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }, true);
   document.addEventListener('focus', function(e){
     var t = e.target;
-    if(!App.isGuest || !t || !/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) || t.closest(GUEST_ALLOW)) return;
+    if(!App.isGuest || !t || !/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) || t.closest(GUEST_ALLOW) || t.closest(GUEST_VIEW_ALLOW)) return;
     e.stopImmediatePropagation();
     setTimeout(function(){ t.blur(); }, 0);
     openAuthModal(false);
@@ -9546,15 +9583,86 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var expired = isExpiredAccount();
     document.body.classList.toggle('ro-mode', expired);
     var days = accountDaysLeft();
-    if(!App.profile || App.profile.role === 'admin' || days === null){ banner.hidden = true; return; }
-    var expText = fmtDate(new Date(App.profile.expires_at).getTime());
-    if(expired){
-      banner.hidden = false; banner.className = 'expiry-banner expired';
-      document.getElementById('expiryBannerText').textContent = 'บัญชีหมดอายุเมื่อ '+expText+' — ตอนนี้ดูข้อมูลได้อย่างเดียว ทำรายการไม่ได้ สมัครแพ็กเกจเพื่อกลับมาใช้งานได้เต็มรูปแบบ';
-    } else if(days <= 3){
-      banner.hidden = false; banner.className = 'expiry-banner soon';
-      document.getElementById('expiryBannerText').textContent = 'เหลืออีก '+days+' วัน บัญชีจะหมดอายุ ('+expText+') — ต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า';
+    var bannerBtn = banner.querySelector('[data-go-pricing]');
+    if(!App.profile || App.profile.role === 'admin'){ banner.hidden = true; return; }
+    if(days !== null){
+      var expText = fmtDate(new Date(App.profile.expires_at).getTime());
+      if(expired){
+        banner.hidden = false; banner.className = 'expiry-banner expired'; bannerBtn.textContent = 'สมัครแพ็กเกจ';
+        document.getElementById('expiryBannerText').textContent = 'บัญชีหมดอายุเมื่อ '+expText+' — ตอนนี้ดูข้อมูลได้อย่างเดียว ทำรายการไม่ได้ สมัครแพ็กเกจเพื่อกลับมาใช้งานได้เต็มรูปแบบ';
+        return;
+      }
+      if(days <= 3){
+        banner.hidden = false; banner.className = 'expiry-banner soon'; bannerBtn.textContent = 'สมัครแพ็กเกจ';
+        document.getElementById('expiryBannerText').textContent = 'เหลืออีก '+days+' วัน บัญชีจะหมดอายุ ('+expText+') — ต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า';
+        return;
+      }
+    }
+    // วันหมดอายุรวมของบัญชียังไม่ใกล้ (บัญชีใหม่ = 2099) → เช็คแพ็กเกจที่ซื้อไว้แทน
+    var soon = packageExpiringSoon();
+    if(soon.length){
+      banner.hidden = false; banner.className = 'expiry-banner soon'; bannerBtn.textContent = 'ต่ออายุแพ็กเกจ';
+      document.getElementById('expiryBannerText').textContent = 'แพ็กเกจใกล้หมดอายุ: '+soon.map(function(s){ return s.name+' เหลืออีก '+s.days+' วัน'; }).join(' · ')+' — ต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า';
     } else banner.hidden = true;
+  }
+
+  // ---------- เตือนแพ็กเกจที่ซื้อไว้ ----------
+  // แยกจากวันหมดอายุรวมของบัญชีด้านบน (บัญชีใหม่ตั้งเป็น 2099 จึงไม่เคยเข้าเงื่อนไขนั้น)
+  //   ใกล้หมด = แพ็กที่เหลือไม่เกิน 3 วัน · ใช้รายการชุดเดียวกับหน้าตั้งค่า (แพ็กเล็กที่แพ็กใหญ่ครอบยาวกว่าไม่นับ)
+  //   หมดแล้ว = แพ็กที่หมดภายใน 30 วันที่ผ่านมาและยังไม่ได้ต่อ · แจ้งครั้งเดียวต่อการหมดอายุแต่ละครั้ง (จำในเครื่อง)
+  // บัญชีรุ่นเดิม (legacy_unlimited) และแอดมินได้สิทธิ์ไม่จำกัดอยู่แล้ว จึงไม่เตือน
+  var PKG_WARN_DAYS = 3, PKG_EXPIRED_WINDOW = 30*86400000;
+  function packageReminderApplies(){
+    return !!App.profile && !App.isGuest && App.profile.role !== 'admin' && !App.profile.legacy_unlimited;
+  }
+  function packageExpiringSoon(){
+    if(!packageReminderApplies()) return [];
+    var now = Date.now();
+    return settingsPackageRows(App.profile, now).filter(function(r){ return r.expiry > now; }).map(function(r){
+      return { name:r.name, expiry:r.expiry, days:Math.ceil((r.expiry-now)/86400000) };
+    }).filter(function(r){ return r.days <= PKG_WARN_DAYS; });
+  }
+  function packageJustExpired(){
+    if(!packageReminderApplies()) return [];
+    var now = Date.now(), p = App.profile, sc = p.feature_expiries || {};
+    var ts = function(v){ return new Date(v||0).getTime() || 0; };
+    var b = ts(p.plan_bundle_expires_at), t = ts(p.plan_timers_expires_at), f = ts(sc.farm), a = ts(sc.accountItems);
+    var recent = function(x){ return x > 0 && x <= now && now-x <= PKG_EXPIRED_WINDOW; };
+    var out = [];
+    if(recent(b) && recent(t) && b === t) out.push({ key:'all', name:'4 in 1 — ครบทั้ง 4 ระบบ', expiry:b });
+    else {
+      if(recent(b)) out.push({ key:'bundle', name:'3 in 1', expiry:b });
+      if(recent(t)) out.push({ key:'timers', name:'จับเวลาบอส', expiry:t });
+    }
+    // ยอดฟาม / 2 in 1 ที่ยังถูก 3 in 1 ครอบอยู่ = ยังใช้ได้ ไม่ต้องแจ้ง
+    if(recent(f) && b <= now) out.push({ key:'farm', name:'1 in 1 — ยอดนักฟาม', expiry:f });
+    if(recent(a) && b <= now) out.push({ key:'accountItems', name:'2 in 1 — บัญชีนักลงทุน + คลังไอเทม', expiry:a });
+    return out;
+  }
+  function checkPackageReminder(){
+    if(!packageReminderApplies()) return;
+    // ป๊อปอัปเตือนบัญชีหมดอายุแสดงอยู่ → รอรอบถัดไป (ยังไม่จดว่าแจ้งแล้ว)
+    if(!document.getElementById('expiryOverlay').hidden) return;
+    var now = Date.now();
+    var soon = packageExpiringSoon();
+    var seen = store(App.keys.pkgExpiredSeen, []);
+    if(!Array.isArray(seen)) seen = [];
+    var gone = packageJustExpired().filter(function(g){ return seen.indexOf(g.key+':'+g.expiry) === -1; });
+    var soonStamp = soon.length ? todayKey(now)+':'+soon.map(function(s){ return s.name+'='+s.days; }).join('|') : '';
+    var showSoon = soon.length > 0 && store(App.keys.pkgWarn, '') !== soonStamp;
+    if(!showSoon && !gone.length) return;
+    var parts = [];
+    if(gone.length){
+      parts.push(gone.map(function(g){ return g.name+' หมดอายุเมื่อ '+fmtDate(g.expiry); }).join('\n')+
+        '\nตอนนี้ใช้สิทธิ์แบบฟรี ข้อมูลเดิมของคุณไม่ถูกลบ ต่ออายุเมื่อไหร่ก็กลับมาใช้ได้เต็มที่');
+    }
+    if(showSoon){
+      parts.push(soon.map(function(s){ return s.name+' — เหลืออีก '+s.days+' วัน (หมด '+fmtDate(s.expiry)+')'; }).join('\n')+
+        '\nต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า ถ้าปล่อยให้หมดจะกลับไปใช้สิทธิ์แบบฟรี');
+    }
+    showExpiryPopup(gone.length && showSoon ? 'แจ้งเตือนแพ็กเกจ' : gone.length ? 'แพ็กเกจหมดอายุแล้ว' : 'แพ็กเกจใกล้หมดอายุ', parts.join('\n\n'));
+    if(showSoon) persist(App.keys.pkgWarn, soonStamp);
+    if(gone.length) persist(App.keys.pkgExpiredSeen, seen.concat(gone.map(function(g){ return g.key+':'+g.expiry; })).slice(-20));
   }
   function showExpiryPopup(title, msg){
     document.getElementById('expiryTitle').textContent = title;
@@ -9585,7 +9693,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(e.target.closest('[data-expiry-close]')) document.getElementById('expiryOverlay').hidden = true;
   });
   // เปิดแอปค้างไว้ข้ามวัน: เช็คทุกนาที แถบ/โหมดดูอย่างเดียวจะอัปเดตเอง
-  setInterval(function(){ if(App.session && App.profile){ renderExpiryState(); checkExpiryReminder(); } }, 60000);
+  setInterval(function(){ if(App.session && App.profile){ renderExpiryState(); checkExpiryReminder(); checkPackageReminder(); } }, 60000);
 
   // ---------- เติมแต้ม: QR PromptPay ผ่าน TMWEASY Edge Function ----------
   var topupAmount = 500;
@@ -10823,7 +10931,16 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   function renderSearchResults(){
     var q = searchInput.value.trim().toLowerCase();
-    var matches = CATALOG.concat(visibleCustomCatalog()).filter(function(b){ return !q || b.name.toLowerCase().indexOf(q)!==-1; });
+    // เรียง A–Z ไม่สนตัวพิมพ์ (ฐานข้อมูลส่งบอสมาตามลำดับที่บันทึก) บอส Custom เรียงปนกันไป · ชื่อเหมือนกันเรียงตามรหัส
+    // ตอนพิมพ์ค้นหา: ชื่อที่ขึ้นต้นด้วยคำที่พิมพ์ขึ้นก่อน แล้วค่อยตามด้วยชื่อที่มีคำนั้นอยู่ตรงอื่น (แต่ละกลุ่มเรียง A–Z)
+    var matches = CATALOG.concat(visibleCustomCatalog()).filter(function(b){ return !q || b.name.toLowerCase().indexOf(q)!==-1; })
+      .sort(function(a, b){
+        if(q){
+          var aFirst = a.name.toLowerCase().indexOf(q)===0, bFirst = b.name.toLowerCase().indexOf(q)===0;
+          if(aFirst!==bFirst) return aFirst ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name, 'en', { numeric:true, sensitivity:'base' }) || String(a.id).localeCompare(String(b.id));
+      });
     if(!matches.length){
       searchResults.innerHTML = '<p class="search-results-empty">ไม่พบบอสที่ค้นหาในระบบ</p>';
       searchResults.hidden = false;

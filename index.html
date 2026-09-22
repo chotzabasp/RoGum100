@@ -2247,6 +2247,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-items .items-card-b.items-detail-tier-a{--detail-rgb:82,211,153;--detail-heading:#d9ffeb}
 #view-items .items-card-b.items-detail-tier-b{--detail-rgb:248,127,151;--detail-heading:#ffe0e6}
 #view-items .items-card-b.items-detail-tier-c{--detail-rgb:115,185,255;--detail-heading:#e0efff}
+#view-items .items-card-b.items-detail-tier-d{--detail-rgb:250,176,80;--detail-heading:#ffe9cc}
+#view-items .items-card-b.items-detail-tier-e{--detail-rgb:45,200,190;--detail-heading:#d6fff9}
 #view-items .items-card-b.items-detail-tier-s{--detail-rgb:184,145,255;--detail-heading:#eee3ff}
 #view-items .items-card-c{border-color:rgba(224,164,76,.46);background:radial-gradient(ellipse at 100% 0%,rgba(236,163,65,.17),transparent 68%),linear-gradient(145deg,#302a38,#1b2433);box-shadow:inset 0 1px 0 rgba(255,224,156,.11),0 5px 18px rgba(207,139,36,.1)}
 #view-items .items-card-b::before,#view-items .items-card-c::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(110deg,rgba(255,255,255,.04),transparent 38%)}
@@ -2915,6 +2917,20 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
                 <div class="panel-head"><h2>คลังไอเทม C</h2></div>
                 <div class="items-tier-count" id="itemsTierCountC">0 ชิ้น</div>
                 <button type="button" class="items-tier-viewall" data-view-tier="C">ดูไอเทมทั้งหมด</button>
+              </div>
+              <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierD" data-warehouse="D">
+                <img class="items-card-a-art" src="assets/warehouse/mjolnir.png" alt="" aria-hidden="true">
+                <div class="panel-head"><h2>คลังไอเทม D</h2></div>
+                <div class="items-tier-count" id="itemsTierCountD">0 ชิ้น</div>
+                <button type="button" class="items-tier-viewall" data-view-tier="D">ดูไอเทมทั้งหมด</button>
+              </div>
+            </div>
+            <div class="items-card-a-row items-card-a-row-2">
+              <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierE" data-warehouse="E">
+                <img class="items-card-a-art" src="assets/warehouse/bubble-gum.png" alt="" aria-hidden="true">
+                <div class="panel-head"><h2>คลังไอเทม E</h2></div>
+                <div class="items-tier-count" id="itemsTierCountE">0 ชิ้น</div>
+                <button type="button" class="items-tier-viewall" data-view-tier="E">ดูไอเทมทั้งหมด</button>
               </div>
               <div class="panel items-card-a-sub items-dropzone" id="itemsCardTierS" data-warehouse="S">
                 <img class="items-card-a-art" src="assets/warehouse/jellopy.png" alt="" aria-hidden="true">
@@ -8696,15 +8712,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // not yet claimed by a warehouse) rather than stored separately, so the source of
   // truth for "what was bought" stays the merchant log; only the warehouse assignment
   // (which tier a line's item/money ended up in) is persisted here.
-  var ITEM_WAREHOUSE_TIERS = ['A','B','C','S'];
+  var ITEM_WAREHOUSE_TIERS = ['A','B','C','D','E','S'];
   // Warehouse "S" is displayed as "อื่นๆ" (its internal tier code stays 'S' so existing
   // saved warehouse data keeps working without a migration).
   function itemTierLabel(tier){ return tier==='S' ? 'อื่นๆ' : tier; }
 
   function warehouseStockFor(serverId){
-    if(!App.itemWarehouseStock[serverId]) App.itemWarehouseStock[serverId] = { A:[], B:[], S:[], C:[] };
+    if(!App.itemWarehouseStock[serverId]) App.itemWarehouseStock[serverId] = {};
     var w = App.itemWarehouseStock[serverId];
-    if(!w.A) w.A = []; if(!w.B) w.B = []; if(!w.S) w.S = []; if(!w.C) w.C = [];
+    ITEM_WAREHOUSE_TIERS.forEach(function(tier){ if(!w[tier]) w[tier] = []; });
     return w;
   }
 
@@ -8910,7 +8926,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var detailCard = document.querySelector('#view-items .items-card-b');
     // Visual-only link between the selected warehouse and its detail panel.
     // Item data stays in the existing tier state and rendering path.
-    ['a','b','c','s'].forEach(function(key){ detailCard.classList.toggle('items-detail-tier-'+key, tier===key.toUpperCase()); });
+    ['a','b','c','d','e','s'].forEach(function(key){ detailCard.classList.toggle('items-detail-tier-'+key, tier===key.toUpperCase()); });
     ITEM_WAREHOUSE_TIERS.forEach(function(tierKey){
       var card = document.getElementById('itemsCardTier'+tierKey);
       if(card) card.classList.toggle('items-tier-selected', tierKey===tier);
@@ -9151,7 +9167,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         'บันทึกรายการซื้อ–ขาย M และไอเทม',
         'ดูสรุปยอดซื้อ ยอดขาย และกำไรสุทธิ',
         'ดูประวัติและกราฟย้อนหลัง',
-        'จัดการคลังไอเทม A / B / C / อื่น ๆ',
+        'จัดการคลังไอเทม A / B / C / D / E / อื่น ๆ',
         'ตัดสต็อกอัตโนมัติเมื่อขายไอเทม',
         'คืนไอเทมกลับเข้าคลังเมื่อยกเลิกรายการ',
         'ดูจำนวนและมูลค่าไอเทมคงเหลือ',
@@ -10618,12 +10634,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // ---------- แอดมิน: รายชื่อสมาชิกทั้งหมด + แพ็กเกจ/วันหมดอายุ (ไล่ดูได้โดยไม่ต้องรู้ username ก่อน) ----------
   var adminMembersCache = [];
   function adminMemberRowHtml(m){
-    return '<div class="admin-topup-row">'+
-      '<div style="flex:1;min-width:200px">'+
-        '<b>'+escapeHtml(m.display_name||'-')+'</b> <span class="sub">(@'+escapeHtml(m.username||'-')+')</span>'+
-        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">'+escapeHtml(m.email||'-')+' · '+fmtNum(m.points||0)+' แต้ม</div>'+
-        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">'+describeMemberPlans(m)+'</div>'+
-      '</div>'+
+    var plan = describeMemberPlans(m).replace(/<br>/g, ' · ');
+    return '<div class="admin-topup-row" style="padding:.6rem .9rem;gap:.5rem 1rem">'+
+      '<b style="flex:none">'+escapeHtml(m.display_name||'-')+'</b>'+
+      '<span class="sub" style="flex:none">@'+escapeHtml(m.username||'-')+'</span>'+
+      '<span class="sub" style="flex:none">'+escapeHtml(m.email||'-')+'</span>'+
+      '<span class="sub" style="flex:none">'+fmtNum(m.points||0)+' แต้ม</span>'+
+      '<span class="sub" style="flex:1;min-width:160px">'+plan+'</span>'+
     '</div>';
   }
   function renderAdminMembers(){

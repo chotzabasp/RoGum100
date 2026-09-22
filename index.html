@@ -5230,17 +5230,21 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   // คนที่เคยติ๊กหาร (อยู่ใน shared_with ของไอเทมที่เคยขาย) แต่ออกจากปาร์ตี้ไปแล้ว — ไม่อยู่ใน
   // partyRoster ปัจจุบัน จึงต้องดึงชื่อแยกมาเก็บไว้เอง เพื่อโชว์เป็นชิปล็อก (ดู lootRowHtml)
+  // App.departedSharerNames จริงๆ คือ "แผนที่ชื่อของทุกคนที่เคยหารของ" ไม่ใช่แค่คนที่ออกปาร์ตี้ไปแล้ว —
+  // ตั้งต้นด้วยชื่อจาก partyRoster ก่อน (ฟรี ไม่ต้อง query) แล้วดึงเพิ่มเฉพาะ id ที่ยังไม่มีชื่อ เหตุผลที่
+  // ต้องทำแบบนี้แทนที่จะเช็คแค่ "อยู่ใน partyRoster ปัจจุบันไหม": lootRowHtml คำนวณ roster ของแต่ละแถวแยก
+  // ต่างหาก (ว่างเปล่าถ้าแถวนั้น read-only เช่น สมาชิกฟรี) ถ้าคนนั้นถูกนับว่า "known" จาก partyRoster
+  // ตรงนี้ แต่แถวนั้นไม่ได้โชว์ผ่าน roster จริง ก็จะไม่มีชื่อให้ใช้เลย ต้องมีชื่อสำรองไว้ในแผนที่นี้เสมอ
   function loadDepartedSharerNames(){
-    var known = {}; (App.partyRoster||[]).forEach(function(p){ known[p.id] = true; });
+    var names = {}; (App.partyRoster||[]).forEach(function(p){ names[p.id] = p.name; });
     var missing = {};
     App.kills.forEach(function(k){ k.items.forEach(function(it){
-      (it.sharedWith||[]).forEach(function(id){ if(!known[id]) missing[id] = true; });
+      (it.sharedWith||[]).forEach(function(id){ if(!names[id]) missing[id] = true; });
     }); });
     var ids = Object.keys(missing);
-    if(!ids.length){ App.departedSharerNames = {}; return Promise.resolve(); }
+    if(!ids.length){ App.departedSharerNames = names; return Promise.resolve(); }
     return supa.from('profiles').select('id, display_name').in('id', ids).then(function(res){
-      if(res.error){ console.error('loadDepartedSharerNames', res.error); return; }
-      var names = {};
+      if(res.error){ console.error('loadDepartedSharerNames', res.error); App.departedSharerNames = names; return; }
       (res.data||[]).forEach(function(p){ names[p.id] = p.display_name || 'ไม่ทราบชื่อ'; });
       App.departedSharerNames = names;
     });

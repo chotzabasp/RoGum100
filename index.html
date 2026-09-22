@@ -846,8 +846,6 @@ svg.icon{width:18px;height:18px;display:block}
 /* เลือกเซิร์ฟเวอร์ที่เล่น (ตอนสมัคร + หน้าตั้งค่า) */
 #serverPickOverlay .confirm-backdrop{z-index:87}
 #serverPickOverlay .confirm-box{z-index:88}
-#partyServerMismatchOverlay .confirm-backdrop{z-index:83}
-#partyServerMismatchOverlay .confirm-box{z-index:84}
 .server-pick-list{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:.6rem}
 .server-pick-list .share-chip{font-size:.84rem;padding:.35rem .8rem}
 .server-pick-list .share-chip.on{font-weight:600}
@@ -1022,7 +1020,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .item-ic-lg{width:22px;height:22px;vertical-align:-5px}
 .h-actions{display:flex;justify-content:flex-end;margin:-.3rem 0 .6rem}
 
-.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);background:var(--text);color:var(--bg);padding:.7rem 1.1rem;border-radius:999px;font-size:.85rem;text-align:center;max-width:min(90vw,360px);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);background:var(--text);color:var(--bg);padding:.7rem 1.1rem;border-radius:999px;font-size:.85rem;text-align:center;max-width:min(90vw,360px);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 /* A small pill anchored right above the specific field it's warning about (e.g. the
    จำนวน input when a sell-from-stock qty is capped) — separate from the general toast,
@@ -2758,7 +2756,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
               <span>บาท</span>
             </div>
           </div>
-          <p class="farm-retired-note" id="farmRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักแล้ว ใช้งานอีกครั้งที่ " ตั้งค่า "</p>
+          <p class="farm-retired-note" id="farmRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักเพราะไม่ได้เลือกไว้ใน "ตั้งค่า" แล้ว — ดูกราฟและประวัติย้อนหลังได้</p>
           <div class="farm-log-divider"></div>
           <div class="farm-map-row">
             <span>Map</span>
@@ -2865,7 +2863,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       </div>
     </section>
 
-    <p class="farm-retired-note" id="timersRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักแล้ว ใช้งานอีกครั้งที่ " ตั้งค่า "</p>
+    <p class="farm-retired-note" id="timersRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักแล้ว ใช้งานจับเวลาบอส (เพิ่ม/ลบ/กดตายแล้ว) ไม่ได้ — ดูรายชื่อบอสที่เคยบันทึกไว้ได้ตามปกติ</p>
     <div class="timers-panel" id="timersPanel">
     <div class="toolbar">
       <div class="search-wrap">
@@ -3163,18 +3161,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" data-expiry-close>ไว้ก่อน</button>
       <button type="button" class="btn btn-gradient" data-go-pricing data-expiry-close>ไปเติมแพ็กเกจ</button>
-    </div>
-  </div>
-</div>
-
-<div id="partyServerMismatchOverlay" hidden>
-  <div class="confirm-backdrop"></div>
-  <div class="confirm-box topup-box">
-    <h3 class="post-announce-title">เซิร์ฟเวอร์ไม่ตรงกับปาร์ตี้</h3>
-    <p class="expiry-msg">กรุณาเลือกเซิร์ฟเวอร์เดียวกันกับปาร์ตี้</p>
-    <p class="settings-note" id="partyServerMismatchDetail"></p>
-    <div class="confirm-actions">
-      <button type="button" class="btn btn-gradient" id="partyServerMismatchSwitchBtn">สลับเซิร์ฟเวอร์ให้ตรงกับปาร์ตี้</button>
     </div>
   </div>
 </div>
@@ -3502,11 +3488,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     return live.length ? live : SERVER_RATES.map(function(s){ return s.id; });
   }
   function isRetiredServer(id){ return id!=null && myServerIds().indexOf(id)===-1; }
-  // "พักแล้ว" ของหน้าจับเวลาบอส ใช้แนวคิดต่างจาก isRetiredServer เดิม — ตอนดูปาร์ตี้คนอื่น
-  // (App.viewingHostId) ข้อมูลเป็นของหัวปาร์ตี้ ไม่ใช่ของสมาชิก จะเอา "เซิร์ฟเวอร์ที่เล่น" ของ
-  // สมาชิกเองมาตัดสินว่าพักหรือไม่ไม่ได้ — เรื่องเลือกเซิร์ฟไม่ตรงกับปาร์ตี้มี checkPartyServerMatch
-  // (popup บล็อก) คุมแยกอยู่แล้ว จุดนี้เลยข้ามการเช็คไปเลยเมื่อกำลังดูปาร์ตี้คนอื่น
-  function isTimersServerRetired(id){ return !App.viewingHostId && isRetiredServer(id); }
   // เซิร์ฟพัก (ไม่ได้เล่นแล้ว) ที่เคยมีประวัติ ค่าเริ่มต้น "ซ่อน" ทั้งหมด — ผู้ใช้ต้องมาติ๊กเปิดเองที่
   // หน้าตั้งค่า (การ์ด "เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ") ถึงจะโผล่กลับมาใน dropdown ประวัติ/กราฟ
   // เก็บในเครื่อง (localStorage) ไม่ผูกกับบัญชี ไม่ต้องรัน SQL — เปลี่ยนเครื่อง/ล้างเบราว์เซอร์แล้วรีเซ็ตกลับเป็นซ่อนหมด
@@ -4469,32 +4450,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     sel.innerHTML = ids.map(function(id){ return '<option value="'+id+'">'+serverLabel(id)+'</option>'; }).join('');
     sel.value = App.timersServerId;
   }
-  // ---------- เช็คว่าเซิร์ฟเวอร์ที่สมาชิกกำลังดูตรงกับที่หัวปาร์ตี้ใช้อยู่ไหม ----------
-  // เฉพาะตอนเป็นสมาชิก (App.viewingHostId ตั้งค่าไว้) หัวปาร์ตี้เองไม่โดนเช็ค เพราะหัวปาร์ตี้
-  // คือตัวกำหนดค่าอ้างอิง ใช้ RPC party_active_server (security definer) อ่านค่าข้ามบัญชีของหัวปาร์ตี้
-  // ถ้าเรียกไม่สำเร็จ (เน็ตมีปัญหา ฯลฯ) ไม่บล็อก กันเผลอล็อกผู้ใช้ออกจากหน้าเฉยๆ
-  function hidePartyServerMismatch(){
-    var ov = document.getElementById('partyServerMismatchOverlay');
-    if(ov) ov.hidden = true;
-  }
-  function checkPartyServerMatch(){
-    if(!App.viewingHostId || !App.session || App.isGuest){ hidePartyServerMismatch(); return; }
-    supa.rpc('party_active_server', { p_host: App.viewingHostId }).then(function(res){
-      if(res.error){ console.error('checkPartyServerMatch', res.error); return; }
-      if(App.viewingHostId == null) return; // ออกจากปาร์ตี้ไปแล้วระหว่างรอผลลัพธ์
-      var hostServer = res.data;
-      var ov = document.getElementById('partyServerMismatchOverlay');
-      if(!ov) return;
-      if(hostServer && hostServer !== App.timersServerId){
-        document.getElementById('partyServerMismatchDetail').textContent =
-          'ปาร์ตี้กำลังใช้ '+serverLabel(hostServer)+' อยู่ (คุณเลือก '+(App.timersServerId?serverLabel(App.timersServerId):'-')+')';
-        ov.dataset.hostServer = hostServer;
-        ov.hidden = false;
-      } else {
-        ov.hidden = true;
-      }
-    });
-  }
   // รายการบอสของผู้ใช้ + เวลาที่จับอยู่ (App.db/App.active) sync กับตาราง user_bosses
   // ใน Supabase โดยตรง แทนการเซฟเป็น blob เดียวใน localStorage แบบเดิม เพื่อให้ข้าม
   // อุปกรณ์ได้ — ฟังก์ชันด้านล่างแทนที่ saveDB()/saveActive() เดิม
@@ -4551,7 +4506,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function openCustomBossModal(boss){
     if(!CustomAPI || !App.session || App.isGuest){toast('กรุณาเข้าสู่ระบบ');return;}
     if(activeOwnerId()!==App.session.id){toast('เจ้าของปาร์ตี้เท่านั้นที่เพิ่มหรือแก้ไขบอสได้');return;}
-    if(isTimersServerRetired(App.timersServerId))return;
+    if(isRetiredServer(App.timersServerId))return;
     var record=boss?boss.record:null,uploads={},saving=false;
     var dialog=customNode('dialog'),form=customNode('form');dialog.className='custom-boss-dialog';
     var title=customNode('h3',boss?'แก้ไขบอส':'เพิ่มบอส');form.append(title);
@@ -6429,7 +6384,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function renderTimersRetiredState(){
     var panel = document.getElementById('timersPanel');
     if(!panel) return;
-    var retired = isTimersServerRetired(App.timersServerId);
+    var retired = isRetiredServer(App.timersServerId);
     panel.classList.toggle('server-retired', retired);
     panel.querySelectorAll('input, select, textarea, button').forEach(function(el){
       if(el.closest('#bossSoundControl')) return;
@@ -7979,26 +7934,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       return bossFetchState(bossHost).then(function(state){ bossLive.knownState = state; bossLive.stateHost = bossHost; }, function(){})
         .then(function(){ return loadTimersServerIds(); })
         .then(function(){ populateTimersServerSelect(); })
-        .then(function(){ return Promise.all([ loadUserBosses(), loadKills() ]); })
-        .then(function(){ checkPartyServerMatch(); });
+        .then(function(){ return Promise.all([ loadUserBosses(), loadKills() ]); });
     }).then(function(){
       loadUserData(user.email);
       // ประวัติ/คลัง/การตั้งค่า อยู่บนคลาวด์ — โหลดแล้วรวมกับของในเครื่องก่อนวาดหน้า (ย้ายของเดิมขึ้นให้ครั้งแรก)
       return cloudBegin(user);
-    }).then(function(){
-      // cloudBegin ด้านบนอาจเขียนทับ App.timersServerId/App.farmServerId เงียบๆ ด้วยค่าจากคลาวด์
-      // (loadUserData อ่านค่านี้จาก cloudValues ถ้ามี) แต่ dropdown/ป้าย "พักแล้ว"/รายการบอสที่วาด
-      // ไปแล้วก่อนหน้านี้ไม่ถูกวาดใหม่ตาม — ทำให้สิ่งที่เห็นบนจอกับค่าจริงในหน่วยความจำไม่ตรงกัน
-      // (ต้นเหตุของบั๊กที่สมาชิกปาร์ตี้เจอเซิร์ฟเวอร์ไม่ตรง) คำนวณ/วาดใหม่ให้ตรงกันเสมอตรงนี้
-      var prevTimersServer = App.timersServerId;
-      populateTimersServerSelect();
-      renderTimersRetiredState();
-      populateFarmServerSelect();
-      renderFarmRetiredState();
-      var reloadTimers = App.timersServerId !== prevTimersServer
-        ? loadUserBosses().then(function(){ renderRoster(); })
-        : Promise.resolve();
-      return reloadTimers.then(function(){ checkPartyServerMatch(); });
     }).then(function(){
       pruneServerSelections();
       // ประกาศเป็นกระดานร่วม โหลดแยกแล้วค่อยวาดทับอีกที ไม่บล็อกการเปิดหน้า
@@ -9419,15 +9359,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       pruneServerSelections(true);
       renderSettingsPage();
       renderAll();
-      // เซิร์ฟที่เล่นเปลี่ยนกระทบว่า "เซิร์ฟนี้พักแล้วหรือยัง" ของหน้าจับเวลาบอส/ต้นทุนฟามด้วย
-      // (isRetiredServer เทียบกับรายชื่อนี้ตรงๆ) เดิมไม่มีใครเรียกคำนวณ dropdown/ป้ายเตือนใหม่ตรงนี้
-      // เลยค้างค่า/ป้ายเดิมจนกว่าจะไปกดเปลี่ยน dropdown เองหรือรีเฟรชหน้า
-      var prevTimersServer = App.timersServerId;
-      populateTimersServerSelect();
-      renderTimersRetiredState();
-      if(App.timersServerId !== prevTimersServer) loadUserBosses().then(function(){ renderRoster(); checkPartyServerMatch(); });
-      populateFarmServerSelect();
-      renderFarmRetiredState();
       toast('บันทึกเซิร์ฟเวอร์ที่เล่นแล้ว');
     });
   });
@@ -10468,34 +10399,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             return loadTimersServerIds().then(populateTimersServerSelect).then(function(){
               return Promise.all([ loadUserBosses(), loadKills() ]);
             });
-          }).then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); hidePartyServerMismatch(); });
+          }).then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
         });
       });
     }
   });
-
-  document.getElementById('partyServerMismatchSwitchBtn').addEventListener('click', function(){
-    var ov = document.getElementById('partyServerMismatchOverlay');
-    var target = ov.dataset.hostServer;
-    if(!target) return;
-    App.timersServerId = target;
-    saveTimersServer();
-    var sel = document.getElementById('timersServerSelect');
-    if(sel){
-      // เซิร์ฟของปาร์ตี้อาจยังไม่มีตัวเลือกในดรอปดาวน์ (เช่นหัวปาร์ตี้เพิ่งสลับไปเซิร์ฟที่ยังไม่มีบอสบันทึกไว้เลย)
-      // เพิ่ม option ให้เองชั่วคราวกันดรอปดาวน์โชว์ค่าว่าง — ไม่ต้องแตะ "เซิร์ฟเวอร์ที่เล่น" ในหน้าตั้งค่าเลย
-      if(![].slice.call(sel.options).some(function(o){ return o.value===target; })){
-        var opt = document.createElement('option');
-        opt.value = target; opt.textContent = serverLabel(target);
-        sel.appendChild(opt);
-      }
-      sel.value = target;
-    }
-    ov.hidden = true;
-    loadUserBosses().then(function(){ renderRoster(); });
-  });
-  // เช็คซ้ำเป็นระยะระหว่างเปิดหน้าจับเวลาบอสอยู่ เผื่อหัวปาร์ตี้สลับเซิร์ฟเวอร์ระหว่างที่สมาชิกเปิดหน้าค้างไว้
-  setInterval(function(){ if(bossPageOpen()) checkPartyServerMatch(); }, 20000);
 
   document.getElementById('addPartyMemberBtn').addEventListener('click', function(){
     document.getElementById('addPartyMemberEmail').value = '';
@@ -10736,7 +10644,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   document.getElementById('timersServerSelect').addEventListener('change', function(e){
     App.timersServerId = e.target.value;
     saveTimersServer();
-    loadUserBosses().then(function(){ renderRoster(); checkPartyServerMatch(); });
+    loadUserBosses().then(function(){ renderRoster(); });
   });
 
   document.getElementById('farmExRateInput').addEventListener('input', function(){
@@ -11105,7 +11013,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   });
 
   searchResults.addEventListener('click', function(e){
-    if(isTimersServerRetired(App.timersServerId)) return;
+    if(isRetiredServer(App.timersServerId)) return;
     var row = e.target.closest('.search-result-row');
     if(!row || row.classList.contains('added')) return;
     var boss = CATALOG.concat(visibleCustomCatalog()).filter(function(b){ return b.id===row.dataset.catalogId; })[0];
@@ -11131,7 +11039,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ---------- roster interactions ----------
   document.getElementById('roster').addEventListener('click', function(e){
-    if(isTimersServerRetired(App.timersServerId)) return;
+    if(isRetiredServer(App.timersServerId)) return;
     var card = e.target.closest('.boss-card');
     if(!card) return;
     var bossId = card.dataset.boss;

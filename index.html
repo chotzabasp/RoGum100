@@ -1007,6 +1007,8 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .loot-each{color:var(--text-dim);font-size:.72rem}
 .share-chip{background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.18rem .6rem;font-size:.74rem;color:var(--text-dim);cursor:pointer}
 .share-chip.on{color:var(--accent);border-color:var(--accent);background:color-mix(in srgb, var(--accent) 18%, transparent)}
+/* ✓ ของชิป "เซิร์ฟเวอร์ที่เล่น" (หน้าตั้งค่า + popup ตอนสมัคร) ย้อมทองแยกจากสีชื่อเซิร์ฟ — ดู chipLabelHtml */
+.chip-check-gold{color:var(--warn);font-weight:800}
 .sold-amount{width:7.5rem;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.3rem .5rem;font-size:.8rem}
 .sold-currency{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.3rem .4rem;font-size:.78rem}
 .membership-pill.neutral{background:var(--surface-2);color:var(--text-dim)}
@@ -2108,14 +2110,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-settings .settings-security{grid-column:2;grid-row:1}
 #view-settings .settings-servers{grid-column:1/-1}
 #view-settings .settings-servers{padding:1rem 1.1rem .9rem}
-#view-settings .settings-servers .panel-head{align-items:center;margin-bottom:.15rem}
+#view-settings .settings-servers .panel-head{align-items:center;margin-bottom:.15rem;flex-wrap:wrap}
 #view-settings .settings-servers .panel-head h2{font-size:1rem}
+#view-settings .settings-servers-head-actions{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap}
 #view-settings .settings-servers .panel-head .party-panel-summary{font-size:.78rem;color:#a9c4f5;font-weight:700;white-space:nowrap}
-#view-settings .settings-servers .settings-note:not(.server-quota-hint){margin:.15rem 0 .65rem;font-size:.72rem}
+#view-settings .settings-servers-head-actions .settings-package-upgrade{padding:.3rem .65rem;min-height:0;font-size:.72rem;white-space:nowrap}
+#view-settings .settings-servers .settings-note{margin:.15rem 0 .65rem;font-size:.72rem}
 #view-settings .settings-servers .server-pick-list{gap:.35rem;margin-bottom:.55rem}
 #view-settings .settings-servers .server-pick-list .share-chip{font-size:.78rem;padding:.28rem .62rem}
-#view-settings .settings-servers .server-quota-hint{margin:.35rem 0 0;font-size:.72rem;color:var(--text-dim);order:1}
-#view-settings .settings-servers .settings-actions{display:flex;justify-content:flex-end;margin-top:-1.35rem;position:relative;z-index:1}
+#view-settings .settings-servers .settings-actions{display:flex;justify-content:flex-end;margin-top:.75rem}
 #view-settings .settings-servers .settings-actions .btn{padding:.42rem .75rem;min-height:36px;font-size:.78rem}
 @media(max-width:760px){
  #view-settings .settings-security{grid-column:auto;grid-row:3}
@@ -3009,11 +3012,26 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSavePass">เปลี่ยนรหัสผ่าน</button></div>
         </div>
         <div class="panel settings-card settings-wide settings-servers">
-          <div class="panel-head"><h2>เซิร์ฟเวอร์ที่เล่น</h2><span class="party-panel-summary" id="stServersSummary"></span></div>
-          <p class="settings-note">เลือกอย่างน้อย 1 เซิร์ฟเวอร์</p>
+          <div class="panel-head">
+            <h2>เซิร์ฟเวอร์ที่เล่น</h2>
+            <div class="settings-servers-head-actions">
+              <span class="party-panel-summary" id="stServersSummary"></span>
+              <!-- ซื้อช่องเซิร์ฟเวอร์เพิ่มแบบเดียวกับปุ่ม "+ เพิ่มเซิร์ฟเวอร์" หน้าแรก (buyServerSlotFlow มี
+                   popup ยืนยันก่อนหักแต้มอยู่แล้ว จึงกดได้เสมอแม้โควต้ายังไม่เต็ม ไม่ต้องคอยซ่อน/ปิดปุ่มเอง) -->
+              <button type="button" class="btn btn-sm settings-package-upgrade" id="stAddServerSlotBtn">+ เพิ่มเซิร์ฟเวอร์</button>
+            </div>
+          </div>
+          <p class="settings-note">เลือกได้มากกว่า 1 เซิร์ฟเวอร์ สำหรับผู้เล่นที่เล่นหลายเซิร์ฟเวอร์พร้อมกัน</p>
           <div class="server-pick-list" id="stServerList"></div>
-          <p class="settings-note server-quota-hint" data-server-quota-hint></p>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveServers">บันทึกเซิร์ฟเวอร์</button></div>
+        </div>
+        <!-- เซิร์ฟพักที่เคยมีประวัติ — ค่าเริ่มต้นซ่อนไว้ทั้งหมด (กันตัวเลือกเซิร์ฟเวอร์ในหน้า "ประวัติซื้อ-ขาย"/
+             "กราฟกำไรสุทธิ"/"ยอดนักฟาม" รกจากเซิร์ฟเก่าที่เลิกเล่นแล้ว) ติ๊กเปิดคืนได้เฉพาะเซิร์ฟที่เคยมีประวัติจริง
+             เก็บในเครื่อง กดติ๊กแล้วมีผลทันที ไม่ต้องกดบันทึก — การ์ดนี้ทั้งการ์ดจะซ่อนถ้าไม่มีเซิร์ฟพักที่มีประวัติเลย -->
+        <div class="panel settings-card settings-wide settings-servers" id="stRetiredServerCard" hidden>
+          <div class="panel-head"><h2>เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ</h2></div>
+          <p class="settings-note">ซ่อนไว้เป็นค่าเริ่มต้น ติ๊กเปิดเพื่อให้กลับมาแสดงใน "ประวัติซื้อ-ขาย", "กราฟกำไรสุทธิ" และ "ยอดนักฟาม" — มีผลทันทีไม่ต้องกดบันทึก</p>
+          <div class="server-pick-list" id="stRetiredServerList"></div>
         </div>
       </div>
       <h3 class="settings-group-label">ประวัติ</h3>
@@ -3470,6 +3488,24 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     return live.length ? live : SERVER_RATES.map(function(s){ return s.id; });
   }
   function isRetiredServer(id){ return id!=null && myServerIds().indexOf(id)===-1; }
+  // เซิร์ฟพัก (ไม่ได้เล่นแล้ว) ที่เคยมีประวัติ ค่าเริ่มต้น "ซ่อน" ทั้งหมด — ผู้ใช้ต้องมาติ๊กเปิดเองที่
+  // หน้าตั้งค่า (การ์ด "เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ") ถึงจะโผล่กลับมาใน dropdown ประวัติ/กราฟ
+  // เก็บในเครื่อง (localStorage) ไม่ผูกกับบัญชี ไม่ต้องรัน SQL — เปลี่ยนเครื่อง/ล้างเบราว์เซอร์แล้วรีเซ็ตกลับเป็นซ่อนหมด
+  function visibleRetiredServerIds(){
+    if(!App.keys) return [];
+    var v = store(App.keys.retiredServerVisible, []);
+    return Array.isArray(v) ? v : [];
+  }
+  function isRetiredServerVisible(id){ return visibleRetiredServerIds().indexOf(id)!==-1; }
+  function setRetiredServerVisible(id, show){
+    var v = visibleRetiredServerIds();
+    var idx = v.indexOf(id);
+    if(show && idx===-1) v.push(id);
+    else if(!show && idx!==-1) v.splice(idx, 1);
+    persist(App.keys.retiredServerVisible, v);
+  }
+  // เซิร์ฟที่ "จะโชว์" ใน dropdown ประวัติ/กราฟ = ไม่พัก หรือ พักแต่ติ๊กเปิดไว้
+  function isHistoryServerShown(id){ return !isRetiredServer(id) || isRetiredServerVisible(id); }
   // โควต้าจำนวนเซิร์ฟเวอร์ต่อบัญชี — ฟรี 1 เซิร์ฟ ซื้อเพิ่มครั้งละ 30 แต้ม (สล็อตถาวร)
   // ตัวจริงบังคับที่ฝั่งฐานข้อมูล (set_my_servers/buy_server_slot) ตรงนี้แค่ใช้วาดหน้าจอ
   var SERVER_SLOT_COST = 30;
@@ -3500,6 +3536,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         return refreshProfile().then(function(){
           addRateSlot();
           renderAll();
+          // เผื่อกดจากปุ่มในหน้าตั้งค่าเอง (การ์ด "เซิร์ฟเวอร์ที่เล่น") ให้ "เล่นอยู่ X/Y" และชิปที่ล็อกไว้
+          // อัปเดตตามโควต้าใหม่ทันที ไม่ต้องออกจากหน้าแล้วกลับเข้ามาใหม่
+          if(document.getElementById('view-settings') && !document.getElementById('view-settings').hidden) renderSettingsPage();
           toast('ได้ช่องเซิร์ฟเวอร์เพิ่มแล้ว — เลือกเซิร์ฟที่หน้า "ตั้งค่า"');
         });
       }, function(err){ console.warn('buy_server_slot', err); toast('ซื้อโควต้าไม่สำเร็จ ลองใหม่อีกครั้ง'); });
@@ -3583,7 +3622,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       farmOcHint:'mvpwatch_farmochint_'+email, farmExRate:'mvpwatch_farmexrate_'+email, farmMapNames:'mvpwatch_farmmapnames_'+email,
       timersServer:'mvpwatch_timersserver_'+email,
       tickerServers:'mvpwatch_tickerservers_'+email, tickerSelectedServers:'mvpwatch_tickerselectedservers_'+email,
-      lastRateUpdateTs:'mvpwatch_lastrateupdatets_'+email
+      lastRateUpdateTs:'mvpwatch_lastrateupdatets_'+email,
+      retiredServerVisible:'mvpwatch_retiredserversvisible_'+email
     };
   };
 
@@ -5722,13 +5762,18 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // หน้าฟามใช้ dropdown ตัวเดียวคุมทั้ง "ช่องกรอกต้นทุน" และ "กราฟ/ประวัติการฟาม"
   // เลยต้องโชว์เซิร์ฟที่เคยมีข้อมูลฟามไว้ด้วย ไม่งั้นเลิกเล่นเซิร์ฟไหนแล้วประวัติเซิร์ฟนั้นจะเข้าไม่ถึงเลย
   // เซิร์ฟที่พักอยู่จะดูย้อนหลังได้อย่างเดียว กรอกใหม่ไม่ได้ (ดู renderFarmRetiredState)
-  function farmServerIds(){
+  // ไม่กรองเซิร์ฟพักที่ซ่อนไว้ — ใช้สำหรับหน้าตั้งค่า (เหมือน rawHistoryServerIds)
+  function rawFarmServerIds(){
     var ids = myServerIds().slice();
     App.farmLog.forEach(function(e){ if(e.serverId && ids.indexOf(e.serverId)===-1) ids.push(e.serverId); });
     Object.keys(App.farmCostItems||{}).forEach(function(id){
       if(ids.indexOf(id)===-1 && (App.farmCostItems[id]||[]).length) ids.push(id);
     });
     return ids;
+  }
+  // ตัดเซิร์ฟพักที่ผู้ใช้ซ่อนไว้ออก (ดู isHistoryServerShown) — เซิร์ฟที่เล่นอยู่ (myServerIds) ไม่ถูกกรองอยู่แล้ว
+  function farmServerIds(){
+    return rawFarmServerIds().filter(isHistoryServerShown);
   }
   function populateFarmServerSelect(){
     var sel = document.getElementById('farmServerSelect');
@@ -7120,10 +7165,16 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   function mrDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 
-  function historyServerIds(){
+  // ไม่กรองเซิร์ฟพักที่ซ่อนไว้ — ใช้สำหรับหน้าตั้งค่า (ต้องเห็นทุกเซิร์ฟที่เคยมีประวัติ ถึงจะติ๊กเปิดกลับได้)
+  function rawHistoryServerIds(){
     var ids = [];
     App.merchantLog.forEach(function(e){ if(ids.indexOf(e.serverId)===-1) ids.push(e.serverId); });
     return ids;
+  }
+  // รายชื่อเซิร์ฟใน dropdown ของ "ประวัติซื้อ-ขาย" กับกราฟกำไร — ตัดเซิร์ฟพักที่ผู้ใช้ซ่อนไว้ออก
+  // (ดู isHistoryServerShown / การ์ด "เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ" ในหน้าตั้งค่า)
+  function historyServerIds(){
+    return rawHistoryServerIds().filter(isHistoryServerShown);
   }
   // รายชื่อเซิร์ฟใน dropdown ของ "ประวัติ" กับกราฟกำไร = เซิร์ฟที่มีข้อมูลบันทึกไว้
   // บวกเซิร์ฟที่กำลังเลือกอยู่ในกล่องซื้อ-ขาย ถึงเซิร์ฟนั้นจะยังไม่มีข้อมูลก็ต้องเลือกดูได้
@@ -9196,18 +9247,58 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(p.birth_date) document.getElementById('stBirthInput').value = '';
     renderServerChips(document.getElementById('stServerList'), p.servers||[]);
     updateServersSummary();
+    renderRetiredServerVisibility();
     loadTopupHistory();
     loadPurchaseHistory();
     loadPointsHistory();
   }
+  // ---------- เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ: ติ๊กเปิดกลับให้โผล่ใน dropdown ประวัติ/กราฟ ----------
+  // (ค่าเริ่มต้นซ่อนหมด — ดู isHistoryServerShown, visibleRetiredServerIds) รวมทั้งเซิร์ฟที่เคยมีประวัติ
+  // ซื้อ-ขาย และเคยมีประวัติฟาม เข้าด้วยกัน เพราะติ๊กตัวเดียวคุมทั้งสองหน้า
+  function retiredServerHistoryCandidates(){
+    var ids = [];
+    rawHistoryServerIds().concat(rawFarmServerIds()).forEach(function(id){
+      if(isRetiredServer(id) && ids.indexOf(id)===-1) ids.push(id);
+    });
+    return ids;
+  }
+  function renderRetiredServerVisibility(){
+    var card = document.getElementById('stRetiredServerCard');
+    var root = document.getElementById('stRetiredServerList');
+    var candidates = retiredServerHistoryCandidates();
+    card.hidden = !candidates.length;
+    if(!candidates.length) return;
+    var visible = visibleRetiredServerIds();
+    root.innerHTML = candidates.map(function(id){
+      var on = visible.indexOf(id)!==-1;
+      var sv = serverRateById(id);
+      return '<button type="button" class="share-chip'+(on?' on':'')+'" data-retired-server-pick="'+id+'">'+(on?'✓ ':'')+escapeHtml(sv?sv.name:id)+'</button>';
+    }).join('');
+  }
+  document.addEventListener('click', function(e){
+    var chip = e.target.closest('[data-retired-server-pick]');
+    if(!chip) return;
+    var id = chip.dataset.retiredServerPick;
+    var show = !chip.classList.contains('on');
+    setRetiredServerVisible(id, show);
+    chip.classList.toggle('on', show);
+    chip.textContent = (show ? '✓ ' : '') + chip.textContent.replace(/^✓ /, '');
+    // ไม่ต้องรีเฟรชหน้าอื่นตรงนี้ — หน้าประวัติ/กราฟ/ฟาม อ่านค่านี้ใหม่เองทุกครั้งที่เข้าไปดู (populateHistoryServerFilter ฯลฯ)
+  });
   // ---------- เซิร์ฟเวอร์ที่เล่น: ชิปเลือกได้หลายอัน ใช้ทั้ง popup ตอนสมัคร/ล็อกอินครั้งแรก และหน้าตั้งค่า ----------
   // ปิดให้บริการแล้ว = ไม่โชว์เป็นตัวเลือกใหม่ แต่ถ้าบัญชีนี้มีอยู่แล้วต้องยังเห็น/เอาออกเองได้
+  // ✓ สีทอง (var(--warn)) แยกจากสีของชื่อเซิร์ฟ — เก็บชื่อดิบไว้ใน data-server-label เพื่อสลับ ✓
+  // เข้า/ออกตอนคลิกโดยไม่ต้องแกะ textContent เดิม (กันเผลอทำ HTML ของ span เพี้ยน)
+  function chipLabelHtml(on, label){
+    return (on ? '<span class="chip-check-gold">✓</span> ' : '') + escapeHtml(label);
+  }
   function renderServerChips(root, selected){
     if(!SERVER_RATES.length){ root.innerHTML = '<p class="empty-note">ยังไม่มีเซิร์ฟเวอร์ในระบบ</p>'; return; }
     var visible = SERVER_RATES.filter(function(s){ return s.active || selected.indexOf(s.id)!==-1; });
     root.innerHTML = visible.map(function(s){
       var on = selected.indexOf(s.id)!==-1;
-      return '<button type="button" class="share-chip'+(on?' on':'')+'" data-server-pick="'+s.id+'">'+(on?'✓ ':'')+escapeHtml(s.name)+(s.active?'':' (ปิดให้บริการ)')+'</button>';
+      var label = s.name+(s.active?'':' (ปิดให้บริการ)');
+      return '<button type="button" class="share-chip'+(on?' on':'')+'" data-server-pick="'+s.id+'" data-server-label="'+escapeHtml(label)+'">'+chipLabelHtml(on, label)+'</button>';
     }).join('');
     syncServerPickLimit(root);
   }
@@ -9237,8 +9328,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var chip = e.target.closest('[data-server-pick]');
     if(!chip) return;
     if(chip.disabled) return;
-    chip.classList.toggle('on');
-    chip.textContent = (chip.classList.contains('on') ? '✓ ' : '')+chip.textContent.replace(/^✓ /, '');
+    var on = chip.classList.toggle('on');
+    chip.innerHTML = chipLabelHtml(on, chip.dataset.serverLabel);
     if(chip.parentNode) syncServerPickLimit(chip.parentNode);
   });
   function saveServers(root, errEl, onDone){
@@ -9271,6 +9362,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       toast('บันทึกเซิร์ฟเวอร์ที่เล่นแล้ว');
     });
   });
+  document.getElementById('stAddServerSlotBtn').addEventListener('click', function(){ buyServerSlotFlow(); });
   function loadTopupHistory(){
     var root = document.getElementById('stTopupList'), sum = document.getElementById('stTopupSummary'), moreWrap = document.getElementById('stTopupMoreWrap');
     root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = ''; moreWrap.hidden = true;

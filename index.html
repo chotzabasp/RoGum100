@@ -9512,13 +9512,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     topup:'เติมแต้ม (QR PromptPay)', slip_topup:'เติมแต้ม (สลิป)', admin_confirm_topup:'เติมแต้ม (แอดมินยืนยันรับเงิน)',
     admin_grant:'แอดมินเติมแต้มให้', admin_reverse:'แอดมินยกเลิกรายการเติมเงิน', admin_deduct:'แอดมินหักแต้ม',
     plan_purchase:'ซื้อแพ็กเกจ', server_slot:'ซื้อช่องเซิร์ฟเวอร์เพิ่ม', party_slot:'เพิ่มสมาชิกปาร์ตี้',
-    announcement:'ลงประกาศรับ M', spend:'ใช้แต้ม', other:'ปรับแต้ม'
+    announcement:'ลงประกาศรับ M', spend:'ใช้แต้ม', promo_code:'แลกโค้ดโปรโมชัน', other:'ปรับแต้ม'
   };
   function loadPointsHistory(){
     var root = document.getElementById('stPointsList'), sum = document.getElementById('stPointsSummary'), moreWrap = document.getElementById('stPointsMoreWrap');
     root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = ''; moreWrap.hidden = true;
     if(!App.session || !App.session.id){ root.innerHTML = '<p class="admin-topup-empty">กรุณาเข้าสู่ระบบ</p>'; return; }
-    supa.from('points_ledger').select('id, delta, balance_after, reason, created_at')
+    supa.from('points_ledger').select('id, delta, balance_after, reason, detail, created_at')
       .eq('user_id', App.session.id).order('created_at', { ascending:false }).limit(200).then(function(res){
         if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
         var rows = res.data || [];
@@ -9527,10 +9527,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         var shown = stHistExpanded.points ? rows : rows.slice(0, HIST_PAGE);
         root.innerHTML = shown.map(function(r){
           var plus = r.delta > 0;
+          var amtHtml = r.delta === 0 ? '' : '<b class="settings-row-amt" style="color:var(--'+(plus?'success':'danger')+')">'+(plus?'+':'')+fmtNum(r.delta)+' แต้ม</b>';
           return '<div class="settings-row"><div class="settings-row-main">'+
-            '<div class="settings-row-title">'+escapeHtml(POINTS_REASON[r.reason] || POINTS_REASON.other)+'</div>'+
+            '<div class="settings-row-title">'+escapeHtml(r.detail || POINTS_REASON[r.reason] || POINTS_REASON.other)+'</div>'+
             '<div class="settings-row-meta">'+fmtDateTime(new Date(r.created_at).getTime())+' · คงเหลือ '+fmtNum(r.balance_after)+' แต้ม</div></div>'+
-            '<b class="settings-row-amt" style="color:var(--'+(plus?'success':'danger')+')">'+(plus?'+':'')+fmtNum(r.delta)+' แต้ม</b></div>';
+            amtHtml+'</div>';
         }).join('');
         if(rows.length > HIST_PAGE){
           moreWrap.hidden = false;

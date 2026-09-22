@@ -9408,6 +9408,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       pruneServerSelections(true);
       renderSettingsPage();
       renderAll();
+      // เซิร์ฟที่เล่นเปลี่ยนกระทบว่า "เซิร์ฟนี้พักแล้วหรือยัง" ของหน้าจับเวลาบอส/ต้นทุนฟามด้วย
+      // (isRetiredServer เทียบกับรายชื่อนี้ตรงๆ) เดิมไม่มีใครเรียกคำนวณ dropdown/ป้ายเตือนใหม่ตรงนี้
+      // เลยค้างค่า/ป้ายเดิมจนกว่าจะไปกดเปลี่ยน dropdown เองหรือรีเฟรชหน้า
+      var prevTimersServer = App.timersServerId;
+      populateTimersServerSelect();
+      renderTimersRetiredState();
+      if(App.timersServerId !== prevTimersServer) loadUserBosses().then(function(){ renderRoster(); checkPartyServerMatch(); });
+      populateFarmServerSelect();
+      renderFarmRetiredState();
       toast('บันทึกเซิร์ฟเวอร์ที่เล่นแล้ว');
     });
   });

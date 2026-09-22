@@ -5182,7 +5182,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function renderHistory(){
     var list = document.getElementById('historyList');
     var today = todayKey(Date.now());
-    var timersAllowed = hasTimersPlan();
+    // สมาชิกปาร์ตี้ดูประวัติย้อนหลังได้ไม่จำกัดเสมอ ไม่ว่าตัวเองจะมีแพ็กเกจไหม (สิทธิ์ดูมาจากการเป็น
+    // สมาชิกของปาร์ตี้นั้นโดยตรง) — แต่แก้ไข/ลบยังคุมแยกอีกชั้นด้วย isFreePartyMember() ใน lootRowHtml
+    var timersAllowed = hasTimersPlan() || !!App.viewingHostId;
     var todayOnlyBox = document.getElementById('todayOnly');
     todayOnlyBox.disabled = !timersAllowed;
     todayOnlyBox.title = timersAllowed ? '' : 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจ "จับเวลาบอส" เพื่อดูย้อนหลังทั้งหมด';
@@ -5192,13 +5194,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.getElementById('htabKills').className = App.historyTab==='kills' ? 'active' : '';
     document.getElementById('htabItems').className = App.historyTab==='items' ? 'active' : '';
     document.getElementById('htabBoss').className = App.historyTab==='boss' ? 'active' : '';
-    document.getElementById('historyDeleteAll').hidden = !App.kills.length;
+    document.getElementById('historyDeleteAll').hidden = !App.kills.length || isFreePartyMember();
     if(App.historyTab==='items'){ renderLootView(list, entries.filter(function(l){ return l.items.length>0; })); return; }
     if(App.historyTab==='boss'){ renderBossView(list, entries); return; }
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
     list.innerHTML = entries.map(function(l){
-      // รายการของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) ลบไม่ได้
-      var writable = l.hostId===App.session.id || l.hostId===activeOwnerId();
+      // รายการของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) หรือ
+      // เป็นสมาชิกฟรีของปาร์ตี้ปัจจุบัน (isFreePartyMember) ลบไม่ได้
+      var writable = l.hostId===App.session.id || (l.hostId===activeOwnerId() && !isFreePartyMember());
       var delBtn = writable ? '<button type="button" class="hist-del" data-del-kill="'+l.id+'" title="ลบรายการนี้">✕</button>' : '';
       return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+escapeHtml(l.killedBy) : '')+'</div>'+
@@ -5281,10 +5284,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   function lootRowHtml(r){
     var k = r.kill, it = r.item;
-    // แก้ไข/ลบ/ติ๊กหารได้เฉพาะรายการที่ยังมีสิทธิ์เขียนจริง (ตรงกับเงื่อนไข RLS ฝั่ง DB: เจ้าของ
-    // หรือสมาชิกปัจจุบันของปาร์ตี้นั้น) — ถ้าเป็นของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่แล้ว
-    // (ดึงมาโชว์ผ่าน fetchSharedKills) ต้องล็อกทั้งแถว ดูได้อย่างเดียว แก้/ลบ/ติ๊กอะไรไม่ได้เลย
-    var writable = k.hostId===App.session.id || k.hostId===activeOwnerId();
+    // แก้ไข/ลบ/ติ๊กหารได้เฉพาะรายการที่ยังมีสิทธิ์เขียนจริง (ตรงกับเงื่อนไข RLS ฝั่ง DB: เจ้าของ หรือ
+    // สมาชิกปัจจุบันของปาร์ตี้นั้นที่มีแพ็กเกจจับเวลาบอส) — ของตัวเองเขียนได้เสมอ, ของปาร์ตี้ปัจจุบัน
+    // เขียนได้ถ้าไม่ใช่ "สมาชิกฟรี" (isFreePartyMember), ของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่
+    // แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) ล็อกทั้งแถวเสมอ ดูได้อย่างเดียว
+    var writable = k.hostId===App.session.id || (k.hostId===activeOwnerId() && !isFreePartyMember());
     // รายการนี้เป็นประวัติส่วนตัวของตัวเอง (ก่อนเข้าปาร์ตี้ปัจจุบัน) ที่ถูกรวมมาแสดงปนกับของ
     // ปาร์ตี้ (ดู loadKillsForActiveOwner) — ต้องหารกับตัวเองเท่านั้น ไม่ใช่ roster ของปาร์ตี้ที่กำลังดูอยู่
     // เพราะไอเทมนี้ไม่ได้เกี่ยวอะไรกับปาร์ตี้นั้นเลย
@@ -9576,6 +9580,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(App.profile.role === 'admin' || App.profile.legacy_unlimited === undefined || App.profile.legacy_unlimited) return true;
     return !!(App.profile.plan_timers_expires_at && new Date(App.profile.plan_timers_expires_at).getTime() > Date.now());
   }
+  // สมาชิกปาร์ตี้ (ไม่ใช่หัวปาร์ตี้เอง) ที่บัญชีตัวเองไม่มีแพ็กเกจ "จับเวลาบอส" — เพิ่มบอส/กดตายแล้ว/
+  // แก้ไข-ลบประวัติไม่ได้ (ดูอย่างเดียว) ต่างจากเดิมที่ยึดสิทธิ์ตามแพ็กเกจของหัวปาร์ตี้ล้วนๆ — หัวปาร์ตี้
+  // เองไม่โดนกฎนี้ ยึดแพ็กเกจของตัวเองตามปกติ (ฝั่งเซิร์ฟเวอร์บังคับจริงด้วย ดู add_boss_capped/record_kill/
+  // kill_items_write/kills_party_delete — จุดนี้แค่กันไม่ให้กดง่ายๆ ฝั่งหน้าเว็บ)
+  function isFreePartyMember(){ return !!App.viewingHostId && !hasTimersPlan(); }
   function hasScopedPlan(feature){
     if(hasBundlePlan()) return true;
     var expiry = App.profile && App.profile.feature_expiries && App.profile.feature_expiries[feature];
@@ -11041,6 +11050,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   });
 
   searchResults.addEventListener('click', function(e){
+    if(isFreePartyMember()){ toast('กรุณาซื้อแพ็กเกจ เพื่อใช้งานได้อย่างอิสระ'); return; }
     var row = e.target.closest('.search-result-row');
     if(!row || row.classList.contains('added')) return;
     var boss = CATALOG.concat(visibleCustomCatalog()).filter(function(b){ return b.id===row.dataset.catalogId; })[0];
@@ -11121,6 +11131,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         if(res.error) console.error('supaRemoveBoss', res.error);
       });
     } else if(action==='kill'){
+      if(isFreePartyMember()){ toast('กรุณาซื้อแพ็กเกจ เพื่อใช้งานได้อย่างอิสระ'); return; }
       var minutesInput = card.querySelector('[data-minutes]');
       var rawTimeInput = minutesInput ? minutesInput.value.trim() : '';
       // Empty field = died right now (unchanged default). A non-empty field must parse

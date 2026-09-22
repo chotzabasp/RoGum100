@@ -846,6 +846,8 @@ svg.icon{width:18px;height:18px;display:block}
 /* เลือกเซิร์ฟเวอร์ที่เล่น (ตอนสมัคร + หน้าตั้งค่า) */
 #serverPickOverlay .confirm-backdrop{z-index:87}
 #serverPickOverlay .confirm-box{z-index:88}
+#partyServerMismatchOverlay .confirm-backdrop{z-index:83}
+#partyServerMismatchOverlay .confirm-box{z-index:84}
 .server-pick-list{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:.6rem}
 .server-pick-list .share-chip{font-size:.84rem;padding:.35rem .8rem}
 .server-pick-list .share-chip.on{font-weight:600}
@@ -3165,6 +3167,18 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   </div>
 </div>
 
+<div id="partyServerMismatchOverlay" hidden>
+  <div class="confirm-backdrop"></div>
+  <div class="confirm-box topup-box">
+    <h3 class="post-announce-title">เซิร์ฟเวอร์ไม่ตรงกับปาร์ตี้</h3>
+    <p class="expiry-msg">กรุณาเลือกเซิร์ฟเวอร์เดียวกันกับปาร์ตี้</p>
+    <p class="settings-note" id="partyServerMismatchDetail"></p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-gradient" id="partyServerMismatchSwitchBtn">สลับเซิร์ฟเวอร์ให้ตรงกับปาร์ตี้</button>
+    </div>
+  </div>
+</div>
+
 <div id="forgotPasswordOverlay" hidden>
   <div class="confirm-backdrop" data-forgot-close></div>
   <div class="confirm-box topup-box">
@@ -4445,10 +4459,39 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var ids = timersServerIds();
     if(ids.indexOf(App.timersServerId)===-1){
       App.timersServerId = ids[0] || null;
-      saveTimersServer();
     }
+    // เซฟทุกครั้งที่ยืนยันค่านี้ (ไม่ใช่แค่ตอนค่าเดิมใช้ไม่ได้แล้วต้องเปลี่ยน) เพราะ RPC
+    // party_active_server (เช็คเซิร์ฟเวอร์ไม่ตรงกับปาร์ตี้) อ่านค่านี้จาก user_app_data ของหัวปาร์ตี้
+    // ถ้าหัวปาร์ตี้ไม่เคยกดเปลี่ยน dropdown เองเลย ค่านี้จะไม่เคยถูกซิงก์ขึ้นคลาวด์มาก่อน
+    saveTimersServer();
     sel.innerHTML = ids.map(function(id){ return '<option value="'+id+'">'+serverLabel(id)+'</option>'; }).join('');
     sel.value = App.timersServerId;
+  }
+  // ---------- เช็คว่าเซิร์ฟเวอร์ที่สมาชิกกำลังดูตรงกับที่หัวปาร์ตี้ใช้อยู่ไหม ----------
+  // เฉพาะตอนเป็นสมาชิก (App.viewingHostId ตั้งค่าไว้) หัวปาร์ตี้เองไม่โดนเช็ค เพราะหัวปาร์ตี้
+  // คือตัวกำหนดค่าอ้างอิง ใช้ RPC party_active_server (security definer) อ่านค่าข้ามบัญชีของหัวปาร์ตี้
+  // ถ้าเรียกไม่สำเร็จ (เน็ตมีปัญหา ฯลฯ) ไม่บล็อก กันเผลอล็อกผู้ใช้ออกจากหน้าเฉยๆ
+  function hidePartyServerMismatch(){
+    var ov = document.getElementById('partyServerMismatchOverlay');
+    if(ov) ov.hidden = true;
+  }
+  function checkPartyServerMatch(){
+    if(!App.viewingHostId || !App.session || App.isGuest){ hidePartyServerMismatch(); return; }
+    supa.rpc('party_active_server', { p_host: App.viewingHostId }).then(function(res){
+      if(res.error){ console.error('checkPartyServerMatch', res.error); return; }
+      if(App.viewingHostId == null) return; // ออกจากปาร์ตี้ไปแล้วระหว่างรอผลลัพธ์
+      var hostServer = res.data;
+      var ov = document.getElementById('partyServerMismatchOverlay');
+      if(!ov) return;
+      if(hostServer && hostServer !== App.timersServerId){
+        document.getElementById('partyServerMismatchDetail').textContent =
+          'ปาร์ตี้กำลังใช้ '+serverLabel(hostServer)+' อยู่ (คุณเลือก '+(App.timersServerId?serverLabel(App.timersServerId):'-')+')';
+        ov.dataset.hostServer = hostServer;
+        ov.hidden = false;
+      } else {
+        ov.hidden = true;
+      }
+    });
   }
   // รายการบอสของผู้ใช้ + เวลาที่จับอยู่ (App.db/App.active) sync กับตาราง user_bosses
   // ใน Supabase โดยตรง แทนการเซฟเป็น blob เดียวใน localStorage แบบเดิม เพื่อให้ข้าม
@@ -7934,7 +7977,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       return bossFetchState(bossHost).then(function(state){ bossLive.knownState = state; bossLive.stateHost = bossHost; }, function(){})
         .then(function(){ return loadTimersServerIds(); })
         .then(function(){ populateTimersServerSelect(); })
-        .then(function(){ return Promise.all([ loadUserBosses(), loadKills() ]); });
+        .then(function(){ return Promise.all([ loadUserBosses(), loadKills() ]); })
+        .then(function(){ checkPartyServerMatch(); });
     }).then(function(){
       loadUserData(user.email);
       // ประวัติ/คลัง/การตั้งค่า อยู่บนคลาวด์ — โหลดแล้วรวมกับของในเครื่องก่อนวาดหน้า (ย้ายของเดิมขึ้นให้ครั้งแรก)
@@ -10399,11 +10443,34 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             return loadTimersServerIds().then(populateTimersServerSelect).then(function(){
               return Promise.all([ loadUserBosses(), loadKills() ]);
             });
-          }).then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
+          }).then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); hidePartyServerMismatch(); });
         });
       });
     }
   });
+
+  document.getElementById('partyServerMismatchSwitchBtn').addEventListener('click', function(){
+    var ov = document.getElementById('partyServerMismatchOverlay');
+    var target = ov.dataset.hostServer;
+    if(!target) return;
+    App.timersServerId = target;
+    saveTimersServer();
+    var sel = document.getElementById('timersServerSelect');
+    if(sel){
+      // เซิร์ฟของปาร์ตี้อาจยังไม่มีตัวเลือกในดรอปดาวน์ (เช่นหัวปาร์ตี้เพิ่งสลับไปเซิร์ฟที่ยังไม่มีบอสบันทึกไว้เลย)
+      // เพิ่ม option ให้เองชั่วคราวกันดรอปดาวน์โชว์ค่าว่าง — ไม่ต้องแตะ "เซิร์ฟเวอร์ที่เล่น" ในหน้าตั้งค่าเลย
+      if(![].slice.call(sel.options).some(function(o){ return o.value===target; })){
+        var opt = document.createElement('option');
+        opt.value = target; opt.textContent = serverLabel(target);
+        sel.appendChild(opt);
+      }
+      sel.value = target;
+    }
+    ov.hidden = true;
+    loadUserBosses().then(function(){ renderRoster(); });
+  });
+  // เช็คซ้ำเป็นระยะระหว่างเปิดหน้าจับเวลาบอสอยู่ เผื่อหัวปาร์ตี้สลับเซิร์ฟเวอร์ระหว่างที่สมาชิกเปิดหน้าค้างไว้
+  setInterval(function(){ if(bossPageOpen()) checkPartyServerMatch(); }, 20000);
 
   document.getElementById('addPartyMemberBtn').addEventListener('click', function(){
     document.getElementById('addPartyMemberEmail').value = '';
@@ -10644,7 +10711,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   document.getElementById('timersServerSelect').addEventListener('change', function(e){
     App.timersServerId = e.target.value;
     saveTimersServer();
-    loadUserBosses().then(function(){ renderRoster(); });
+    loadUserBosses().then(function(){ renderRoster(); checkPartyServerMatch(); });
   });
 
   document.getElementById('farmExRateInput').addEventListener('input', function(){

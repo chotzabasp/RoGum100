@@ -3044,6 +3044,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             <button class="active" data-sthtab="topup" id="sthtabTopup">เติมแต้ม</button>
             <button data-sthtab="purchase" id="sthtabPurchase">แพ็กเกจ</button>
             <button data-sthtab="points" id="sthtabPoints">ใช้แต้ม</button>
+            <button data-sthtab="promo" id="sthtabPromo">โค้ดโปรโมชัน</button>
           </div>
           <div id="stHistTopup">
             <p class="settings-note" id="stTopupSummary"></p>
@@ -3059,6 +3060,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             <p class="settings-note" id="stPointsSummary"></p>
             <div id="stPointsList" class="settings-list"></div>
             <div class="settings-actions" id="stPointsMoreWrap" hidden><button type="button" class="btn btn-sm btn-ghost" id="stPointsMore">ดูทั้งหมด</button></div>
+          </div>
+          <div id="stHistPromo" hidden>
+            <p class="settings-note" id="stPromoHistSummary"></p>
+            <div id="stPromoHistList" class="settings-list"></div>
+            <div class="settings-actions" id="stPromoHistMoreWrap" hidden><button type="button" class="btn btn-sm btn-ghost" id="stPromoHistMore">ดูทั้งหมด</button></div>
           </div>
         </div>
       </div>
@@ -6413,6 +6419,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           : '+'+fmtNum(rareTotal)+' z'+bahtSuffix(rareTotal);
         rows += '<div class="ct-row"><span class="ct-key">🎁 '+escapeHtml(r.name)+(r.qty>1?' x'+r.qty:'')+'</span><span class="ct-val" style="color:var(--success)">'+rareValText+'</span></div>';
       });
+      if(hasRate){
+        rows += '<div class="ct-row"><span class="ct-key" style="color:var(--text-dim)">เรทที่ใช้ตอนนั้น</span><span class="ct-val" style="color:var(--text-dim)">1M = '+fmtNum(entry.exchangeRate)+'บ</span></div>';
+      }
       rows += '<div class="ct-row" style="border-top:1px dashed var(--border);margin-top:.3rem;padding-top:.3rem"><span class="ct-key">รวมรายได้</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(entry.earned)+' z'+bahtSuffix(entry.earned)+'</span></div>';
       tip.innerHTML = '<span class="ct-time">ที่มาของรายได้</span>'+rows;
     }
@@ -9316,7 +9325,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     manual_review:['รอตรวจสอบ','soon']
   };
   var HIST_PAGE = 5;
-  var stHistExpanded = { topup:false, purchase:false, points:false };
+  var stHistExpanded = { topup:false, purchase:false, points:false, promo:false };
   // Display only: derive package rows from existing entitlement expiries.
   function settingsPackageRows(profile, now){
     var p=profile||{}, scoped=p.feature_expiries||{};
@@ -9377,6 +9386,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     loadTopupHistory();
     loadPurchaseHistory();
     loadPointsHistory();
+    loadPromoHistory();
   }
   // ---------- เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ: ติ๊กเปิดกลับให้โผล่ใน dropdown ประวัติ/กราฟ ----------
   // (ค่าเริ่มต้นซ่อนหมด — ดู isHistoryServerShown, visibleRetiredServerIds) รวมทั้งเซิร์ฟที่เคยมีประวัติ
@@ -9569,13 +9579,40 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         }
       });
   }
+  function loadPromoHistory(){
+    var root = document.getElementById('stPromoHistList'), sum = document.getElementById('stPromoHistSummary'), moreWrap = document.getElementById('stPromoHistMoreWrap');
+    root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = ''; moreWrap.hidden = true;
+    if(!App.session || !App.session.id){ root.innerHTML = '<p class="admin-topup-empty">กรุณาเข้าสู่ระบบ</p>'; return; }
+    supa.rpc('list_my_promo_redemptions').then(function(res){
+      if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
+      var rows = res.data || [];
+      if(!rows.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่เคยใช้โค้ดโปรโมชัน</p>'; return; }
+      sum.textContent = 'ใช้ไปแล้วทั้งหมด '+fmtNum(rows.length)+' โค้ด';
+      var shown = stHistExpanded.promo ? rows : rows.slice(0, HIST_PAGE);
+      root.innerHTML = shown.map(function(r){
+        var amtHtml = r.reward_type==='plan_days'
+          ? '<b class="settings-row-amt" style="color:#f3d48e">4 in 1 +'+fmtNum(r.plan_days)+' วัน</b>'
+          : '<b class="settings-row-amt" style="color:var(--success)">+'+fmtNum(r.points)+' แต้ม</b>';
+        return '<div class="settings-row"><div class="settings-row-main">'+
+          '<div class="settings-row-title">'+escapeHtml(r.code)+'</div>'+
+          '<div class="settings-row-meta">'+fmtDateTime(new Date(r.redeemed_at).getTime())+'</div></div>'+
+          amtHtml+'</div>';
+      }).join('');
+      if(rows.length > HIST_PAGE){
+        moreWrap.hidden = false;
+        document.getElementById('stPromoHistMore').textContent = stHistExpanded.promo ? 'ย่อ' : 'ดูทั้งหมด ('+rows.length+')';
+      }
+    });
+  }
   document.getElementById('stTopupMore').addEventListener('click', function(){ stHistExpanded.topup = !stHistExpanded.topup; loadTopupHistory(); });
   document.getElementById('stPurchaseMore').addEventListener('click', function(){ stHistExpanded.purchase = !stHistExpanded.purchase; loadPurchaseHistory(); });
   document.getElementById('stPointsMore').addEventListener('click', function(){ stHistExpanded.points = !stHistExpanded.points; loadPointsHistory(); });
+  document.getElementById('stPromoHistMore').addEventListener('click', function(){ stHistExpanded.promo = !stHistExpanded.promo; loadPromoHistory(); });
   var ST_HIST_TABS = {
     topup:['ประวัติการเติมแต้ม','sthtabTopup','stHistTopup'],
     purchase:['ประวัติการซื้อแพ็กเกจ','sthtabPurchase','stHistPurchase'],
-    points:['ประวัติการใช้แต้ม','sthtabPoints','stHistPoints']
+    points:['ประวัติการใช้แต้ม','sthtabPoints','stHistPoints'],
+    promo:['ประวัติการใช้โค้ดโปรโมชัน','sthtabPromo','stHistPromo']
   };
   function setStHistTab(tab){
     document.getElementById('stHistoryTitle').textContent = ST_HIST_TABS[tab][0];

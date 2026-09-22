@@ -1022,7 +1022,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .item-ic-lg{width:22px;height:22px;vertical-align:-5px}
 .h-actions{display:flex;justify-content:flex-end;margin:-.3rem 0 .6rem}
 
-.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);background:var(--text);color:var(--bg);padding:.7rem 1.1rem;border-radius:999px;font-size:.85rem;text-align:center;max-width:min(90vw,360px);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);background:var(--text);color:var(--bg);padding:.7rem 1.1rem;border-radius:999px;font-size:.85rem;text-align:center;max-width:min(90vw,360px);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 /* A small pill anchored right above the specific field it's warning about (e.g. the
    จำนวน input when a sell-from-stock qty is capped) — separate from the general toast,
@@ -4464,11 +4464,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var ids = timersServerIds();
     if(ids.indexOf(App.timersServerId)===-1){
       App.timersServerId = ids[0] || null;
+      saveTimersServer();
     }
-    // เซฟทุกครั้งที่ยืนยันค่านี้ (ไม่ใช่แค่ตอนค่าเดิมใช้ไม่ได้แล้วต้องเปลี่ยน) เพราะ RPC
-    // party_active_server (เช็คเซิร์ฟเวอร์ไม่ตรงกับปาร์ตี้) อ่านค่านี้จาก user_app_data ของหัวปาร์ตี้
-    // ถ้าหัวปาร์ตี้ไม่เคยกดเปลี่ยน dropdown เองเลย ค่านี้จะไม่เคยถูกซิงก์ขึ้นคลาวด์มาก่อน
-    saveTimersServer();
     sel.innerHTML = ids.map(function(id){ return '<option value="'+id+'">'+serverLabel(id)+'</option>'; }).join('');
     sel.value = App.timersServerId;
   }

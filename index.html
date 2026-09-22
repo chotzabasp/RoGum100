@@ -5144,7 +5144,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
     list.innerHTML = entries.map(function(l){
       return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body">'+
-        '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+escapeHtml(l.killedBy) : '')+killServerTagHtml(l)+'</div>'+
+        '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+escapeHtml(l.killedBy) : '')+'</div>'+
           '<button type="button" class="hist-del" data-del-kill="'+l.id+'" title="ลบรายการนี้">✕</button></div>'+
         '<div class="boss">'+escapeHtml(l.bossName)+'</div>'+
         '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+itemIconHtml(it.name,'item-ic')+escapeHtml(it.name)+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div></div>';
@@ -5245,7 +5245,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     return '<div class="log-row loot-row">'+historyAvatarHtml(k.bossId, k.bossName)+'<div class="log-body">'+
       '<div class="loot-head"><div class="boss">'+itemIconHtml(it.name,'item-ic item-ic-lg')+escapeHtml(it.name)+'</div>'+
         '<div class="loot-head-r">'+pill+action+'<button type="button" class="hist-del" data-del-item="'+it.id+'" title="ลบไอเทมนี้">✕</button></div></div>'+
-      '<div class="when">'+escapeHtml(k.bossName)+' · '+fmtDateTime(k.ts)+(k.killedBy ? ' · '+escapeHtml(k.killedBy) : '')+killServerTagHtml(k)+'</div>'+
+      '<div class="when">'+escapeHtml(k.bossName)+' · '+fmtDateTime(k.ts)+(k.killedBy ? ' · '+escapeHtml(k.killedBy) : '')+'</div>'+
       bodyHtml+
     '</div></div>';
   }
@@ -5278,8 +5278,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // 'all' = ทุกคน (มีบรรทัด "กดโดย ใคร ×กี่ครั้ง" ใต้ชื่อบอส), 'none' = รอบเก่าที่ไม่รู้ว่าใครกด
   var bossKillerFilter = 'all';
   function killerNameOf(k){ return k.killedById ? (k.killedBy || 'ไม่ทราบชื่อ') : 'ไม่ระบุ'; }
-  // การฆ่าเก่าก่อนมีคอลัมน์ server_id จะไม่มีป้ายนี้ (ไม่เดาให้ กันข้อมูลผิด) — ของใหม่มีตั้งแต่วันที่เพิ่มระบบ
-  function killServerTagHtml(k){ return k.serverId ? ' · '+serverLabel(k.serverId) : ''; }
   function killerOptions(){
     var seen = {}, opts = [];
     (App.partyRoster||[]).forEach(function(p){ if(!seen[p.id]){ seen[p.id] = true; opts.push({ id:p.id, name:p.name }); } });
@@ -5327,7 +5325,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var todayCount = g.kills.filter(function(l){ return todayKey(l.ts)===today; }).length;
       var names = Object.keys(g.items);
       var byHtml = killer==='all' ? '<div class="hist-by">กดโดย '+g.byOrder.map(function(w){ return escapeHtml(w)+' ×'+g.by[w]; }).join(' · ')+'</div>' : '';
-      var displayName = g.name+(g.serverId ? ' ('+serverLabel(g.serverId)+')' : '');
+      var displayName = g.name;
       var svAttr = ' data-del-server="'+(g.serverId||'')+'"';
       return '<div class="log-row">'+historyAvatarHtml(g.bossId, g.name)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">ฆ่าแล้ว '+g.kills.length+' ครั้ง · วันนี้ '+todayCount+' · ล่าสุด '+fmtDateTime(g.kills[0].ts)+'</div>'+
@@ -11046,11 +11044,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       supa.rpc('record_kill', { p_boss_id: String(boss.id), p_boss_name: boss.name, p_killed_at: new Date(deathTs).toISOString(), p_items: items }).then(function(res){
         if(res.error){ console.error('record_kill', res.error); toast('บันทึกประวัติการฆ่าไม่สำเร็จ: '+res.error.message); return; }
         bossNotifyChanged();
-        // แปะเซิร์ฟเวอร์ให้การฆ่าที่เพิ่งบันทึก (record_kill RPC ไม่รับ server_id ตรงๆ) — พลาดได้ไม่บล็อกการบันทึกหลัก
-        supa.rpc('set_kill_server', { p_kill_id: res.data, p_server_id: TIMERS_SERVER })
-          .then(function(res2){ if(res2 && res2.error) console.error('set_kill_server', res2.error); })
-          .then(function(){ return loadKills(); })
-          .then(function(){ renderStats(); renderRoster(); });
+        loadKills().then(function(){ renderStats(); renderRoster(); });
       });
 
       var startedByName = App.profile ? App.profile.display_name : null;
@@ -11165,9 +11159,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var ks = App.kills.filter(function(k){ return k.bossId===bid && (k.serverId||'')===sid && (who==null || (k.killedById||'none')===who); });
       if(!ks.length) return;
       var itemCount = ks.reduce(function(s,k){ return s+k.items.length; }, 0);
-      var svText = sid ? ' ('+serverLabel(sid)+')' : '';
       var scopeText = who==null ? ' ทั้งหมด' : ' เฉพาะรอบที่ '+escapeHtml(killerNameOf(ks[0]))+' กด';
-      showConfirm('ลบประวัติ '+escapeHtml(ks[0].bossName)+svText+scopeText+' '+ks.length+' ครั้ง'+(itemCount ? ' พร้อมไอเทม '+itemCount+' ชิ้น (รวมข้อมูลหาร/ยอดขาย)' : '')+(who==null ? '' : ' (ของคนอื่นยังอยู่)')+'? ลบแล้วกู้คืนไม่ได้', function(){
+      showConfirm('ลบประวัติ '+escapeHtml(ks[0].bossName)+scopeText+' '+ks.length+' ครั้ง'+(itemCount ? ' พร้อมไอเทม '+itemCount+' ชิ้น (รวมข้อมูลหาร/ยอดขาย)' : '')+(who==null ? '' : ' (ของคนอื่นยังอยู่)')+'? ลบแล้วกู้คืนไม่ได้', function(){
         var q = supa.from('kills').delete().eq('host_id', activeOwnerId()).eq('boss_id', bid);
         q = sid ? q.eq('server_id', sid) : q.is('server_id', null);
         if(who==='none') q = q.is('killed_by', null); else if(who!=null) q = q.eq('killed_by', who);

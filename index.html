@@ -768,7 +768,6 @@ svg.icon{width:18px;height:18px;display:block}
   0%,100%{box-shadow:0 0 0 0 transparent}
   50%{box-shadow:0 0 0 3px color-mix(in srgb, var(--danger) 30%, transparent)}
 }
-.boss-card.shake{animation:shake .5s ease}
 @keyframes shake{
   0%,100%{transform:translateX(0)}
   20%{transform:translateX(-5px)}
@@ -1091,6 +1090,9 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .admin-grant-card h3{margin:0;font-size:1rem}
 .admin-grant-row{display:flex;gap:.5rem}
 .admin-grant-row input{flex:1;min-width:0}
+.promo-code-row{display:flex;gap:.5rem;flex-wrap:nowrap}
+.promo-code-row input{width:200px;max-width:100%}
+@media (max-width:520px){.promo-code-row{width:100%}.promo-code-row input{flex:1;min-width:0}}
 .admin-grant-card input{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);color:var(--text);padding:.6rem .75rem;font-size:.9rem}
 #adminGrantFound{display:flex;flex-direction:column;gap:.6rem}
 #adminGrantFound[hidden]{display:none}
@@ -1770,13 +1772,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-timers .bc-time.state-normal{color:#f3f6ff;text-shadow:none}
 #view-timers .bc-time-block:has(> .state-warning){display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-color:rgba(244,201,93,.62);background:linear-gradient(145deg,rgba(128,88,26,.22),rgba(38,34,31,.34));box-shadow:inset 0 1px 0 rgba(255,226,156,.14),0 0 14px rgba(244,201,93,.14)}
 #view-timers .bc-time-block:has(> .state-overdue){display:flex;flex-direction:column;align-items:center;text-align:center;border-color:rgba(255,108,116,.58);background:linear-gradient(145deg,rgba(121,41,49,.23),rgba(43,28,35,.34));box-shadow:inset 0 1px 0 rgba(255,177,181,.12),0 0 14px rgba(255,82,94,.16)}
-#view-timers .boss-card.state-shake .bc-time-block{animation:boss-time-shake .9s ease-in-out infinite}
 @keyframes boss-time-shake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-.5px)}20%,40%,60%,80%{transform:translateX(.5px)}}
-#view-timers .boss-card.state-shake{animation:boss-card-shake .9s ease-in-out infinite}
 @keyframes boss-card-shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-.6px)}50%{transform:translateX(.6px)}}
-#view-timers .boss-card.state-warning{animation:boss-card-shake .9s ease-in-out infinite}
-#view-timers .boss-card.state-warning .bc-time-block{animation:boss-time-shake .9s ease-in-out infinite}
-@media (prefers-reduced-motion:reduce){#view-timers .boss-card.state-shake,#view-timers .boss-card.state-shake .bc-time-block,#view-timers .boss-card.state-warning,#view-timers .boss-card.state-warning .bc-time-block{animation:none}}
 #view-timers .boss-card:is(.state-warning,.state-spawn){border-color:rgba(244,201,93,.7);box-shadow:inset 0 1px 0 rgba(255,226,156,.14),0 8px 22px rgba(143,99,31,.14),0 0 13px rgba(244,201,93,.08)}
 #view-timers .bc-time-sub{color:#b6c4d9}
 #view-timers .bc-delay-pill{border:1px solid rgba(244,201,93,.32);box-shadow:0 0 9px rgba(244,201,93,.1);transition:background 180ms ease,box-shadow 180ms ease,transform 180ms ease}
@@ -2867,7 +2864,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         <button type="button" class="boss-sound-toggle" id="bossSoundToggle" aria-label="เสียงแจ้งเตือน" aria-pressed="true" title="เสียงแจ้งเตือน"></button>
         <button type="button" class="boss-sound-menu-toggle" id="bossSoundMenuToggle" aria-label="ตั้งค่าเสียงแจ้งเตือน" aria-expanded="false" aria-controls="bossSoundPopover" title="ตั้งค่าเสียง">⌄</button>
         <div class="boss-sound-popover" id="bossSoundPopover" role="dialog" aria-label="การตั้งค่าเสียงแจ้งเตือน" hidden>
-          <div class="boss-sound-popover-head">เสียงแจ้งเตือน</div>
+          <div class="boss-sound-popover-head">เสียงแจ้งเตือน (ก่อน 3 นาที)</div>
           <label class="boss-sound-enable-row"><span>เปิดเสียง</span><input type="checkbox" id="bossSoundEnable" role="switch"></label>
           <label class="boss-sound-volume-row"><span class="boss-sound-volume-head"><span>ระดับเสียง</span><output id="bossSoundVolumeOutput">80%</output></span><input type="range" id="bossSoundVolume" min="0" max="100" step="1" value="80" aria-label="ระดับเสียงแจ้งเตือน"></label>
           <button type="button" class="boss-sound-preview" id="bossSoundBellPreview">ลองฟังเสียงกระดิ่ง</button>
@@ -2977,7 +2974,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         </div>
       </div>
       <div class="panel settings-card settings-package">
-        <div class="panel-head"><h2>แพ็กเกจของฉัน</h2></div>
+        <div class="panel-head">
+          <h2>แพ็กเกจของฉัน</h2>
+          <div class="promo-code-row">
+            <input type="text" id="stPromoCodeInput" maxlength="40" autocomplete="off" placeholder="กรอกรหัสโปรโมชั่น (Promo Code)">
+            <button type="button" class="btn btn-gradient btn-sm" id="stPromoCodeBtn">ใช้โค้ด</button>
+          </div>
+        </div>
+        <p class="auth-error" id="stPromoCodeError"></p>
         <div id="stPackageList" class="settings-package-list"></div>
         <p id="stPackageAccessNote" class="settings-note" hidden></p>
       </div>
@@ -3013,14 +3017,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
               <button type="button" class="btn btn-sm settings-package-upgrade" id="stAddServerSlotBtn">+ เพิ่มเซิร์ฟเวอร์</button>
             </div>
           </div>
-          <p class="settings-note">เลือกได้มากกว่า 1 เซิร์ฟเวอร์ สำหรับผู้เล่นที่เล่นหลายเซิร์ฟเวอร์พร้อมกัน</p>
+          <p class="settings-note">กด ✓ ออก เพื่อเลือกเซิร์ฟเวอร์ใหม่</p>
           <div class="server-pick-list" id="stServerList"></div>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveServers">บันทึกเซิร์ฟเวอร์</button></div>
         </div>
         <!-- เซิร์ฟพักที่เคยมีประวัติ — ค่าเริ่มต้นซ่อนไว้ทั้งหมด (กันตัวเลือกเซิร์ฟเวอร์ในหน้า "ประวัติซื้อ-ขาย"/
              "กราฟกำไรสุทธิ"/"ยอดนักฟาม" รกจากเซิร์ฟเก่าที่เลิกเล่นแล้ว) ติ๊กเปิดคืนได้เฉพาะเซิร์ฟที่เคยมีประวัติจริง
-             เก็บในเครื่อง กดติ๊กแล้วมีผลทันที ไม่ต้องกดบันทึก — การ์ดนี้ทั้งการ์ดจะซ่อนถ้าไม่มีเซิร์ฟพักที่มีประวัติเลย -->
-        <div class="panel settings-card settings-wide settings-servers" id="stRetiredServerCard" hidden>
+             เก็บในเครื่อง กดติ๊กแล้วมีผลทันที ไม่ต้องกดบันทึก — การ์ดนี้โชว์ไว้แต่แรกเสมอ ไม่ซ่อนแม้ยังไม่มี
+             เซิร์ฟพักที่มีประวัติเลย (โชว์ข้อความว่างแทน) -->
+        <div class="panel settings-card settings-wide settings-servers" id="stRetiredServerCard">
           <div class="panel-head"><h2>เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ</h2></div>
           <p class="settings-note">ซ่อนไว้เป็นค่าเริ่มต้น ติ๊กเปิดเพื่อให้กลับมาแสดงใน "ประวัติซื้อ-ขาย", "กราฟกำไรสุทธิ" และ "ยอดนักฟาม" — มีผลทันทีไม่ต้องกดบันทึก</p>
           <div class="server-pick-list" id="stRetiredServerList"></div>
@@ -3066,6 +3071,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <div class="h-tabs admin-tabs" id="adminTabs">
         <button type="button" class="active" data-admin-tab="qr">รายการเติมเงิน</button>
         <button type="button" data-admin-tab="grant">เติมแต้มให้สมาชิก</button>
+        <button type="button" data-admin-tab="servers">จัดการเซิร์ฟเวอร์</button>
+        <button type="button" data-admin-tab="promo">โค้ดโปรโมชัน</button>
         <button type="button" data-admin-tab="slip" hidden>สลิป (ระบบเก่า) <span id="adminSlipCount"></span></button>
       </div>
       <div id="adminQrPanel">
@@ -3103,6 +3110,41 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             <button type="button" class="btn btn-primary" id="adminGrantSubmit">เติมแต้ม</button>
           </div>
         </div>
+      </div>
+      <div id="adminServersPanel" hidden>
+        <div class="admin-grant-card">
+          <h3>เพิ่มเซิร์ฟเวอร์ใหม่</h3>
+          <p class="sub">รหัส (id) ใช้อ้างอิงในระบบ ตั้งแล้วแก้ทีหลังไม่ได้ — ตั้งให้ไม่ซ้ำกับที่มีอยู่</p>
+          <div class="admin-grant-row">
+            <input id="adminServerNewId" type="text" maxlength="60" autocomplete="off" placeholder="รหัส (เช่น Sv.NewName)">
+            <input id="adminServerNewName" type="text" maxlength="60" autocomplete="off" placeholder="ชื่อที่แสดง (เช่น Sv.NewName)">
+          </div>
+          <div class="admin-grant-row">
+            <input id="adminServerNewBuy" type="text" inputmode="numeric" autocomplete="off" placeholder="เรทซื้อเริ่มต้น (ไม่ใส่ = 0)">
+            <input id="adminServerNewSell" type="text" inputmode="numeric" autocomplete="off" placeholder="เรทขายเริ่มต้น (ไม่ใส่ = 0)">
+            <button type="button" class="btn btn-primary" id="adminServerAddBtn">+ เพิ่มเซิร์ฟเวอร์</button>
+          </div>
+          <p class="auth-error" id="adminServerAddError"></p>
+        </div>
+        <div id="adminServerList" class="admin-topup-list"></div>
+      </div>
+      <div id="adminPromoPanel" hidden>
+        <div class="admin-grant-card">
+          <h3>สร้างโค้ดโปรโมชันใหม่</h3>
+          <p class="sub">1 โค้ด ใช้ได้ตามจำนวนคนที่กำหนด (คนละบัญชีใช้ได้แค่ครั้งเดียว) เหมาะกับโปรเร่งด่วนหรือแจกในกิจกรรม — ไม่ใช่การสร้างหลายรหัสไม่ซ้ำกันพร้อมกัน</p>
+          <div class="admin-grant-row">
+            <input id="adminPromoCode" type="text" maxlength="40" autocomplete="off" placeholder="รหัสโค้ด (เช่น SONGKRAN2026)">
+            <input id="adminPromoPoints" type="text" inputmode="numeric" autocomplete="off" placeholder="แต้มที่ได้ต่อคน">
+          </div>
+          <div class="admin-grant-row">
+            <input id="adminPromoMaxUses" type="text" inputmode="numeric" autocomplete="off" placeholder="จำนวนคนใช้ได้ทั้งหมด">
+            <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;white-space:nowrap">วันหมดอายุ (ไม่บังคับ)<input id="adminPromoExpires" type="date" autocomplete="off"></label>
+          </div>
+          <input id="adminPromoNote" type="text" maxlength="200" autocomplete="off" placeholder="หมายเหตุ (ไม่บังคับ เช่น โปรวันสงกรานต์ 2569)">
+          <button type="button" class="btn btn-primary" id="adminPromoAddBtn">+ สร้างโค้ด</button>
+          <p class="auth-error" id="adminPromoAddError"></p>
+        </div>
+        <div id="adminPromoList" class="admin-topup-list"></div>
       </div>
       <div id="adminSlipPanel" hidden>
         <p class="sub admin-slip-note">ระบบสลิปปิดรับคำขอใหม่แล้ว รายการนี้เป็นคำขอเก่าที่ยังค้างอยู่</p>
@@ -3465,7 +3507,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     return supa.from('servers').select('*').order('sort_order').then(function(res){
       if(res.error){ console.error('loadServers', res.error); return; }
       SERVER_RATES = (res.data||[]).map(function(s){
-        return { id:s.id, name:s.name, buy:s.buy, sell:s.sell, active:s.active!==false };
+        return { id:s.id, name:s.name, buy:s.buy, sell:s.sell, active:s.active!==false, sortOrder:s.sort_order||0 };
       });
     });
   }
@@ -5331,7 +5373,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         (it.soldAmount!=null ? '<button type="button" class="btn btn-ghost btn-sm" data-sold-clear="'+it.id+'">ยกเลิกขาย</button>' : '')+
       '</div>';
     } else {
-      soldHtml = '<div class="loot-line"><span class="loot-lbl">ยังไม่ขาย</span><span class="loot-each">ปาร์ตี้อื่น — ดูได้อย่างเดียว</span></div>';
+      soldHtml = '<div class="loot-line"><span class="loot-lbl">ยังไม่ขาย</span></div>';
     }
     // สถานะ: ขายแล้ว > เก็บไว้ (ไม่หาร ไม่ขาย เช่นของราคาถูก — เก็บประวัติไว้โดยไม่ต้องลบ) > หาร N คน > รอแบ่ง (ยังไม่ตัดสินใจ)
     var kept = !!it.keptAt && it.soldAmount==null;
@@ -9310,9 +9352,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function renderRetiredServerVisibility(){
     var card = document.getElementById('stRetiredServerCard');
     var root = document.getElementById('stRetiredServerList');
+    card.hidden = false;
     var candidates = retiredServerHistoryCandidates();
-    card.hidden = !candidates.length;
-    if(!candidates.length) return;
+    if(!candidates.length){ root.innerHTML = '<p class="empty-note">ยังไม่มีเซิร์ฟเวอร์เก่าที่มีประวัติ</p>'; return; }
     var visible = visibleRetiredServerIds();
     root.innerHTML = candidates.map(function(id){
       var on = visible.indexOf(id)!==-1;
@@ -9532,6 +9574,22 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       });
     };
     if(birth) showConfirm('ยืนยันวันเกิด '+fmtFullDate(birth+'T00:00:00')+'? บันทึกแล้วแก้ไขไม่ได้อีก', go); else go();
+  });
+  var promoCodeBusy = false;
+  document.getElementById('stPromoCodeBtn').addEventListener('click', function(){
+    if(promoCodeBusy) return;
+    var input = document.getElementById('stPromoCodeInput');
+    var errEl = document.getElementById('stPromoCodeError');
+    var code = input.value.trim();
+    errEl.textContent = '';
+    if(!code){ errEl.textContent = 'กรุณากรอกโค้ด'; return; }
+    promoCodeBusy = true;
+    supa.rpc('redeem_promo_code', { p_code: code }).then(function(res){
+      promoCodeBusy = false;
+      if(res.error){ errEl.textContent = res.error.message; return; }
+      input.value = '';
+      refreshProfile().then(function(){ toast('ใช้โค้ดสำเร็จ ได้รับ '+fmtNum(res.data)+' แต้ม'); });
+    });
   });
   document.getElementById('stSavePass').addEventListener('click', function(){
     if(settingsBusy) return;
@@ -10229,6 +10287,175 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   function openAdminPage(){ loadAdminQr(); renderAdminTopups(); }
 
+  // ---------- แอดมิน: จัดการเซิร์ฟเวอร์ (เพิ่ม/ซ่อน-เปิดใช้/ลบ/จัดลำดับ) ----------
+  // เขียนตาราง servers ตรงๆ ผ่าน supabase-js เลย (ไม่ผ่าน RPC) เพราะมี RLS "servers_admin_write"
+  // (for all using is_admin()) อยู่แล้วในระบบ อนุญาตให้แอดมินเขียนได้เต็มที่โดยตรง
+  function adminServerRowHtml(s, idx, total){
+    return '<div class="admin-topup-row" data-server-id="'+escapeHtml(s.id)+'">'+
+      '<div class="admin-topup-actions">'+
+        '<button type="button" class="btn btn-ghost btn-sm" data-server-move="up"'+(idx===0?' disabled':'')+' title="ขึ้น">↑</button>'+
+        '<button type="button" class="btn btn-ghost btn-sm" data-server-move="down"'+(idx===total-1?' disabled':'')+' title="ลง">↓</button>'+
+      '</div>'+
+      '<div style="flex:1;min-width:160px">'+
+        '<b>'+escapeHtml(s.name)+'</b>'+
+        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">รหัส: '+escapeHtml(s.id)+'</div>'+
+      '</div>'+
+      '<div style="font-size:.82rem;color:var(--text-dim);flex:none">ซื้อ '+fmtNum(s.buy)+' / ขาย '+fmtNum(s.sell)+'</div>'+
+      '<label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;flex:none">'+
+        '<input type="checkbox" data-server-active'+(s.active?' checked':'')+'> เปิดใช้งาน'+
+      '</label>'+
+      '<div class="admin-topup-actions">'+
+        '<button type="button" class="btn btn-ghost btn-sm" data-server-delete title="ลบเซิร์ฟเวอร์นี้">ลบ</button>'+
+      '</div>'+
+    '</div>';
+  }
+  function renderAdminServers(){
+    var root = document.getElementById('adminServerList');
+    if(!SERVER_RATES.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่มีเซิร์ฟเวอร์ในระบบ</p>'; return; }
+    root.innerHTML = SERVER_RATES.map(function(s, idx){ return adminServerRowHtml(s, idx, SERVER_RATES.length); }).join('');
+  }
+  document.getElementById('adminServerAddBtn').addEventListener('click', function(){
+    var btn = document.getElementById('adminServerAddBtn');
+    var errEl = document.getElementById('adminServerAddError');
+    errEl.textContent = '';
+    var id = document.getElementById('adminServerNewId').value.trim();
+    var name = document.getElementById('adminServerNewName').value.trim();
+    var buy = Number(document.getElementById('adminServerNewBuy').value.replace(/,/g,'')) || 0;
+    var sell = Number(document.getElementById('adminServerNewSell').value.replace(/,/g,'')) || 0;
+    if(!id || !name){ errEl.textContent = 'กรอกรหัสและชื่อให้ครบ'; return; }
+    if(SERVER_RATES.some(function(s){ return s.id===id; })){ errEl.textContent = 'รหัสนี้มีอยู่แล้ว ตั้งรหัสใหม่'; return; }
+    var nextSort = SERVER_RATES.reduce(function(m,s){ return Math.max(m, s.sortOrder||0); }, 0) + 1;
+    btn.disabled = true;
+    supa.from('servers').insert({ id:id, name:name, buy:buy, sell:sell, sort_order:nextSort, active:true }).then(function(res){
+      btn.disabled = false;
+      if(res.error){ errEl.textContent = 'เพิ่มไม่สำเร็จ: '+res.error.message; return; }
+      document.getElementById('adminServerNewId').value = '';
+      document.getElementById('adminServerNewName').value = '';
+      document.getElementById('adminServerNewBuy').value = '';
+      document.getElementById('adminServerNewSell').value = '';
+      toast('เพิ่มเซิร์ฟเวอร์แล้ว');
+      loadServers().then(renderAdminServers);
+    });
+  });
+  document.getElementById('adminServerList').addEventListener('click', function(e){
+    var moveBtn = e.target.closest('[data-server-move]');
+    if(moveBtn){
+      var row = moveBtn.closest('[data-server-id]');
+      var id = row.dataset.serverId;
+      var idx = SERVER_RATES.findIndex(function(s){ return s.id===id; });
+      var swapIdx = moveBtn.dataset.serverMove==='up' ? idx-1 : idx+1;
+      if(idx===-1 || swapIdx<0 || swapIdx>=SERVER_RATES.length) return;
+      var a = SERVER_RATES[idx], b = SERVER_RATES[swapIdx];
+      var aOrder = a.sortOrder, bOrder = b.sortOrder;
+      Promise.all([
+        supa.from('servers').update({ sort_order: bOrder }).eq('id', a.id),
+        supa.from('servers').update({ sort_order: aOrder }).eq('id', b.id)
+      ]).then(function(results){
+        var err = results.filter(function(r){ return r.error; })[0];
+        if(err) toast('สลับลำดับไม่สำเร็จ: '+err.error.message);
+        loadServers().then(renderAdminServers);
+      });
+      return;
+    }
+    var delBtn = e.target.closest('[data-server-delete]');
+    if(delBtn){
+      var drow = delBtn.closest('[data-server-id]');
+      var did = drow.dataset.serverId;
+      var srv = SERVER_RATES.filter(function(s){ return s.id===did; })[0];
+      showConfirm('ลบเซิร์ฟเวอร์ "'+escapeHtml(srv?srv.name:did)+'" ออกจากระบบถาวร? ข้อมูลเก่าที่เคยอ้างอิงเซิร์ฟนี้จะโชว์เป็นรหัสดิบแทนชื่อ กู้คืนไม่ได้ — แนะนำใช้ "ปิดใช้งาน" แทนถ้าเซิร์ฟนี้เคยมีคนเลือกใช้ไปแล้ว', function(){
+        supa.from('servers').delete().eq('id', did).then(function(res){
+          if(res.error){ toast('ลบไม่สำเร็จ: '+res.error.message); return; }
+          toast('ลบเซิร์ฟเวอร์แล้ว');
+          loadServers().then(renderAdminServers);
+        });
+      });
+    }
+  });
+  document.getElementById('adminServerList').addEventListener('change', function(e){
+    var chk = e.target.closest('[data-server-active]');
+    if(!chk) return;
+    var row = chk.closest('[data-server-id]');
+    var id = row.dataset.serverId;
+    chk.disabled = true;
+    supa.from('servers').update({ active: chk.checked }).eq('id', id).then(function(res){
+      if(res.error){ toast('บันทึกไม่สำเร็จ: '+res.error.message); chk.checked = !chk.checked; }
+      chk.disabled = false;
+      loadServers();
+    });
+  });
+
+  // ---------- แอดมิน: โค้ดโปรโมชัน (สร้าง/ลบ — 1 โค้ดใช้ได้ตามจำนวนคนที่กำหนด ไม่ใช่สร้างหลายรหัส) ----------
+  // เขียนตาราง promo_codes ตรงๆ ผ่าน RLS "admin เขียนได้เต็มที่" เหมือน servers — ฝั่งผู้ใช้แลกโค้ดผ่าน
+  // RPC redeem_promo_code เท่านั้น (ดู migration 20260922001400_promo_codes.sql)
+  var adminPromoCodes = [];
+  function adminPromoRowHtml(p){
+    var expText = p.expires_at ? fmtDate(new Date(p.expires_at).getTime()) : 'ไม่หมดอายุ';
+    var full = p.used_count >= p.max_uses;
+    return '<div class="admin-topup-row" data-promo-code="'+escapeHtml(p.code)+'">'+
+      '<div style="flex:1;min-width:160px">'+
+        '<b>'+escapeHtml(p.code)+'</b>'+
+        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">+'+fmtNum(p.points)+' แต้ม/คน · ใช้แล้ว '+fmtNum(p.used_count)+'/'+fmtNum(p.max_uses)+' · หมดอายุ: '+expText+(p.note?' · '+escapeHtml(p.note):'')+'</div>'+
+      '</div>'+
+      (full ? '<span class="membership-pill neutral">ใช้ครบแล้ว</span>' : '<span class="membership-pill ok">ใช้งานได้</span>')+
+      '<div class="admin-topup-actions">'+
+        '<button type="button" class="btn btn-ghost btn-sm" data-promo-delete title="ลบโค้ดนี้">ลบ</button>'+
+      '</div>'+
+    '</div>';
+  }
+  function renderAdminPromoCodes(){
+    var root = document.getElementById('adminPromoList');
+    if(!adminPromoCodes.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่มีโค้ดโปรโมชัน</p>'; return; }
+    root.innerHTML = adminPromoCodes.map(adminPromoRowHtml).join('');
+  }
+  function loadAdminPromoCodes(){
+    var root = document.getElementById('adminPromoList');
+    root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';
+    return supa.from('promo_codes').select('*').order('created_at', { ascending:false }).then(function(res){
+      if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
+      adminPromoCodes = res.data||[];
+      renderAdminPromoCodes();
+    });
+  }
+  document.getElementById('adminPromoAddBtn').addEventListener('click', function(){
+    var btn = document.getElementById('adminPromoAddBtn');
+    var errEl = document.getElementById('adminPromoAddError');
+    errEl.textContent = '';
+    var code = document.getElementById('adminPromoCode').value.trim().toUpperCase();
+    var points = parseInt(document.getElementById('adminPromoPoints').value.replace(/,/g,''), 10);
+    var maxUses = parseInt(document.getElementById('adminPromoMaxUses').value.replace(/,/g,''), 10);
+    var expDate = document.getElementById('adminPromoExpires').value;
+    var note = document.getElementById('adminPromoNote').value.trim();
+    if(!code){ errEl.textContent = 'กรอกรหัสโค้ด'; return; }
+    if(!points || points<=0){ errEl.textContent = 'กรอกจำนวนแต้มให้ถูกต้อง'; return; }
+    if(!maxUses || maxUses<=0){ errEl.textContent = 'กรอกจำนวนคนใช้ได้ให้ถูกต้อง'; return; }
+    var expiresAt = expDate ? new Date(expDate+'T23:59:59').toISOString() : null;
+    btn.disabled = true;
+    supa.from('promo_codes').insert({ code:code, points:points, max_uses:maxUses, expires_at:expiresAt, note:note||null }).then(function(res){
+      btn.disabled = false;
+      if(res.error){ errEl.textContent = 'สร้างไม่สำเร็จ: '+(res.error.code==='23505' ? 'มีโค้ดนี้อยู่แล้ว' : res.error.message); return; }
+      document.getElementById('adminPromoCode').value = '';
+      document.getElementById('adminPromoPoints').value = '';
+      document.getElementById('adminPromoMaxUses').value = '';
+      document.getElementById('adminPromoExpires').value = '';
+      document.getElementById('adminPromoNote').value = '';
+      toast('สร้างโค้ดแล้ว');
+      loadAdminPromoCodes();
+    });
+  });
+  document.getElementById('adminPromoList').addEventListener('click', function(e){
+    var delBtn = e.target.closest('[data-promo-delete]');
+    if(!delBtn) return;
+    var row = delBtn.closest('[data-promo-code]');
+    var code = row.dataset.promoCode;
+    showConfirm('ลบโค้ด "'+escapeHtml(code)+'" ออกจากระบบถาวร? คนที่ยังไม่ได้ใช้จะใช้โค้ดนี้ไม่ได้อีก กู้คืนไม่ได้', function(){
+      supa.from('promo_codes').delete().eq('code', code).then(function(res){
+        if(res.error){ toast('ลบไม่สำเร็จ: '+res.error.message); return; }
+        toast('ลบโค้ดแล้ว');
+        loadAdminPromoCodes();
+      });
+    });
+  });
+
   document.getElementById('adminTabs').addEventListener('click', function(e){
     var btn = e.target.closest('[data-admin-tab]');
     if(!btn) return;
@@ -10236,9 +10463,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.querySelectorAll('#adminTabs button').forEach(function(b){ b.classList.toggle('active', b===btn); });
     document.getElementById('adminQrPanel').hidden = tab!=='qr';
     document.getElementById('adminGrantPanel').hidden = tab!=='grant';
+    document.getElementById('adminServersPanel').hidden = tab!=='servers';
+    document.getElementById('adminPromoPanel').hidden = tab!=='promo';
     document.getElementById('adminSlipPanel').hidden = tab!=='slip';
     if(tab==='qr') loadAdminQr();
     if(tab==='slip') renderAdminTopups();
+    if(tab==='promo') loadAdminPromoCodes();
+    if(tab==='servers') loadServers().then(renderAdminServers);
   });
   document.getElementById('adminQrFilter').addEventListener('click', function(e){
     var btn = e.target.closest('[data-admin-qr-filter]');
@@ -11054,7 +11285,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   });
 
   searchResults.addEventListener('click', function(e){
-    if(isFreePartyMember()){ toast('กรุณาซื้อแพ็กเกจ เพื่อใช้งานได้อย่างอิสระ'); return; }
+    if(isFreePartyMember()){ toast('แพ็กเกจฟรี เข้าร่วมปาร์ตี้ เยี่ยมชมเท่านั้น'); return; }
     var row = e.target.closest('.search-result-row');
     if(!row || row.classList.contains('added')) return;
     var boss = CATALOG.concat(visibleCustomCatalog()).filter(function(b){ return b.id===row.dataset.catalogId; })[0];
@@ -11135,7 +11366,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         if(res.error) console.error('supaRemoveBoss', res.error);
       });
     } else if(action==='kill'){
-      if(isFreePartyMember()){ toast('กรุณาซื้อแพ็กเกจ เพื่อใช้งานได้อย่างอิสระ'); return; }
+      if(isFreePartyMember()){ toast('แพ็กเกจฟรี เข้าร่วมปาร์ตี้ เยี่ยมชมเท่านั้น'); return; }
       var minutesInput = card.querySelector('[data-minutes]');
       var rawTimeInput = minutesInput ? minutesInput.value.trim() : '';
       // Empty field = died right now (unchanged default). A non-empty field must parse

@@ -2758,7 +2758,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
               <span>บาท</span>
             </div>
           </div>
-          <p class="farm-retired-note" id="farmRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักเพราะไม่ได้เลือกไว้ใน "ตั้งค่า" แล้ว — ดูกราฟและประวัติย้อนหลังได้</p>
+          <p class="farm-retired-note" id="farmRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักแล้ว ใช้งานอีกครั้งที่ " ตั้งค่า "</p>
           <div class="farm-log-divider"></div>
           <div class="farm-map-row">
             <span>Map</span>
@@ -2865,7 +2865,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       </div>
     </section>
 
-    <p class="farm-retired-note" id="timersRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักแล้ว ใช้งานจับเวลาบอส (เพิ่ม/ลบ/กดตายแล้ว) ไม่ได้ — ดูรายชื่อบอสที่เคยบันทึกไว้ได้ตามปกติ</p>
+    <p class="farm-retired-note" id="timersRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักแล้ว ใช้งานอีกครั้งที่ " ตั้งค่า "</p>
     <div class="timers-panel" id="timersPanel">
     <div class="toolbar">
       <div class="search-wrap">
@@ -3502,6 +3502,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     return live.length ? live : SERVER_RATES.map(function(s){ return s.id; });
   }
   function isRetiredServer(id){ return id!=null && myServerIds().indexOf(id)===-1; }
+  // "พักแล้ว" ของหน้าจับเวลาบอส ใช้แนวคิดต่างจาก isRetiredServer เดิม — ตอนดูปาร์ตี้คนอื่น
+  // (App.viewingHostId) ข้อมูลเป็นของหัวปาร์ตี้ ไม่ใช่ของสมาชิก จะเอา "เซิร์ฟเวอร์ที่เล่น" ของ
+  // สมาชิกเองมาตัดสินว่าพักหรือไม่ไม่ได้ — เรื่องเลือกเซิร์ฟไม่ตรงกับปาร์ตี้มี checkPartyServerMatch
+  // (popup บล็อก) คุมแยกอยู่แล้ว จุดนี้เลยข้ามการเช็คไปเลยเมื่อกำลังดูปาร์ตี้คนอื่น
+  function isTimersServerRetired(id){ return !App.viewingHostId && isRetiredServer(id); }
   // เซิร์ฟพัก (ไม่ได้เล่นแล้ว) ที่เคยมีประวัติ ค่าเริ่มต้น "ซ่อน" ทั้งหมด — ผู้ใช้ต้องมาติ๊กเปิดเองที่
   // หน้าตั้งค่า (การ์ด "เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ") ถึงจะโผล่กลับมาใน dropdown ประวัติ/กราฟ
   // เก็บในเครื่อง (localStorage) ไม่ผูกกับบัญชี ไม่ต้องรัน SQL — เปลี่ยนเครื่อง/ล้างเบราว์เซอร์แล้วรีเซ็ตกลับเป็นซ่อนหมด
@@ -4549,7 +4554,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function openCustomBossModal(boss){
     if(!CustomAPI || !App.session || App.isGuest){toast('กรุณาเข้าสู่ระบบ');return;}
     if(activeOwnerId()!==App.session.id){toast('เจ้าของปาร์ตี้เท่านั้นที่เพิ่มหรือแก้ไขบอสได้');return;}
-    if(isRetiredServer(App.timersServerId))return;
+    if(isTimersServerRetired(App.timersServerId))return;
     var record=boss?boss.record:null,uploads={},saving=false;
     var dialog=customNode('dialog'),form=customNode('form');dialog.className='custom-boss-dialog';
     var title=customNode('h3',boss?'แก้ไขบอส':'เพิ่มบอส');form.append(title);
@@ -6427,7 +6432,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function renderTimersRetiredState(){
     var panel = document.getElementById('timersPanel');
     if(!panel) return;
-    var retired = isRetiredServer(App.timersServerId);
+    var retired = isTimersServerRetired(App.timersServerId);
     panel.classList.toggle('server-retired', retired);
     panel.querySelectorAll('input, select, textarea, button').forEach(function(el){
       if(el.closest('#bossSoundControl')) return;
@@ -11080,7 +11085,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   });
 
   searchResults.addEventListener('click', function(e){
-    if(isRetiredServer(App.timersServerId)) return;
+    if(isTimersServerRetired(App.timersServerId)) return;
     var row = e.target.closest('.search-result-row');
     if(!row || row.classList.contains('added')) return;
     var boss = CATALOG.concat(visibleCustomCatalog()).filter(function(b){ return b.id===row.dataset.catalogId; })[0];
@@ -11106,7 +11111,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ---------- roster interactions ----------
   document.getElementById('roster').addEventListener('click', function(e){
-    if(isRetiredServer(App.timersServerId)) return;
+    if(isTimersServerRetired(App.timersServerId)) return;
     var card = e.target.closest('.boss-card');
     if(!card) return;
     var bossId = card.dataset.boss;

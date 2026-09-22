@@ -6753,7 +6753,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             '<input type="text" inputmode="decimal" class="mr-row-qty" placeholder="จำนวน" value="'+formatDecimalDisplay(row.qty)+'"></label>'+
           '<label class="mr-entry-field mr-entry-price">'+(isZenyTab?'ราคา / 1 M (บาท)':showSlots?'ราคาต่อชิ้น':'ราคาต่อหน่วย')+
             '<input type="text" inputmode="decimal" class="mr-row-price" placeholder="ราคา" value="'+formatDecimalDisplay(row.price)+'"></label>'+
-          '<label class="mr-entry-field mr-entry-currency">สกุลเงิน<select class="mr-row-currency" '+(lockFields?'disabled':'')+'>'+currencyOptionsHtml+'</select></label>'+
+          // สกุลเงินตอนขาย "ไม่ล็อก" ตามล็อตในคลังอีกต่อไป (เดิมล็อกตามตอนซื้อ) เพราะขายได้จริง
+          // อาจได้เป็นคนละสกุลเงินกับตอนซื้อ (เช่น ซื้อด้วย Zeny แต่ขายได้เป็นบาท) — กำไร/ขาดทุน
+          // ยังคำนวณถูกต้อง เพราะต้นทุนฝั่งซื้อกับยอดฝั่งขายแปลงเป็นบาทแยกอิสระจากกันอยู่แล้ว
+          // (ราคาก็แก้ได้อิสระอยู่แล้วเช่นกัน — ล็อกไว้แค่ชื่อ/Slot เพื่อไม่ให้สับสนว่าขายล็อตไหน)
+          '<label class="mr-entry-field mr-entry-currency">สกุลเงิน<select class="mr-row-currency">'+currencyOptionsHtml+'</select></label>'+
           '<button type="button" class="mr-row-remove" aria-label="ลบรายการ" data-remove-row="'+row.rid+'" '+(removable?'':'disabled')+'>✕</button>'+
         '</div>'+
         zenyRemainingHtml+

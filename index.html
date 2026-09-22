@@ -628,13 +628,6 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-tx .mr-del:hover{color:var(--danger)}
 .mr-tx.just-saved{animation:mr-flash 1.1s ease}
 @media (prefers-reduced-motion: reduce){ .mr-tx.just-saved{animation:none} }
-.mr-day{display:flex;flex-direction:column;gap:.25rem}
-.mr-day+.mr-day{margin-top:.45rem}
-.mr-day-head{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;padding:0 .2rem .15rem;font-size:.76rem;font-weight:700}
-.mr-day-tot{font-weight:500;font-size:.68rem;color:var(--text-dim);font-family:"JetBrains Mono";white-space:nowrap}
-.mr-day-tot .sell{color:var(--success)}
-.mr-day-tot .buy{color:var(--danger)}
-.mr-more-btn{align-self:center;margin-top:.4rem}
 @media (max-width:600px){
   .mr-tx{grid-template-columns:auto minmax(0,1fr) auto auto;row-gap:.15rem}
   .mr-tx-calc{grid-column:2;grid-row:2}
@@ -1372,7 +1365,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home .mr-hist-bar{margin-bottom:0;gap:.65rem}
 #view-home .mr-hist-search{flex:1 1 200px;min-height:40px;border-radius:var(--radius-s)}
 #view-home #mrHistoryRange{min-height:40px}
-#view-home #historyViewToggle{flex:none}
+#view-home #historyCategoryToggle{flex:none}
 #view-home .home-grid{grid-template-columns:1fr;align-items:start}
 #view-home .home-left{gap:1.25rem}
 #view-home .panel-head{gap:.75rem}
@@ -1419,7 +1412,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   #view-home .mr-summary-value{font-size:1.25rem}
   #view-home .mr-summary-label{font-size:.78rem}
   #view-home .mr-hist-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem}
-  #view-home #historyViewToggle{grid-column:1/-1;justify-self:start}
+  #view-home #historyCategoryToggle{grid-column:1/-1;justify-self:start}
   #view-home .mr-hist-search{min-width:0;width:100%;font-size:1rem}
   #view-home #mrHistoryRange{max-width:110px;font-size:1rem}
   #view-home #mrChartWrap{height:220px}
@@ -1494,7 +1487,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home .dashboard-filters .hf-group label{display:none}
 #view-home .dashboard-filters .hf-group select{min-height:38px;width:100%}
 #view-home .mr-hist-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;width:100%;gap:.5rem}
-#view-home #historyViewToggle{grid-column:1/-1;justify-self:start}
+#view-home #historyCategoryToggle{grid-column:1/-1;justify-self:start}
 #view-home .mr-hist-search{min-width:0;width:100%;min-height:38px;font-size:.9rem}
 #view-home #mrHistoryRange{min-height:38px;max-width:110px}
 #view-home .mr-history{padding-top:.2rem}
@@ -1558,15 +1551,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home .dashboard-filter-label{display:none}
 #view-home .dashboard-filters .hf-group{width:auto;min-width:0}
 #view-home .dashboard-filters .mr-hist-bar{display:contents}
-#view-home .dashboard-filters #historyViewToggle{grid-column:auto;justify-self:start;padding:.15rem;gap:.1rem}
-#view-home .dashboard-filters #historyViewToggle .seg-btn{min-height:30px;padding:.25rem .5rem;font-size:.76rem;white-space:nowrap}
+#view-home .dashboard-filters #historyCategoryToggle{grid-column:auto;justify-self:start;padding:.15rem;gap:.1rem}
+#view-home .dashboard-filters #historyCategoryToggle .seg-btn{min-height:30px;padding:.25rem .5rem;font-size:.76rem;white-space:nowrap}
 #view-home .dashboard-filters #historyServerFilter,
 #view-home .dashboard-filters #mrHistorySearch,
 #view-home .dashboard-filters #mrHistoryRange{width:100%;min-width:0;min-height:36px;padding:.35rem .5rem;font-size:.82rem}
 #view-home .dashboard-filters #mrHistoryRange{max-width:76px;justify-self:end}
 @container home-history (max-width:519px){
   #view-home .dashboard-filters{grid-template-columns:minmax(0,1fr) max-content;gap:.45rem}
-  #view-home .dashboard-filters #historyViewToggle{justify-self:end}
+  #view-home .dashboard-filters #historyCategoryToggle{justify-self:end}
   #view-home .dashboard-filters #historyServerFilter,
   #view-home .dashboard-filters #mrHistorySearch,
   #view-home .dashboard-filters #mrHistoryRange{min-height:40px;font-size:1rem}
@@ -2605,13 +2598,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
                 <label>เซิร์ฟเวอร์</label>
                 <select aria-label="เซิร์ฟเวอร์ของยอดสรุปและประวัติ" id="historyServerFilter" autocomplete="off"><option value="all">ALL</option></select>
               </div>
-              <!-- One control row: how to look (ตามไอเทม / ตามวัน), a search box, a time range.
-                   หมวดหมู่ shows as a tag on each item, ซื้อ/ขาย as a colored badge on each row,
-                   so neither needs its own filter toggle. -->
+              <!-- กรองหมวดหมู่ (ทั้งหมด/M/ไอเทม/อื่นๆ) แทนตัวเลือกเดิม "ตามไอเทม/ตามวัน" — ทำงานแบบ
+                   "ตามไอเทม" เดิมเสมอ (การ์ดรวมซื้อ-ขายต่อชิ้น) แค่กรองว่าจะโชว์หมวดไหน โหมด "ตามวัน"
+                   (log รายการเรียงเวลาทั้งหมด) ถูกตัดออกตามที่ผู้ใช้ขอ ส่วนซื้อ/ขาย ยังเป็นแถบสีบนแต่ละแถวเหมือนเดิม -->
               <div class="mr-hist-bar">
-                <div class="seg-toggle" id="historyViewToggle">
-                  <button type="button" class="seg-btn active" data-historyview="item">ตามไอเทม</button>
-                  <button type="button" class="seg-btn" data-historyview="day">ตามวัน</button>
+                <div class="seg-toggle" id="historyCategoryToggle" role="group" aria-label="กรองหมวดหมู่ประวัติ">
+                  <button type="button" class="seg-btn active" data-historycat="all">ทั้งหมด</button>
+                  <button type="button" class="seg-btn" data-historycat="zeny">M</button>
+                  <button type="button" class="seg-btn" data-historycat="item">ไอเทม</button>
+                  <button type="button" class="seg-btn" data-historycat="other">อื่น ๆ</button>
                 </div>
                 <input type="search" class="mr-hist-search" aria-label="ค้นหาประวัติ" id="mrHistorySearch" placeholder="ค้นหาไอเทม…" autocomplete="off">
                 <select class="chart-tf-select" aria-label="ช่วงเวลาของยอดสรุปและประวัติ" id="mrHistoryRange">
@@ -7104,11 +7099,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   var MR_TYPE_LABEL = { buy:'ซื้อ', sell:'ขาย' };
   function entryType(e){ return e.type === 'sell' ? 'sell' : 'buy'; }
 
-  var MR_HISTORY_DAY_STEP = 30; // rows revealed per "แสดงเพิ่ม" click in the ตามวัน view
-  var historyState = { serverId:'all', userChangedServer:false, view:'item', range:'today', search:'', dayLimit:MR_HISTORY_DAY_STEP, expanded:{}, expandedDays:{}, soldOutOpen:null };
+  // category: กรองหมวดหมู่ (all/zeny/item/other) — แทนที่ view เดิม ('item'/'day') ที่ถูกตัด "ตามวัน" ออกแล้ว
+  var historyState = { serverId:'all', userChangedServer:false, category:'all', range:'today', search:'', expanded:{}, expandedDays:{}, soldOutOpen:null };
   function resetMerchantHistoryRange(){
     historyState.range = 'today';
-    historyState.dayLimit = MR_HISTORY_DAY_STEP;
     var rangeEl = document.getElementById('mrHistoryRange');
     if(rangeEl) rangeEl.value = 'today';
   }
@@ -7178,6 +7172,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     opts = opts || {};
     var entries = App.merchantLog.slice();
     if(historyState.serverId!=='all') entries = entries.filter(function(e){ return e.serverId===historyState.serverId; });
+    if(historyState.category!=='all') entries = entries.filter(function(e){ return (e.category||'zeny')===historyState.category; });
     if(!opts.ignoreRange){
       var startTs = historyRangeStartTs();
       if(startTs!=null) entries = entries.filter(function(e){ return e.ts>=startTs; });
@@ -7218,8 +7213,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   function historyEmptyHtml(){
     if(!App.merchantLog.length) return '<p class="mr-empty"><span class="dashboard-empty-title">'+(App.isGuest ? 'ประวัติซื้อ–ขายของคุณอยู่ที่นี่' : 'เริ่มต้นด้วยรายการแรกของคุณ')+'</span><span class="dashboard-empty-detail">'+(App.isGuest ? 'เข้าสู่ระบบด้วยปุ่มด้านบนเพื่อดูข้อมูลของคุณ หรือสมัครสมาชิกหากยังไม่มีบัญชี ตัวเลข 0 ในหน้านี้ยังไม่ใช่ข้อมูลบัญชีของคุณ' : 'ใช้ปุ่ม "ไปฟอร์มซื้อ–ขาย" ด้านบนเพื่อบันทึกรายการ เมื่อบันทึกแล้วจะดูประวัติและยอดสรุปได้ที่นี่')+'</span></p>';
-    if(historyState.search) return '<p class="mr-empty"><span class="dashboard-empty-title">ไม่พบไอเทมชื่อ "'+historyEscape(historyState.search)+'"</span><span class="dashboard-empty-detail">ลองเปลี่ยนคำค้น หรือตรวจสอบเซิร์ฟเวอร์และช่วงเวลาที่เลือกด้านบน</span></p>';
-    return '<p class="mr-empty"><span class="dashboard-empty-title">ไม่มีรายการในช่วงเวลานี้</span><span class="dashboard-empty-detail">ลองเลือกช่วงเวลาที่กว้างขึ้น หรือตรวจสอบเซิร์ฟเวอร์ในตัวกรองด้านบน</span></p>';
+    if(historyState.search) return '<p class="mr-empty"><span class="dashboard-empty-title">ไม่พบไอเทมชื่อ "'+historyEscape(historyState.search)+'"</span><span class="dashboard-empty-detail">ลองเปลี่ยนคำค้น หรือตรวจสอบหมวดหมู่ เซิร์ฟเวอร์ และช่วงเวลาที่เลือกด้านบน</span></p>';
+    return '<p class="mr-empty"><span class="dashboard-empty-title">ไม่มีรายการในช่วงเวลานี้</span><span class="dashboard-empty-detail">ลองเลือกช่วงเวลาที่กว้างขึ้น หรือตรวจสอบหมวดหมู่และเซิร์ฟเวอร์ในตัวกรองด้านบน</span></p>';
   }
 
   // Groups the filtered lines by server+category+item name(+slots) so "ซื้อมาเท่าไหร่,
@@ -7411,47 +7406,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     list.innerHTML = html+'</div>';
   }
 
-  function renderHistoryDayView(list){
-    var rows = historyScopedLines();
-    if(!rows.length){ list.innerHTML = historyEmptyHtml(); return; }
-    var shown = rows.slice(0, historyState.dayLimit);
-    var showServer = historyState.serverId==='all';
-    var days = [], byDay = {};
-    shown.forEach(function(t){
-      var k = mrDateStr(new Date(t.entry.ts));
-      if(!byDay[k]){ byDay[k] = { ts:t.entry.ts, rows:[], buy:0, sell:0 }; days.push(k); }
-      byDay[k].rows.push(t);
-    });
-    // Day totals cover the whole day, not just the rows revealed so far.
-    rows.forEach(function(t){
-      var k = mrDateStr(new Date(t.entry.ts));
-      if(byDay[k]) byDay[k][t.type] += lineBahtValue(t.entry, t.line);
-    });
-    var html = days.map(function(k){
-      var d = byDay[k];
-      var tot = [];
-      if(d.sell) tot.push('<span class="sell">ขาย '+fmtNum(d.sell)+' บ</span>');
-      if(d.buy) tot.push('<span class="buy">ซื้อ '+fmtNum(d.buy)+' บ</span>');
-      var dayGroupKey = 'day-view|'+historyState.serverId+'|'+k;
-      var open = !!historyState.expandedDays[dayGroupKey];
-      return '<div class="mr-day mr-ic-day'+(open?' open':'')+'" data-day-key="'+encodeURIComponent(dayGroupKey)+'">'+
-        '<button type="button" class="mr-day-head mr-ic-day-head" aria-expanded="'+(open?'true':'false')+'"><span class="mr-ic-chev">▸</span><span>'+historyDayLabel(d.ts)+' · '+d.rows.length+' รายการ</span><span class="mr-day-tot">'+tot.join(' · ')+'</span></button>'+
-        '<div class="mr-tx-list"'+(open?'':' hidden')+'> '+
-        d.rows.map(function(t){ return historyTxRowHtml(t, { showName:true, showTime:true, showServer:showServer }); }).join('')+
-      '</div></div>';
-    }).join('');
-    if(rows.length > shown.length){
-      html += '<button type="button" class="farm-hist-page-btn mr-more-btn" id="mrHistMore">แสดงเพิ่ม (เหลืออีก '+(rows.length-shown.length)+' รายการ)</button>';
-    }
-    list.innerHTML = html;
-  }
-
   function renderMerchantHistory(){
     populateHistoryServerFilter();
     renderMerchantSummary();
     var list = document.getElementById('mrHistoryList');
-    if(historyState.view==='day') renderHistoryDayView(list);
-    else renderHistoryItemView(list);
+    renderHistoryItemView(list);
   }
 
   function summaryTilesHtml(buyTotal, sellTotal, unit){
@@ -8498,10 +8457,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       renderMerchantHistory();
       return;
     }
-    if(e.target.closest('#mrHistMore')){
-      historyState.dayLimit += MR_HISTORY_DAY_STEP;
-      renderMerchantHistory();
-    }
   });
 
   function onHistoryServerFilterChange(e){
@@ -8518,12 +8473,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   document.getElementById('historyServerFilter').addEventListener('change', onHistoryServerFilterChange);
   document.getElementById('historyServerFilter').addEventListener('input', onHistoryServerFilterChange);
 
-  document.getElementById('historyViewToggle').addEventListener('click', function(e){
-    var btn = e.target.closest('[data-historyview]');
+  document.getElementById('historyCategoryToggle').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-historycat]');
     if(!btn) return;
-    historyState.view = btn.dataset.historyview;
-    historyState.dayLimit = MR_HISTORY_DAY_STEP;
-    document.querySelectorAll('#historyViewToggle .seg-btn').forEach(function(b){
+    historyState.category = btn.dataset.historycat;
+    document.querySelectorAll('#historyCategoryToggle .seg-btn').forEach(function(b){
       b.classList.toggle('active', b===btn);
     });
     renderMerchantHistory();
@@ -8531,13 +8485,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   document.getElementById('mrHistorySearch').addEventListener('input', function(e){
     historyState.search = e.target.value.trim().toLowerCase();
-    historyState.dayLimit = MR_HISTORY_DAY_STEP;
     renderMerchantHistory();
   });
 
   document.getElementById('mrHistoryRange').addEventListener('change', function(e){
     historyState.range = e.target.value;
-    historyState.dayLimit = MR_HISTORY_DAY_STEP;
     renderMerchantHistory();
   });
 
@@ -9506,7 +9458,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]',
     // บัญชีนักลงทุน: กราฟ/ตัวกรอง/ค้นหา/กางการ์ดประวัติ (ไม่รวมฟอร์มรับ-ขาย, ลงประกาศ, แก้/ลบรายการ)
     '#mrChartCategoryToggle', '#mrChartServerSelect', '#mrChartTimeframeSelect', '#mrSeriesDropdownBtn', '#mrSeriesDropdown', '#mrSeriesChips', '#mrChartLegend',
-    '#historyViewToggle', '#historyServerFilter', '#mrHistorySearch', '#mrHistoryRange', '#mrHistMore', '#mrItSoldToggle', '.mr-ic-head', '.mr-ic-day-head', '.mr-rate-hover', '.mr-edited-hover',
+    '#historyCategoryToggle', '#historyServerFilter', '#mrHistorySearch', '#mrHistoryRange', '#mrItSoldToggle', '.mr-ic-head', '.mr-ic-day-head', '.mr-rate-hover', '.mr-edited-hover',
     '#tickerServerChips', '#rateChips',
     // รูปไอเทม: กดไอคอนดูรูปในประวัติ/คลังได้ (แนบ/เปลี่ยน/เอารูปออกในฟอร์ม = ทำรายการ → กัน)
     '.item-img-ico', '#itemImageLightbox',

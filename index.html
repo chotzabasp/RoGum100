@@ -6280,8 +6280,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var costBahtText = hasRate ? ' = '+fmtNum(farmZenyToBaht(e.cost, e.exchangeRate))+' บ' : '';
       var profitBahtText = hasRate ? ' = '+(pos?'+':'')+fmtNum(farmZenyToBaht(e.profit, e.exchangeRate))+' บ' : '';
       var earnedBahtText = hasRate ? ' = '+fmtNum(farmZenyToBaht(e.earned, e.exchangeRate))+' บ' : '';
-      var farmGained = e.earnedBase!=null ? e.earnedBase : e.earned;
-      var farmGainedBahtText = hasRate ? ' = '+fmtNum(farmZenyToBaht(farmGained, e.exchangeRate))+' บ' : '';
+      var avgProfit = e.profit / count;
+      var avgProfitBahtText = hasRate ? ' = '+(pos?'+':'')+fmtNum(farmZenyToBaht(avgProfit, e.exchangeRate))+' บ' : '';
       var mapChip = e.mapName ? '<span class="farm-history-chip farm-history-map">Map: '+escapeHtml(e.mapName)+'</span>' : '';
       var rareTag = (e.rareItems||[]).filter(function(r){ return r.name; }).map(function(r){
         var qtySuffix = r.qty>1 ? ' x'+r.qty : '';
@@ -6302,7 +6302,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           '<div class="farm-history-metric farm-history-cost"><span>ต้นทุน</span><b class="farm-cost-hover" data-farm-cost-id="'+e.id+'">'+fmtNum(e.cost)+' z</b><small>'+costBahtText+'</small></div>'+
           '<div class="farm-history-metric '+(pos?'farm-profit-pos':'farm-profit-neg')+'"><span>กำไร</span><b class="farm-profit-hover" data-farm-profit-id="'+e.id+'">'+(pos?'+':'')+fmtNum(e.profit)+' z</b><small>'+profitBahtText+'</small></div>'+
         '</div>'+
-        '<div class="farm-history-earned"><span>ฟามได้</span><b>'+fmtNum(farmGained)+' z</b><small>'+farmGainedBahtText+'</small></div>'+
+        '<div class="farm-history-earned"><span>เฉลี่ย 1 กั้ม</span><b style="color:var(--'+(pos?'success':'danger')+')">'+(pos?'+':'')+fmtNum(avgProfit)+' z</b><small>'+avgProfitBahtText+'</small></div>'+
         (rareTag ? '<div class="farm-history-rares"><span>ไอเทม</span><div>'+rareTag+'</div></div>' : '')+
       '</div>';
     }).join('');

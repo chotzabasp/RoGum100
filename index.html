@@ -1076,6 +1076,17 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .admin-topup-empty{color:var(--text-dim);font-size:.88rem;text-align:center;padding:2rem 0}
 .admin-tabs{max-width:560px;margin-top:1rem}
 .admin-qr-tools{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.4rem}
+.admin-table-wrap{overflow-x:auto;margin-top:1rem;border:1px solid var(--border);border-radius:var(--radius-m)}
+.admin-table{width:100%;border-collapse:collapse;font-size:.82rem;white-space:nowrap}
+.admin-table th{text-align:left;padding:.6rem .8rem;background:var(--surface-2);color:var(--text-dim);font-size:.72rem;font-weight:700;border-bottom:1px solid var(--border)}
+.admin-table td{padding:.55rem .8rem;border-bottom:1px solid var(--border);vertical-align:top}
+.admin-table tbody tr:last-child td{border-bottom:none}
+.admin-table tbody tr:nth-child(odd){background:var(--surface)}
+.admin-table tbody tr:nth-child(even){background:var(--surface-2)}
+.admin-table tbody tr:hover{filter:brightness(1.12)}
+.admin-table td.at-idx{color:var(--text-dim);font-variant-numeric:tabular-nums;width:2.5rem}
+.admin-table td.at-points{font-variant-numeric:tabular-nums;text-align:right}
+.admin-table td.at-plan{white-space:normal;min-width:220px}
 .admin-qr-tools input{flex:1;min-width:220px}
 .admin-qr-tools input,.admin-qr-tools select{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);color:var(--text);padding:.55rem .75rem;font-size:.85rem}
 .admin-qr-filter{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}
@@ -3184,7 +3195,21 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <input id="adminMembersSearch" type="text" maxlength="60" autocomplete="off" placeholder="กรองด้วยชื่อ หรือ username">
         </div>
         <p class="sub" id="adminMembersSummary"></p>
-        <div id="adminMembersList" class="admin-topup-list"></div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>ชื่อ</th>
+                <th>ยูเซอ</th>
+                <th>อีเมล</th>
+                <th>แต้ม</th>
+                <th>แพ็กเกจ</th>
+              </tr>
+            </thead>
+            <tbody id="adminMembersList"></tbody>
+          </table>
+        </div>
       </div>
       <div id="adminSlipPanel" hidden>
         <p class="sub admin-slip-note">ระบบสลิปปิดรับคำขอใหม่แล้ว รายการนี้เป็นคำขอเก่าที่ยังค้างอยู่</p>
@@ -10633,15 +10658,16 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ---------- แอดมิน: รายชื่อสมาชิกทั้งหมด + แพ็กเกจ/วันหมดอายุ (ไล่ดูได้โดยไม่ต้องรู้ username ก่อน) ----------
   var adminMembersCache = [];
-  function adminMemberRowHtml(m){
+  function adminMemberRowHtml(m, idx){
     var plan = describeMemberPlans(m).replace(/<br>/g, ' · ');
-    return '<div class="admin-topup-row" style="padding:.6rem .9rem;gap:.5rem 1rem">'+
-      '<b style="flex:none">'+escapeHtml(m.display_name||'-')+'</b>'+
-      '<span class="sub" style="flex:none">@'+escapeHtml(m.username||'-')+'</span>'+
-      '<span class="sub" style="flex:none">'+escapeHtml(m.email||'-')+'</span>'+
-      '<span class="sub" style="flex:none">'+fmtNum(m.points||0)+' แต้ม</span>'+
-      '<span class="sub" style="flex:1;min-width:160px">'+plan+'</span>'+
-    '</div>';
+    return '<tr>'+
+      '<td class="at-idx">'+(idx+1)+'</td>'+
+      '<td><b>'+escapeHtml(m.display_name||'-')+'</b></td>'+
+      '<td class="sub">@'+escapeHtml(m.username||'-')+'</td>'+
+      '<td class="sub">'+escapeHtml(m.email||'-')+'</td>'+
+      '<td class="at-points">'+fmtNum(m.points||0)+'</td>'+
+      '<td class="at-plan sub">'+plan+'</td>'+
+    '</tr>';
   }
   function renderAdminMembers(){
     var root = document.getElementById('adminMembersList');
@@ -10651,13 +10677,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       return (m.display_name||'').toLowerCase().indexOf(q)>=0 || (m.username||'').toLowerCase().indexOf(q)>=0;
     });
     document.getElementById('adminMembersSummary').textContent = 'ทั้งหมด '+fmtNum(adminMembersCache.length)+' คน'+(q ? ' · กรองเหลือ '+fmtNum(rows.length)+' คน' : '');
-    root.innerHTML = rows.length ? rows.map(adminMemberRowHtml).join('') : '<p class="admin-topup-empty">ไม่พบสมาชิก</p>';
+    root.innerHTML = rows.length ? rows.map(adminMemberRowHtml).join('') : '<tr><td colspan="6" class="admin-topup-empty">ไม่พบสมาชิก</td></tr>';
   }
   function loadAdminMembers(){
     var root = document.getElementById('adminMembersList');
-    root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';
+    root.innerHTML = '<tr><td colspan="6" class="admin-topup-empty">กำลังโหลด...</td></tr>';
     return supa.rpc('admin_list_members').then(function(res){
-      if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
+      if(res.error){ root.innerHTML = '<tr><td colspan="6" class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</td></tr>'; return; }
       adminMembersCache = res.data || [];
       renderAdminMembers();
     });

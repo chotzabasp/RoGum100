@@ -1090,6 +1090,10 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .admin-grant-card h3{margin:0;font-size:1rem}
 .admin-grant-row{display:flex;gap:.5rem}
 .admin-grant-row input{flex:1;min-width:0}
+.admin-server-row{cursor:grab}
+.admin-server-row.dragging{opacity:.4}
+.admin-server-row.drag-over{border-color:var(--accent)}
+.admin-server-drag-handle{flex:none;font-size:1.1rem;color:var(--text-dim);cursor:grab;user-select:none;padding:0 .2rem}
 .promo-code-row{display:flex;gap:.5rem;flex-wrap:nowrap}
 .promo-code-row input{width:200px;max-width:100%}
 @media (max-width:520px){.promo-code-row{width:100%}.promo-code-row input{flex:1;min-width:0}}
@@ -3132,9 +3136,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         <div class="admin-grant-card">
           <h3>สร้างโค้ดโปรโมชันใหม่</h3>
           <p class="sub">1 โค้ด ใช้ได้ตามจำนวนคนที่กำหนด (คนละบัญชีใช้ได้แค่ครั้งเดียว) เหมาะกับโปรเร่งด่วนหรือแจกในกิจกรรม — ไม่ใช่การสร้างหลายรหัสไม่ซ้ำกันพร้อมกัน</p>
+          <div class="h-tabs admin-grant-mode" id="adminPromoTypeMode">
+            <button type="button" class="active" data-promo-type="points">แจกแต้ม</button>
+            <button type="button" data-promo-type="plan_days">แจกแพ็กเกจ 4 in 1 (กำหนดวัน)</button>
+          </div>
           <div class="admin-grant-row">
             <input id="adminPromoCode" type="text" maxlength="40" autocomplete="off" placeholder="รหัสโค้ด (เช่น SONGKRAN2026)">
             <input id="adminPromoPoints" type="text" inputmode="numeric" autocomplete="off" placeholder="แต้มที่ได้ต่อคน">
+            <input id="adminPromoPlanDays" type="text" inputmode="numeric" autocomplete="off" placeholder="จำนวนวันที่ได้ต่อคน (เช่น 3)" hidden>
           </div>
           <div class="admin-grant-row">
             <input id="adminPromoMaxUses" type="text" inputmode="numeric" autocomplete="off" placeholder="จำนวนคนใช้ได้ทั้งหมด">
@@ -9588,7 +9597,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       promoCodeBusy = false;
       if(res.error){ errEl.textContent = res.error.message; return; }
       input.value = '';
-      refreshProfile().then(function(){ toast('ใช้โค้ดสำเร็จ ได้รับ '+fmtNum(res.data)+' แต้ม'); });
+      var data = res.data || {};
+      refreshProfile().then(function(){
+        if(data.reward_type === 'plan_days'){
+          toast('ใช้โค้ดสำเร็จ ได้รับแพ็กเกจ 4 in 1 เพิ่ม '+fmtNum(data.plan_days)+' วัน');
+        } else {
+          toast('ใช้โค้ดสำเร็จ ได้รับ '+fmtNum(data.points)+' แต้ม');
+        }
+      });
     });
   });
   document.getElementById('stSavePass').addEventListener('click', function(){
@@ -10291,11 +10307,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // เขียนตาราง servers ตรงๆ ผ่าน supabase-js เลย (ไม่ผ่าน RPC) เพราะมี RLS "servers_admin_write"
   // (for all using is_admin()) อยู่แล้วในระบบ อนุญาตให้แอดมินเขียนได้เต็มที่โดยตรง
   function adminServerRowHtml(s, idx, total){
-    return '<div class="admin-topup-row" data-server-id="'+escapeHtml(s.id)+'">'+
-      '<div class="admin-topup-actions">'+
-        '<button type="button" class="btn btn-ghost btn-sm" data-server-move="up"'+(idx===0?' disabled':'')+' title="ขึ้น">↑</button>'+
-        '<button type="button" class="btn btn-ghost btn-sm" data-server-move="down"'+(idx===total-1?' disabled':'')+' title="ลง">↓</button>'+
-      '</div>'+
+    return '<div class="admin-topup-row admin-server-row" draggable="true" data-server-id="'+escapeHtml(s.id)+'">'+
+      '<span class="admin-server-drag-handle" title="ลากเพื่อจัดลำดับ">⠿</span>'+
       '<div style="flex:1;min-width:160px">'+
         '<b>'+escapeHtml(s.name)+'</b>'+
         '<div class="sub" style="font-size:.78rem;margin-top:.15rem">รหัส: '+escapeHtml(s.id)+'</div>'+
@@ -10337,26 +10350,54 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       loadServers().then(renderAdminServers);
     });
   });
+  // ลากสลับลำดับเซิร์ฟเวอร์ (HTML5 drag-and-drop ธรรมดา ไม่ใช้ไลบรารีเพิ่ม) — ลากแล้วปล่อย
+  // คำนวณลำดับใหม่ทั้งชุดฝั่งหน้าเว็บก่อน (วาดใหม่ให้ลื่นไหลทันที) แล้วค่อยเขียน sort_order
+  // ของทุกแถวใหม่ทั้งหมดเป็นเลขเรียงกัน (0,1,2,...) กันปัญหาเลขลำดับชนกัน/มีช่องว่าง
+  var draggedServerId = null;
+  var adminServerListEl = document.getElementById('adminServerList');
+  adminServerListEl.addEventListener('dragstart', function(e){
+    var row = e.target.closest('.admin-server-row');
+    if(!row) return;
+    draggedServerId = row.dataset.serverId;
+    row.classList.add('dragging');
+    if(e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+  });
+  adminServerListEl.addEventListener('dragend', function(e){
+    var row = e.target.closest('.admin-server-row');
+    if(row) row.classList.remove('dragging');
+    adminServerListEl.querySelectorAll('.drag-over').forEach(function(r){ r.classList.remove('drag-over'); });
+    draggedServerId = null;
+  });
+  adminServerListEl.addEventListener('dragover', function(e){
+    var row = e.target.closest('.admin-server-row');
+    if(!row || !draggedServerId || row.dataset.serverId===draggedServerId) return;
+    e.preventDefault();
+    if(e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    adminServerListEl.querySelectorAll('.drag-over').forEach(function(r){ if(r!==row) r.classList.remove('drag-over'); });
+    row.classList.add('drag-over');
+  });
+  adminServerListEl.addEventListener('drop', function(e){
+    var row = e.target.closest('.admin-server-row');
+    if(!row || !draggedServerId) return;
+    e.preventDefault();
+    row.classList.remove('drag-over');
+    var targetId = row.dataset.serverId;
+    if(targetId===draggedServerId) return;
+    var fromIdx = SERVER_RATES.findIndex(function(s){ return s.id===draggedServerId; });
+    var toIdx = SERVER_RATES.findIndex(function(s){ return s.id===targetId; });
+    if(fromIdx===-1 || toIdx===-1) return;
+    var reordered = SERVER_RATES.slice();
+    var moved = reordered.splice(fromIdx, 1)[0];
+    reordered.splice(toIdx, 0, moved);
+    SERVER_RATES = reordered;
+    renderAdminServers();
+    Promise.all(reordered.map(function(s, i){ return supa.from('servers').update({ sort_order: i }).eq('id', s.id); })).then(function(results){
+      var err = results.filter(function(r){ return r.error; })[0];
+      if(err) toast('บันทึกลำดับไม่สำเร็จ: '+err.error.message);
+      loadServers().then(renderAdminServers);
+    });
+  });
   document.getElementById('adminServerList').addEventListener('click', function(e){
-    var moveBtn = e.target.closest('[data-server-move]');
-    if(moveBtn){
-      var row = moveBtn.closest('[data-server-id]');
-      var id = row.dataset.serverId;
-      var idx = SERVER_RATES.findIndex(function(s){ return s.id===id; });
-      var swapIdx = moveBtn.dataset.serverMove==='up' ? idx-1 : idx+1;
-      if(idx===-1 || swapIdx<0 || swapIdx>=SERVER_RATES.length) return;
-      var a = SERVER_RATES[idx], b = SERVER_RATES[swapIdx];
-      var aOrder = a.sortOrder, bOrder = b.sortOrder;
-      Promise.all([
-        supa.from('servers').update({ sort_order: bOrder }).eq('id', a.id),
-        supa.from('servers').update({ sort_order: aOrder }).eq('id', b.id)
-      ]).then(function(results){
-        var err = results.filter(function(r){ return r.error; })[0];
-        if(err) toast('สลับลำดับไม่สำเร็จ: '+err.error.message);
-        loadServers().then(renderAdminServers);
-      });
-      return;
-    }
     var delBtn = e.target.closest('[data-server-delete]');
     if(delBtn){
       var drow = delBtn.closest('[data-server-id]');
@@ -10388,13 +10429,23 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // เขียนตาราง promo_codes ตรงๆ ผ่าน RLS "admin เขียนได้เต็มที่" เหมือน servers — ฝั่งผู้ใช้แลกโค้ดผ่าน
   // RPC redeem_promo_code เท่านั้น (ดู migration 20260922001400_promo_codes.sql)
   var adminPromoCodes = [];
+  var adminPromoType = 'points';
+  document.getElementById('adminPromoTypeMode').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-promo-type]');
+    if(!btn) return;
+    adminPromoType = btn.dataset.promoType;
+    document.querySelectorAll('#adminPromoTypeMode button').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    document.getElementById('adminPromoPoints').hidden = adminPromoType!=='points';
+    document.getElementById('adminPromoPlanDays').hidden = adminPromoType!=='plan_days';
+  });
   function adminPromoRowHtml(p){
     var expText = p.expires_at ? fmtDate(new Date(p.expires_at).getTime()) : 'ไม่หมดอายุ';
     var full = p.used_count >= p.max_uses;
+    var rewardText = p.reward_type==='plan_days' ? ('แพ็กเกจ 4 in 1 '+fmtNum(p.plan_days)+' วัน/คน') : ('+'+fmtNum(p.points)+' แต้ม/คน');
     return '<div class="admin-topup-row" data-promo-code="'+escapeHtml(p.code)+'">'+
       '<div style="flex:1;min-width:160px">'+
         '<b>'+escapeHtml(p.code)+'</b>'+
-        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">+'+fmtNum(p.points)+' แต้ม/คน · ใช้แล้ว '+fmtNum(p.used_count)+'/'+fmtNum(p.max_uses)+' · หมดอายุ: '+expText+(p.note?' · '+escapeHtml(p.note):'')+'</div>'+
+        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">'+rewardText+' · ใช้แล้ว '+fmtNum(p.used_count)+'/'+fmtNum(p.max_uses)+' · หมดอายุ: '+expText+(p.note?' · '+escapeHtml(p.note):'')+'</div>'+
       '</div>'+
       (full ? '<span class="membership-pill neutral">ใช้ครบแล้ว</span>' : '<span class="membership-pill ok">ใช้งานได้</span>')+
       '<div class="admin-topup-actions">'+
@@ -10421,20 +10472,30 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var errEl = document.getElementById('adminPromoAddError');
     errEl.textContent = '';
     var code = document.getElementById('adminPromoCode').value.trim().toUpperCase();
-    var points = parseInt(document.getElementById('adminPromoPoints').value.replace(/,/g,''), 10);
     var maxUses = parseInt(document.getElementById('adminPromoMaxUses').value.replace(/,/g,''), 10);
     var expDate = document.getElementById('adminPromoExpires').value;
     var note = document.getElementById('adminPromoNote').value.trim();
     if(!code){ errEl.textContent = 'กรอกรหัสโค้ด'; return; }
-    if(!points || points<=0){ errEl.textContent = 'กรอกจำนวนแต้มให้ถูกต้อง'; return; }
     if(!maxUses || maxUses<=0){ errEl.textContent = 'กรอกจำนวนคนใช้ได้ให้ถูกต้อง'; return; }
-    var expiresAt = expDate ? new Date(expDate+'T23:59:59').toISOString() : null;
+    var payload = { code:code, max_uses:maxUses, expires_at: expDate ? new Date(expDate+'T23:59:59').toISOString() : null, note:note||null, reward_type:adminPromoType };
+    if(adminPromoType === 'plan_days'){
+      var days = parseInt(document.getElementById('adminPromoPlanDays').value.replace(/,/g,''), 10);
+      if(!days || days<=0){ errEl.textContent = 'กรอกจำนวนวันให้ถูกต้อง'; return; }
+      payload.plan_days = days;
+      payload.points = null;
+    } else {
+      var points = parseInt(document.getElementById('adminPromoPoints').value.replace(/,/g,''), 10);
+      if(!points || points<=0){ errEl.textContent = 'กรอกจำนวนแต้มให้ถูกต้อง'; return; }
+      payload.points = points;
+      payload.plan_days = null;
+    }
     btn.disabled = true;
-    supa.from('promo_codes').insert({ code:code, points:points, max_uses:maxUses, expires_at:expiresAt, note:note||null }).then(function(res){
+    supa.from('promo_codes').insert(payload).then(function(res){
       btn.disabled = false;
       if(res.error){ errEl.textContent = 'สร้างไม่สำเร็จ: '+(res.error.code==='23505' ? 'มีโค้ดนี้อยู่แล้ว' : res.error.message); return; }
       document.getElementById('adminPromoCode').value = '';
       document.getElementById('adminPromoPoints').value = '';
+      document.getElementById('adminPromoPlanDays').value = '';
       document.getElementById('adminPromoMaxUses').value = '';
       document.getElementById('adminPromoExpires').value = '';
       document.getElementById('adminPromoNote').value = '';

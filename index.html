@@ -10666,6 +10666,17 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     }
   });
 
+  // แปลผลแพ็กเกจของสมาชิกที่แอดมินค้นหาเจอ ใช้ตรรกะเดียวกับ settingsPackageRows() ที่หน้าตั้งค่าของยูเซอเอง
+  function describeMemberPlans(d){
+    if(d.legacy_unlimited) return 'บัญชีเก่า (ใช้งานได้ไม่จำกัดเวลา)';
+    var rows = settingsPackageRows({
+      plan_bundle_expires_at: d.plan_bundle_expires_at,
+      plan_timers_expires_at: d.plan_timers_expires_at,
+      feature_expiries: d.feature_expiries || {}
+    }, Date.now());
+    if(rows.length===1 && !rows[0].expiry) return 'ฟรี (ไม่มีแพ็กเกจ)';
+    return rows.map(function(r){ return escapeHtml(r.name)+' หมดอายุ '+fmtDate(r.expiry); }).join('<br>');
+  }
   // เติมแต้มให้สมาชิกโดยตรง (ลูกค้าโอนตรงผ่านเพจ FB): ค้นหาก่อน → เห็นชื่อ/แต้มปัจจุบัน → ใส่จำนวนกับหมายเหตุ → ยืนยัน
   function adminGrantFind(){
     var ident = document.getElementById('adminGrantIdent').value.trim();
@@ -10677,7 +10688,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var found = document.getElementById('adminGrantFound');
       if(res.error){ adminGrantTarget = null; found.hidden = true; toast(res.error.message); return; }
       adminGrantTarget = res.data;
-      document.getElementById('adminGrantMember').innerHTML = '<b>'+escapeHtml(res.data.display_name||'-')+'</b> (@'+escapeHtml(res.data.username||'-')+')<br>'+escapeHtml(res.data.email||'')+'<br>แต้มคงเหลือตอนนี้ <b>'+fmtNum(res.data.points||0)+'</b>';
+      document.getElementById('adminGrantMember').innerHTML = '<b>'+escapeHtml(res.data.display_name||'-')+'</b> (@'+escapeHtml(res.data.username||'-')+')<br>'+escapeHtml(res.data.email||'')+'<br>แต้มคงเหลือตอนนี้ <b>'+fmtNum(res.data.points||0)+'</b><br>แพ็กเกจ: '+describeMemberPlans(res.data);
       document.getElementById('adminGrantPoints').value = '';
       document.getElementById('adminGrantNote').value = '';
       found.hidden = false;

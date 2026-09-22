@@ -4600,17 +4600,18 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // ดึงซ้ำ เพราะ activeOwnerId() ก็คือตัวเองอยู่แล้ว
   function loadKillsForActiveOwner(){
     var owner = activeOwnerId();
-    var jobs = [fetchKillsFor(owner)];
-    if(App.viewingHostId && App.session && App.session.id) jobs.push(fetchKillsFor(App.session.id));
-    return Promise.all(jobs).then(function(results){
+    var jobs = [{ hostId:owner, job:fetchKillsFor(owner) }];
+    if(App.viewingHostId && App.session && App.session.id) jobs.push({ hostId:App.session.id, job:fetchKillsFor(App.session.id) });
+    return Promise.all(jobs.map(function(j){ return j.job; })).then(function(results){
       var rows = [], seen = {};
-      results.forEach(function(res){
+      results.forEach(function(res, idx){
         if(res.error){ console.error('loadKills', res.error); return; }
-        (res.data||[]).forEach(function(k){ if(!seen[k.id]){ seen[k.id] = true; rows.push(k); } });
+        (res.data||[]).forEach(function(k){ if(!seen[k.id]){ seen[k.id] = true; k._hostId = jobs[idx].hostId; rows.push(k); } });
       });
       rows.sort(function(a,b){ return new Date(b.killed_at) - new Date(a.killed_at); });
       App.kills = rows.map(function(k){
         return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(), serverId:k.server_id || null,
+          hostId:k._hostId,
           killedById:k.killed_by || null,
           killedBy:(k.profiles && k.profiles.display_name) || null,
           // เรียงชื่อไอเทมในรอบเดียวกันให้คงที่ — ไม่งั้นหลังแก้ไขแถวจะสลับที่กัน (DB ไม่รับประกันลำดับ)
@@ -5261,7 +5262,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     '</div>';
   }
   function lootRowHtml(r){
-    var k = r.kill, it = r.item, roster = App.partyRoster || [];
+    var k = r.kill, it = r.item;
+    // รายการนี้เป็นประวัติส่วนตัวของตัวเอง (ก่อนเข้าปาร์ตี้ปัจจุบัน) ที่ถูกรวมมาแสดงปนกับของ
+    // ปาร์ตี้ (ดู loadKillsForActiveOwner) — ต้องหารกับตัวเองเท่านั้น ไม่ใช่ roster ของปาร์ตี้ที่กำลังดูอยู่
+    // เพราะไอเทมนี้ไม่ได้เกี่ยวอะไรกับปาร์ตี้นั้นเลย
+    var roster = (k.hostId && k.hostId !== activeOwnerId())
+      ? [{ id:App.session.id, name:(App.profile && App.profile.display_name) || '-' }]
+      : (App.partyRoster || []);
     var unit = currencyLabel(it.soldCurrency);
     // คนที่เคยติ๊กหารไว้แต่ออกจากปาร์ตี้ไปแล้ว (ไม่อยู่ใน roster ปัจจุบัน) ยังต้องค้างชื่อไว้ในประวัติ
     // เหมือนเดิม แค่กดติ๊กออกไม่ได้แล้ว (ดู loadDepartedSharerNames) — ต่างจากคนในปาร์ตี้ตอนนี้ที่ยัง

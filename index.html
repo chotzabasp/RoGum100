@@ -3622,7 +3622,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
-  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], partyRoster:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], myLifetimeShare:{zeny:0,baht:0,count:0}, partyRoster:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, threeMin:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -4588,6 +4588,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // ประวัติการฆ่า+ไอเทมของปาร์ตี้ที่กำลังดูอยู่ — ผูกกับหัวปาร์ตี้เหมือน user_bosses
   function loadKills(){
     if(!App.session || !App.session.id){ App.kills = []; return Promise.resolve(); }
+    return Promise.all([loadKillsForActiveOwner(), loadMyLifetimeShare()]);
+  }
+  function loadKillsForActiveOwner(){
     return withSkewRetry(function(){ return supa.from('kills').select('id, boss_id, boss_name, killed_at, killed_by, server_id, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)')
       .eq('host_id', activeOwnerId()).order('killed_at', { ascending:false }).order('created_at', { ascending:false }); }).then(function(res){
       if(res.error){ console.error('loadKills', res.error); App.kills = []; return; }
@@ -4600,6 +4603,24 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             return { id:i.id, name:i.name, sharedWith:i.shared_with||[], soldAmount:i.sold_amount==null?null:Number(i.sold_amount), soldCurrency:i.sold_currency||'zeny', soldAt:i.sold_at, keptAt:i.kept_at||null };
           }).sort(function(a,b){ return a.name.localeCompare(b.name); }) };
       });
+    });
+  }
+  // "ส่วนแบ่งของฉัน" บนการ์ดสถิติ = ยอดสะสมตลอดชีพ ไม่ใช่แค่ของปาร์ตี้ที่กำลังดูอยู่ — ดึงจาก
+  // kill_items ตรงๆ ไม่กรอง host_id เลย (RLS เป็นคนคุมว่าเห็นแถวไหนได้บ้าง: ของตัวเอง, ของปาร์ตี้
+  // ที่อยู่อยู่ตอนนี้, และของปาร์ตี้เก่าที่เคยได้ส่วนแบ่งแต่ออกไปแล้ว — ดู migration
+  // 20260922000900_kill_share_visible_after_leave.sql) แล้วกรองเอาเฉพาะแถวที่ตัวเองมีชื่ออยู่ใน
+  // shared_with ฝั่งนี้อีกที
+  function loadMyLifetimeShare(){
+    if(!App.session || !App.session.id){ App.myLifetimeShare = {zeny:0,baht:0,count:0}; return Promise.resolve(); }
+    return withSkewRetry(function(){ return supa.from('kill_items').select('sold_amount, sold_currency, shared_with').not('sold_amount','is',null); }).then(function(res){
+      if(res.error){ console.error('loadMyLifetimeShare', res.error); return; }
+      var mine = {zeny:0, baht:0}, count = 0;
+      (res.data||[]).forEach(function(r){
+        if((r.shared_with||[]).indexOf(App.session.id)===-1) return;
+        count++;
+        mine[r.sold_currency] += Number(r.sold_amount) / r.shared_with.length;
+      });
+      App.myLifetimeShare = { zeny:mine.zeny, baht:mine.baht, count:count };
     });
   }
   // ---------- จับเวลาบอส: อัปเดตสดระหว่างสมาชิกปาร์ตี้ / หลายเครื่อง ----------
@@ -4983,8 +5004,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.getElementById('statTotalItems').textContent = s.totalItems;
     document.getElementById('statItemsSold').textContent = s.soldCount;
     document.getElementById('statItemsSoldAmount').innerHTML = statAmountLines(s.sold);
-    document.getElementById('statMyShare').textContent = s.mineCount;
-    document.getElementById('statMyShareAmount').innerHTML = statAmountLines(s.mine);
+    // ยอดสะสมตลอดชีพ (ทุกปาร์ตี้ที่เคยเข้าร่วม รวมปาร์ตี้ที่ออกไปแล้ว) — ไม่ใช่แค่ของ App.kills
+    // ที่สโคปตามบัญชี/ปาร์ตี้ที่กำลังดูอยู่ (ดู loadMyLifetimeShare)
+    document.getElementById('statMyShare').textContent = App.myLifetimeShare.count;
+    document.getElementById('statMyShareAmount').innerHTML = statAmountLines(App.myLifetimeShare);
     // รูปล่าสุดในการ์ด: การ์ด "ฆ่า" = บอสที่กดฆ่าล่าสุด, การ์ด "ไอเทม" = ไอเทมชิ้นล่าสุด — มีรูปในหลังบ้านถึงจะโชว์ ไม่มีก็ซ่อนช่อง
     var sorted = App.kills.slice().sort(function(a,b){ return b.ts-a.ts; });
     setStatThumb('thumbTotalKills', latestBossThumb(sorted));

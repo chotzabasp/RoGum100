@@ -4590,28 +4590,43 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(!App.session || !App.session.id){ App.kills = []; return Promise.resolve(); }
     return Promise.all([loadKillsForActiveOwner(), loadMyLifetimeShare()]);
   }
-  var KILL_SELECT_COLS = 'id, boss_id, boss_name, killed_at, killed_by, server_id, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)';
+  var KILL_SELECT_COLS = 'id, host_id, boss_id, boss_name, killed_at, killed_by, server_id, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)';
   function fetchKillsFor(hostId){
     return withSkewRetry(function(){ return supa.from('kills').select(KILL_SELECT_COLS)
       .eq('host_id', hostId).order('killed_at', { ascending:false }).order('created_at', { ascending:false }); });
+  }
+  // ทุกก้อนที่เคยมีชื่อเราอยู่ใน "ผู้รับส่วนแบ่ง" ของไอเทมที่เคยขาย ไม่ว่าจะเป็นของปาร์ตี้ไหนก็ตาม
+  // (แม้ออกจากปาร์ตี้นั้นไปแล้ว — RLS เปิดให้อ่านได้เฉพาะรายการที่มีเอี่ยว ดู migration
+  // 20260922000900_kill_share_visible_after_leave.sql) ต้องดึงมารวมในประวัติด้วย ไม่ใช่แค่ไปโผล่
+  // ในยอดรวม "ส่วนแบ่งของฉัน" เฉยๆ
+  function fetchSharedKills(){
+    if(!App.session || !App.session.id) return Promise.resolve({ data:[] });
+    return supa.from('kill_items').select('kill_id').contains('shared_with', [App.session.id]).then(function(res){
+      if(res.error){ console.error('fetchSharedKills lookup', res.error); return { data:[] }; }
+      var ids = Array.from(new Set((res.data||[]).map(function(r){ return r.kill_id; })));
+      if(!ids.length) return { data:[] };
+      return withSkewRetry(function(){ return supa.from('kills').select(KILL_SELECT_COLS)
+        .in('id', ids).order('killed_at', { ascending:false }).order('created_at', { ascending:false }); });
+    });
   }
   // สมาชิกปาร์ตี้ (กำลังดูของหัวปาร์ตี้คนอื่นอยู่) ต้องยังเห็นประวัติส่วนตัวของตัวเอง (ก่อนเข้าปาร์ตี้)
   // รวมอยู่ในรายการเดียวกับของปาร์ตี้ด้วย เรียงตามเวลาปนกันไปเลย ไม่แยกเป็นคนละชุด — หัวปาร์ตี้เองไม่ต้อง
   // ดึงซ้ำ เพราะ activeOwnerId() ก็คือตัวเองอยู่แล้ว
   function loadKillsForActiveOwner(){
     var owner = activeOwnerId();
-    var jobs = [{ hostId:owner, job:fetchKillsFor(owner) }];
-    if(App.viewingHostId && App.session && App.session.id) jobs.push({ hostId:App.session.id, job:fetchKillsFor(App.session.id) });
-    return Promise.all(jobs.map(function(j){ return j.job; })).then(function(results){
+    var jobs = [fetchKillsFor(owner)];
+    if(App.viewingHostId && App.session && App.session.id) jobs.push(fetchKillsFor(App.session.id));
+    if(App.session && App.session.id) jobs.push(fetchSharedKills());
+    return Promise.all(jobs).then(function(results){
       var rows = [], seen = {};
-      results.forEach(function(res, idx){
+      results.forEach(function(res){
         if(res.error){ console.error('loadKills', res.error); return; }
-        (res.data||[]).forEach(function(k){ if(!seen[k.id]){ seen[k.id] = true; k._hostId = jobs[idx].hostId; rows.push(k); } });
+        (res.data||[]).forEach(function(k){ if(!seen[k.id]){ seen[k.id] = true; rows.push(k); } });
       });
       rows.sort(function(a,b){ return new Date(b.killed_at) - new Date(a.killed_at); });
       App.kills = rows.map(function(k){
         return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(), serverId:k.server_id || null,
-          hostId:k._hostId,
+          hostId:k.host_id || null,
           killedById:k.killed_by || null,
           killedBy:(k.profiles && k.profiles.display_name) || null,
           // เรียงชื่อไอเทมในรอบเดียวกันให้คงที่ — ไม่งั้นหลังแก้ไขแถวจะสลับที่กัน (DB ไม่รับประกันลำดับ)
@@ -5182,9 +5197,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(App.historyTab==='boss'){ renderBossView(list, entries); return; }
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
     list.innerHTML = entries.map(function(l){
+      // รายการของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) ลบไม่ได้
+      var writable = l.hostId===App.session.id || l.hostId===activeOwnerId();
+      var delBtn = writable ? '<button type="button" class="hist-del" data-del-kill="'+l.id+'" title="ลบรายการนี้">✕</button>' : '';
       return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+escapeHtml(l.killedBy) : '')+'</div>'+
-          '<button type="button" class="hist-del" data-del-kill="'+l.id+'" title="ลบรายการนี้">✕</button></div>'+
+          delBtn+'</div>'+
         '<div class="boss">'+escapeHtml(l.bossName)+'</div>'+
         '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+itemIconHtml(it.name,'item-ic')+escapeHtml(it.name)+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div></div>';
     }).join('');
@@ -5263,19 +5281,23 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   function lootRowHtml(r){
     var k = r.kill, it = r.item;
+    // แก้ไข/ลบ/ติ๊กหารได้เฉพาะรายการที่ยังมีสิทธิ์เขียนจริง (ตรงกับเงื่อนไข RLS ฝั่ง DB: เจ้าของ
+    // หรือสมาชิกปัจจุบันของปาร์ตี้นั้น) — ถ้าเป็นของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่แล้ว
+    // (ดึงมาโชว์ผ่าน fetchSharedKills) ต้องล็อกทั้งแถว ดูได้อย่างเดียว แก้/ลบ/ติ๊กอะไรไม่ได้เลย
+    var writable = k.hostId===App.session.id || k.hostId===activeOwnerId();
     // รายการนี้เป็นประวัติส่วนตัวของตัวเอง (ก่อนเข้าปาร์ตี้ปัจจุบัน) ที่ถูกรวมมาแสดงปนกับของ
     // ปาร์ตี้ (ดู loadKillsForActiveOwner) — ต้องหารกับตัวเองเท่านั้น ไม่ใช่ roster ของปาร์ตี้ที่กำลังดูอยู่
     // เพราะไอเทมนี้ไม่ได้เกี่ยวอะไรกับปาร์ตี้นั้นเลย
-    var roster = (k.hostId && k.hostId !== activeOwnerId())
+    var roster = !writable ? [] : (k.hostId && k.hostId !== activeOwnerId())
       ? [{ id:App.session.id, name:(App.profile && App.profile.display_name) || '-' }]
       : (App.partyRoster || []);
     var unit = currencyLabel(it.soldCurrency);
     // คนที่เคยติ๊กหารไว้แต่ออกจากปาร์ตี้ไปแล้ว (ไม่อยู่ใน roster ปัจจุบัน) ยังต้องค้างชื่อไว้ในประวัติ
     // เหมือนเดิม แค่กดติ๊กออกไม่ได้แล้ว (ดู loadDepartedSharerNames) — ต่างจากคนในปาร์ตี้ตอนนี้ที่ยัง
-    // กดติ๊ก/ปลดได้ปกติ
+    // กดติ๊ก/ปลดได้ปกติ — แถวที่ไม่มีสิทธิ์เขียนเลย (writable=false) ล็อกทุกชื่อหมด ไม่มีใครกดได้
     var rosterIds = {}; roster.forEach(function(p){ rosterIds[p.id] = true; });
     var departed = (it.sharedWith||[]).filter(function(id){ return !rosterIds[id]; }).map(function(id){
-      return { id:id, name:App.departedSharerNames[id] || 'ไม่ทราบชื่อ' };
+      return { id:id, name:id===App.session.id ? ((App.profile && App.profile.display_name) || '-') : (App.departedSharerNames[id] || 'ไม่ทราบชื่อ') };
     });
     // ไม่มีปาร์ตี้ (roster มีแค่ตัวเอง 1 คน) ก็ยังต้องโชว์แถวนี้ ไม่งั้นไม่มีทางติ๊กชื่อตัวเอง
     // ยอดขายเลยไม่มีวันเข้า "ส่วนแบ่งของฉัน" ได้เลยเพราะ sharedWith ว่างตลอด
@@ -5285,21 +5307,23 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'">'+(on?'✓ ':'')+escapeHtml(p.name)+'</button>';
       }).join('')+
       departed.map(function(p){
-        return '<button type="button" class="share-chip on chip-locked" disabled title="ออกจากปาร์ตี้ไปแล้ว — แก้ไขไม่ได้">✓ '+escapeHtml(p.name)+'</button>';
+        return '<button type="button" class="share-chip on chip-locked" disabled title="'+(writable ? 'ออกจากปาร์ตี้ไปแล้ว — แก้ไขไม่ได้' : 'ปาร์ตี้อื่น — ดูได้อย่างเดียว')+'">✓ '+escapeHtml(p.name)+'</button>';
       }).join('')+'</div>' : '';
     var soldHtml;
-    if(it.soldAmount!=null && lootEditing!==it.id){
+    if(it.soldAmount!=null && (lootEditing!==it.id || !writable)){
       var each = it.sharedWith.length ? it.soldAmount / it.sharedWith.length : null;
       soldHtml = '<div class="loot-line"><span class="loot-lbl">ขายแล้ว</span><b>'+fmtNum(it.soldAmount)+' '+unit+'</b>'+
         '<span class="loot-each">'+(each!=null ? 'คนละ '+fmtNum(Math.round(each))+' '+unit+' ('+it.sharedWith.length+' คน)' : 'ไม่หาร')+'</span>'+
-        '<button type="button" class="btn btn-ghost btn-sm" data-sold-edit="'+it.id+'">แก้ไข</button></div>';
-    } else {
+        (writable ? '<button type="button" class="btn btn-ghost btn-sm" data-sold-edit="'+it.id+'">แก้ไข</button>' : '')+'</div>';
+    } else if(writable) {
       soldHtml = '<div class="loot-line"><span class="loot-lbl">ขายได้</span>'+
         '<input type="text" inputmode="numeric" class="sold-amount" placeholder="จำนวน" value="'+(it.soldAmount!=null ? fmtNum(it.soldAmount) : '')+'" data-sold-input="'+it.id+'">'+
         '<select class="sold-currency" data-sold-currency="'+it.id+'"><option value="zeny"'+(it.soldCurrency!=='baht'?' selected':'')+'>zeny</option><option value="baht"'+(it.soldCurrency==='baht'?' selected':'')+'>บาท</option></select>'+
         '<button type="button" class="btn btn-primary btn-sm" data-sold-save="'+it.id+'">บันทึก</button>'+
         (it.soldAmount!=null ? '<button type="button" class="btn btn-ghost btn-sm" data-sold-clear="'+it.id+'">ยกเลิกขาย</button>' : '')+
       '</div>';
+    } else {
+      soldHtml = '<div class="loot-line"><span class="loot-lbl">ยังไม่ขาย</span><span class="loot-each">ปาร์ตี้อื่น — ดูได้อย่างเดียว</span></div>';
     }
     // สถานะ: ขายแล้ว > เก็บไว้ (ไม่หาร ไม่ขาย เช่นของราคาถูก — เก็บประวัติไว้โดยไม่ต้องลบ) > หาร N คน > รอแบ่ง (ยังไม่ตัดสินใจ)
     var kept = !!it.keptAt && it.soldAmount==null;
@@ -5307,17 +5331,18 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(it.soldAmount!=null) pill = '<span class="membership-pill ok">ขายแล้ว</span>';
     else if(kept){
       pill = '<span class="membership-pill neutral">เก็บไว้</span>';
-      action = '<button type="button" class="loot-act" data-keep-undo="'+it.id+'" title="กลับไปเป็นรอแบ่ง">ยกเลิก</button>';
+      if(writable) action = '<button type="button" class="loot-act" data-keep-undo="'+it.id+'" title="กลับไปเป็นรอแบ่ง">ยกเลิก</button>';
     } else {
       pill = it.sharedWith.length ? '<span class="membership-pill soon">หาร '+it.sharedWith.length+' คน</span>' : '<span class="membership-pill neutral">รอแบ่ง</span>';
-      action = '<button type="button" class="loot-act" data-keep="'+it.id+'" title="ของไม่มีมูลค่า ไม่หาร ไม่ขาย — เก็บประวัติไว้เฉยๆ">เก็บไว้</button>';
+      if(writable) action = '<button type="button" class="loot-act" data-keep="'+it.id+'" title="ของไม่มีมูลค่า ไม่หาร ไม่ขาย — เก็บประวัติไว้เฉยๆ">เก็บไว้</button>';
     }
     var bodyHtml = kept
       ? '<div class="loot-line"><span class="loot-lbl">เก็บไว้</span><span class="loot-each">ไม่หาร ไม่ขาย · กดเก็บเมื่อ '+fmtDateTime(it.keptAt)+'</span></div>'
       : shareHtml+soldHtml;
+    var delBtn = writable ? '<button type="button" class="hist-del" data-del-item="'+it.id+'" title="ลบไอเทมนี้">✕</button>' : '';
     return '<div class="log-row loot-row">'+historyAvatarHtml(k.bossId, k.bossName)+'<div class="log-body">'+
       '<div class="loot-head"><div class="boss">'+itemIconHtml(it.name,'item-ic item-ic-lg')+escapeHtml(it.name)+'</div>'+
-        '<div class="loot-head-r">'+pill+action+'<button type="button" class="hist-del" data-del-item="'+it.id+'" title="ลบไอเทมนี้">✕</button></div></div>'+
+        '<div class="loot-head-r">'+pill+action+delBtn+'</div></div>'+
       '<div class="when">'+escapeHtml(k.bossName)+' · '+fmtDateTime(k.ts)+(k.killedBy ? ' · '+escapeHtml(k.killedBy) : '')+'</div>'+
       bodyHtml+
     '</div></div>';

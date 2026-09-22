@@ -415,7 +415,8 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-hist-nav{display:flex;align-items:center;gap:.8rem}
 .farm-cost-hover{border-bottom:1px dashed var(--text-dim);cursor:help}
 .farm-profit-hover{border-bottom:1px dashed currentColor;cursor:help}
-.farm-cost-tooltip{position:fixed;top:auto;z-index:70;pointer-events:none;max-width:280px}
+.farm-income-hover{border-bottom:1px dashed var(--text-dim);cursor:help}
+.farm-cost-tooltip{position:fixed;top:auto;z-index:70;pointer-events:none;max-width:340px}
 .farm-hist-page-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.3rem .7rem;font-size:.75rem;cursor:pointer}
 .farm-hist-page-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
 .farm-hist-page-btn:disabled{opacity:.4;cursor:not-allowed}
@@ -6254,10 +6255,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var summaryBaht = entries.reduce(function(s,e){
       return s + (e.exchangeRate>0 ? farmZenyToBaht(e.profit, e.exchangeRate) : 0);
     }, 0);
-    var summaryBahtText = summaryHasRate ? ' = '+(summaryProfit>=0?'+':'')+fmtNum(summaryBaht)+' บ' : '';
+    var summaryBahtText = summaryHasRate ? '<span style="color:#f3d48e"> = '+(summaryProfit>=0?'+':'')+fmtNum(summaryBaht)+' บ</span>' : '';
     var summaryEl = document.getElementById('farmHistorySummary');
     if(entries.length){
-      summaryEl.innerHTML = '<span class="farm-history-summary-count">'+summaryCount+' กั้ม</span><span class="farm-history-summary-profit '+(summaryProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(summaryProfit>=0?'+':'')+fmtNum(summaryProfit)+' z'+summaryBahtText+'</span>';
+      summaryEl.innerHTML = '<span class="farm-history-summary-count">'+summaryCount+' กั้ม</span><span class="farm-history-summary-profit '+(summaryProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(summaryProfit>=0?'+':'')+fmtNum(summaryProfit)+' z</span>'+summaryBahtText;
     } else {
       summaryEl.textContent = '';
     }
@@ -6298,11 +6299,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             '<button type="button" class="mr-del" data-farm-del="'+e.id+'" title="ลบ">🗑</button>'+
           '</span></div>'+
         '<div class="farm-history-metrics">'+
-          '<div class="farm-history-metric farm-history-revenue"><span>รายได้</span><b>'+fmtNum(e.earned)+' z</b><small>'+earnedBahtText+'</small></div>'+
-          '<div class="farm-history-metric farm-history-cost"><span>ต้นทุน</span><b class="farm-cost-hover" data-farm-cost-id="'+e.id+'">'+fmtNum(e.cost)+' z</b><small>'+costBahtText+'</small></div>'+
-          '<div class="farm-history-metric '+(pos?'farm-profit-pos':'farm-profit-neg')+'"><span>กำไร</span><b class="farm-profit-hover" data-farm-profit-id="'+e.id+'">'+(pos?'+':'')+fmtNum(e.profit)+' z</b><small>'+profitBahtText+'</small></div>'+
+          '<div class="farm-history-metric farm-history-revenue"><span>รายได้</span><b class="farm-income-hover" data-farm-income-id="'+e.id+'">'+fmtNum(e.earned)+' z</b><small>'+earnedBahtText+'</small></div>'+
+          '<div class="farm-history-metric farm-history-cost"><span>ต้นทุน</span><b class="farm-cost-hover" style="color:var(--danger)" data-farm-cost-id="'+e.id+'">'+fmtNum(e.cost)+' z</b><small style="color:var(--danger)">'+costBahtText+'</small></div>'+
+          '<div class="farm-history-metric '+(pos?'farm-profit-pos':'farm-profit-neg')+'"><span>กำไร</span><b class="farm-profit-hover" data-farm-profit-id="'+e.id+'">'+(pos?'+':'')+fmtNum(e.profit)+' z</b><small style="color:#f3d48e">'+profitBahtText+'</small></div>'+
         '</div>'+
-        '<div class="farm-history-earned"><span>เฉลี่ย 1 กั้ม</span><b style="color:var(--'+(pos?'success':'danger')+')">'+(pos?'+':'')+fmtNum(avgProfit)+' z</b><small>'+avgProfitBahtText+'</small></div>'+
+        '<div class="farm-history-earned"><span>เฉลี่ย 1 กั้ม</span><b style="color:var(--'+(pos?'success':'danger')+')">'+(pos?'+':'')+fmtNum(avgProfit)+' z</b><small style="color:#f3d48e">'+avgProfitBahtText+'</small></div>'+
         (rareTag ? '<div class="farm-history-rares"><span>ไอเทม</span><div>'+rareTag+'</div></div>' : '')+
       '</div>';
     }).join('');
@@ -6385,6 +6386,35 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var pos = entry.profit>=0;
       rows += '<div class="ct-row" style="border-top:1px dashed var(--border);margin-top:.3rem;padding-top:.3rem"><span class="ct-key">กำไรสุทธิ</span><span class="ct-val" style="color:'+(pos?'var(--success)':'var(--danger)')+'">'+(pos?'+':'')+fmtNum(entry.profit)+' z'+bahtSuffix(entry.profit)+'</span></div>';
       tip.innerHTML = '<span class="ct-time">ที่มาของกำไร</span>'+rows;
+    }
+    var rect = el.getBoundingClientRect();
+    tip.hidden = false;
+    var left = Math.min(rect.left, window.innerWidth - tip.offsetWidth - 12);
+    tip.style.left = Math.max(4, left)+'px';
+    tip.style.top = (rect.bottom+6)+'px';
+  }
+
+  function showFarmIncomeTooltip(el){
+    var id = el.dataset.farmIncomeId;
+    var entry = App.farmLog.filter(function(x){ return x.id===id; })[0];
+    var tip = document.getElementById('farmCostTooltip');
+    if(!entry){
+      tip.innerHTML = '<span class="ct-time">ที่มาของรายได้</span><div class="ct-row"><span class="ct-key">ไม่มีข้อมูลรายละเอียด</span></div>';
+    } else {
+      var hasRate = entry.exchangeRate>0;
+      var earnedBase = entry.earnedBase!=null ? entry.earnedBase : entry.earned;
+      function bahtSuffix(z){ return hasRate ? ' (= '+fmtNum(farmZenyToBaht(z, entry.exchangeRate))+' บ)' : ''; }
+      var rows = '<div class="ct-row"><span class="ct-key">ฟามได้ (พื้นฐาน)</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z'+bahtSuffix(earnedBase)+'</span></div>';
+      (entry.rareItems||[]).filter(function(r){ return r.name && r.price; }).forEach(function(r){
+        var rareTotal = r.price*r.qty;
+        var isRareBaht = (r.currency||'zeny')==='baht';
+        var rareValText = isRareBaht
+          ? '+'+fmtNum(rareTotal)+' บ'+(hasRate ? ' (= '+fmtNum(farmBahtToZeny(rareTotal, entry.exchangeRate))+' z)' : '')
+          : '+'+fmtNum(rareTotal)+' z'+bahtSuffix(rareTotal);
+        rows += '<div class="ct-row"><span class="ct-key">🎁 '+escapeHtml(r.name)+(r.qty>1?' x'+r.qty:'')+'</span><span class="ct-val" style="color:var(--success)">'+rareValText+'</span></div>';
+      });
+      rows += '<div class="ct-row" style="border-top:1px dashed var(--border);margin-top:.3rem;padding-top:.3rem"><span class="ct-key">รวมรายได้</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(entry.earned)+' z'+bahtSuffix(entry.earned)+'</span></div>';
+      tip.innerHTML = '<span class="ct-time">ที่มาของรายได้</span>'+rows;
     }
     var rect = el.getBoundingClientRect();
     tip.hidden = false;
@@ -9685,7 +9715,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     '.item-img-ico', '#itemImageLightbox',
     // ยอดนักฟาม: เปลี่ยนเซิร์ฟเวอร์/หน่วย/ช่วงเวลา/กราฟ/หน้าประวัติ (ไม่รวมฟอร์มบันทึก, ต้นทุน, เรท, แก้/ลบ)
     '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
-    '#farmHistoryRange', '#farmHistoryPagination', '.farm-cost-hover', '.farm-profit-hover',
+    '#farmHistoryRange', '#farmHistoryPagination', '.farm-cost-hover', '.farm-profit-hover', '.farm-income-hover',
     // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหาได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
     '#partyPanelToggle', '[data-open-history]', '#searchInput', '#bossSoundControl',
     // คลังไอเทม: ดูตามระดับ/เปลี่ยนเซิร์ฟเวอร์
@@ -11317,9 +11347,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(costEl){ showFarmCostTooltip(costEl); return; }
     var profitEl = e.target.closest('.farm-profit-hover');
     if(profitEl){ showFarmProfitTooltip(profitEl); return; }
+    var incomeEl = e.target.closest('.farm-income-hover');
+    if(incomeEl){ showFarmIncomeTooltip(incomeEl); return; }
   });
   document.getElementById('farmHistoryList').addEventListener('mouseout', function(e){
-    var el = e.target.closest('.farm-cost-hover, .farm-profit-hover');
+    var el = e.target.closest('.farm-cost-hover, .farm-profit-hover, .farm-income-hover');
     if(!el) return;
     document.getElementById('farmCostTooltip').hidden = true;
   });

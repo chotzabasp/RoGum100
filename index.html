@@ -7986,6 +7986,20 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       // ประวัติ/คลัง/การตั้งค่า อยู่บนคลาวด์ — โหลดแล้วรวมกับของในเครื่องก่อนวาดหน้า (ย้ายของเดิมขึ้นให้ครั้งแรก)
       return cloudBegin(user);
     }).then(function(){
+      // cloudBegin ด้านบนอาจเขียนทับ App.timersServerId/App.farmServerId เงียบๆ ด้วยค่าจากคลาวด์
+      // (loadUserData อ่านค่านี้จาก cloudValues ถ้ามี) แต่ dropdown/ป้าย "พักแล้ว"/รายการบอสที่วาด
+      // ไปแล้วก่อนหน้านี้ไม่ถูกวาดใหม่ตาม — ทำให้สิ่งที่เห็นบนจอกับค่าจริงในหน่วยความจำไม่ตรงกัน
+      // (ต้นเหตุของบั๊กที่สมาชิกปาร์ตี้เจอเซิร์ฟเวอร์ไม่ตรง) คำนวณ/วาดใหม่ให้ตรงกันเสมอตรงนี้
+      var prevTimersServer = App.timersServerId;
+      populateTimersServerSelect();
+      renderTimersRetiredState();
+      populateFarmServerSelect();
+      renderFarmRetiredState();
+      var reloadTimers = App.timersServerId !== prevTimersServer
+        ? loadUserBosses().then(function(){ renderRoster(); })
+        : Promise.resolve();
+      return reloadTimers.then(function(){ checkPartyServerMatch(); });
+    }).then(function(){
       pruneServerSelections();
       // ประกาศเป็นกระดานร่วม โหลดแยกแล้วค่อยวาดทับอีกที ไม่บล็อกการเปิดหน้า
       refreshAnnouncementsIfChanged(true);

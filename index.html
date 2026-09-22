@@ -8948,6 +8948,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   function renderItemsDetail(){
     var titleText = document.getElementById('itemsDetailTitleText');
+    var headingIcon = document.querySelector('#itemsDetailTitle .inventory-heading-icon');
     var list = document.getElementById('itemsDetailList');
     var tier = App.itemsSelectedTier;
     var detailCard = document.querySelector('#view-items .items-card-b');
@@ -8960,10 +8961,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     });
     if(!tier){
       titleText.textContent = 'รายการในคลัง';
+      headingIcon.src = 'assets/treasure.png';
       list.innerHTML = '<p class="mr-empty">เลือกคลังเพื่อดูไอเทม</p>';
       return;
     }
     titleText.textContent = 'รายการในคลัง '+itemTierLabel(tier);
+    // ใช้รูปเดียวกับที่การ์ดคลังนั้นๆ ใช้อยู่แล้ว (single source — ไม่ต้องทำ mapping ซ้ำ)
+    var tierCardImg = document.querySelector('#itemsCardTier'+tier+' .items-card-a-art');
+    if(tierCardImg) headingIcon.src = tierCardImg.getAttribute('src');
     var items = warehouseStockFor(App.itemsServerId)[tier];
     if(!items.length){ list.innerHTML = '<p class="mr-empty">ยังไม่มีไอเทมในคลังนี้</p>'; return; }
     var groups = {};

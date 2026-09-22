@@ -2815,7 +2815,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <div id="partyPanelBody" class="party-panel-body" hidden>
         <div class="panel-head">
           <h2>สมาชิกในปาร์ตี้</h2>
-          <button type="button" class="btn btn-gradient btn-sm" id="addPartyMemberBtn">+ เพิ่มเพื่อน (20 แต้ม)</button>
+          <button type="button" class="btn btn-gradient btn-sm" id="addPartyMemberBtn">+ เพิ่มเพื่อน (50 แต้ม)</button>
         </div>
         <div id="myPartyList" class="admin-topup-list"></div>
       </div>
@@ -3351,10 +3351,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <label>อีเมลหรือ Username ของเพื่อน</label>
       <input type="text" id="addPartyMemberEmail" placeholder="friend@example.com หรือ username" autocomplete="off" autocapitalize="none" spellcheck="false">
     </div>
-    <p class="post-announce-note">ใช้ 20 แต้มต่อการเพิ่ม 1 คน — เพิ่มแล้ว<b>เปลี่ยนเป็นคนอื่นไม่ได้</b> ถ้าเอาออกภายหลัง สล็อตนี้จะเสียไปเลย ต้องจ่าย 20 แต้มใหม่ถ้าจะเพิ่มคนอื่นอีกครั้ง</p>
+    <p class="post-announce-note">ใช้ 50 แต้มต่อการเพิ่ม 1 คน <b>ถาวร (ห้ามกดออกจากปาร์ตี้)</b> ถ้าออกจากปาร์ตี้ไปแล้ว ต้องจ่าย 50 แต้มใหม่ถ้าจะเพิ่มเพื่อนกลับเข้ามาอีกครั้ง</p>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" id="addPartyMemberCancelBtn">ยกเลิก</button>
-      <button type="button" class="btn btn-gradient" id="addPartyMemberConfirmBtn">ยืนยันเพิ่ม (20 แต้ม)</button>
+      <button type="button" class="btn btn-gradient" id="addPartyMemberConfirmBtn">ยืนยันเพิ่ม (50 แต้ม)</button>
     </div>
   </div>
 </div>
@@ -10414,7 +10414,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var removeBtn = e.target.closest('[data-remove-member]');
     if(removeBtn){
       var memberId = removeBtn.dataset.removeMember;
-      showConfirm('เอาเพื่อนคนนี้ออกจากปาร์ตี้? สล็อตนี้จะเสียไปเลย เพิ่มคนใหม่ต้องจ่าย 20 แต้มใหม่', function(){
+      showConfirm('เอาเพื่อนคนนี้ออกจากปาร์ตี้? สล็อตนี้จะเสียไปเลย เพิ่มคนใหม่ต้องจ่าย 50 แต้มใหม่', function(){
         supa.rpc('remove_party_member', { target_member_id: memberId }).then(function(res){
           if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
           toast('เอาออกจากปาร์ตี้แล้ว');
@@ -10426,7 +10426,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var leaveBtn = e.target.closest('[data-leave-party]');
     if(leaveBtn){
       var leaveHostId = leaveBtn.dataset.leaveParty;
-      showConfirm('ออกจากปาร์ตี้ของ '+(App.viewingHostName||'-')+'? สล็อตนี้จะเสียไปเลย หัวปาร์ตี้ต้องจ่าย 20 แต้มใหม่ถ้าจะเพิ่มคุณกลับเข้าปาร์ตี้อีกครั้ง', function(){
+      showConfirm('ออกจากปาร์ตี้ของ '+(App.viewingHostName||'-')+'? สล็อตนี้จะเสียไปเลย หัวปาร์ตี้ต้องจ่าย 50 แต้มใหม่ถ้าจะเพิ่มคุณกลับเข้าปาร์ตี้อีกครั้ง', function(){
         supa.rpc('leave_party', { target_host_id: leaveHostId }).then(function(res){
           if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
           toast('ออกจากปาร์ตี้แล้ว');

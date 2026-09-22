@@ -10446,9 +10446,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       '<div style="flex:1;min-width:160px">'+
         '<b>'+escapeHtml(p.code)+'</b>'+
         '<div class="sub" style="font-size:.78rem;margin-top:.15rem">'+rewardText+' · ใช้แล้ว '+fmtNum(p.used_count)+'/'+fmtNum(p.max_uses)+' · หมดอายุ: '+expText+(p.note?' · '+escapeHtml(p.note):'')+'</div>'+
+        '<div data-promo-redeem-list hidden style="margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--border)"></div>'+
       '</div>'+
       (full ? '<span class="membership-pill neutral">ใช้ครบแล้ว</span>' : '<span class="membership-pill ok">ใช้งานได้</span>')+
       '<div class="admin-topup-actions">'+
+        (p.used_count > 0 ? '<button type="button" class="btn btn-ghost btn-sm" data-promo-view title="ดูว่าใครใช้โค้ดนี้ไปบ้าง">ดูผู้ใช้</button>' : '')+
         '<button type="button" class="btn btn-ghost btn-sm" data-promo-delete title="ลบโค้ดนี้">ลบ</button>'+
       '</div>'+
     '</div>';
@@ -10505,16 +10507,36 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   });
   document.getElementById('adminPromoList').addEventListener('click', function(e){
     var delBtn = e.target.closest('[data-promo-delete]');
-    if(!delBtn) return;
-    var row = delBtn.closest('[data-promo-code]');
-    var code = row.dataset.promoCode;
-    showConfirm('ลบโค้ด "'+escapeHtml(code)+'" ออกจากระบบถาวร? คนที่ยังไม่ได้ใช้จะใช้โค้ดนี้ไม่ได้อีก กู้คืนไม่ได้', function(){
-      supa.from('promo_codes').delete().eq('code', code).then(function(res){
-        if(res.error){ toast('ลบไม่สำเร็จ: '+res.error.message); return; }
-        toast('ลบโค้ดแล้ว');
-        loadAdminPromoCodes();
+    if(delBtn){
+      var row = delBtn.closest('[data-promo-code]');
+      var code = row.dataset.promoCode;
+      showConfirm('ลบโค้ด "'+escapeHtml(code)+'" ออกจากระบบถาวร? คนที่ยังไม่ได้ใช้จะใช้โค้ดนี้ไม่ได้อีก กู้คืนไม่ได้', function(){
+        supa.from('promo_codes').delete().eq('code', code).then(function(res){
+          if(res.error){ toast('ลบไม่สำเร็จ: '+res.error.message); return; }
+          toast('ลบโค้ดแล้ว');
+          loadAdminPromoCodes();
+        });
       });
-    });
+      return;
+    }
+    var viewBtn = e.target.closest('[data-promo-view]');
+    if(viewBtn){
+      var row2 = viewBtn.closest('[data-promo-code]');
+      var code2 = row2.dataset.promoCode;
+      var listEl = row2.querySelector('[data-promo-redeem-list]');
+      if(!listEl.hidden){ listEl.hidden = true; return; }
+      listEl.hidden = false;
+      listEl.innerHTML = '<div class="admin-topup-meta">กำลังโหลด...</div>';
+      supa.rpc('admin_list_promo_redemptions', { p_code: code2 }).then(function(res){
+        if(res.error){ listEl.innerHTML = '<div class="admin-topup-meta">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</div>'; return; }
+        var rows = res.data || [];
+        listEl.innerHTML = rows.length
+          ? rows.map(function(r){
+              return '<div class="admin-topup-meta">'+fmtDateTime(new Date(r.redeemed_at).getTime())+' · '+escapeHtml(r.display_name||'-')+' (@'+escapeHtml(r.username||'-')+') · '+escapeHtml(r.email||'-')+'</div>';
+            }).join('')
+          : '<div class="admin-topup-meta">ยังไม่มีคนใช้โค้ดนี้</div>';
+      });
+    }
   });
 
   document.getElementById('adminTabs').addEventListener('click', function(e){

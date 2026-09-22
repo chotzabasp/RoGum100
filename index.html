@@ -3084,6 +3084,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         <button type="button" data-admin-tab="grant">เติมแต้มให้สมาชิก</button>
         <button type="button" data-admin-tab="servers">จัดการเซิร์ฟเวอร์</button>
         <button type="button" data-admin-tab="promo">โค้ดโปรโมชัน</button>
+        <button type="button" data-admin-tab="members">สมาชิก</button>
         <button type="button" data-admin-tab="slip" hidden>สลิป (ระบบเก่า) <span id="adminSlipCount"></span></button>
       </div>
       <div id="adminQrPanel">
@@ -3161,6 +3162,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <p class="auth-error" id="adminPromoAddError"></p>
         </div>
         <div id="adminPromoList" class="admin-topup-list"></div>
+      </div>
+      <div id="adminMembersPanel" hidden>
+        <div class="admin-qr-tools">
+          <input id="adminMembersSearch" type="text" maxlength="60" autocomplete="off" placeholder="กรองด้วยชื่อ หรือ username">
+        </div>
+        <p class="sub" id="adminMembersSummary"></p>
+        <div id="adminMembersList" class="admin-topup-list"></div>
       </div>
       <div id="adminSlipPanel" hidden>
         <p class="sub admin-slip-note">ระบบสลิปปิดรับคำขอใหม่แล้ว รายการนี้เป็นคำขอเก่าที่ยังค้างอยู่</p>
@@ -10607,6 +10615,38 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     }
   });
 
+  // ---------- แอดมิน: รายชื่อสมาชิกทั้งหมด + แพ็กเกจ/วันหมดอายุ (ไล่ดูได้โดยไม่ต้องรู้ username ก่อน) ----------
+  var adminMembersCache = [];
+  function adminMemberRowHtml(m){
+    return '<div class="admin-topup-row">'+
+      '<div style="flex:1;min-width:200px">'+
+        '<b>'+escapeHtml(m.display_name||'-')+'</b> <span class="sub">(@'+escapeHtml(m.username||'-')+')</span>'+
+        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">'+escapeHtml(m.email||'-')+' · '+fmtNum(m.points||0)+' แต้ม</div>'+
+        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">'+describeMemberPlans(m)+'</div>'+
+      '</div>'+
+    '</div>';
+  }
+  function renderAdminMembers(){
+    var root = document.getElementById('adminMembersList');
+    var q = (document.getElementById('adminMembersSearch').value||'').trim().toLowerCase();
+    var rows = adminMembersCache.filter(function(m){
+      if(!q) return true;
+      return (m.display_name||'').toLowerCase().indexOf(q)>=0 || (m.username||'').toLowerCase().indexOf(q)>=0;
+    });
+    document.getElementById('adminMembersSummary').textContent = 'ทั้งหมด '+fmtNum(adminMembersCache.length)+' คน'+(q ? ' · กรองเหลือ '+fmtNum(rows.length)+' คน' : '');
+    root.innerHTML = rows.length ? rows.map(adminMemberRowHtml).join('') : '<p class="admin-topup-empty">ไม่พบสมาชิก</p>';
+  }
+  function loadAdminMembers(){
+    var root = document.getElementById('adminMembersList');
+    root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';
+    return supa.rpc('admin_list_members').then(function(res){
+      if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
+      adminMembersCache = res.data || [];
+      renderAdminMembers();
+    });
+  }
+  document.getElementById('adminMembersSearch').addEventListener('input', renderAdminMembers);
+
   document.getElementById('adminTabs').addEventListener('click', function(e){
     var btn = e.target.closest('[data-admin-tab]');
     if(!btn) return;
@@ -10616,11 +10656,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.getElementById('adminGrantPanel').hidden = tab!=='grant';
     document.getElementById('adminServersPanel').hidden = tab!=='servers';
     document.getElementById('adminPromoPanel').hidden = tab!=='promo';
+    document.getElementById('adminMembersPanel').hidden = tab!=='members';
     document.getElementById('adminSlipPanel').hidden = tab!=='slip';
     if(tab==='qr') loadAdminQr();
     if(tab==='slip') renderAdminTopups();
     if(tab==='promo') loadAdminPromoCodes();
     if(tab==='servers') loadServers().then(renderAdminServers);
+    if(tab==='members') loadAdminMembers();
   });
   document.getElementById('adminQrFilter').addEventListener('click', function(e){
     var btn = e.target.closest('[data-admin-qr-filter]');

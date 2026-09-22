@@ -3622,7 +3622,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
-  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], myLifetimeShare:{zeny:0,baht:0,count:0}, partyRoster:[], keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, db:[], active:{}, markers:{}, kills:[], myLifetimeShare:{zeny:0,baht:0,count:0}, partyRoster:[], departedSharerNames:{}, keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, threeMin:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -4590,11 +4590,26 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(!App.session || !App.session.id){ App.kills = []; return Promise.resolve(); }
     return Promise.all([loadKillsForActiveOwner(), loadMyLifetimeShare()]);
   }
+  var KILL_SELECT_COLS = 'id, boss_id, boss_name, killed_at, killed_by, server_id, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)';
+  function fetchKillsFor(hostId){
+    return withSkewRetry(function(){ return supa.from('kills').select(KILL_SELECT_COLS)
+      .eq('host_id', hostId).order('killed_at', { ascending:false }).order('created_at', { ascending:false }); });
+  }
+  // สมาชิกปาร์ตี้ (กำลังดูของหัวปาร์ตี้คนอื่นอยู่) ต้องยังเห็นประวัติส่วนตัวของตัวเอง (ก่อนเข้าปาร์ตี้)
+  // รวมอยู่ในรายการเดียวกับของปาร์ตี้ด้วย เรียงตามเวลาปนกันไปเลย ไม่แยกเป็นคนละชุด — หัวปาร์ตี้เองไม่ต้อง
+  // ดึงซ้ำ เพราะ activeOwnerId() ก็คือตัวเองอยู่แล้ว
   function loadKillsForActiveOwner(){
-    return withSkewRetry(function(){ return supa.from('kills').select('id, boss_id, boss_name, killed_at, killed_by, server_id, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)')
-      .eq('host_id', activeOwnerId()).order('killed_at', { ascending:false }).order('created_at', { ascending:false }); }).then(function(res){
-      if(res.error){ console.error('loadKills', res.error); App.kills = []; return; }
-      App.kills = (res.data||[]).map(function(k){
+    var owner = activeOwnerId();
+    var jobs = [fetchKillsFor(owner)];
+    if(App.viewingHostId && App.session && App.session.id) jobs.push(fetchKillsFor(App.session.id));
+    return Promise.all(jobs).then(function(results){
+      var rows = [], seen = {};
+      results.forEach(function(res){
+        if(res.error){ console.error('loadKills', res.error); return; }
+        (res.data||[]).forEach(function(k){ if(!seen[k.id]){ seen[k.id] = true; rows.push(k); } });
+      });
+      rows.sort(function(a,b){ return new Date(b.killed_at) - new Date(a.killed_at); });
+      App.kills = rows.map(function(k){
         return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(), serverId:k.server_id || null,
           killedById:k.killed_by || null,
           killedBy:(k.profiles && k.profiles.display_name) || null,
@@ -5191,6 +5206,23 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       }));
     });
   }
+  // คนที่เคยติ๊กหาร (อยู่ใน shared_with ของไอเทมที่เคยขาย) แต่ออกจากปาร์ตี้ไปแล้ว — ไม่อยู่ใน
+  // partyRoster ปัจจุบัน จึงต้องดึงชื่อแยกมาเก็บไว้เอง เพื่อโชว์เป็นชิปล็อก (ดู lootRowHtml)
+  function loadDepartedSharerNames(){
+    var known = {}; (App.partyRoster||[]).forEach(function(p){ known[p.id] = true; });
+    var missing = {};
+    App.kills.forEach(function(k){ k.items.forEach(function(it){
+      (it.sharedWith||[]).forEach(function(id){ if(!known[id]) missing[id] = true; });
+    }); });
+    var ids = Object.keys(missing);
+    if(!ids.length){ App.departedSharerNames = {}; return Promise.resolve(); }
+    return supa.from('profiles').select('id, display_name').in('id', ids).then(function(res){
+      if(res.error){ console.error('loadDepartedSharerNames', res.error); return; }
+      var names = {};
+      (res.data||[]).forEach(function(p){ names[p.id] = p.display_name || 'ไม่ทราบชื่อ'; });
+      App.departedSharerNames = names;
+    });
+  }
   function lootRows(entries, applyFilter){
     var rows = [];
     entries.forEach(function(k){ k.items.forEach(function(it){ rows.push({ kill:k, item:it }); }); });
@@ -5231,11 +5263,22 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function lootRowHtml(r){
     var k = r.kill, it = r.item, roster = App.partyRoster || [];
     var unit = currencyLabel(it.soldCurrency);
+    // คนที่เคยติ๊กหารไว้แต่ออกจากปาร์ตี้ไปแล้ว (ไม่อยู่ใน roster ปัจจุบัน) ยังต้องค้างชื่อไว้ในประวัติ
+    // เหมือนเดิม แค่กดติ๊กออกไม่ได้แล้ว (ดู loadDepartedSharerNames) — ต่างจากคนในปาร์ตี้ตอนนี้ที่ยัง
+    // กดติ๊ก/ปลดได้ปกติ
+    var rosterIds = {}; roster.forEach(function(p){ rosterIds[p.id] = true; });
+    var departed = (it.sharedWith||[]).filter(function(id){ return !rosterIds[id]; }).map(function(id){
+      return { id:id, name:App.departedSharerNames[id] || 'ไม่ทราบชื่อ' };
+    });
     // ไม่มีปาร์ตี้ (roster มีแค่ตัวเอง 1 คน) ก็ยังต้องโชว์แถวนี้ ไม่งั้นไม่มีทางติ๊กชื่อตัวเอง
     // ยอดขายเลยไม่มีวันเข้า "ส่วนแบ่งของฉัน" ได้เลยเพราะ sharedWith ว่างตลอด
-    var shareHtml = roster.length > 0 ? '<div class="loot-line"><span class="loot-lbl">หาร</span>'+roster.map(function(p){
+    var shareHtml = (roster.length > 0 || departed.length > 0) ? '<div class="loot-line"><span class="loot-lbl">หาร</span>'+
+      roster.map(function(p){
         var on = it.sharedWith.indexOf(p.id)!==-1;
         return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'">'+(on?'✓ ':'')+escapeHtml(p.name)+'</button>';
+      }).join('')+
+      departed.map(function(p){
+        return '<button type="button" class="share-chip on chip-locked" disabled title="ออกจากปาร์ตี้ไปแล้ว — แก้ไขไม่ได้">✓ '+escapeHtml(p.name)+'</button>';
       }).join('')+'</div>' : '';
     var soldHtml;
     if(it.soldAmount!=null && lootEditing!==it.id){
@@ -7869,7 +7912,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     App.isGuest = true;
     // เคลียร์ข้อมูลที่โหลดมาจาก Supabase ตอนล็อกอินจริงรอบก่อน (ถ้ามี) กันไม่ให้เหลือค้างโชว์
     // ผิดๆ ตอนกลับมาเป็นผู้เยี่ยมชม — ต้องว่างเปล่าจริงเหมือนบัญชีใหม่เอี่ยม
-    App.db = []; App.active = {}; App.markers = {}; App.kills = []; App.partyRoster = [];
+    App.db = []; App.active = {}; App.markers = {}; App.kills = []; App.partyRoster = []; App.departedSharerNames = {};
     App.viewingHostId = null; App.viewingHostName = null;
     cloudEnd();
     bossLiveStop(); bossLive.knownState = null; bossLive.stateHost = null;
@@ -11124,7 +11167,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     document.getElementById('todayOnly').checked = mode.indexOf('today') !== -1;
     document.getElementById('historyOverlay').hidden = false;
     renderHistory();
-    loadPartyRoster().then(renderHistory);
+    loadPartyRoster().then(loadDepartedSharerNames).then(renderHistory);
   }
   document.querySelectorAll('[data-open-history]').forEach(function(btn){
     btn.addEventListener('click', function(){ openHistory(btn.dataset.openHistory); });

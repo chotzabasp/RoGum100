@@ -1494,7 +1494,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home .dashboard-quicklinks{position:relative;font-size:.8rem;color:var(--text-dim)}
 #view-home .dashboard-quicklinks summary{cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--radius-s)}
 #view-home .dashboard-shortcuts{position:absolute;right:0;top:100%;z-index:20;display:grid;grid-template-columns:1fr;min-width:180px;margin:.4rem 0 0;padding:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-s);box-shadow:0 8px 24px #0004}
-#view-home .home-grid{grid-template-columns:minmax(0,1.25fr) minmax(340px,1fr);gap:1rem;align-items:start}
+#view-home .home-grid{grid-template-columns:minmax(0,1.25fr) minmax(340px,1fr);grid-template-rows:auto 1fr;gap:1rem;align-items:start}
 #view-home .home-left{grid-column:1;grid-row:2;gap:1rem}
 /* Match the summary heading line (.95rem × 1.5) plus its .6rem bottom gap. */
 #view-home #mrEntryPanel{grid-column:2;grid-row:1 / span 2;margin-top:2.025rem}
@@ -1550,7 +1550,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home #mrEntryPanel .mr-total{padding:.5rem .65rem}
 #view-home #mrEntryPanel #mrConfirm{min-height:46px}
 @media(max-width:1100px){
-  #view-home .home-grid{grid-template-columns:minmax(0,1fr)}
+  #view-home .home-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
   #view-home #mrEntryPanel{grid-column:1;grid-row:2;margin-top:0}
   #view-home .home-left{grid-column:1;grid-row:3}
 }
@@ -2240,6 +2240,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-items .items-card-a-sub .items-tier-viewall{z-index:1}
 #view-items .items-card-a-sub .panel-head h2{font-size:1rem;font-weight:750;letter-spacing:0;color:#e4eafa}
 #view-items .items-card-a-sub .items-tier-count{font-family:inherit;font-size:1.7rem;line-height:1.25;font-weight:800;font-variant-numeric:tabular-nums;color:rgb(var(--tier-rgb));text-shadow:0 0 14px rgba(var(--tier-rgb),.18)}
+#view-items .items-card-a-sub .items-tier-free-note{font-size:.7rem;color:var(--text-dim);margin-top:-.1rem;z-index:1;position:relative}
 #view-items .items-card-a-sub .items-tier-viewall{color:rgb(var(--tier-rgb));font-size:.8rem;transition:color .16s ease,text-shadow .16s ease}
 #view-items .items-card-a-sub .items-tier-viewall:hover{color:#fff;text-decoration:none;text-shadow:0 0 10px rgba(var(--tier-rgb),.55)}
 #view-items .items-card-a-sub .items-card-a-art{opacity:.42;filter:drop-shadow(0 3px 9px rgba(var(--tier-rgb),.35));transition:opacity .18s ease,transform .18s ease,filter .18s ease}
@@ -2949,6 +2950,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
                 <img class="items-card-a-art" src="assets/warehouse/jellopy.png" alt="" aria-hidden="true">
                 <div class="panel-head"><h2>คลังไอเทม อื่นๆ</h2></div>
                 <div class="items-tier-count" id="itemsTierCountS">0 ชิ้น</div>
+                <div class="items-tier-free-note" id="itemsTierFreeNote" hidden></div>
                 <button type="button" class="items-tier-viewall" data-view-tier="S">ดูไอเทมทั้งหมด</button>
               </div>
             </div>
@@ -6996,8 +6998,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           '<button type="button" class="mr-row-remove" aria-label="ลบรายการ" data-remove-row="'+row.rid+'" '+(removable?'':'disabled')+'>✕</button>'+
         '</div>'+
         zenyRemainingHtml+
-        (isZenyTab ? '' : '<div class="mr-entry-details"><p class="mr-entry-section-label">'+(showSlots?'รูปภาพ / Slot':'รูปภาพ')+'</p>'+
-          '<div class="mr-entry-image">'+rowImageButtonHtml(row, stockGroups)+'<span>ลากรูปภาพไอเทมมาใส่ (ไม่บังคับ)</span></div>'+slotsHtml+'</div>')+
+        '<div class="mr-entry-details"><p class="mr-entry-section-label">'+(showSlots?'รูปภาพ / Slot':'รูปภาพ')+'</p>'+
+          '<div class="mr-entry-image">'+rowImageButtonHtml(row, stockGroups)+'<span>ลากรูปภาพไอเทมมาใส่ (ไม่บังคับ)</span></div>'+slotsHtml+'</div>'+
       '</div>';
     }).join('');
     hydrateItemThumbs(root);
@@ -7148,7 +7150,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
 
   function rowImageButtonHtml(row, stockGroups){
-    if(App.merchantCategory==='zeny') return '';
     if(row.imageLoading) return '<span class="mr-row-img loading" aria-label="กำลังเตรียมรูป"></span>';
     if(row.imagePreviewUrl){
       return '<button type="button" class="mr-row-img has-img" data-row-img="'+row.rid+'" data-img-row="'+row.rid+'" title="ดูรูป / เปลี่ยนรูป" aria-label="ดูรูปที่แนบ"><img src="'+row.imagePreviewUrl+'" alt=""></button>';
@@ -7162,9 +7163,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ไฟล์แรกไปที่แถวที่ระบุ (ถ้ามี) ที่เหลือไล่ใส่แถวที่ยังไม่มีรูป เต็มแล้วเพิ่มแถวใหม่ให้
   function attachImageFiles(files, targetRowId){
-    if(App.merchantCategory==='zeny') return;
     files = (files || []).filter(function(f){ return f && f.type && f.type.indexOf('image/')===0; });
     if(!files.length){ toast('รองรับเฉพาะไฟล์รูปภาพ'); return; }
+    // M มีแถวเดียวตายตัว (ไม่มีปุ่ม +เพิ่มรายการ) — แนบได้แค่ 1 รูป ไม่สร้างแถวใหม่ให้
+    if(App.merchantCategory==='zeny') files = files.slice(0, 1);
     var rows = activeRows();
     var targets = [];
     var addedRow = false;
@@ -7172,7 +7174,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var row = null;
       if(i===0 && targetRowId) row = rows.filter(function(r){ return r.rid===targetRowId; })[0] || null;
       if(!row) row = rows.filter(function(r){ return rowAcceptsImage(r) && targets.indexOf(r)===-1; })[0] || null;
-      if(!row){ row = newItemRow(null, null, null, defaultRowCurrency()); rows.push(row); addedRow = true; }
+      if(!row){
+        if(App.merchantCategory==='zeny') return;
+        row = newItemRow(null, null, null, defaultRowCurrency()); rows.push(row); addedRow = true;
+      }
       row.imageLoading = true;
       targets.push(row);
       prepareItemImage(file).then(function(blob){
@@ -8250,17 +8255,17 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   });
   // ลากรูปไปวางบนแถวไหน = แนบให้แถวนั้นเลย
   document.getElementById('mrItemRows').addEventListener('dragover', function(e){
-    if(App.merchantCategory==='zeny' || !dragHasFiles(e)) return;
+    if(!dragHasFiles(e)) return;
     e.preventDefault();
   });
   document.getElementById('mrItemRows').addEventListener('drop', function(e){
-    if(App.merchantCategory==='zeny' || !dragHasFiles(e)) return;
+    if(!dragHasFiles(e)) return;
     e.preventDefault();
     var files = filesFrom(e.dataTransfer.files);
     if(files.length) attachImageFiles(files, rowIdForImage(e.target.closest('.mr-item-row')));
   });
   document.addEventListener('paste', function(e){
-    if(document.getElementById('view-home').hidden || App.merchantCategory==='zeny') return;
+    if(document.getElementById('view-home').hidden) return;
     if(App.isGuest || isExpiredAccount()) return;
     if(e.target && e.target.closest && e.target.closest('[id$="Overlay"], #authModal, #itemImageLightbox')) return;
     var data = e.clipboardData || window.clipboardData;
@@ -8473,7 +8478,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var slots = (r.slots || []).map(function(s){ return String(s||'').trim(); }).filter(function(s){ return s; });
       if(App.merchantCategory!=='zeny' && App.merchantItems[App.merchantCategory].indexOf(name)===-1) App.merchantItems[App.merchantCategory].push(name);
       var line = { id: r.lineId||uid(), name:name, rate:rate, qty:qty, currency:currency, total:rate*qty, slots:slots };
-      if(imagePaths[r.rid] && App.merchantCategory!=='zeny'){
+      if(imagePaths[r.rid]){
         line.image = imagePaths[r.rid];
         if(r.imagePreviewUrl) previewUrls[line.image] = r.imagePreviewUrl;
       }
@@ -8556,7 +8561,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   document.getElementById('mrConfirm').addEventListener('click', function(){
     if(mrSaving) return;
     function rowIsValid(r){ return r.name.trim() && (parseFloat(r.price)>0) && (parseFloat(r.qty)>0); }
-    var rowsWithImage = App.merchantCategory==='zeny' ? [] : activeRows().filter(function(r){ return r.imageBlob && rowIsValid(r); });
+    var rowsWithImage = activeRows().filter(function(r){ return r.imageBlob && rowIsValid(r); });
     // ไม่มีรูปให้อัพ หรือฟอร์มยังบันทึกไม่ได้ → ไปทางเดิม (commit เป็นคนเตือนเองว่าขาดอะไร)
     if(!rowsWithImage.length || !App.currentServerId){ commitMerchantEntry({}); return; }
     var needsRate = activeRows().some(function(r){ return rowIsValid(r) && lineCurrency(r)==='zeny'; });
@@ -8740,6 +8745,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // truth for "what was bought" stays the merchant log; only the warehouse assignment
   // (which tier a line's item/money ended up in) is persisted here.
   var ITEM_WAREHOUSE_TIERS = ['A','B','C','D','E','S'];
+  var FREE_WAREHOUSE_TIER = 'S';       // คลังเดียวที่บัญชีฟรีใช้ได้ (ที่เหลือล็อกหมด)
+  var FREE_WAREHOUSE_MAX_ITEMS = 3;    // จำกัดจำนวนรายการ (นับรวมรายการชื่อซ้ำด้วย ไม่ใช่นับจำนวนชิ้น)
   // Warehouse "S" is displayed as "อื่นๆ" (its internal tier code stays 'S' so existing
   // saved warehouse data keeps working without a migration).
   function itemTierLabel(tier){ return tier==='S' ? 'อื่นๆ' : tier; }
@@ -8942,8 +8949,16 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     ITEM_WAREHOUSE_TIERS.forEach(function(tier){
       document.getElementById('itemsTierCount'+tier).textContent = fmtNum(warehouseTierCount(serverId, tier)) + ' ชิ้น';
       var card = document.getElementById('itemsCardTier'+tier);
-      if(card) card.classList.toggle('items-tier-locked', tier!=='A' && !allowed);
+      if(card) card.classList.toggle('items-tier-locked', tier!==FREE_WAREHOUSE_TIER && !allowed);
     });
+    var freeNote = document.getElementById('itemsTierFreeNote');
+    if(freeNote){
+      freeNote.hidden = allowed;
+      if(!allowed){
+        var used = warehouseStockFor(serverId)[FREE_WAREHOUSE_TIER].length;
+        freeNote.textContent = 'แพ็กฟรี: ใส่ได้ '+used+'/'+FREE_WAREHOUSE_MAX_ITEMS+' รายการ';
+      }
+    }
   }
 
   function renderItemsDetail(){
@@ -9016,11 +9031,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
 
   function handleItemsDrop(warehouse, lineId){
-    if(warehouse!=='A' && !hasTradePlan()){
+    if(warehouse!==FREE_WAREHOUSE_TIER && !hasTradePlan()){
       toast('คลัง '+itemTierLabel(warehouse)+' ต้องมีแพ็กเกจที่มีสิทธิ์คลังไอเทม — สมัครเพื่อใช้คลังเพิ่มเติม');
       return;
     }
     var serverId = App.itemsServerId;
+    if(warehouse===FREE_WAREHOUSE_TIER && !hasTradePlan() && warehouseStockFor(serverId)[warehouse].length >= FREE_WAREHOUSE_MAX_ITEMS){
+      toast('บัญชีฟรีใส่คลังได้สูงสุด '+FREE_WAREHOUSE_MAX_ITEMS+' รายการ — สมัครแพ็กเกจเพื่อไม่จำกัด');
+      return;
+    }
     var item = itemsPendingList(serverId).filter(function(p){ return p.lineId===lineId; })[0];
     if(!item) return; // already claimed by another drop, or stale drag
     var w = warehouseStockFor(serverId);

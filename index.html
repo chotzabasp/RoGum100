@@ -414,6 +414,9 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-history-day-count{color:var(--text-dim);font-weight:500;font-size:.7rem}
 .farm-history-day-total{margin-left:auto;font-family:"JetBrains Mono";font-weight:700;font-size:.72rem;white-space:nowrap}
 .farm-history-day-list{display:flex;flex-direction:column;gap:.5rem}
+.farm-history-day-toggle{margin-left:.5rem;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:999px;padding:.15rem .55rem;font-size:.66rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.farm-history-day-toggle:hover{border-color:var(--accent);color:var(--text)}
+.farm-history-day-hidden-note{font-size:.68rem;color:var(--text-dim);font-style:italic;margin:0 0 .4rem}
 .farm-profit-pos{color:var(--success);font-family:"JetBrains Mono"}
 .farm-profit-neg{color:var(--danger);font-family:"JetBrains Mono"}
 .panel-farm-history .chart-tf-select{padding:.35rem .5rem;font-size:.78rem}
@@ -6316,6 +6319,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   var farmHistoryPage = 0;
   var farmHistoryRange = 'today';
+  // กดซ่อนการ์ดวันไหน = เหลือแสดงแค่ใบล่าสุดของวันนั้น (rows[0] เพราะ sort ใหม่สุดก่อนไว้แล้ว)
+  var farmHistoryDayCollapsed = {};
   function resetFarmTimeframes(){
     farmHistoryRange = 'today';
     farmTimeframe = 'today';
@@ -6418,12 +6423,19 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var dayBaht = grp.rows.reduce(function(s,e){ return s+(e.exchangeRate>0 ? farmZenyToBaht(e.profit, e.exchangeRate) : 0); }, 0);
       var dayBahtText = dayHasRate ? ' <small style="color:#f3d48e">= '+(dayProfit>=0?'+':'')+fmtNum(dayBaht)+' บ</small>' : '';
       // สลับสีการ์ดตามวันที่ (ทุกใบในวันเดียวกันใช้สีเดียวกัน) แทนที่จะสลับทีละใบ
-      var entriesHtml = grp.rows.map(function(e){
+      var collapsed = farmHistoryDayCollapsed.hasOwnProperty(dk) ? farmHistoryDayCollapsed[dk] : true;
+      var rowsToShow = collapsed ? [grp.rows[0]] : grp.rows;
+      var hiddenCount = grp.rows.length - rowsToShow.length;
+      var entriesHtml = rowsToShow.map(function(e){
         return farmHistoryEntryHtml(e, globalDayIndex);
       }).join('');
+      var toggleBtn = grp.rows.length>1
+        ? '<button type="button" class="farm-history-day-toggle" data-farm-day-toggle="'+encodeURIComponent(dk)+'">'+(collapsed?'แสดงทั้งหมด':'ซ่อน')+'</button>'
+        : '';
       return '<div class="farm-history-day">'+
         '<div class="farm-history-day-head"><span>'+historyDayLabel(grp.ts)+'</span><span class="farm-history-day-count">'+grp.rows.length+' รายการ</span><span class="farm-history-day-count">'+dayGamCount+' กั้ม</span>'+
-        '<span class="farm-history-day-total '+(dayProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(dayProfit>=0?'+':'')+fmtNum(dayProfit)+' z'+dayBahtText+'</span></div>'+
+        '<span class="farm-history-day-total '+(dayProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(dayProfit>=0?'+':'')+fmtNum(dayProfit)+' z'+dayBahtText+'</span>'+toggleBtn+'</div>'+
+        (hiddenCount>0 ? '<div class="farm-history-day-hidden-note">ซ่อนอยู่ '+hiddenCount+' รายการ — แสดงเฉพาะรายการล่าสุด</div>' : '')+
         '<div class="farm-history-day-list">'+entriesHtml+'</div>'+
       '</div>';
     }).join('');
@@ -11619,6 +11631,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }, true);
 
   document.getElementById('farmHistoryList').addEventListener('click', function(e){
+    var dayToggleBtn = e.target.closest('[data-farm-day-toggle]');
+    if(dayToggleBtn){
+      var dk = decodeURIComponent(dayToggleBtn.dataset.farmDayToggle);
+      var curCollapsed = farmHistoryDayCollapsed.hasOwnProperty(dk) ? farmHistoryDayCollapsed[dk] : true;
+      farmHistoryDayCollapsed[dk] = !curCollapsed;
+      renderFarmHistory();
+      return;
+    }
     var editBtn = e.target.closest('[data-farm-edit]');
     if(editBtn){ startEditFarmEntry(editBtn.dataset.farmEdit); return; }
     var btn = e.target.closest('[data-farm-del]');

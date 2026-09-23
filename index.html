@@ -408,7 +408,12 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-oc-toggle:hover{border-color:color-mix(in srgb, var(--accent) 50%, var(--border))}
 .farm-oc-toggle.active{background:color-mix(in srgb, var(--accent) 22%, transparent);border-color:var(--accent);color:var(--text)}
 .farm-log-field input{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.55rem .65rem;font-size:.88rem;width:100%}
-#farmHistoryList{display:flex;flex-direction:column;gap:.5rem}
+#farmHistoryList{display:flex;flex-direction:column;gap:.6rem}
+.farm-history-day{border:2px solid var(--border);border-radius:var(--radius-s);padding:.5rem .55rem .55rem}
+.farm-history-day-head{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-size:.76rem;font-weight:700;color:var(--text);padding-bottom:.45rem;margin-bottom:.5rem;border-bottom:1px dashed var(--border)}
+.farm-history-day-count{color:var(--text-dim);font-weight:500;font-size:.7rem}
+.farm-history-day-total{margin-left:auto;font-family:"JetBrains Mono";font-weight:700;font-size:.72rem;white-space:nowrap}
+.farm-history-day-list{display:flex;flex-direction:column;gap:.5rem}
 .farm-profit-pos{color:var(--success);font-family:"JetBrains Mono"}
 .farm-profit-neg{color:var(--danger);font-family:"JetBrains Mono"}
 .panel-farm-history .chart-tf-select{padding:.35rem .5rem;font-size:.78rem}
@@ -566,12 +571,18 @@ svg.icon{width:18px;height:18px;display:block}
    กดที่ชื่อเพื่อกางรายการซื้อ-ขายของไอเทมนั้น; ของที่ขายหมดแล้วพับรวมไว้กลุ่มล่าง */
 .mr-it{display:flex;flex-direction:column;gap:.2rem}
 .mr-it-row{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(0,.95fr)) minmax(0,1.1fr);gap:.5rem;align-items:center;padding:.4rem .6rem;border-radius:var(--radius-s);background:var(--surface-2);border:1px solid var(--border)}
+.mr-it-row.mr-ic{cursor:pointer}
+.mr-it-row.mr-ic .mr-ic-body{cursor:default}
 .mr-it-row.open{border-color:color-mix(in srgb, var(--accent) 55%, var(--border))}
 .mr-it-head{background:transparent;border:none;padding:.1rem .6rem .2rem;font-size:.62rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em}
-.mr-ic-head{display:flex;align-items:flex-start;gap:.4rem;background:none;border:none;color:var(--text);cursor:pointer;padding:0;text-align:left;font:inherit;min-width:0}
+.mr-ic-head{position:relative;display:flex;align-items:flex-start;gap:.4rem;background:none;border:none;color:var(--text);cursor:pointer;padding:0;text-align:left;font:inherit;min-width:0}
 .mr-ic-head:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 .mr-ic-head:hover .mr-it-name{color:var(--accent)}
 .mr-ic-head .mr-ic-chev{margin-top:.15rem}
+/* ป้าย "New" ลอยที่มุมบนขวาของหัวการ์ด — ให้เห็นได้แม้การ์ดจะพับปิดอยู่ก็ตาม หายก็ต่อเมื่อกดเปิดการ์ดนั้นจริงๆ */
+.mr-ic-new-badge{position:absolute;top:-.55rem;right:-.4rem;font-size:.6rem;font-weight:800;letter-spacing:.03em;color:#0b1220;background:var(--success);padding:.1rem .45rem;border-radius:999px;white-space:nowrap;z-index:1;pointer-events:none;animation:mr-new-glow 1.6s ease-in-out infinite}
+@keyframes mr-new-glow{0%,100%{box-shadow:0 0 0 2px var(--surface-2),0 0 6px 1px color-mix(in srgb, var(--success) 55%, transparent)}50%{box-shadow:0 0 0 2px var(--surface-2),0 0 13px 4px color-mix(in srgb, var(--success) 90%, transparent)}}
+@media (prefers-reduced-motion: reduce){.mr-ic-new-badge{animation:none;box-shadow:0 0 0 2px var(--surface-2),0 0 8px 2px color-mix(in srgb, var(--success) 70%, transparent)}}
 .mr-it-namewrap{min-width:0;display:flex;flex-direction:column;gap:.15rem}
 .mr-it-name{font-weight:700;font-size:.82rem;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
 .mr-it-tags{display:flex;flex-wrap:wrap;gap:.25rem}
@@ -592,7 +603,7 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-ic-body{grid-column:1 / -1;border-top:1px dashed var(--border);padding-top:.4rem;margin-top:.1rem;display:flex;flex-direction:column;gap:.35rem}
 /* Per-day accordion inside an expanded item card (keeps a long-lived item like M from
    dumping its entire transaction history as one giant flat list). */
-.mr-ic-day-head{display:flex;align-items:center;gap:.5rem;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-s);padding:.35rem .6rem;cursor:pointer;font-size:.74rem;font-weight:600;color:var(--text);text-align:left;font-family:inherit}
+.mr-ic-day-head{position:relative;display:flex;align-items:center;gap:.5rem;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-s);padding:.35rem .6rem;cursor:pointer;font-size:.74rem;font-weight:600;color:var(--text);text-align:left;font-family:inherit}
 .mr-ic-day-head:hover{border-color:var(--text-dim)}
 .mr-ic-day-head:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mr-ic-day.open .mr-ic-day-head .mr-ic-chev{transform:rotate(90deg)}
@@ -602,7 +613,9 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-ic-day-tot .buy{color:var(--danger)}
 .mr-ic-day .mr-tx-list{margin-top:.3rem}
 .mr-it-group-wrap{margin-top:.5rem;border:1.5px dashed color-mix(in srgb, var(--accent) 55%, transparent);border-radius:var(--radius-s);background:color-mix(in srgb, var(--accent) 6%, transparent);overflow:hidden}
-.mr-it-group{display:flex;align-items:center;gap:.5rem;padding:.5rem .7rem;font-size:.76rem;font-weight:700;color:var(--accent);background:color-mix(in srgb, var(--accent) 12%, transparent);border:none;border-radius:0;cursor:pointer;width:100%;text-align:left;font-family:inherit}
+.mr-it-group{position:relative;display:flex;align-items:center;gap:.5rem;padding:.5rem .7rem;font-size:.76rem;font-weight:700;color:var(--accent);background:color-mix(in srgb, var(--accent) 12%, transparent);border:none;border-radius:0;cursor:pointer;width:100%;text-align:left;font-family:inherit}
+/* กรอบรอบปุ่มนี้ตั้ง overflow:hidden ไว้ ป้ายลอยยื่นออกนอกขอบแบบการ์ดอื่นจะโดนตัด — ให้อยู่ในบรรทัดแทน */
+.mr-it-group .mr-ic-new-badge{position:static;flex:none}
 .mr-it-group:hover{color:var(--text);background:color-mix(in srgb, var(--accent) 20%, transparent)}
 .mr-it-group .mr-ic-chev{color:inherit}
 .mr-it-group-wrap .mr-it{padding:.5rem;gap:.4rem}
@@ -2365,6 +2378,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-farm .panel-farm-history>.panel-head h2{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
 #view-farm .farm-history-summary{display:inline-flex;align-items:center;gap:.35rem;flex-wrap:wrap;margin:0;font-size:.74rem;font-weight:600}
 #view-farm .farm-history-summary-count{padding:.14rem .45rem;border:1px solid rgba(201,168,240,.35);border-radius:999px;background:rgba(201,168,240,.1);color:#dbc7fb;white-space:nowrap}
+#view-farm .farm-history-day{border-color:rgba(201,168,240,.6);background:rgba(201,168,240,.06);box-shadow:0 2px 10px rgba(20,10,40,.25)}
+#view-farm .farm-history-day-head{color:#e7edf8}
 #view-farm .farm-history-summary-profit{white-space:nowrap}
 #view-farm .farm-history-entry{padding:.75rem .8rem;display:grid;gap:.6rem;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,filter .18s ease}
 #view-farm .farm-history-entry.farm-history-alt-odd{background:linear-gradient(135deg,rgba(31,40,76,.96),rgba(38,48,88,.94));border-color:rgba(112,126,220,.5);box-shadow:inset 0 1px 0 rgba(205,210,255,.07),0 2px 8px rgba(30,39,100,.16)}
@@ -3743,7 +3758,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       farmOcHint:'mvpwatch_farmochint_'+email, farmExRate:'mvpwatch_farmexrate_'+email, farmMapNames:'mvpwatch_farmmapnames_'+email,
       tickerServers:'mvpwatch_tickerservers_'+email, tickerSelectedServers:'mvpwatch_tickerselectedservers_'+email,
       lastRateUpdateTs:'mvpwatch_lastrateupdatets_'+email,
-      retiredServerVisible:'mvpwatch_retiredserversvisible_'+email
+      retiredServerVisible:'mvpwatch_retiredserversvisible_'+email,
+      recentNewTx:'mvpwatch_recentnewtx_'+email, recentNewGroup:'mvpwatch_recentnewgroup_'+email
     };
   };
 
@@ -3760,6 +3776,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function loadUserData(email, cloudValues){
     var keys = DataKeys(email);
     App.keys = keys;
+    // ป้าย "New" ต้องอยู่ข้ามการรีเฟรชหน้า จนกว่าจะถูกกดเปิดดูจริง — เก็บใน localStorage แยกต่อบัญชี
+    recentNewTxIds = store(keys.recentNewTx, {});
+    recentNewGroupIds = store(keys.recentNewGroup, {});
     function read(name, fallback){
       if(cloudValues && Object.prototype.hasOwnProperty.call(cloudValues, name)){
         var v = cloudValues[name];
@@ -6324,6 +6343,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     });
     entries.sort(function(a,b){ return b.ts-a.ts; });
 
+    // จัดกลุ่มตามวันที่จากรายการทั้งหมดก่อน แล้วค่อยแบ่งหน้าโดยนับเป็น "วัน" (ไม่ใช่นับรายการ)
+    var allDayOrder = [], allDayGroups = {};
+    entries.forEach(function(e){
+      var dk = mrDateStr(new Date(e.ts));
+      if(!allDayGroups[dk]){ allDayGroups[dk] = { ts:e.ts, rows:[] }; allDayOrder.push(dk); }
+      allDayGroups[dk].rows.push(e);
+    });
+
     var summaryCount = entries.reduce(function(s,e){ return s+(e.count||1); }, 0);
     var summaryProfit = entries.reduce(function(s,e){ return s+e.profit; }, 0);
     var summaryHasRate = entries.some(function(e){ return e.exchangeRate>0; });
@@ -6333,7 +6360,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var summaryBahtText = summaryHasRate ? '<span style="color:#f3d48e"> = '+(summaryProfit>=0?'+':'')+fmtNum(summaryBaht)+' บ</span>' : '';
     var summaryEl = document.getElementById('farmHistorySummary');
     if(entries.length){
-      summaryEl.innerHTML = '<span class="farm-history-summary-count">'+summaryCount+' กั้ม</span><span class="farm-history-summary-profit '+(summaryProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(summaryProfit>=0?'+':'')+fmtNum(summaryProfit)+' z</span>'+summaryBahtText;
+      summaryEl.innerHTML = '<span class="farm-history-summary-count">'+allDayOrder.length+' วัน</span><span class="farm-history-summary-count">'+summaryCount+' กั้ม</span><span class="farm-history-summary-profit '+(summaryProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(summaryProfit>=0?'+':'')+fmtNum(summaryProfit)+' z</span>'+summaryBahtText;
     } else {
       summaryEl.textContent = '';
     }
@@ -6344,12 +6371,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       return;
     }
 
-    var totalPages = Math.max(1, Math.ceil(entries.length/FARM_HISTORY_PAGE_SIZE));
+    var totalPages = Math.max(1, Math.ceil(allDayOrder.length/FARM_HISTORY_PAGE_SIZE));
     if(farmHistoryPage > totalPages-1) farmHistoryPage = totalPages-1;
     if(farmHistoryPage < 0) farmHistoryPage = 0;
-    var pageRows = entries.slice(farmHistoryPage*FARM_HISTORY_PAGE_SIZE, farmHistoryPage*FARM_HISTORY_PAGE_SIZE+FARM_HISTORY_PAGE_SIZE);
+    var pageDayKeys = allDayOrder.slice(farmHistoryPage*FARM_HISTORY_PAGE_SIZE, farmHistoryPage*FARM_HISTORY_PAGE_SIZE+FARM_HISTORY_PAGE_SIZE);
 
-    list.innerHTML = pageRows.map(function(e, pageIndex){
+    function farmHistoryEntryHtml(e, displayIndex){
       var pos = e.profit>=0;
       var count = e.count || 1;
       var hasRate = e.exchangeRate>0;
@@ -6366,9 +6393,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           ? '<span class="farm-rare-tag sold">🎁 '+escapeHtml(r.name)+qtySuffix+' +'+fmtNum(r.price*r.qty)+' '+rareUnit+'</span>'
           : '<span class="farm-rare-tag pending">🎁 '+escapeHtml(r.name)+qtySuffix+' (รอขาย)</span>';
       }).join('');
-      var displayIndex = farmHistoryPage*FARM_HISTORY_PAGE_SIZE + pageIndex;
       return '<div class="mr-entry farm-history-entry farm-history-alt-'+(displayIndex%2===0?'odd':'even')+(e.id===editingFarmId?' editing':'')+'" data-farm-entry-id="'+e.id+'">'+
-        '<div class="farm-history-entry-head"><div class="farm-history-meta"><span class="farm-history-time">'+fmtDateTime(e.ts)+'</span><span class="farm-history-chip farm-history-count">'+count+' กั้ม</span>'+mapChip+'</div>'+
+        '<div class="farm-history-entry-head"><div class="farm-history-meta"><span class="farm-history-time">'+fmtTimeShort(e.ts)+'</span><span class="farm-history-chip farm-history-count">'+count+' กั้ม</span>'+mapChip+'</div>'+
           '<span class="mr-entry-actions farm-history-actions">'+
             '<button type="button" class="mr-edit" data-farm-edit="'+e.id+'" title="แก้ไข">✎</button>'+
             '<button type="button" class="mr-del" data-farm-del="'+e.id+'" title="ลบ">🗑</button>'+
@@ -6381,11 +6407,30 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         '<div class="farm-history-earned"><span>เฉลี่ย 1 กั้ม</span><b style="color:var(--'+(pos?'success':'danger')+')">'+(pos?'+':'')+fmtNum(avgProfit)+' z</b><small style="color:#f3d48e">'+avgProfitBahtText+'</small></div>'+
         (rareTag ? '<div class="farm-history-rares"><span>ไอเทม</span><div>'+rareTag+'</div></div>' : '')+
       '</div>';
+    }
+
+    list.innerHTML = pageDayKeys.map(function(dk, dayIndexInPage){
+      var grp = allDayGroups[dk];
+      var globalDayIndex = farmHistoryPage*FARM_HISTORY_PAGE_SIZE + dayIndexInPage;
+      var dayGamCount = grp.rows.reduce(function(s,e){ return s+(e.count||1); }, 0);
+      var dayProfit = grp.rows.reduce(function(s,e){ return s+e.profit; }, 0);
+      var dayHasRate = grp.rows.some(function(e){ return e.exchangeRate>0; });
+      var dayBaht = grp.rows.reduce(function(s,e){ return s+(e.exchangeRate>0 ? farmZenyToBaht(e.profit, e.exchangeRate) : 0); }, 0);
+      var dayBahtText = dayHasRate ? ' <small style="color:#f3d48e">= '+(dayProfit>=0?'+':'')+fmtNum(dayBaht)+' บ</small>' : '';
+      // สลับสีการ์ดตามวันที่ (ทุกใบในวันเดียวกันใช้สีเดียวกัน) แทนที่จะสลับทีละใบ
+      var entriesHtml = grp.rows.map(function(e){
+        return farmHistoryEntryHtml(e, globalDayIndex);
+      }).join('');
+      return '<div class="farm-history-day">'+
+        '<div class="farm-history-day-head"><span>'+historyDayLabel(grp.ts)+'</span><span class="farm-history-day-count">'+grp.rows.length+' รายการ</span><span class="farm-history-day-count">'+dayGamCount+' กั้ม</span>'+
+        '<span class="farm-history-day-total '+(dayProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(dayProfit>=0?'+':'')+fmtNum(dayProfit)+' z'+dayBahtText+'</span></div>'+
+        '<div class="farm-history-day-list">'+entriesHtml+'</div>'+
+      '</div>';
     }).join('');
 
     var sizeSelectHtml = '<div class="farm-hist-size"><label for="farmHistPageSize">แสดง</label><select id="farmHistPageSize">'+
       FARM_HISTORY_PAGE_SIZE_OPTIONS.map(function(n){ return '<option value="'+n+'"'+(n===FARM_HISTORY_PAGE_SIZE?' selected':'')+'>'+n+'</option>'; }).join('')+
-      '</select><span>รายการ</span></div>';
+      '</select><span>วัน</span></div>';
 
     if(totalPages>1){
       pag.innerHTML = sizeSelectHtml+
@@ -7361,8 +7406,17 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // category: กรองหมวดหมู่ (all/zeny/item/other) — แทนที่ view เดิม ('item'/'day') ที่ถูกตัด "ตามวัน" ออกแล้ว
   var historyState = { serverId:'all', userChangedServer:false, category:'all', range:'today', search:'', expanded:{}, expandedDays:{}, soldOutOpen:null };
-  // รายการที่เพิ่งบันทึกใหม่ (ขึ้นป้าย "New") — หายทันทีที่ผู้ใช้กดเปิดดูอะไรก็ตามในประวัติ ไม่ใช่ตั้งเวลา
+  // ป้าย "New" 2 ชั้น ไม่ auto-เปิดการ์ดให้อีกต่อไป (การ์ดเริ่มปิดเสมอ) ป้ายเป็นตัวดึงความสนใจแทน:
+  // ชั้น 1 (recentNewGroupIds) = จุดบนสุดที่หัวการ์ดไอเทม หายเมื่อกดเปิดการ์ดนั้น
+  // ชั้น 2 (recentNewTxIds) = จุดที่หัวกลุ่มวันที่ข้างในการ์ด หายเมื่อกดเปิดกลุ่มวันที่นั้นดูรายการจริง
+  // เก็บลง localStorage ทั้งคู่ ให้อยู่ข้ามการรีเฟรชหน้า จนกว่าจะกดเปิดดูจริงตามลำดับชั้น
+  var recentNewGroupIds = {};
   var recentNewTxIds = {};
+  function saveRecentNewGroupIds(){ if(App.keys) persist(App.keys.recentNewGroup, recentNewGroupIds); }
+  function saveRecentNewTxIds(){ if(App.keys) persist(App.keys.recentNewTx, recentNewTxIds); }
+  // ดัชนี id ของ tx ที่อยู่ในแต่ละกลุ่มวันที่ — สร้างใหม่ทุกครั้งที่ render เพื่อรู้ว่า
+  // ตอนกดเปิดกลุ่มวันที่ไหน ควรเคลียร์ป้าย New ของ id ไหนบ้าง (ไม่ใช่เคลียร์รวมทุกกลุ่ม)
+  var historyDayTxIds = {};
   function resetMerchantHistoryRange(){
     historyState.range = 'today';
     var rangeEl = document.getElementById('mrHistoryRange');
@@ -7602,13 +7656,16 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     return order.map(function(dayKey, idx){
       var d = byDay[dayKey];
       var dayGroupKey = g.key+'|'+dayKey;
+      historyDayTxIds[dayGroupKey] = d.rows.map(function(t){ return t.entry.id; });
       var open = historyState.expandedDays[dayGroupKey];
       if(open===undefined) open = false; // only a user click opens a day
       var tot = [];
       if(d.sell) tot.push('<span class="sell">ขาย '+fmtNum(d.sell)+' บ</span>');
       if(d.buy) tot.push('<span class="buy">ซื้อ '+fmtNum(d.buy)+' บ</span>');
+      var dayHasNew = d.rows.some(function(t){ return recentNewTxIds[t.entry.id]; });
       return '<div class="mr-ic-day'+(open?' open':'')+'" data-day-key="'+encodeURIComponent(dayGroupKey)+'">'+
         '<button type="button" class="mr-ic-day-head" aria-expanded="'+(open?'true':'false')+'">'+
+          (dayHasNew ? '<span class="mr-ic-new-badge">New</span>' : '')+
           '<span class="mr-ic-chev">▸</span>'+
           '<span>'+historyDayLabel(d.ts)+'</span>'+
           '<span class="mr-ic-day-count">'+d.rows.length+' รายการ</span>'+
@@ -7637,12 +7694,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       return value ? '-'+fmtNum(Math.abs(value)) : fmtNum(0);
     };
     var buyAvgLine = avgLine(g.buyBaht, g.buyQty, unit);
+    var groupHasNew = !!recentNewGroupIds[g.key];
     var profitCell = g.sellQty<=0
       ? '<span class="mr-it-cell profit none"><i>กำไร</i><b>—</b><small>ยังไม่ได้ขาย</small></span>'
       : '<span class="mr-it-cell profit"><i>กำไร</i><b class="'+(g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</b>'+
         '<small class="mr-profit-sale-note">ขายไป '+fmtNum(g.sellQty)+' '+unit+'</small></span>';
     return '<div class="mr-it-row mr-ic history-alt-'+(displayIndex%2===0?'odd':'even')+(open?' open':'')+'" data-key="'+encodeURIComponent(g.key)+'">'+
       '<button type="button" class="mr-ic-head" aria-expanded="'+(open?'true':'false')+'" title="กดเพื่อดูรายการซื้อ-ขายของไอเทมนี้">'+
+        (groupHasNew ? '<span class="mr-ic-new-badge">New</span>' : '')+
         '<span class="mr-ic-chev">▸</span>'+
         '<span class="mr-it-namewrap">'+
           '<span class="mr-it-name">'+itemImageNameHtml(historyGroupImagePath(g), itemNameWithSlots(g.name, g.slots), g.name)+'</span>'+
@@ -7671,8 +7730,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(soldOut.length){
       var soldOpen = historyState.soldOutOpen==null ? !active.length : historyState.soldOutOpen;
       var soldProfit = soldOut.reduce(function(s,g){ return s+g.profit; }, 0);
+      var soldHasNew = soldOut.some(function(g){ return recentNewGroupIds[g.key]; });
       html += '<div class="mr-it-group-wrap">'+
         '<button type="button" class="mr-it-group'+(soldOpen?' open':'')+'" id="mrItSoldToggle" aria-expanded="'+(soldOpen?'true':'false')+'">'+
+          (soldHasNew ? '<span class="mr-ic-new-badge">New</span>' : '')+
           '<span class="mr-ic-chev">▸</span>ขายหมดแล้ว '+soldOut.length+' รายการ'+
           '<span class="mr-it-group-profit '+(soldProfit>=0?'profit-pos':'profit-neg')+'">กำไรรวม '+(soldProfit>=0?'+':'')+fmtNum(soldProfit)+' บ</span>'+
         '</button>'+
@@ -8561,17 +8622,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var newEntry = { id:newId, ts:Date.now(), serverId:App.currentServerId, lines:lines, totalBaht:totalBaht, totalZeny:totalZeny, exchangeRate: exRate>0 ? exRate : null, type:App.merchantType, category:App.merchantCategory };
     App.merchantLog.push(newEntry);
     saveMerchantLog();
-    // เปิดกลุ่ม "วันนี้" ของไอเทมที่เพิ่งบันทึกในหน้าประวัติให้เห็นทันที ไม่ต้องกดขยายเอง
-    // ขายแล้วของเหลือ 0 = ไอเทมนั้นเด้งไปกองรวม "ขายหมดแล้ว" ที่พับไว้เป็นค่าเริ่มต้น ต้องเปิดกองนั้นด้วย
-    // ไม่งั้นแม้การ์ดไอเทมจะเปิดแต่ก็ยังถูกกองซ่อนไว้อยู่ดี มองไม่เห็น
-    var newEntryDayKey = todayKey(newEntry.ts);
+    // ไม่ auto-เปิดการ์ด/กลุ่มวันที่ให้อีกต่อไป (การ์ดเริ่มปิดเสมอ) — ใช้ป้าย "New" 2 ชั้นแทน:
+    // ชั้นการ์ดไอเทม (recentNewGroupIds) + ชั้นกลุ่มวันที่ (recentNewTxIds) ดึงความสนใจให้กดเปิดเอง
     lines.forEach(function(l){
       var histKey = newEntry.serverId+'|'+newEntry.category+'|'+l.name+'|'+JSON.stringify(l.slots||[]);
-      historyState.expanded[histKey] = true;
-      historyState.expandedDays[histKey+'|'+newEntryDayKey] = true;
+      recentNewGroupIds[histKey] = true;
     });
+    saveRecentNewGroupIds();
     recentNewTxIds[newEntry.id] = true;
-    if(App.merchantType==='sell') historyState.soldOutOpen = true;
+    saveRecentNewTxIds();
     renderMerchantHistory();
     renderMerchantSummary();
     renderMrChart();
@@ -8711,25 +8770,34 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // Expand/collapse an item card, or reveal more rows in the ตามวัน view. The delete
   // button is handled by the listener above, so it's skipped here.
-  // เปิดดูอะไรก็ตามในประวัติ = เคลียร์ป้าย "New" ทั้งหมดทันที (ไม่รอครบเวลา)
-  function clearNewTxBadges(){
-    var hadAny = Object.keys(recentNewTxIds).length>0;
-    recentNewTxIds = {};
-    if(hadAny) renderMerchantHistory();
+  // ป้าย "New" ไล่ระดับ: เปิดการ์ดไอเทม/กองขายหมดแล้ว = เคลียร์เฉพาะป้ายชั้นบน (recentNewGroupIds)
+  // เปิดกลุ่มวันที่ดูรายการจริง = เคลียร์เฉพาะป้ายชั้นล่าง (recentNewTxIds) ของวันนั้น — คนละชั้น คนละเงื่อนไขหาย
+  function clearNewGroupIdsFor(keys){
+    var changed = false;
+    (keys||[]).forEach(function(k){ if(recentNewGroupIds[k]){ delete recentNewGroupIds[k]; changed = true; } });
+    if(changed) saveRecentNewGroupIds();
+    return changed;
+  }
+  function clearNewTxIdsFor(ids){
+    var changed = false;
+    (ids||[]).forEach(function(id){ if(recentNewTxIds[id]){ delete recentNewTxIds[id]; changed = true; } });
+    if(changed) saveRecentNewTxIds();
+    return changed;
   }
   document.getElementById('mrHistoryList').addEventListener('click', function(e){
     if(e.target.closest('[data-del]')) return;
     if(e.target.closest('.item-img-ico')) return; // กดไอคอนรูป = เปิดรูป ไม่ใช่กาง/หุบการ์ด
-    var head = e.target.closest('.mr-ic-head');
-    if(head){
-      var card = head.closest('.mr-ic');
+    // กดตรงไหนของการ์ด (หัวข้อ/ซื้อมา/ขายไป/เหลือ/กำไร) ก็กาง-หุบได้หมด ยกเว้นกดในส่วนที่กางออกมาแล้ว
+    // (มีปุ่ม/แถวย่อยของตัวเองอยู่ข้างในอยู่แล้ว — ปล่อยให้ตัวจัดการด้านล่างดูแลแทน)
+    var card = e.target.closest('.mr-it-row.mr-ic');
+    if(card && !e.target.closest('.mr-ic-body')){
       var key = decodeURIComponent(card.dataset.key);
       var open = !historyState.expanded[key];
       historyState.expanded[key] = open;
       card.classList.toggle('open', open);
       card.querySelector('.mr-ic-body').hidden = !open;
-      head.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if(open) clearNewTxBadges();
+      card.querySelector('.mr-ic-head').setAttribute('aria-expanded', open ? 'true' : 'false');
+      if(open && clearNewGroupIdsFor([key])) renderMerchantHistory();
       return;
     }
     var dayHead = e.target.closest('.mr-ic-day-head');
@@ -8741,12 +8809,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       dayEl.classList.toggle('open', dayOpen);
       dayEl.querySelector('.mr-tx-list').hidden = !dayOpen;
       dayHead.setAttribute('aria-expanded', dayOpen ? 'true' : 'false');
-      if(dayOpen) clearNewTxBadges();
+      if(dayOpen && clearNewTxIdsFor(historyDayTxIds[dayKey])) renderMerchantHistory();
       return;
     }
     if(e.target.closest('#mrItSoldToggle')){
+      // ป้าย New บนปุ่มนี้คำนวณสดจาก recentNewGroupIds ของไอเทมข้างในเสมอ (ดู soldHasNew ตอน render)
+      // ไม่ใช่ธงแยกของตัวเอง — กดเปิดแค่เผยรายการ ไม่เคลียร์อะไร ต้องกดเปิดทีละการ์ดไอเทมข้างในเองถึงจะหาย
       historyState.soldOutOpen = document.getElementById('mrItSoldList').hidden;
-      if(historyState.soldOutOpen) recentNewTxIds = {};
       renderMerchantHistory();
       return;
     }
@@ -9307,6 +9376,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       features:[
         'เพิ่มบอสได้ไม่จำกัดจำนวน',
         'เพิ่มบอสแบบ Custom ได้ไม่จำกัด',
+        'ระบบเสียงแจ้งเตือน',
         'ระบบเลือกบันทึกไอเทมที่ได้จากบอสแบบส่วนตัว/ปาร์ตี้',
         'แสดงยอดเงินที่หารแบบเป็นสัดส่วน ทั้งแบบส่วนตัว/ปาร์ตี้',
         'ประวัติการฆ่าบอสทั้งหมด',

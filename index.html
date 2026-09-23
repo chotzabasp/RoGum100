@@ -214,11 +214,16 @@ svg.icon{width:18px;height:18px;display:block}
 #view-home > *{position:relative;z-index:1}
 
 .home-banner-zone{
+  position:relative;
   border-radius:var(--radius-l);overflow:hidden;margin-bottom:1.4rem;
   background:
     linear-gradient(90deg, rgba(8,10,16,.75) 0%, rgba(8,10,16,.4) 55%, rgba(8,10,16,.75) 100%),
     url('login-bg.jpg') center/cover no-repeat;
 }
+.home-banner-fb{position:absolute;left:1rem;bottom:1rem;width:38px;height:38px;border-radius:50%;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.45);transition:transform .16s ease,box-shadow .16s ease;z-index:2}
+.home-banner-fb img{width:100%;height:100%;object-fit:cover;display:block}
+.home-banner-fb:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(0,0,0,.55)}
+@media(max-width:640px){.home-banner-fb{width:32px;height:32px;left:.75rem;bottom:.75rem}}
 .home-banner-zone .util-bar{margin-bottom:0;padding:1rem 1.5rem 0;border-radius:var(--radius-l) var(--radius-l) 0 0;background:none}
 .hero-row{
   display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;
@@ -231,7 +236,7 @@ svg.icon{width:18px;height:18px;display:block}
   background:var(--gradient-brand);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 2px 8px rgba(0,0,0,.6));
 }
-.hero-stats{display:flex;gap:.7rem;flex-wrap:wrap}
+.hero-stats{display:flex;gap:.7rem;flex-wrap:wrap;margin-left:auto}
 .stat-chip{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);
   padding:.55rem .9rem;display:flex;flex-direction:column;gap:.3rem;min-width:150px;
@@ -372,6 +377,7 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-exrate-row input{width:110px;flex:none;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.4rem .5rem;font-size:.82rem}
 .farm-exrate-row input.farm-exrate-invalid{border-color:var(--danger)}
 #mrExRateField .farm-exrate-row input{width:85px}
+.mr-exrate-hint{margin:.3rem 0 0;font-size:.72rem;color:var(--danger)}
 .farm-exrate-error{margin:-.3rem 0 .7rem;font-size:.72rem;color:var(--danger)}
 .farm-map-row{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--text-dim)}
 .farm-map-row input{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-s);padding:.4rem .5rem;font-size:.82rem}
@@ -595,8 +601,11 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-ic-day-tot .sell{color:var(--success)}
 .mr-ic-day-tot .buy{color:var(--danger)}
 .mr-ic-day .mr-tx-list{margin-top:.3rem}
-.mr-it-group{display:flex;align-items:center;gap:.5rem;margin-top:.5rem;padding:.4rem .6rem;font-size:.74rem;font-weight:600;color:var(--text-dim);background:none;border:1px dashed var(--border);border-radius:var(--radius-s);cursor:pointer;width:100%;text-align:left;font-family:inherit}
-.mr-it-group:hover{color:var(--text);border-color:var(--text-dim)}
+.mr-it-group-wrap{margin-top:.5rem;border:1.5px dashed color-mix(in srgb, var(--accent) 55%, transparent);border-radius:var(--radius-s);background:color-mix(in srgb, var(--accent) 6%, transparent);overflow:hidden}
+.mr-it-group{display:flex;align-items:center;gap:.5rem;padding:.5rem .7rem;font-size:.76rem;font-weight:700;color:var(--accent);background:color-mix(in srgb, var(--accent) 12%, transparent);border:none;border-radius:0;cursor:pointer;width:100%;text-align:left;font-family:inherit}
+.mr-it-group:hover{color:var(--text);background:color-mix(in srgb, var(--accent) 20%, transparent)}
+.mr-it-group .mr-ic-chev{color:inherit}
+.mr-it-group-wrap .mr-it{padding:.5rem;gap:.4rem}
 .mr-it-group-profit{margin-left:auto;font-family:"JetBrains Mono";font-weight:700;font-size:.72rem}
 .mr-it-group-profit.profit-pos{color:var(--accent)}
 .mr-it-group-profit.profit-neg{color:var(--danger)}
@@ -621,6 +630,11 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-tx-calc{color:var(--text-dim);font-family:"JetBrains Mono";font-size:.7rem;white-space:nowrap}
 .mr-tx-total{font-family:"JetBrains Mono";font-weight:700;white-space:nowrap}
 .mr-tx-total small{font-weight:500;color:var(--text-dim);font-size:.66rem}
+.mr-tx-main.has-warn{white-space:normal;overflow:visible;text-overflow:clip}
+.mr-tx-new-badge{display:inline-block;margin-left:.35rem;font-size:.6rem;font-weight:800;letter-spacing:.03em;color:#0b1220;background:var(--success);padding:.05rem .4rem;border-radius:999px;vertical-align:middle;animation:mr-new-pulse 1.6s ease-in-out infinite}
+@keyframes mr-new-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+@media (prefers-reduced-motion: reduce){.mr-tx-new-badge{animation:none}}
+.mr-tx-nostock-warn{display:inline-block;margin-left:.5rem;font-size:.68rem;font-weight:700;color:var(--danger);background:color-mix(in srgb, var(--danger) 14%, transparent);border-radius:var(--radius-s);padding:.15rem .45rem;white-space:normal}
 .mr-tx.type-buy .mr-tx-total{color:var(--danger)}
 .mr-tx.type-sell .mr-tx-total{color:var(--success)}
 .mr-tx-time{color:var(--text-dim);font-size:.68rem;white-space:nowrap;font-family:"JetBrains Mono"}
@@ -1024,8 +1038,9 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 /* A small pill anchored right above the specific field it's warning about (e.g. the
    จำนวน input when a sell-from-stock qty is capped) — separate from the general toast,
    which stays centered for everything else. */
-.mr-field-tip{position:fixed;z-index:65;background:var(--text);color:var(--bg);padding:.45rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.35);opacity:0;transform:translateY(4px);transition:opacity .15s ease, transform .15s ease;pointer-events:none}
-.mr-field-tip.show{opacity:1;transform:translateY(0)}
+.mr-field-tip{position:fixed;z-index:65;background:var(--danger);color:#fff;padding:.5rem .9rem;border-radius:999px;font-size:.82rem;font-weight:700;white-space:nowrap;box-shadow:0 0 0 3px rgba(239,90,86,.25),0 8px 20px rgba(0,0,0,.4);opacity:0;transform:translateY(4px);transition:opacity .15s ease, transform .15s ease;pointer-events:none}
+.mr-field-tip.show{opacity:1;transform:translateY(0);animation:shake .4s ease}
+@media (prefers-reduced-motion: reduce){.mr-field-tip.show{animation:none}}
 
 /* ---------- เติมแพ็กเกจ ---------- */
 .pricing-hero{text-align:center;padding:.4rem 0 2rem;display:flex;flex-direction:column;align-items:center;gap:.85rem}
@@ -1360,6 +1375,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #view-home .dashboard-heading{margin:.25rem 0 1rem}
 #view-home .dashboard-heading h2{font-size:1.45rem}
 #view-home .dashboard-help{margin:.35rem 0 0;font-size:.82rem;line-height:1.75;color:var(--text-dim);max-width:76ch}
+.dashboard-howto-label{font-size:.68rem;font-weight:500;color:var(--text-dim);vertical-align:middle}
 #view-home .dashboard-guest-note{display:none;margin:0 0 1rem;padding:.85rem 1rem;border-left:3px solid var(--accent);border-radius:var(--radius-s);background:var(--surface-2);font-size:.85rem;line-height:1.8;color:var(--text-dim)}
 body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{display:block}
 #view-home .dashboard-shortcuts{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.5rem}
@@ -1469,6 +1485,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home #mrEntryPanel #mrExRateField{padding:.85rem;background:var(--surface-2);border-radius:var(--radius-s)}
 #view-home #mrEntryPanel #mrExRateInput{width:130px;min-height:48px;font-size:1rem}
 #view-home #mrEntryPanel .farm-exrate-row label{margin:0}
+#view-home #mrEntryPanel .mr-exrate-hint{margin:.5rem 0 0}
 #view-home #mrEntryPanel .farm-exrate-error{margin:.6rem 0 0}
 #view-home #mrEntryPanel #mrConfirm{min-height:52px;font-size:1rem}
 #view-home #mrEntryPanel:has([data-category="zeny"].active) .mr-entry-name,
@@ -1485,7 +1502,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home .dashboard-help,#view-home .panel-hero .chart-footer,#view-home .mr-entry-intro{display:none}
 #view-home .dashboard-overview{grid-column:1;grid-row:1;min-width:0;padding:0;border:0;background:none;margin-bottom:0}
 #view-home .dashboard-overview-head{align-items:center;margin-bottom:.6rem;gap:.5rem}
-#view-home .dashboard-overview-head h2{font-size:.95rem}
+#view-home .dashboard-overview-head h2{font-size:1.5rem}
 #view-home #mrSummary{margin:0}
 #view-home .mr-summary-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem}
 #view-home .mr-summary-item,#view-home .mr-summary-item:last-child{grid-column:auto;flex-direction:column;align-items:flex-start;gap:.2rem;padding:.65rem .85rem;border-top-width:2px}
@@ -2446,9 +2463,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     <div class="rail-brand">
       <img class="rail-logo-img" src="logo-gum100.png?v=2" alt="Gum100" width="440" height="215">
     </div>
-    <button class="rail-btn active" data-page="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9"/></svg><span class="tip">บัญชีนักลงทุน</span></button>
+    <button class="rail-btn active" data-page="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="17" height="13" rx="2"/><path d="M7 6v10"/><path d="M9 8.3c-.5-.7-1.6-1-2.5-.7-1.3.4-1.7 1.8-.6 2.5.6.4 1.6.5 2.4.7 1.3.4 1.7 1.8.4 2.5-.9.5-2 .3-2.6-.4"/><path d="M12 7.5h5"/><path d="M12 10.5h3"/><path d="M14 21h3l6-6a2 2 0 00-3-3l-6 6z"/><path d="M18.5 13.5l3 3"/></svg><span class="tip">บัญชีนักลงทุน</span></button>
     <button class="rail-btn" data-page="items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="tip">คลังไอเทม</span><span class="rail-badge" id="railItemsBadge" hidden>0</span></button>
-    <button class="rail-btn" data-page="farm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 9c0 0-6 0-6-5 5 0 6 3 6 5z"/><path d="M12 9c0 0 6 0 6-5-5 0-6 3-6 5z"/></svg><span class="tip">ยอดนักฟาม</span></button>
+    <button class="rail-btn" data-page="farm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3h4v4m0-4L6 18m-3 0h3v3m10.5-1c1.576-1.576 2.5-4.095 2.5-6.5C19 8.69 15.31 5 10.5 5C8.085 5 5.578 5.913 4 7.5z"/></svg><span class="tip">ยอดนักฟาม</span></button>
     <button class="rail-btn" data-page="timers"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="tip">จับเวลาบอส</span></button>
     <button class="rail-btn" data-page="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="tip">เติมแพ็กเกจ</span></button>
     <button class="rail-btn" data-page="admin" id="railAdminBtn" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg><span class="tip">แอดมิน</span><span class="rail-badge" id="railAdminBadge" hidden>0</span></button>
@@ -2487,12 +2504,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         </div>
       </div>
       <div class="hero-row">
-        <div class="hero-greet">
-          <div class="hero-line1">ยินดีต้อนรับกลับมา,</div>
-          <h1 class="hero-line2" id="homeGreetName">นักล่า</h1>
-        </div>
         <div class="hero-stats" id="rateChips"></div>
       </div>
+      <a class="home-banner-fb" id="homeBannerFbLink" href="https://www.facebook.com/rogum100/" target="_blank" rel="noopener noreferrer" title="เพจ Facebook">
+        <img src="assets/facebook-icon.webp" alt="Facebook">
+      </a>
     </div>
 
     <!-- ===================== HOME VIEW ===================== -->
@@ -2523,7 +2539,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <div class="home-grid">
         <div class="dashboard-overview">
           <div class="dashboard-overview-head">
-            <div><h2>สรุปซื้อ–ขาย</h2><p class="dashboard-help">อ้างอิงเซิร์ฟเวอร์ ช่วงเวลา และคำค้นในตัวกรองประวัติด้านล่าง</p></div>
+            <div><h2>สรุปซื้อ–ขาย <span class="dashboard-howto-label">วิธีใช้</span></h2><p class="dashboard-help">อ้างอิงเซิร์ฟเวอร์ ช่วงเวลา และคำค้นในตัวกรองประวัติด้านล่าง</p></div>
             <details class="dashboard-quicklinks" hidden><summary>ทางลัด</summary>
         <nav class="dashboard-shortcuts" aria-label="ทางลัดจากแดชบอร์ด">
           <button type="button" class="btn btn-primary dashboard-shortcut" data-dashboard-section="mrEntryPanel">ไปฟอร์มซื้อ–ขาย</button>
@@ -2573,10 +2589,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
           <div class="field" id="mrExRateField">
             <div class="farm-exrate-row">
-              <label for="mrExRateInput">อัตราแลกเปลี่ยน 1 M =</label>
+              <label for="mrExRateInput">อัตราแลกเปลี่ยน 1M =</label>
               <input type="text" inputmode="numeric" id="mrExRateInput" class="mono" placeholder="เช่น 1,000">
-              <span>บาท · ใช้กับรายการสกุลเงิน Zeny</span>
+              <span>บาท</span>
             </div>
+            <p class="mr-exrate-hint">ใส่เพื่อคำนวณรายการ Zeny กับ บาท ให้สมดุลกัน</p>
             <p class="farm-exrate-error" id="mrExRateError" hidden>กรุณาใส่อัตราแลกเปลี่ยนก่อนบันทึก (มีรายการที่เป็น Zeny)</p>
           </div>
 
@@ -2699,7 +2716,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <div class="page-scroll">
       <div class="topbar">
         <div>
-          <h1>ยอดนักฟาม</h1>
+          <h1>ยอดนักฟาม <span class="dashboard-howto-label">วิธีใช้</span></h1>
           <p class="sub">สรุปรายได้จากการฟาม เทียบต้นทุนต่อกั้ม (1 กั้ม = 30 นาที)</p>
         </div>
         <div class="topbar-right">
@@ -2816,8 +2833,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     <section id="view-timers" hidden>
     <div class="topbar">
       <div>
-        <h1>จับเวลาบอส</h1>
-        <p class="sub">ความเคลื่อนไหวและรอบเกิดใหม่ของ MVP ในกิลด์คุณ</p>
+        <h1>จับเวลาบอส <span class="dashboard-howto-label">วิธีใช้</span></h1>
+        <p class="sub">ความเคลื่อนไหวและรอบเกิดใหม่ของ MVP ในปาร์ตี้คุณ</p>
       </div>
     </div>
 
@@ -2902,8 +2919,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     <section id="view-items" hidden>
       <div class="topbar">
         <div>
-          <h1>คลังไอเทม</h1>
-          <p class="sub">ลากรายการรอลงคลังไปยังคลังที่ต้องการ</p>
+          <h1>คลังไอเทม <span class="dashboard-howto-label">วิธีใช้</span></h1>
         </div>
       </div>
 
@@ -5180,7 +5196,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   function renderGuestChip(){
     document.getElementById('userMenu').hidden = true;
     document.getElementById('guestAuthButtons').hidden = false;
-    document.getElementById('homeGreetName').textContent = 'นักล่า';
     document.getElementById('pointsValue').textContent = '0';
   }
   function userPackageChipInfo(profile){
@@ -5213,7 +5228,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var name = acc.display_name || '';
     document.getElementById('userAvatar').textContent = name.trim().charAt(0).toUpperCase();
     document.getElementById('userName').textContent = name;
-    document.getElementById('homeGreetName').textContent = name + '!';
     document.getElementById('pointsValue').textContent = fmtNum(acc.points||0);
     var pill = document.getElementById('userPill');
     var expiry = document.getElementById('userExpiry');
@@ -7345,6 +7359,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // category: กรองหมวดหมู่ (all/zeny/item/other) — แทนที่ view เดิม ('item'/'day') ที่ถูกตัด "ตามวัน" ออกแล้ว
   var historyState = { serverId:'all', userChangedServer:false, category:'all', range:'today', search:'', expanded:{}, expandedDays:{}, soldOutOpen:null };
+  // รายการที่เพิ่งบันทึกใหม่ (ขึ้นป้าย "New") — หายทันทีที่ผู้ใช้กดเปิดดูอะไรก็ตามในประวัติ ไม่ใช่ตั้งเวลา
+  var recentNewTxIds = {};
   function resetMerchantHistoryRange(){
     historyState.range = 'today';
     var rangeEl = document.getElementById('mrHistoryRange');
@@ -7548,17 +7564,23 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var edited = (e.editHistory && e.editHistory.length) ? ' mr-edited-hover' : '';
     var serverTag = opts.showServer ? ' '+historyServerTag(e.serverId) : '';
     var imgPath = lineImagePath(l);
+    // รายการที่เพิ่งบันทึกใหม่ ขึ้นป้าย "New" — หายทันทีที่กดเปิดดูอะไรก็ตามในประวัติ (ไม่ใช่ตั้งเวลา)
+    var newBadge = recentNewTxIds[e.id] ? '<span class="mr-tx-new-badge">New</span>' : '';
     var main = opts.showName
       ? itemImageNameHtml(imgPath, itemNameWithSlots(l.name||'', l.slots), l.name)+(showZenyTag?zenyNameTag():'')+serverTag
-      : itemImageNameHtml(imgPath, '', l.name)+'<span class="'+edited.trim()+'">'+(opts.timeOnly?fmtTimeShort(e.ts):fmtDateTime(e.ts))+'</span>'+serverTag;
+      : itemImageNameHtml(imgPath, '', l.name)+'<span class="'+edited.trim()+'">'+(opts.timeOnly?fmtTimeShort(e.ts):fmtDateTime(e.ts))+newBadge+'</span>'+serverTag;
     var totalHtml = fmtCurrencyAmount(l.total, lineCurrency(l));
     if(isZeny && e.exchangeRate>0) totalHtml += ' <small class="mr-rate-hover">≈ '+fmtNum(farmZenyToBaht(parseFloat(l.total)||0, e.exchangeRate))+' บ</small>';
+    // ขายไอเทมโดยไม่ได้เลือกจากคลัง (กรอกเองตรงๆ) = ไม่มีต้นทุนที่รู้ที่มาผูกไว้เลย เตือนให้เห็นชัด
+    // กันเข้าใจผิดว่ายอดกำไรที่ขึ้นคือกำไรจริงหลังหักต้นทุนแล้ว — วางต่อท้ายเวลา/ชื่อในบรรทัดเดียวกันเลย
+    var hasNoStockWarning = t.type==='sell' && cat==='item' && !l.warehouseSale;
+    if(hasNoStockWarning) main += '<span class="mr-tx-nostock-warn">⚠ ไม่ได้เลือกจากคลัง ไม่ได้ลบต้นทุน</span>';
     return '<div class="mr-tx type-'+t.type+'" data-entry-id="'+e.id+'">'+
       '<span class="mr-type-badge '+t.type+'">'+MR_TYPE_LABEL[t.type]+'</span>'+
-      '<span class="mr-tx-main">'+main+'</span>'+
+      '<span class="mr-tx-main'+(hasNoStockWarning?' has-warn':'')+'">'+main+'</span>'+
       '<span class="mr-tx-calc">'+fmtNum(l.qty)+' × '+fmtNum(l.rate)+'</span>'+
       '<span class="mr-tx-total">'+totalHtml+'</span>'+
-      (opts.showTime ? '<span class="mr-tx-time'+edited+'">'+fmtTimeShort(e.ts)+'</span>' : '')+
+      (opts.showTime ? '<span class="mr-tx-time'+edited+'">'+fmtTimeShort(e.ts)+newBadge+'</span>' : '')+
       '<button type="button" class="mr-del" data-del="'+e.id+'" title="ลบรายการนี้">🗑</button>'+
     '</div>';
   }
@@ -7647,11 +7669,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(soldOut.length){
       var soldOpen = historyState.soldOutOpen==null ? !active.length : historyState.soldOutOpen;
       var soldProfit = soldOut.reduce(function(s,g){ return s+g.profit; }, 0);
-      html += '<button type="button" class="mr-it-group'+(soldOpen?' open':'')+'" id="mrItSoldToggle" aria-expanded="'+(soldOpen?'true':'false')+'">'+
-        '<span class="mr-ic-chev">▸</span>ขายหมดแล้ว '+soldOut.length+' รายการ'+
-        '<span class="mr-it-group-profit '+(soldProfit>=0?'profit-pos':'profit-neg')+'">กำไรรวม '+(soldProfit>=0?'+':'')+fmtNum(soldProfit)+' บ</span>'+
-      '</button>'+
-      '<div class="mr-it" id="mrItSoldList"'+(soldOpen?'':' hidden')+'>'+soldOut.map(function(g, idx){ return historyItemRowHtml(g, showServer, active.length+idx); }).join('')+'</div>';
+      html += '<div class="mr-it-group-wrap">'+
+        '<button type="button" class="mr-it-group'+(soldOpen?' open':'')+'" id="mrItSoldToggle" aria-expanded="'+(soldOpen?'true':'false')+'">'+
+          '<span class="mr-ic-chev">▸</span>ขายหมดแล้ว '+soldOut.length+' รายการ'+
+          '<span class="mr-it-group-profit '+(soldProfit>=0?'profit-pos':'profit-neg')+'">กำไรรวม '+(soldProfit>=0?'+':'')+fmtNum(soldProfit)+' บ</span>'+
+        '</button>'+
+        '<div class="mr-it" id="mrItSoldList"'+(soldOpen?'':' hidden')+'>'+soldOut.map(function(g, idx){ return historyItemRowHtml(g, showServer, active.length+idx); }).join('')+'</div>'+
+      '</div>';
     }
     list.innerHTML = html+'</div>';
   }
@@ -8532,8 +8556,20 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       if(previewUrls[l.image]) itemImageUrlCache[l.image] = { url: previewUrls[l.image], exp: Infinity };
     });
     var newId = uid();
-    App.merchantLog.push({ id:newId, ts:Date.now(), serverId:App.currentServerId, lines:lines, totalBaht:totalBaht, totalZeny:totalZeny, exchangeRate: exRate>0 ? exRate : null, type:App.merchantType, category:App.merchantCategory });
+    var newEntry = { id:newId, ts:Date.now(), serverId:App.currentServerId, lines:lines, totalBaht:totalBaht, totalZeny:totalZeny, exchangeRate: exRate>0 ? exRate : null, type:App.merchantType, category:App.merchantCategory };
+    App.merchantLog.push(newEntry);
     saveMerchantLog();
+    // เปิดกลุ่ม "วันนี้" ของไอเทมที่เพิ่งบันทึกในหน้าประวัติให้เห็นทันที ไม่ต้องกดขยายเอง
+    // ขายแล้วของเหลือ 0 = ไอเทมนั้นเด้งไปกองรวม "ขายหมดแล้ว" ที่พับไว้เป็นค่าเริ่มต้น ต้องเปิดกองนั้นด้วย
+    // ไม่งั้นแม้การ์ดไอเทมจะเปิดแต่ก็ยังถูกกองซ่อนไว้อยู่ดี มองไม่เห็น
+    var newEntryDayKey = todayKey(newEntry.ts);
+    lines.forEach(function(l){
+      var histKey = newEntry.serverId+'|'+newEntry.category+'|'+l.name+'|'+JSON.stringify(l.slots||[]);
+      historyState.expanded[histKey] = true;
+      historyState.expandedDays[histKey+'|'+newEntryDayKey] = true;
+    });
+    recentNewTxIds[newEntry.id] = true;
+    if(App.merchantType==='sell') historyState.soldOutOpen = true;
     renderMerchantHistory();
     renderMerchantSummary();
     renderMrChart();
@@ -8673,6 +8709,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // Expand/collapse an item card, or reveal more rows in the ตามวัน view. The delete
   // button is handled by the listener above, so it's skipped here.
+  // เปิดดูอะไรก็ตามในประวัติ = เคลียร์ป้าย "New" ทั้งหมดทันที (ไม่รอครบเวลา)
+  function clearNewTxBadges(){
+    var hadAny = Object.keys(recentNewTxIds).length>0;
+    recentNewTxIds = {};
+    if(hadAny) renderMerchantHistory();
+  }
   document.getElementById('mrHistoryList').addEventListener('click', function(e){
     if(e.target.closest('[data-del]')) return;
     if(e.target.closest('.item-img-ico')) return; // กดไอคอนรูป = เปิดรูป ไม่ใช่กาง/หุบการ์ด
@@ -8685,6 +8727,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       card.classList.toggle('open', open);
       card.querySelector('.mr-ic-body').hidden = !open;
       head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if(open) clearNewTxBadges();
       return;
     }
     var dayHead = e.target.closest('.mr-ic-day-head');
@@ -8696,10 +8739,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       dayEl.classList.toggle('open', dayOpen);
       dayEl.querySelector('.mr-tx-list').hidden = !dayOpen;
       dayHead.setAttribute('aria-expanded', dayOpen ? 'true' : 'false');
+      if(dayOpen) clearNewTxBadges();
       return;
     }
     if(e.target.closest('#mrItSoldToggle')){
       historyState.soldOutOpen = document.getElementById('mrItSoldList').hidden;
+      if(historyState.soldOutOpen) recentNewTxIds = {};
       renderMerchantHistory();
       return;
     }

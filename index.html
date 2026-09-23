@@ -1091,6 +1091,8 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .pricing-promo-badge{background:var(--danger);color:#fff;font-size:.66rem;font-weight:800;padding:.15rem .5rem;border-radius:999px;margin-left:.4rem}
 .pricing-perday{font-size:.72rem;color:var(--text-dim)}
 .pricing-feature-divider{list-style:none;font-weight:700;color:var(--text);font-size:.82rem;margin-top:.4rem;padding-top:.6rem;border-top:1px dashed var(--border)}
+/* การ์ดฟรีเท่านั้น — เอาเส้นประคั่นระหว่างกลุ่มฟีเจอร์ย่อยออก (เส้นใต้ "ฟรี" เป็นคนละเส้น อยู่ที่ .pricing-features ไม่ถูกแตะ) */
+.pricing-card[data-plan-key="free"] .pricing-feature-divider{border-top:none}
 .pricing-save{font-size:.7rem;font-weight:700;color:var(--success);background:color-mix(in srgb, var(--success) 16%, transparent);border-radius:999px;padding:.3rem .6rem;display:inline-flex;align-self:flex-start}
 .pricing-save-hidden{visibility:hidden}
 .pricing-features{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem;flex:1}
@@ -2056,11 +2058,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 }
 #view-pricing .pricing-grid{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1120px;gap:1rem;padding-top:.4rem}
 #view-pricing .pricing-card{min-width:0;padding:1.35rem;gap:.7rem;background:#192231;border:1px solid #364155;border-radius:20px}
-#view-pricing .pricing-card-best{border:2px solid #d9b75d;padding:calc(1.35rem - 1px);background:linear-gradient(150deg,#2b3453,#1c253a 65%);box-shadow:0 0 28px rgba(217,183,93,.18)}
+#view-pricing .pricing-card-best{border:2px solid #d9b75d;padding:calc(1.35rem - 1px);background:linear-gradient(150deg,#544317,#1d2127 65%);box-shadow:inset 0 1px 0 rgba(255,235,177,.1),0 0 28px rgba(217,183,93,.22)}
 #view-pricing .pricing-badge-best{top:-.8rem;right:1rem;padding:.35rem .85rem;font-size:.75rem;background:linear-gradient(100deg,#8aaeff,#b49bf2);color:#111b32;box-shadow:0 4px 16px #0003}
 #view-pricing .pricing-card-name{min-height:0;font-size:1.2rem;line-height:1.5;font-weight:800}
 #view-pricing .pricing-card-tagline{min-height:4.8em;margin:0;font-size:.82rem;line-height:1.6;font-style:normal;color:#b8c4d7}
-#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-tagline{display:inline;min-height:0;margin:0;font-size:1rem;line-height:1.85;font-weight:600;color:#d3ddef;letter-spacing:normal;word-spacing:normal;word-break:normal;overflow-wrap:normal}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-tagline{display:inline-block;min-height:0;margin:.25rem 0 0;font-size:.85rem;line-height:1.4;font-weight:800;color:#0f172a;background:#d9b75d;padding:.15rem .7rem;border-radius:999px;letter-spacing:normal;word-spacing:normal;word-break:normal;overflow-wrap:normal}
 #view-pricing .pricing-card-price{gap:.45rem}
 #view-pricing .pricing-card-amount{font-family:inherit;font-variant-numeric:tabular-nums;font-size:2.85rem;line-height:1.1;letter-spacing:-.03em}
 #view-pricing .pricing-card-best .pricing-card-amount{color:#d6ddff}
@@ -2071,27 +2073,30 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-promo-badge{position:absolute;top:1.25rem;right:1rem;margin:0;padding:.3rem .65rem;border:1px solid #ff737b;border-radius:5px;background:#c92e3c;color:#fff;font-size:.8rem;line-height:1.4;font-weight:900;white-space:nowrap;box-shadow:0 3px 10px #0003}
 #view-pricing .pricing-card:has(.pricing-promo-badge) .pricing-card-name{padding-right:5.25rem}
 #view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.15rem;padding-right:0}
-#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name-main{font-size:1.5rem}
-#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name-sub{font-size:1.15rem;color:#d3ddef}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name-main{font-size:3rem;color:#d9b75d}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name-sub{font-size:1.15rem;color:#fff}
 #view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-promo-badge{position:static;transform:none}
-#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-name{display:block;padding-right:0;font-size:1.5rem;text-align:center}
+#view-pricing .pricing-card:has([data-plan-key="timers"]){border:2px solid #d9b75d;padding:calc(1.35rem - 1px);box-shadow:0 0 28px rgba(217,183,93,.18)}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]){border:2px solid #d9b75d;padding:calc(1.35rem - 1px);box-shadow:0 0 28px rgba(217,183,93,.18)}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-name{display:block;padding-right:0;font-size:3rem;text-align:center;color:#d9b75d}
 #view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-promo-badge{position:static}
 #view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-tagline{min-height:0;text-align:center}
-#view-pricing .pricing-promo-heading{min-height:5rem;display:flex;flex-direction:column;gap:.7rem}
+#view-pricing .pricing-card-tagline-badge{display:inline-block;align-self:center;margin:.35rem auto 0;font-size:.85rem;line-height:1.4;font-weight:800;text-align:center;color:#0f172a;background:#d9b75d;padding:.15rem .7rem;border-radius:999px}
+#view-pricing .pricing-promo-heading{min-height:9.1rem;display:flex;flex-direction:column;gap:.7rem}
 #view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-original{font-size:1.55rem;font-weight:500;color:#b9c4d5}
 #view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-original{font-size:1.55rem;font-weight:500;color:#b9c4d5}
 #view-pricing .pricing-card-best.pricing-card:has(.pricing-promo-badge) .pricing-card-name{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.15rem;padding-right:0}
-#view-pricing .pricing-card-best .pricing-card-name-main{font-size:1.5rem}
-#view-pricing .pricing-card-best .pricing-card-name-sub{font-size:.93rem;color:#d3ddef}
-#view-pricing .pricing-card-best .pricing-card-tagline{display:block;min-height:0;margin:0;font-size:1rem;line-height:1.85;font-weight:600;text-align:center;color:#d3ddef;letter-spacing:normal;word-spacing:normal}
+#view-pricing .pricing-card-best .pricing-card-name-main{font-size:3rem;color:#d9b75d}
+#view-pricing .pricing-card-best .pricing-card-name-sub{font-size:.93rem;color:#fff}
+#view-pricing .pricing-card-best .pricing-card-tagline{display:inline-block;align-self:center;min-height:0;margin:.25rem auto 0;font-size:.85rem;line-height:1.4;font-weight:800;text-align:center;color:#0f172a;background:#d9b75d;padding:.15rem .7rem;border-radius:999px;letter-spacing:normal;word-spacing:normal}
 #view-pricing .pricing-card-best .pricing-promo-badge{position:static}
 #view-pricing .pricing-card-best .pricing-original{font-size:1.55rem;font-weight:500;color:#b9c4d5}
 #view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.15rem}
-#view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name-main{font-size:1.5rem}
+#view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name-main{font-size:3rem}
 #view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name-sub{font-size:1.15rem;color:#d3ddef}
 #view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-tagline{text-align:center}
 #view-pricing .pricing-card:has([data-plan-key="accountItems"]) .pricing-card-name{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.15rem}
-#view-pricing .pricing-card:has([data-plan-key="accountItems"]) .pricing-card-name-main{font-size:1.5rem}
+#view-pricing .pricing-card:has([data-plan-key="accountItems"]) .pricing-card-name-main{font-size:3rem}
 #view-pricing .pricing-card:has([data-plan-key="accountItems"]) .pricing-card-name-sub{font-size:1.05rem;color:#d3ddef}
 #view-pricing .pricing-card:has([data-plan-key="accountItems"]) .pricing-card-tagline{text-align:center}
 #view-pricing .pricing-bundle-price{display:flex;flex-direction:column;align-items:center;gap:.5rem;text-align:center}
@@ -2107,11 +2112,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-card:has([data-plan-key="timers"]),
 #view-pricing .pricing-card:has([data-plan-key="bundle"]){
   background:linear-gradient(150deg,rgba(38,54,83,.72),rgba(25,35,56,.96) 68%);
-  border-color:rgba(126,155,214,.5);
+  border-color:#d9b75d;
   box-shadow:inset 0 1px 0 rgba(190,213,255,.08),0 8px 22px rgba(25,48,95,.16)
 }
 #view-pricing .pricing-card:has([data-plan-key="timers"]):hover,
-#view-pricing .pricing-card:has([data-plan-key="bundle"]):hover{border-color:rgba(143,180,240,.72);box-shadow:inset 0 1px 0 rgba(210,226,255,.12),0 10px 26px rgba(45,83,150,.24)}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]):hover{border-color:#eccb7f;box-shadow:inset 0 1px 0 rgba(210,226,255,.12),0 10px 26px rgba(45,83,150,.24)}
 #view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-amount,
 #view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-amount{color:#c2d6ff}
 #view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-cta,
@@ -9466,6 +9471,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       }).join('');
       var taglineHtml = p.tagline ? '<div class="pricing-card-tagline">'+escapeHtml(p.tagline)+'</div>' : '';
       if(p.key==='bundle') taglineHtml = '';
+      if(p.key==='timers') taglineHtml += '<div class="pricing-card-tagline-badge">คุ้ม</div>';
       var priceHtml, ctaHtml;
       if(p.free){
         priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">ฟรี</span></div>';
@@ -9485,7 +9491,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           ? (p.displayYearly != null ? '<small class="pricing-pending-note">รอเปิดใช้งานการซื้อรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ยังไม่เปิดซื้อรายปี</button>' : '<small class="pricing-pending-note">แสดงราคาต่อเดือน · ยังไม่มีแพ็กรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>รองรับเฉพาะรายเดือน</button>')
           : '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+escapeHtml(planNamePlain)+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>';
       }
-      return '<div class="pricing-card'+(p.best?' pricing-card-best':'')+'">'+
+      return '<div class="pricing-card'+(p.best?' pricing-card-best':'')+'" data-plan-key="'+p.key+'">'+
         (p.badge ? '<span class="pricing-badge-best'+(p.best?'':' pricing-badge-secondary')+'">'+escapeHtml(p.badge)+'</span>' : '')+
         (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '<div class="pricing-promo-heading">' : '')+
         '<div class="pricing-card-name">'+p.name+(p.key==='bundle' ? ' <span class="pricing-card-tagline">'+escapeHtml(p.tagline)+'</span>' : '')+'</div>'+

@@ -2029,18 +2029,19 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #homeBannerZone .rate-chip .rate-values{gap:.45rem}
 #homeBannerZone .rate-chip .rate-label{font-size:.6rem;color:#a8bdd7;letter-spacing:.06em}
 #homeBannerZone .rate-chip .rate-num{font-size:1.08rem;color:#ff9e65;text-shadow:0 0 9px rgba(255,139,89,.16)}
+/* ปุ่ม "เข้าสู่ระบบ/สมัครสมาชิก" ตอนยังไม่ล็อกอิน — สูงเท่ากับกล่องผู้ใช้/แต้มตอนล็อกอินแล้ว กันแบนเนอร์เตี้ยลง */
+#homeBannerZone #guestAuthButtons{align-items:center}
+#homeBannerZone #guestAuthButtons .btn{min-height:52px}
 @media(max-width:760px){
   #homeBannerZone .points-chip{min-height:42px;padding:.32rem .5rem}
   #homeBannerZone .user-menu{min-height:48px}
   #homeBannerZone .user-menu .name,#homeBannerZone .user-menu .membership-time{max-width:112px}
   #homeBannerZone .rate-chip{min-width:126px;min-height:56px}
+  #homeBannerZone #guestAuthButtons .btn{min-height:48px}
 }
 
 /* Pricing-only presentation: preserve package controls and purchase hooks. */
 .content:has(#view-pricing:not([hidden])) #homeBannerZone{margin-bottom:.65rem}
-.content:has(#view-pricing:not([hidden])) #homeBannerZone .hero-row{padding:.65rem 1.5rem .8rem;align-items:center;gap:.65rem}
-.content:has(#view-pricing:not([hidden])) #homeBannerZone .hero-line1{font-size:.78rem}
-.content:has(#view-pricing:not([hidden])) #homeBannerZone .hero-line2{font-size:1.25rem;margin:0}
 #view-pricing .pricing-hero{padding:.6rem 0 1.55rem;gap:.65rem}
 #view-pricing .pricing-badge{padding:.5rem 1.2rem;font-size:1.52rem;color:#b9caff;background:#202d49;border-color:#35466a}
 #view-pricing .pricing-title{font-size:clamp(1.55rem,2.6vw,2.25rem);line-height:1.4;max-width:850px;text-wrap:balance}
@@ -10147,7 +10148,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // สลับรายเดือน/รายปีในหน้าเติมแพ็กเกจ, ช่องค้นหาบอส · ปุ่มซื้อแพ็กเกจ/บันทึก/เพิ่มบอส/ตัวกรอง ยังเด้งล็อกอิน
   // (เพิ่มรายการที่ให้ผู้เยี่ยมชมกดได้ ต้องเพิ่มที่นี่เท่านั้น — ค่าเริ่มต้นคือกันทั้งหมด)
   var GUEST_ALLOW = '#authModal, #forgotPasswordOverlay, #recoveryPasswordOverlay, #guestLoginBtn, #guestRegisterBtn';
-  var GUEST_VIEW_ALLOW = '.rail-btn:not([data-page="settings"]), #pricingCycleToggle, #searchInput';
+  var GUEST_VIEW_ALLOW = '.rail-btn:not([data-page="settings"]), #pricingCycleToggle, #searchInput, .rail-logo-fb';
   function guestBlock(e){
     if(!App.isGuest || e.target.closest(GUEST_ALLOW) || e.target.closest(GUEST_VIEW_ALLOW)) return;
     e.preventDefault();

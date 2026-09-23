@@ -145,7 +145,9 @@ svg.icon{width:18px;height:18px;display:block}
   padding:1rem .65rem;gap:.15rem;
 }
 .rail-brand{display:flex;align-items:center;justify-content:center;padding:.1rem .3rem .85rem;margin-bottom:.4rem;border-bottom:1px solid var(--border)}
-.rail-logo-img{display:block;width:100%;max-width:168px;height:auto;filter:drop-shadow(0 3px 10px rgba(0,0,0,.45))}
+.rail-logo-fb{display:flex;align-items:center;justify-content:center;width:39px;height:39px;border-radius:50%;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.45);transition:transform .16s ease,box-shadow .16s ease}
+.rail-logo-fb img{width:100%;height:100%;object-fit:cover;display:block}
+.rail-logo-fb:hover{transform:scale(1.06);box-shadow:0 4px 14px rgba(0,0,0,.55)}
 .rail-btn{
   width:100%;min-height:40px;border-radius:var(--radius-s);
   display:flex;align-items:center;gap:.65rem;justify-content:flex-start;
@@ -218,12 +220,8 @@ svg.icon{width:18px;height:18px;display:block}
   border-radius:var(--radius-l);overflow:hidden;margin-bottom:1.4rem;
   background:
     linear-gradient(90deg, rgba(8,10,16,.75) 0%, rgba(8,10,16,.4) 55%, rgba(8,10,16,.75) 100%),
-    url('login-bg.jpg') center/cover no-repeat;
+    url('assets/home-banner.webp') center/cover no-repeat;
 }
-.home-banner-fb{position:absolute;left:1rem;bottom:1rem;width:38px;height:38px;border-radius:50%;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.45);transition:transform .16s ease,box-shadow .16s ease;z-index:2}
-.home-banner-fb img{width:100%;height:100%;object-fit:cover;display:block}
-.home-banner-fb:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(0,0,0,.55)}
-@media(max-width:640px){.home-banner-fb{width:32px;height:32px;left:.75rem;bottom:.75rem}}
 .home-banner-zone .util-bar{margin-bottom:0;padding:1rem 1.5rem 0;border-radius:var(--radius-l) var(--radius-l) 0 0;background:none}
 .hero-row{
   display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;
@@ -864,6 +862,16 @@ svg.icon{width:18px;height:18px;display:block}
 
 .confirm-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:80}
 .confirm-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:81;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:1.3rem;width:min(320px,90vw);box-shadow:var(--shadow)}
+/* ป็อปอัป "วิธีใช้" — กว้างพอดีกับบรรทัดที่ยาวที่สุด ไม่ตัดขึ้นบรรทัดใหม่ (มี max-width+scroll กันจอแคบมากๆ เป็นทางออกฉุกเฉินเท่านั้น) */
+.howto-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:81;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:1.5rem 2.2rem 1.7rem 1.7rem;width:max-content;max-width:95vw;max-height:85vh;overflow:auto;box-shadow:var(--shadow)}
+.howto-close{position:absolute;top:.5rem;right:.5rem;background:none;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:.4rem;line-height:1;border-radius:50%}
+.howto-close:hover{color:var(--text);background:var(--surface-2)}
+.howto-title{margin:0 0 .85rem;font-size:1.15rem;font-weight:800;color:var(--accent);white-space:nowrap}
+.howto-body{display:flex;flex-direction:column;gap:.4rem;font-size:.86rem;color:var(--text-dim);line-height:1.6}
+.howto-body div{white-space:nowrap}
+.howto-body .howto-sub{font-weight:800;color:var(--text);margin-top:.5rem}
+.howto-body .howto-sub:first-child{margin-top:0}
+.howto-body .howto-warn{color:var(--danger);font-weight:700}
 /* the generic yes/no confirm dialog can be triggered from inside other modals
    (e.g. delete inside "ประกาศของฉัน") — it must always render above them */
 #confirmOverlay .confirm-backdrop{z-index:90}
@@ -1101,6 +1109,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .pricing-cross{color:var(--text-dim);font-weight:700;flex:none}
 .pricing-feature-no{opacity:.65}
 .pricing-cta{margin-top:.2rem}
+.pricing-owned-note{margin-top:.5rem;padding:.4rem .6rem;border-radius:var(--radius-s);background:color-mix(in srgb, var(--danger) 14%, transparent);border:1px solid color-mix(in srgb, var(--danger) 40%, transparent);color:var(--danger);font-size:.72rem;font-weight:700;text-align:center;line-height:1.4}
 @media (max-width:760px){ .pricing-grid{grid-template-columns:1fr} }
 
 .admin-topup-list{display:flex;flex-direction:column;gap:.7rem;margin-top:1rem}
@@ -1178,11 +1187,12 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .settings-row-amt{font-family:"JetBrains Mono";font-variant-numeric:tabular-nums;font-size:.9rem;flex:none}
 @media (max-width:760px){ .settings-grid{grid-template-columns:1fr} }
 
-/* Desktop: keep the rail in place and scroll the right-side content independently. */
+/* Desktop: ทั้งหน้าเลื่อนไปด้วยกัน (scrollbar อยู่ขอบจอจริง) แต่เมนูซ้ายลอยนิ่งด้วย position:sticky
+   (ไม่ใช้กล่องเลื่อนแยกซ้อนกันอีกต่อไป — เดิมเคยทำให้ scrollbar ไปโผล่ที่ขอบ .content แทนขอบจอจริง) */
 @media (min-width: 761px){
-  #appScreen{height:100vh;min-height:0;overflow:hidden;align-items:start}
+  #appScreen{align-items:start}
   .rail{position:sticky;top:0;height:100vh;overflow-y:auto;overflow-x:hidden}
-  .content{height:100vh;overflow-y:auto;overflow-x:hidden;display:block;padding-bottom:3rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+  .content{display:block;padding-bottom:3rem}
   .content > section{min-height:0;display:block}
   .content > section[hidden]{display:none}
   .content > section > .page-scroll{
@@ -1197,7 +1207,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   .rail{flex-direction:row;align-items:center;justify-content:flex-start;border-right:none;border-bottom:1px solid var(--border);padding:.6rem;overflow-x:auto;scrollbar-width:none}
   .rail::-webkit-scrollbar{display:none}
   .rail-brand{padding:0;margin:0 .55rem 0 .15rem;border-bottom:none;flex:none}
-  .rail-logo-img{width:auto;max-width:none;height:28px}
+  .rail-logo-fb{width:25px;height:25px}
   .rail-btn{width:42px;min-width:42px;justify-content:center;padding:.5rem}
   .rail-btn .tip{display:none}
   .stats-row{grid-template-columns:repeat(2,1fr)}
@@ -1338,7 +1348,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media (max-width:760px){
   .rail{padding:.5rem;gap:.35rem;align-items:stretch;scrollbar-width:thin}
   .rail-brand{padding:0;margin:0 .35rem;align-self:center}
-  .rail-logo-img{height:32px}
+  .rail-logo-fb{width:28px;height:28px}
   .rail-btn{flex:0 0 auto;flex-direction:column;gap:.2rem;width:auto;min-width:80px;min-height:60px;padding:.5rem .65rem}
   .rail-btn .tip{display:block;font-size:.72rem;line-height:1.5;white-space:nowrap}
   .rail-btn.active{box-shadow:inset 0 -3px var(--accent)}
@@ -1397,7 +1407,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #view-home .dashboard-heading{margin:.25rem 0 1rem}
 #view-home .dashboard-heading h2{font-size:1.45rem}
 #view-home .dashboard-help{margin:.35rem 0 0;font-size:.82rem;line-height:1.75;color:var(--text-dim);max-width:76ch}
-.dashboard-howto-label{font-size:.68rem;font-weight:500;color:var(--text-dim);vertical-align:middle}
+.dashboard-howto-label{font-size:.68rem;font-weight:500;color:var(--text-dim);vertical-align:middle;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.dashboard-howto-label:hover{color:var(--accent)}
 #view-home .dashboard-guest-note{display:none;margin:0 0 1rem;padding:.85rem 1rem;border-left:3px solid var(--accent);border-radius:var(--radius-s);background:var(--surface-2);font-size:.85rem;line-height:1.8;color:var(--text-dim)}
 body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{display:block}
 #view-home .dashboard-shortcuts{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.5rem}
@@ -2031,7 +2042,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 .content:has(#view-pricing:not([hidden])) #homeBannerZone .hero-line1{font-size:.78rem}
 .content:has(#view-pricing:not([hidden])) #homeBannerZone .hero-line2{font-size:1.25rem;margin:0}
 #view-pricing .pricing-hero{padding:.6rem 0 1.55rem;gap:.65rem}
-#view-pricing .pricing-badge{padding:.3rem .75rem;color:#b9caff;background:#202d49;border-color:#35466a}
+#view-pricing .pricing-badge{padding:.5rem 1.2rem;font-size:1.52rem;color:#b9caff;background:#202d49;border-color:#35466a}
 #view-pricing .pricing-title{font-size:clamp(1.55rem,2.6vw,2.25rem);line-height:1.4;max-width:850px;text-wrap:balance}
 #view-pricing .pricing-sub{max-width:700px;font-size:.9rem;line-height:1.65;text-wrap:balance}
 #view-pricing .pricing-benefits{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem 1.25rem;font-size:.78rem;color:#b5d8cb}
@@ -2174,7 +2185,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-settings .settings-package-upgrade:hover{background:linear-gradient(135deg,#a77b2c,#d0a554);border-color:#e3c277;color:#fff8e6;box-shadow:inset 0 1px 0 rgba(255,244,205,.34),0 6px 15px rgba(190,142,43,.3)}
 #view-settings .settings-package #stPackageAccessNote{margin:.35rem 0 0;padding-top:.45rem;border-top:1px solid rgba(157,188,236,.15);font-size:.7rem;color:#9db0c9;opacity:.85}
 #view-settings .settings-security{grid-column:2;grid-row:1}
-#view-settings .settings-servers{grid-column:1/-1}
 #view-settings .settings-servers{padding:1rem 1.1rem .9rem}
 #view-settings .settings-servers .panel-head{align-items:center;margin-bottom:.15rem;flex-wrap:wrap}
 #view-settings .settings-servers .panel-head h2{font-size:1rem}
@@ -2187,8 +2197,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-settings .settings-servers .settings-actions{display:flex;justify-content:flex-end;margin-top:.75rem}
 #view-settings .settings-servers .settings-actions .btn{padding:.42rem .75rem;min-height:36px;font-size:.78rem}
 @media(max-width:760px){
- #view-settings .settings-security{grid-column:auto;grid-row:3}
+ #view-settings .settings-security{grid-column:auto;grid-row:4}
  #view-settings .settings-servers{grid-row:2}
+ #view-settings #stRetiredServerCard{grid-row:3}
  #view-settings .settings-servers .settings-actions{margin-top:.6rem}
  #view-settings .settings-servers .settings-actions .btn{width:100%}
  #view-settings .settings-kv{grid-template-columns:1fr 1fr}
@@ -2473,13 +2484,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     </div>
 
     <div id="loginFields">
-      <div class="field"><label for="li-email">อีเมลหรือ Username</label><input id="li-email" type="text" placeholder="guild@example.com หรือ username" autocomplete="username"></div>
+      <div class="field"><label for="li-email">อีเมล หรือ Username</label><input id="li-email" type="text" placeholder="guild@example.com หรือ username" autocomplete="username"></div>
       <div class="field"><label for="li-pass">รหัสผ่าน</label><input id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
       <p class="auth-switch"><button type="button" id="forgotPasswordLink">ลืมรหัสผ่าน?</button></p>
     </div>
     <div id="registerFields" hidden>
-      <div class="field"><label for="rg-server">เซิร์ฟเวอร์ที่เล่น</label><select id="rg-server"><option value="">— เลือกเซิร์ฟเวอร์ —</option></select><div class="field-hint">เลือกเพิ่มเติมได้ที่ตั้งค่าภายหลัง</div></div>
-      <div class="field"><label for="rg-name">ชื่อที่ใช้แสดง</label><input id="rg-name" type="text" placeholder="เช่น หัวหน้ากิลด์" maxlength="40"></div>
+      <div class="field"><label for="rg-server">เซิร์ฟเวอร์ที่เล่น</label><select id="rg-server"><option value="">— เลือกเซิร์ฟเวอร์ —</option></select><div class="field-hint">เลือกเซิร์ฟเวอร์ใหม่ได้ที่ ตั้งค่า</div></div>
+      <div class="field"><label for="rg-name">ชื่อที่ใช้แสดง</label><input id="rg-name" type="text" placeholder="เช่น กั้ม100" maxlength="15"></div>
       <div class="field"><label for="rg-username">Username</label><input id="rg-username" type="text" placeholder="a-z 0-9 _ . ยาว 3-20 ตัว" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20"><div class="field-hint" id="rg-username-hint">ใช้ล็อกอินได้ และเปลี่ยนภายหลังไม่ได้</div></div>
       <div class="field"><label for="rg-email">อีเมล</label><input id="rg-email" type="email" placeholder="guild@example.com" autocomplete="email"></div>
       <div class="field"><label for="rg-pass">รหัสผ่าน</label><input id="rg-pass" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password"></div>
@@ -2490,7 +2501,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     <p class="auth-error" id="authError"></p>
     <button class="btn btn-primary btn-block" id="authSubmit">เข้าสู่ระบบ</button>
     <p class="auth-switch" id="authSwitchText">ยังไม่มีบัญชี? <button id="authToggle">สมัครสมาชิก</button></p>
-    <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่ เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ · ลืมรหัสผ่านกดลิงก์ด้านบน ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริงให้ติดต่อแอดมิน</p>
+    <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่<br>เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ<br>ลืมรหัสผ่านกดลิงก์ด้านบน ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริงให้ติดต่อแอดมิน</p>
   </div>
 </div>
 
@@ -2500,7 +2511,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 <div id="appScreen">
   <nav class="rail">
     <div class="rail-brand">
-      <img class="rail-logo-img" src="logo-gum100.png?v=2" alt="Gum100" width="440" height="215">
+      <a class="rail-logo-fb" href="https://www.facebook.com/rogum100/" target="_blank" rel="noopener noreferrer" title="เพจ Facebook">
+        <img src="assets/facebook-icon.webp" alt="Facebook">
+      </a>
     </div>
     <button class="rail-btn active" data-page="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="17" height="13" rx="2"/><path d="M7 6v10"/><path d="M9 8.3c-.5-.7-1.6-1-2.5-.7-1.3.4-1.7 1.8-.6 2.5.6.4 1.6.5 2.4.7 1.3.4 1.7 1.8.4 2.5-.9.5-2 .3-2.6-.4"/><path d="M12 7.5h5"/><path d="M12 10.5h3"/><path d="M14 21h3l6-6a2 2 0 00-3-3l-6 6z"/><path d="M18.5 13.5l3 3"/></svg><span class="tip">บัญชีนักลงทุน</span></button>
     <button class="rail-btn" data-page="items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="tip">คลังไอเทม</span><span class="rail-badge" id="railItemsBadge" hidden>0</span></button>
@@ -2545,9 +2558,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <div class="hero-row">
         <div class="hero-stats" id="rateChips"></div>
       </div>
-      <a class="home-banner-fb" id="homeBannerFbLink" href="https://www.facebook.com/rogum100/" target="_blank" rel="noopener noreferrer" title="เพจ Facebook">
-        <img src="assets/facebook-icon.webp" alt="Facebook">
-      </a>
     </div>
 
     <!-- ===================== HOME VIEW ===================== -->
@@ -2578,7 +2588,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <div class="home-grid">
         <div class="dashboard-overview">
           <div class="dashboard-overview-head">
-            <div><h2>สรุปซื้อ–ขาย <span class="dashboard-howto-label">วิธีใช้</span></h2><p class="dashboard-help">อ้างอิงเซิร์ฟเวอร์ ช่วงเวลา และคำค้นในตัวกรองประวัติด้านล่าง</p></div>
+            <div><h2>สรุปซื้อ–ขาย <span class="dashboard-howto-label" data-howto="home">วิธีใช้</span></h2><p class="dashboard-help">อ้างอิงเซิร์ฟเวอร์ ช่วงเวลา และคำค้นในตัวกรองประวัติด้านล่าง</p></div>
             <details class="dashboard-quicklinks" hidden><summary>ทางลัด</summary>
         <nav class="dashboard-shortcuts" aria-label="ทางลัดจากแดชบอร์ด">
           <button type="button" class="btn btn-primary dashboard-shortcut" data-dashboard-section="mrEntryPanel">ไปฟอร์มซื้อ–ขาย</button>
@@ -2755,7 +2765,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <div class="page-scroll">
       <div class="topbar">
         <div>
-          <h1>ยอดนักฟาม <span class="dashboard-howto-label">วิธีใช้</span></h1>
+          <h1>ยอดนักฟาม <span class="dashboard-howto-label" data-howto="farm">วิธีใช้</span></h1>
           <p class="sub">สรุปรายได้จากการฟาม เทียบต้นทุนต่อกั้ม (1 กั้ม = 30 นาที)</p>
         </div>
         <div class="topbar-right">
@@ -2872,7 +2882,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     <section id="view-timers" hidden>
     <div class="topbar">
       <div>
-        <h1>จับเวลาบอส <span class="dashboard-howto-label">วิธีใช้</span></h1>
+        <h1>จับเวลาบอส <span class="dashboard-howto-label" data-howto="timers">วิธีใช้</span></h1>
         <p class="sub">ความเคลื่อนไหวและรอบเกิดใหม่ของ MVP ในปาร์ตี้คุณ</p>
       </div>
     </div>
@@ -2958,7 +2968,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     <section id="view-items" hidden>
       <div class="topbar">
         <div>
-          <h1>คลังไอเทม <span class="dashboard-howto-label">วิธีใช้</span></h1>
+          <h1>คลังไอเทม <span class="dashboard-howto-label" data-howto="items">วิธีใช้</span></h1>
         </div>
       </div>
 
@@ -3032,15 +3042,13 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <div class="page-scroll">
       <div class="pricing-hero">
         <span class="pricing-badge">✦ ปลดล็อกฟีเจอร์เต็มรูปแบบ</span>
-        <h1 class="pricing-title">ปลดล็อกฟีเจอร์ทั้งหมดของ Gum100</h1>
-        <p class="pricing-sub">จัดการบอส คลังไอเทม และยอดฟาร์มได้ครบในที่เดียว เลือกแพ็กที่เหมาะกับสไตล์การเล่นของคุณ</p>
         <div class="pricing-benefits"><span>✓ เริ่มต้นเพียง 99 บาท/เดือน</span><span>✓ เลือกใช้ตามระบบที่ต้องการ</span></div>
         <div class="seg-toggle pricing-cycle-toggle" id="pricingCycleToggle">
           <button type="button" class="seg-btn active" data-cycle="monthly">รายเดือน</button>
           <button type="button" class="seg-btn" data-cycle="yearly">รายปี</button>
         </div>
         <div class="pricing-promo-banner">
-          <div class="pricing-promo-copy"><strong>ราคาโปรโมชันเปิดตัว</strong></div>
+          <div class="pricing-promo-copy"><strong>ราคาโปรโมชันเปิดตัวลด 50%</strong></div>
           <div class="pricing-promo-clock" role="timer" aria-live="off" aria-label="เวลาคงเหลือของโปรโมชั่น">
             <span class="pricing-promo-status" id="pricingPromoStatus">รอกำหนดวันสิ้นสุดโปรโมชั่น</span>
             <div class="pricing-promo-digits" id="pricingPromoDigits" hidden>
@@ -3085,7 +3093,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             <div><span class="lbl">วันเกิด</span><b id="stBirth">-</b></div>
             <div hidden><span class="lbl">ใช้งานได้ถึง</span><b id="stExpires">-</b></div>
           </div>
-          <div class="field"><label for="stDisplayName">ชื่อที่ใช้แสดง</label><input id="stDisplayName" type="text" maxlength="40" placeholder="ชื่อที่เพื่อนในปาร์ตี้จะเห็น"></div>
+          <div class="field"><label for="stDisplayName">ชื่อที่ใช้แสดง</label><input id="stDisplayName" type="text" maxlength="15" placeholder="ชื่อที่เพื่อนในปาร์ตี้จะเห็น"></div>
           <div class="field"><label for="stFacebookUrl">ลิงก์ Facebook (ไม่บังคับ)</label><input id="stFacebookUrl" type="text" maxlength="200" placeholder="เช่น facebook.com/ชื่อโปรไฟล์"><div class="field-hint">ไว้ลิงก์กับชื่อตอนประกาศ รับ M เพื่อความสะดวกในการติดต่อกัน</div></div>
           <div class="field" id="stBirthField" hidden><label for="stBirthInput">วันเดือนปีเกิด (กรอกได้ครั้งเดียว แก้ไม่ได้)</label><input id="stBirthInput" type="date" min="1900-01-01"></div>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveProfile">บันทึกข้อมูล</button></div>
@@ -3098,7 +3106,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <p class="settings-note">เปลี่ยนแล้วเครื่องอื่นที่ล็อกอินบัญชีนี้ค้างอยู่จะถูกออกจากระบบ</p>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSavePass">เปลี่ยนรหัสผ่าน</button></div>
         </div>
-        <div class="panel settings-card settings-wide settings-servers">
+        <div class="panel settings-card settings-servers">
           <div class="panel-head">
             <h2>เซิร์ฟเวอร์ที่เล่น</h2>
             <div class="settings-servers-head-actions">
@@ -3116,9 +3124,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
              "กราฟกำไรสุทธิ"/"ยอดนักฟาม" รกจากเซิร์ฟเก่าที่เลิกเล่นแล้ว) ติ๊กเปิดคืนได้เฉพาะเซิร์ฟที่เคยมีประวัติจริง
              เก็บในเครื่อง กดติ๊กแล้วมีผลทันที ไม่ต้องกดบันทึก — การ์ดนี้โชว์ไว้แต่แรกเสมอ ไม่ซ่อนแม้ยังไม่มี
              เซิร์ฟพักที่มีประวัติเลย (โชว์ข้อความว่างแทน) -->
-        <div class="panel settings-card settings-wide settings-servers" id="stRetiredServerCard">
+        <div class="panel settings-card settings-servers" id="stRetiredServerCard">
           <div class="panel-head"><h2>เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ</h2></div>
-          <p class="settings-note">ซ่อนไว้เป็นค่าเริ่มต้น ติ๊กเปิดเพื่อให้กลับมาแสดงใน "ประวัติซื้อ-ขาย", "กราฟกำไรสุทธิ" และ "ยอดนักฟาม" — มีผลทันทีไม่ต้องกดบันทึก</p>
+          <p class="settings-note">ติ๊ก ✓ เลือก Sv. เพื่อให้เซิร์ฟเวอร์นั้นกลับมาแสดง "ประวัติ" เก่า</p>
           <div class="server-pick-list" id="stRetiredServerList"></div>
         </div>
       </div>
@@ -3327,8 +3335,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   <div class="confirm-backdrop" data-forgot-close></div>
   <div class="confirm-box topup-box">
     <h3 class="post-announce-title">ลืมรหัสผ่าน</h3>
-    <p class="expiry-msg">กรอกอีเมลหรือ Username ที่ใช้สมัคร ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปที่อีเมลของบัญชีนั้น (ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริง ให้ติดต่อแอดมิน)</p>
-    <div class="field"><label for="forgotIdent">อีเมลหรือ Username</label><input id="forgotIdent" type="text" placeholder="guild@example.com หรือ username" autocomplete="username"></div>
+    <p class="expiry-msg">กรอกอีเมล หรือ Username ที่ใช้สมัคร ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปที่อีเมลของบัญชีนั้น (ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริง ให้ติดต่อแอดมิน)</p>
+    <div class="field"><label for="forgotIdent">อีเมล หรือ Username</label><input id="forgotIdent" type="text" placeholder="guild@example.com หรือ username" autocomplete="username"></div>
     <p class="auth-error" id="forgotError"></p>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" data-forgot-close>ยกเลิก</button>
@@ -3374,6 +3382,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       <button type="button" class="btn btn-ghost" id="itemImageRemoveBtn">เอารูปออก</button>
       <button type="button" class="btn btn-gradient" id="itemImageReplaceBtn">เปลี่ยนรูป</button>
     </div>
+  </div>
+</div>
+
+<div id="howtoOverlay" hidden>
+  <div class="confirm-backdrop"></div>
+  <div class="howto-box">
+    <button type="button" class="howto-close" id="howtoCloseBtn" aria-label="ปิด">✕</button>
+    <h3 class="howto-title" id="howtoTitle"></h3>
+    <div class="howto-body" id="howtoBody"></div>
   </div>
 </div>
 
@@ -3514,7 +3531,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   <div class="confirm-box topup-box">
     <h3 class="post-announce-title">เพิ่มเพื่อนเข้าปาร์ตี้</h3>
     <div class="post-announce-field">
-      <label>อีเมลหรือ Username ของเพื่อน</label>
+      <label>อีเมล หรือ Username ของเพื่อน</label>
       <input type="text" id="addPartyMemberEmail" placeholder="friend@example.com หรือ username" autocomplete="off" autocapitalize="none" spellcheck="false">
     </div>
     <p class="post-announce-note">ใช้ 50 แต้มต่อการเพิ่ม 1 คน <b>ถาวร (ห้ามกดออกจากปาร์ตี้)</b> ถ้าออกจากปาร์ตี้ไปแล้ว ต้องจ่าย 50 แต้มใหม่ถ้าจะเพิ่มเพื่อนกลับเข้ามาอีกครั้ง</p>
@@ -7979,6 +7996,72 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     backdrop.addEventListener('click', close);
   }
 
+  // ป็อปอัป "วิธีใช้" แต่ละหน้า — เนื้อหาคนละชุดต่อหน้า {sub:true} = หัวข้อย่อยตัวหนา (สีเดียวกับรายละเอียด แค่หนาขึ้น)
+  var HOWTO_CONTENT = {
+    home: { title:'บัญชีนักลงทุน', lines:[
+      {sub:true, text:'รายการซื้อ-ขาย'},
+      '1. เลือกรายการที่จะทำ M ไอเทม อื่นๆ',
+      '2. ซื้อ หรือ ขาย',
+      '3. เลือกเซิร์ฟเวอร์ที่ทำรายการ (กรณีพ่อค้าแม่ค้าที่เปิดร้าน 2 เซิร์ฟเวอร์ขึ้นไป) รายการจะถูกจัดแบ่งไว้ตามเซิร์ฟเวอร์ที่เลือกไม่รวมกัน',
+      '4. ใส่จำนวน M และราคา (แนบรูปไว้ดูรายการในประวัติได้) กดยืนยัน จะแสดงยอดพร้อมรูปในประวัติ',
+      {sub:true, text:'เพิ่มเติม I'},
+      '1. สำหรับรายการซื้อไอเทม จะถูกส่งไปในคลังไอเทมเพื่อจัดหมวดหมู่',
+      '2. + เพิ่ม Slot (ใส่ข้อมูลไอเทมที่มีออฟหรือการ์ดอื่นๆ ได้)',
+      {sub:true, text:'เพิ่มเติม II'},
+      '1. ขายหรือซื้อไอเทมเป็นแบบ "Zeny" ต้องใส่เรท M วันนั้น ระบบจะคำนวณยอดเป็น "บาท" ให้เลย',
+      {sub:true, text:'เพิ่มเติม III'},
+      '1. การ "ขายไอเทม" สามารถเลือกในรายการคลังไอเทมได้เลย เพื่อช่วยในการจัดการสต๊อกแบบเป็นระบบ',
+      '2. ขายไอเทมที่ไม่มีของในคลังก็ได้ พิมพ์ชื่อไอเทมแล้วกดขายได้เลย จะถูกคำนวณและบันทึกไปไว้ในประวัติ',
+      {sub:true, text:'เพิ่มเติม IV'},
+      '1. ถ้าจะดูประวัติรายการแบบละเอียด กดปุ่มซ่อนตรงชื่อรายการ ตรงกรอบประวัติ'
+    ]},
+    items: { title:'คลังไอเทม', lines:[
+      '1. จะแสดงรายชื่อไอเทมที่ทำรายการซื้อมาเท่านั้น',
+      '2. ลากรายการสินค้าลงกล่องตามความต้องการ จัดหมวดหมู่',
+      '3. เมื่อรายการนั้นถูกขายไป (เลือกจากคลัง) ระบบจะลบรายการในคลังออกอัตโนมัติ แล้วแสดงในประวัติหน้าซื้อ-ขาย'
+    ]},
+    farm: { title:'ยอดนักฟาม', lines:[
+      '1. ใส่ราคา M วันนั้น เพื่อคำนวณรายการที่เป็น Zeny เป็นบาทได้ถูกต้อง',
+      '2. ใส่ Map ฟาม',
+      '3. ใส่รายการต้นทุน ได้ทั้งหน่วยบาท, Zeny รวมกันได้เลย (กด + เพิ่มรายการได้ถ้าใช้หลายอย่าง)',
+      '4. ไอเทมหายาก เช่น การ์ด เอลู โอริ อื่นๆ ใส่ชื่อรายการไว้ก่อน พอขายได้ ไปกดแก้ไขที่ประวัติ ระบบจะคำนวณเพิ่มยอดให้',
+      '5. ไอเทมหายาก กด + เพิ่มรายการได้ กรณีมีหลายชิ้น',
+      '6. การใส่จำนวนกั้ม เอาที่ผู้เล่นสะดวก จะฟาม 1 กั้มแล้วบันทึก หรือ 10 กั้มแล้วบันทึกทีเดียวก็ได้ ระบบจะเฉลี่ยยอดเงินต่อกั้มออกมา',
+      '7. ถ้ายอดเงิน OC มาแล้ว ให้ใส่ยอดแล้วบันทึก',
+      '8. ถ้ายอดเงิน "ยังไม่ได้ OC" ให้ใส่ยอดเงิน แล้วจึงกด OC 24% บันทึก'
+    ]},
+    timers: { title:'จับเวลาบอส', lines:[
+      '1. การเพิ่มเพื่อนปาร์ตี้ใช้ 50 แต้ม (ถาวรไม่จำกัดเวลา) แต่ห้าม! กดออกปาร์ตี้',
+      '2. เพิ่มบอสได้ไม่จำกัด เลือกที่ค้นหาบอส กดเพิ่มตัวที่ต้องการ',
+      '3. เพิ่มบอสเองได้ กรณีมีบอสพิเศษหรือบอสไม่ตรงแพท',
+      '4. ช่องใส่เวลาตาย ตามเวลาหลุมบอส เช่น 14.30 / 1430 แล้วกด MVP',
+      '5. เมื่อฆ่าบอสตาย ติ๊กจุดตายใน Mini Map และกดเลือกไอเทมที่ได้รับ แล้วกด MVP ระบบจะ -3 วินาที และเริ่มจับเวลาบอสตัวนั้นใหม่',
+      '6. ประวัติจะขึ้นบอสที่ฆ่าไป และไอเทมที่ได้รับ สามารถเลือกชื่อเพื่อนในปาร์ตี้ที่ได้ส่วนแบ่งในรอบนั้นได้',
+      '7. เมื่อขายได้แล้ว ใส่จำนวนเงินที่ขาย ระบบจะหารให้พร้อมบอกยอดเงินที่ได้รับในประวัติของแต่ละคนในปาร์ตี้ที่ได้รับส่วนแบ่ง',
+      '8. ระบบเสียงเตือนจะดังก่อนบอสเกิด 3 นาที (ปิดได้)',
+      '9. กดเคลียร์เวลา เลิกจับเวลาบอสตัวนั้น',
+      {sub:true, text:'เพิ่มเติม I'},
+      {warn:true, text:'1. สำหรับแพ็กเกจฟรี เมื่อถูกเพิ่มเข้าปาร์ตี้ จะดูข้อมูลได้อย่างเดียว!'}
+    ]}
+  };
+  function openHowto(key){
+    var d = HOWTO_CONTENT[key];
+    if(!d) return;
+    document.getElementById('howtoTitle').textContent = d.title;
+    document.getElementById('howtoBody').innerHTML = d.lines.map(function(l){
+      if(typeof l === 'object' && l && l.sub) return '<div class="howto-sub">'+escapeHtml(l.text)+'</div>';
+      if(typeof l === 'object' && l && l.warn) return '<div class="howto-warn">'+escapeHtml(l.text)+'</div>';
+      return '<div>'+escapeHtml(l)+'</div>';
+    }).join('');
+    document.getElementById('howtoOverlay').hidden = false;
+  }
+  function closeHowto(){ document.getElementById('howtoOverlay').hidden = true; }
+  document.getElementById('howtoCloseBtn').addEventListener('click', closeHowto);
+  document.querySelector('#howtoOverlay .confirm-backdrop').addEventListener('click', closeHowto);
+  document.querySelectorAll('.dashboard-howto-label').forEach(function(el){
+    el.addEventListener('click', function(){ openHowto(el.dataset.howto); });
+  });
+
   function showFarmOcHint(){
     if(farmOcHintAcknowledged || store(App.keys.farmOcHint, false)) return;
     document.getElementById('farmOcHintDontShow').checked = false;
@@ -8144,7 +8227,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(forgotBusy) return;
     var errEl = document.getElementById('forgotError');
     var ident = document.getElementById('forgotIdent').value.trim().toLowerCase();
-    if(!ident){ errEl.textContent = 'กรอกอีเมลหรือ Username ก่อน'; return; }
+    if(!ident){ errEl.textContent = 'กรอกอีเมล หรือ Username ก่อน'; return; }
     forgotBusy = true; errEl.textContent = '';
     var emailReady = ident.indexOf('@') !== -1 ? Promise.resolve(ident)
       : supa.rpc('email_for_username', { u:ident }).then(function(r){
@@ -9459,6 +9542,27 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   updatePricingPromoCountdown();
   setInterval(updatePricingPromoCountdown,1000);
 
+  // แพ็กเกจนี้ "ใช้งานอยู่แล้ว" ถึงเมื่อไหร่ — ใช้เตือนในหน้าเติมแพ็กเกจกันกดซื้อซ้ำโดยไม่รู้ตัว
+  // (ไม่บล็อกปุ่มซื้อ เพราะกดซื้อซ้ำจริงๆ ระบบจะต่ออายุเพิ่มให้ ไม่ได้เสียแต้มเปล่า)
+  function planActiveUntil(key){
+    var p = App.profile; if(!p) return 0;
+    if(p.role==='admin' || p.legacy_unlimited===undefined || p.legacy_unlimited) return Infinity;
+    var now = Date.now();
+    var bundle = new Date(p.plan_bundle_expires_at||0).getTime();
+    var timers = new Date(p.plan_timers_expires_at||0).getTime();
+    var scoped = p.feature_expiries||{};
+    var farm = new Date(scoped.farm||0).getTime();
+    var acct = new Date(scoped.accountItems||0).getTime();
+    var bundleActive = bundle>now, timersActive = timers>now;
+    switch(key){
+      case 'bundle': return bundleActive ? bundle : 0;
+      case 'timers': return timersActive ? timers : 0;
+      case 'all': return (bundleActive && timersActive) ? Math.min(bundle,timers) : 0;
+      case 'farm': return Math.max(bundleActive?bundle:0, farm>now?farm:0);
+      case 'accountItems': return Math.max(bundleActive?bundle:0, acct>now?acct:0);
+      default: return 0;
+    }
+  }
   function renderPricingPage(){
     var grid = document.getElementById('pricingGrid');
     grid.innerHTML = [PRICING_PLANS[4],PRICING_PLANS[3],PRICING_PLANS[5]].concat(PRICING_PLANS.slice(0,3)).map(function(p){
@@ -9491,6 +9595,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           ? (p.displayYearly != null ? '<small class="pricing-pending-note">รอเปิดใช้งานการซื้อรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ยังไม่เปิดซื้อรายปี</button>' : '<small class="pricing-pending-note">แสดงราคาต่อเดือน · ยังไม่มีแพ็กรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>รองรับเฉพาะรายเดือน</button>')
           : '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+escapeHtml(planNamePlain)+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>';
       }
+      var ownedUntil = p.free ? 0 : planActiveUntil(p.key);
+      var ownedHtml = ownedUntil ? '<div class="pricing-owned-note">⚠ ใช้งานอยู่แล้ว'+(ownedUntil===Infinity ? '' : ' ถึง '+fmtDate(ownedUntil))+' — กดซื้อเพื่อต่ออายุเพิ่ม</div>' : '';
       return '<div class="pricing-card'+(p.best?' pricing-card-best':'')+'" data-plan-key="'+p.key+'">'+
         (p.badge ? '<span class="pricing-badge-best'+(p.best?'':' pricing-badge-secondary')+'">'+escapeHtml(p.badge)+'</span>' : '')+
         (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '<div class="pricing-promo-heading">' : '')+
@@ -9499,6 +9605,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '</div>' : '')+
         (p.key==='bundle' || p.key==='timers' || p.key==='all' || p.key==='farm' || p.key==='accountItems' ? '<div class="pricing-bundle-price">'+priceHtml+'</div>' : priceHtml)+
         '<ul class="pricing-features">'+features+'</ul>'+
+        ownedHtml+
         ctaHtml+
       '</div>';
     }).join('');
@@ -9551,7 +9658,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     showConfirm('ยืนยันสมัคร "'+escapeHtml(planName)+'" ('+(cycle==='yearly' ? 'รายปี +1 ปี' : 'รายเดือน +30 วัน')+') ด้วย '+fmtNum(price)+' แต้ม'+(discounted?' (ราคาโปรลด 50%)':'')+'?<br>'+expiryText, function(){
       supa.rpc('buy_plan', { p_plan_key: planKey, p_cycle: cycle }).then(function(res){
         if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
-        refreshProfile();
+        refreshProfile().then(renderPricingPage);
         toast('สมัคร '+planName+' สำเร็จ — '+(planKey==='all'?'ใช้งานครบทุกระบบได้ถึง ':'ใช้งานได้ถึง ')+fmtDate(new Date(res.data).getTime()));
       });
     });
@@ -11139,7 +11246,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(addPartyMemberBusy) return;
     // รับได้ทั้งอีเมลหรือ username — ฝั่งเซิร์ฟเวอร์ (add_party_member) หาบัญชีจากทั้งสองอย่างเอง
     var email = document.getElementById('addPartyMemberEmail').value.trim().toLowerCase();
-    if(!email){ toast('กรุณากรอกอีเมลหรือ Username ของเพื่อน'); return; }
+    if(!email){ toast('กรุณากรอกอีเมล หรือ Username ของเพื่อน'); return; }
     addPartyMemberBusy = true;
     supa.rpc('add_party_member', { member_email: email }).then(function(res){
       addPartyMemberBusy = false;

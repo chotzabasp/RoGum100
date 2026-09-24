@@ -315,11 +315,13 @@
   // ลงประกาศใหม่เสียแต้มตามระยะเวลา (แก้ไขประกาศเดิมยังฟรีเหมือนเดิม — ดู postAnnounceSubmitBtn)
   // ค่า cost ต้องตรงกับที่ฟังก์ชัน post_announcement() ฝั่ง DB คำนวณเป๊ะๆ (เทียบจาก value เป็น ms)
   var ANNOUNCE_DURATION_OPTIONS = [
-    { value:600000,   label:'10 นาที', cost:1 },
-    { value:1800000,  label:'30 นาที', cost:2 },
-    { value:3600000,  label:'1 ชม.',   cost:3 },
-    { value:10800000, label:'3 ชม.',   cost:6 }
+    { value:300000,   label:'5 นาที',  cost:1 },
+    { value:900000,   label:'15 นาที', cost:2 },
+    { value:1800000,  label:'30 นาที', cost:3 },
+    { value:3600000,  label:'1 ชม.',   cost:5 },
+    { value:10800000, label:'3 ชม.',   cost:10 }
   ];
+  var ANNOUNCE_DEFAULT_DURATION = 3600000; // ค่าเริ่มต้นตอนลงประกาศใหม่ = 1 ชม.
   function serverRateById(id){
     for(var i=0;i<SERVER_RATES.length;i++){ if(SERVER_RATES[i].id===id) return SERVER_RATES[i]; }
     return null;
@@ -7530,7 +7532,7 @@
       document.getElementById('postAnnounceSubmitBtn').textContent = 'บันทึกการแก้ไข';
       document.getElementById('postAnnounceBuyPrice').value = entry.buy!=null ? fmtNum(entry.buy) : '';
     } else {
-      setAnnounceDuration(durSel, ANNOUNCE_DURATION_OPTIONS[2].value, false); // default 1 ชม.
+      setAnnounceDuration(durSel, ANNOUNCE_DEFAULT_DURATION, false);
       document.querySelector('#postAnnounceTitle span').textContent = 'ลงประกาศ รับ M';
       document.getElementById('postAnnounceSubmitBtn').textContent = 'ลงประกาศ';
       document.getElementById('postAnnounceBuyPrice').value = '';

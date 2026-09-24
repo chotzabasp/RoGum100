@@ -26,7 +26,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260924a">
+<link rel="stylesheet" href="assets/app.css?v=20260924b">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -776,6 +776,12 @@
             <input id="adminGrantPoints" type="text" inputmode="numeric" autocomplete="off" placeholder="จำนวนแต้ม (1 บาท = 1 แต้ม)">
             <input id="adminGrantNote" type="text" maxlength="200" autocomplete="off" placeholder="หมายเหตุ (จำเป็น) เช่น โอนผ่านเพจ FB วันที่ 21 ก.ย. 500 บาท">
             <button type="button" class="btn btn-primary" id="adminGrantSubmit">เติมแต้ม</button>
+            <!-- รีเซ็ตรหัสผ่านให้สมาชิกที่ลืมรหัส (ติดต่อมาทางเพจ) — ยืนยันตัวตนด้วยวันเกิดก่อนกด -->
+            <div class="admin-reset-pass">
+              <h4>รีเซ็ตรหัสผ่าน</h4>
+              <p class="sub" id="adminResetInfo"></p>
+              <button type="button" class="btn btn-ghost" id="adminResetPassBtn">รีเซ็ตรหัสผ่าน</button>
+            </div>
           </div>
         </div>
       </div>
@@ -896,13 +902,13 @@
 <div id="forgotPasswordOverlay" hidden>
   <div class="confirm-backdrop" data-forgot-close></div>
   <div class="confirm-box topup-box">
+    <!-- ไม่ส่งอีเมลรีเซ็ตรหัสผ่านแล้ว (ไม่ได้ตั้ง SMTP ของตัวเอง อีเมลในตัวของ Supabase ส่งไม่ถึงผู้ใช้ทั่วไป)
+         ให้ติดต่อแอดมินที่เพจแทน — แอดมินยืนยันตัวตนก่อน แล้วตั้งรหัสใหม่ให้ด้วย SQL -->
     <h3 class="post-announce-title">ลืมรหัสผ่าน</h3>
-    <p class="expiry-msg">กรอกอีเมล หรือ Username ที่ใช้สมัคร ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปที่อีเมลของบัญชีนั้น (ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริง ให้ติดต่อแอดมิน)</p>
-    <div class="field"><label for="forgotIdent">อีเมล หรือ Username</label><input id="forgotIdent" type="text" placeholder="guild@example.com หรือ username" autocomplete="username"></div>
-    <p class="auth-error" id="forgotError"></p>
+    <p class="expiry-msg">ติดต่อแอดมินที่เพจ Facebook ของ Gum100 เพื่อตั้งรหัสผ่านใหม่<br>แจ้ง <b>Username</b> ที่ใช้สมัคร และเตรียม<b>วันเกิดที่กรอกไว้ตอนสมัคร</b> เพื่อยืนยันว่าเป็นเจ้าของบัญชี</p>
     <div class="confirm-actions">
-      <button type="button" class="btn btn-ghost" data-forgot-close>ยกเลิก</button>
-      <button type="button" class="btn btn-gradient" id="forgotSendBtn">ส่งลิงก์รีเซ็ต</button>
+      <button type="button" class="btn btn-ghost" data-forgot-close>ปิด</button>
+      <a class="btn btn-gradient" href="https://www.facebook.com/rogum100/" target="_blank" rel="noopener noreferrer">ติดต่อแอดมินที่เพจ Facebook</a>
     </div>
   </div>
 </div>
@@ -1106,4 +1112,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260924c"></script>
+<script src="assets/app.js?v=20260924e"></script>

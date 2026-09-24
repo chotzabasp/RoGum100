@@ -4768,39 +4768,15 @@
     supa.auth.signOut();
   });
 
-  // ---------- ลืมรหัสผ่าน: ส่งลิงก์รีเซ็ตไปอีเมลของบัญชี (รับได้ทั้งอีเมล/Username เหมือนหน้าล็อกอิน) ----------
+  // ---------- ลืมรหัสผ่าน: ให้ติดต่อแอดมินที่เพจ Facebook (ไม่ส่งอีเมลรีเซ็ตแล้ว) ----------
+  // ไม่ได้ตั้ง SMTP ของตัวเอง — อีเมลในตัวของ Supabase ส่งไม่ถึงผู้ใช้ทั่วไป กดแล้วรออีเมลที่ไม่มาจะงงกว่า
+  // แอดมินยืนยันตัวตน (username + วันเกิดที่กรอกตอนสมัคร) แล้วตั้งรหัสใหม่ให้ด้วย SQL
+  // (ส่วน "ตั้งรหัสผ่านใหม่หลังกดลิงก์รีเซ็ต" ด้านล่างยังเก็บไว้ เผื่อลิงก์เก่าที่เคยส่งไปแล้ว)
   document.getElementById('forgotPasswordLink').addEventListener('click', function(){
-    document.getElementById('forgotIdent').value = document.getElementById('li-email').value.trim();
-    document.getElementById('forgotError').textContent = '';
     document.getElementById('forgotPasswordOverlay').hidden = false;
   });
   document.addEventListener('click', function(e){
     if(e.target.closest('[data-forgot-close]')) document.getElementById('forgotPasswordOverlay').hidden = true;
-  });
-  var forgotBusy = false;
-  document.getElementById('forgotSendBtn').addEventListener('click', function(){
-    if(forgotBusy) return;
-    var errEl = document.getElementById('forgotError');
-    var ident = document.getElementById('forgotIdent').value.trim().toLowerCase();
-    if(!ident){ errEl.textContent = 'กรอกอีเมล หรือ Username ก่อน'; return; }
-    forgotBusy = true; errEl.textContent = '';
-    var emailReady = ident.indexOf('@') !== -1 ? Promise.resolve(ident)
-      : supa.rpc('email_for_username', { u:ident }).then(function(r){
-          if(r.error) throw new Error(r.error.message);
-          if(!r.data) throw new Error('ไม่พบ Username นี้');
-          return r.data;
-        });
-    emailReady.then(function(lemail){
-      return supa.auth.resetPasswordForEmail(lemail, { redirectTo: location.origin + location.pathname });
-    }).then(function(res){
-      forgotBusy = false;
-      if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
-      document.getElementById('forgotPasswordOverlay').hidden = true;
-      toast('ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลของบัญชีนี้แล้ว');
-    }).catch(function(err){
-      forgotBusy = false;
-      errEl.textContent = mapAuthError(err.message || String(err));
-    });
   });
 
   // ---------- ตั้งรหัสผ่านใหม่หลังกดลิงก์รีเซ็ต: ไม่ต้องรู้รหัสเดิม ----------
@@ -7232,7 +7208,7 @@
   function openAdminPage(){
     if(adminPanel){ adminPanel.openAdminPage(); return; }
     if(!adminPanelLoading){
-      adminPanelLoading = import('./admin-panel.js?v=20260924b').then(function(mod){
+      adminPanelLoading = import('./admin-panel.js?v=20260924c').then(function(mod){
         adminPanel = mod.initAdminPanel({
           supa:supa, escapeHtml:escapeHtml, fmtNum:fmtNum, fmtDate:fmtDate, fmtDateTime:fmtDateTime,
           toast:toast, showConfirm:showConfirm, loadServers:loadServers,

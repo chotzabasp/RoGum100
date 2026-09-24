@@ -1151,6 +1151,13 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .admin-grant-mode{margin:0}
 .admin-grant-recent{font-size:.8rem;display:flex;flex-direction:column;gap:.2rem}
 .admin-grant-member{padding:.7rem .85rem;border-radius:var(--radius-s);background:color-mix(in srgb, var(--success) 12%, transparent);border:1px solid color-mix(in srgb, var(--success) 35%, var(--border));font-size:.86rem;line-height:1.6}
+/* รีเซ็ตรหัสผ่าน (ใต้เติม/หักแต้ม ในการ์ดเดียวกัน) */
+.admin-reset-pass{margin-top:.5rem;padding-top:.9rem;border-top:1px dashed var(--border);display:flex;flex-direction:column;align-items:flex-start;gap:.45rem}
+.admin-reset-pass h4{margin:0;font-size:.92rem}
+.admin-reset-pass .sub{margin:0;font-size:.8rem;color:var(--text-dim);line-height:1.6}
+.admin-reset-pass .sub b{color:var(--text)}
+.admin-reset-pass .warn{color:var(--warn)}
+.admin-reset-temp{display:inline-block;margin:.5rem 0;padding:.45rem .8rem;border-radius:var(--radius-s);background:var(--surface-2);border:1px solid var(--border);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:1.25rem;letter-spacing:.06em;color:var(--text);user-select:all}
 
 /* หน้า "ตั้งค่า" */
 .field-hint{font-size:.72rem;color:var(--text-dim)}

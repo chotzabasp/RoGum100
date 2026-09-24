@@ -594,8 +594,63 @@ export function initAdminPanel(ctx){
       found.hidden = false;
       adminGrantSetMode('grant');
       adminGrantLoadRecent(res.data.id);
+      adminResetRender(res.data);
     }).catch(function(err){ adminGrantBusy = false; toast('ค้นหาไม่สำเร็จ: '+(err && err.message || err)); });
   }
+  // ---------- รีเซ็ตรหัสผ่านให้สมาชิกที่ลืมรหัส (ติดต่อมาทางเพจ — เว็บไม่ส่งอีเมลรีเซ็ต) ----------
+  // ยืนยันตัวตนด้วยวันเกิดที่กรอกตอนสมัคร (อีเมลใช้ยืนยันไม่ได้ ระบบไม่เคยตรวจอีเมล) → สุ่มรหัสชั่วคราว
+  // → admin_reset_password ตั้งรหัสใหม่ + เตะทุกเครื่องที่ค้างล็อกอินออก → โชว์รหัสให้คัดลอกส่งทางแชทส่วนตัวครั้งเดียว
+  var adminResetBusy = false;
+  function adminResetRender(m){
+    var info = document.getElementById('adminResetInfo');
+    var btn = document.getElementById('adminResetPassBtn');
+    if(m.role === 'admin'){
+      info.innerHTML = 'บัญชีแอดมินรีเซ็ตจากตรงนี้ไม่ได้ — เปลี่ยนรหัสตัวเองที่หน้าตั้งค่า';
+      btn.disabled = true;
+      return;
+    }
+    btn.disabled = false;
+    info.innerHTML = m.birth_date
+      ? 'ถามวันเกิดจากคนที่ติดต่อมา ต้องตรงกับในระบบ: <b>'+escapeHtml(fmtDate(new Date(m.birth_date+'T00:00:00').getTime()))+'</b><br>ตรงกันแล้วค่อยกดรีเซ็ต'
+      : '<span class="warn">สมาชิกนี้ไม่ได้กรอกวันเกิดไว้</span> — ต้องยืนยันตัวตนวิธีอื่นก่อน เช่น ชื่อตัวละคร หรือแต้มคงเหลือโดยประมาณ';
+  }
+  function adminResetTempPassword(){
+    // ตัดตัวที่อ่านสับสนออก (0 O o 1 l I) ส่งทางแชทแล้วพิมพ์ตามง่าย
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    var buf = new Uint32Array(10);
+    crypto.getRandomValues(buf);
+    return Array.prototype.map.call(buf, function(n){ return chars[n % chars.length]; }).join('');
+  }
+  function adminResetShowResult(t, pw){
+    var ok = document.getElementById('confirmOkBtn'), cancel = document.getElementById('confirmCancelBtn');
+    var okText = ok.textContent, cancelText = cancel.textContent;
+    ok.textContent = 'คัดลอกรหัส'; cancel.textContent = 'ปิด';
+    function restore(){ ok.textContent = okText; cancel.textContent = cancelText; }
+    showConfirm('ตั้งรหัสชั่วคราวให้ <b>'+escapeHtml(t.display_name||'-')+'</b> (@'+escapeHtml(t.username||'-')+') แล้ว<br>'+
+      '<span class="admin-reset-temp">'+escapeHtml(pw)+'</span><br>'+
+      '<small>ส่งรหัสนี้ให้สมาชิกทางแชทส่วนตัว แล้วให้เปลี่ยนเองที่ ตั้งค่า → เปลี่ยนรหัสผ่าน<br>ปิดหน้าต่างนี้แล้วจะดูรหัสนี้อีกไม่ได้ (ลืมคัดลอกให้กดรีเซ็ตใหม่)</small>', function(){
+      restore();
+      var done = function(){ toast('คัดลอกรหัสแล้ว'); };
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pw).then(done, function(){ toast('คัดลอกไม่สำเร็จ — เลือกรหัสแล้วคัดลอกเอง'); adminResetShowResult(t, pw); });
+      else { toast('เบราว์เซอร์ไม่รองรับการคัดลอกอัตโนมัติ — เลือกรหัสแล้วคัดลอกเอง'); adminResetShowResult(t, pw); }
+    }, restore);
+  }
+  document.getElementById('adminResetPassBtn').addEventListener('click', function(){
+    var t = adminGrantTarget;
+    if(!t || adminResetBusy || t.role === 'admin') return;
+    showConfirm('<b>รีเซ็ตรหัสผ่าน</b>ของ <b>'+escapeHtml(t.display_name||'-')+'</b> (@'+escapeHtml(t.username||'-')+') ?<br>'+
+      '<small>ยืนยันตัวตนแล้วใช่ไหม'+(t.birth_date ? ' (วันเกิดในระบบ '+escapeHtml(fmtDate(new Date(t.birth_date+'T00:00:00').getTime()))+')' : '')+
+      '<br>ระบบจะสุ่มรหัสชั่วคราวให้ และทุกเครื่องที่ค้างล็อกอินบัญชีนี้อยู่จะถูกออกจากระบบ</small>', function(){
+      var pw = adminResetTempPassword();
+      adminResetBusy = true;
+      supa.rpc('admin_reset_password', { p_user_id: t.id, p_new_password: pw }).then(function(res){
+        adminResetBusy = false;
+        if(res.error){ toast('รีเซ็ตไม่สำเร็จ: '+res.error.message); return; }
+        adminResetShowResult(t, pw);
+      }).catch(function(err){ adminResetBusy = false; toast('รีเซ็ตไม่สำเร็จ: '+(err && err.message || err)); });
+    });
+  });
+
   // โหมด "เติมแต้ม / หักแต้ม" และประวัติแต้มล่าสุดของสมาชิกที่เจอ (ไว้ตอบลูกค้าที่ถามว่าแต้มหายไปไหน)
   var adminGrantMode = 'grant';
   function adminGrantSetMode(mode){

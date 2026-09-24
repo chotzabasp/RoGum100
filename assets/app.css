@@ -839,6 +839,7 @@ svg.icon{width:18px;height:18px;display:block}
 .bc-kill-btn.bc-kill-btn-img img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
 .bc-kill-btn.bc-kill-btn-img:hover{transform:scale(1.08)}
 .bc-kill-btn.bc-kill-btn-img:active{transform:scale(.95)}
+.bc-kill-btn.bc-kill-btn-img.is-saving,.bc-kill-btn.bc-kill-btn-img:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.35)}
 
 .bc-items{margin-top:.75rem;padding-top:.7rem;border-top:1px dashed var(--border);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
 .bc-items-label{font-size:.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin-right:.2rem}

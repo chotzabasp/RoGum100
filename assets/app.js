@@ -4660,8 +4660,9 @@
 
   function mrEntrySummaryHtml(entry){
     var sv = serverRateById(entry.serverId);
-    var names = (entry.lines||[]).map(function(l){ return l.name; }).join(', ');
-    return (sv?sv.name:entry.serverId)+' · '+names+'<br>'+fmtEntryTotal(entry)+' · '+fmtDateTime(entry.ts);
+    // ชื่อไอเทม = ข้อความที่ผู้ใช้พิมพ์เอง → กรองก่อนใส่ลงหน้าต่างยืนยัน (ใช้ innerHTML)
+    var names = (entry.lines||[]).map(function(l){ return escapeHtml(l.name); }).join(', ');
+    return escapeHtml(sv?sv.name:entry.serverId)+' · '+names+'<br>'+fmtEntryTotal(entry)+' · '+fmtDateTime(entry.ts);
   }
 
   // Edit-history notes are typed by the user (not computed), so they must be escaped

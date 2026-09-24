@@ -6952,6 +6952,68 @@
   // เปิดแอปค้างไว้ข้ามวัน: เช็คทุกนาที แถบ/โหมดดูอย่างเดียวจะอัปเดตเอง
   setInterval(function(){ if(App.session && App.profile){ renderExpiryState(); checkExpiryReminder(); checkPackageReminder(); } }, 60000);
 
+  // ---------- อัปเดตแต้ม/แพ็กเกจเบื้องหลัง ----------
+  // เดิมโปรไฟล์โหลดใหม่แค่ตอนล็อกอิน/หลังทำรายการเอง — แอดมินยืนยันรายการเติมเงินที่ค้างตรวจ, เติม/หักแต้ม,
+  // ยกเลิกรายการ หน้าจอของผู้ใช้คนนั้นไม่รู้จนกว่าจะรีโหลด (เห็นแต้มเก่า กดซื้อแล้วขึ้นแต้มไม่พอ ฯลฯ)
+  // ตอนนี้เช็คใหม่ทุก 60 วิ ระหว่างเปิดแท็บดูอยู่ + ทันทีที่กลับมาที่แท็บ (เว้นอย่างน้อย 15 วิ ยกเว้นสั่ง force)
+  // สร้างโปรไฟล์ใหม่ให้ครบรวมสิทธิ์แพ็กย่อย (1 in 1 / 2 in 1) ก่อน แล้วค่อยสลับเข้า App.profile ทีเดียว —
+  // ไม่ใช้ refreshProfile() ตรงนี้ เพราะตัวนั้นล้าง feature_expiries ก่อนโหลดเสร็จ ช่วงสั้นๆ นั้นคนที่มีแพ็กย่อย
+  // จะถูกมองเป็นบัญชีฟรี ถ้ากดบันทึกพอดีจะโดนลิมิตผิดๆ (ของเดิมเกิดแค่ตอนทำรายการเอง ตัวนี้วิ่งทุกนาทีจึงต้องกัน)
+  var profileSyncBusy = false, profileSyncAt = 0;
+  function profileSyncKey(p){
+    return p ? JSON.stringify([p.points, p.role, p.expires_at, p.legacy_unlimited, p.plan_bundle_expires_at,
+                               p.plan_timers_expires_at, p.feature_expiries, p.server_quota, p.servers]) : '';
+  }
+  function profilePlanKey(p){
+    return p ? JSON.stringify([p.role, p.expires_at, p.legacy_unlimited, p.plan_bundle_expires_at, p.plan_timers_expires_at, p.feature_expiries]) : '';
+  }
+  function syncProfileQuietly(force){
+    if(!App.session || !App.session.id || App.isGuest || !App.profile) return Promise.resolve(false);
+    if(profileSyncBusy || (!force && Date.now() - profileSyncAt < 15000)) return Promise.resolve(false);
+    profileSyncBusy = true;
+    profileSyncAt = Date.now();
+    var uid = App.session.id;
+    // withSkewRetry: นาฬิกาเครื่องผู้ใช้เร็วกว่าเซิร์ฟเวอร์ → token "issued at future" ได้ 401 ชั่วคราว ให้ลองซ้ำเหมือน refreshProfile
+    return withSkewRetry(function(){ return supa.rpc('my_profile'); }).then(function(res){
+      if(res.error || !res.data) return null;
+      var data = res.data;
+      data.feature_expiries = {};
+      return supa.from('package_feature_entitlements').select('feature,expires_at').eq('user_id', uid).then(function(ent){
+        if(ent.error) return null; // สิทธิ์แพ็กย่อยโหลดไม่ได้ = ไม่สลับ (ข้อมูลไม่ครบห้ามใช้) รอบหน้าลองใหม่
+        (ent.data || []).forEach(function(e){
+          if(e.feature==='farm' || e.feature==='accountItems') data.feature_expiries[e.feature] = e.expires_at;
+        });
+        return data;
+      });
+    }).then(function(data){
+      profileSyncBusy = false;
+      if(!data || !App.session || App.session.id !== uid || !App.profile) return false;
+      if(profileSyncKey(data) === profileSyncKey(App.profile)) return false;
+      var planChanged = profilePlanKey(data) !== profilePlanKey(App.profile);
+      App.profile = data;
+      document.getElementById('railAdminBtn').hidden = data.role !== 'admin';
+      renderUser();
+      renderExpiryState();
+      renderFreeQuotaNotes();
+      if(!document.getElementById('view-pricing').hidden) renderPricingPage();
+      if(!document.getElementById('view-settings').hidden) renderSettingsPackages();
+      if(planChanged){
+        // สิทธิ์แพ็กเปลี่ยน (ซื้อ/หมดอายุ/แอดมินแจกวัน) → วาดส่วนที่ล็อกตามแพ็กของหน้าที่เปิดอยู่ใหม่
+        if(!document.getElementById('view-home').hidden) renderMerchantHistory();
+        if(!document.getElementById('view-farm').hidden) renderFarmHistory();
+        if(!document.getElementById('view-items').hidden) renderItemsPage();
+        if(!document.getElementById('view-timers').hidden) renderRoster();
+      }
+      return true;
+    }, function(err){
+      profileSyncBusy = false;
+      console.warn('profile sync', err);
+      return false;
+    });
+  }
+  setInterval(function(){ if(!document.hidden) syncProfileQuietly(); }, 60000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) syncProfileQuietly(); });
+
   // ---------- เติมแต้ม: QR PromptPay ผ่าน TMWEASY Edge Function ----------
   var topupAmount = 500;
   var TOPUP_MIN_AMOUNT = 20;
@@ -7170,11 +7232,13 @@
   function openAdminPage(){
     if(adminPanel){ adminPanel.openAdminPage(); return; }
     if(!adminPanelLoading){
-      adminPanelLoading = import('./admin-panel.js?v=20260924a').then(function(mod){
+      adminPanelLoading = import('./admin-panel.js?v=20260924b').then(function(mod){
         adminPanel = mod.initAdminPanel({
           supa:supa, escapeHtml:escapeHtml, fmtNum:fmtNum, fmtDate:fmtDate, fmtDateTime:fmtDateTime,
           toast:toast, showConfirm:showConfirm, loadServers:loadServers,
           settingsPackageRows:settingsPackageRows, POINTS_REASON:POINTS_REASON,
+          // หลังแอดมินทำรายการที่แต้มเปลี่ยน — อัปเดตแต้ม/แพ็กของแอดมินเองทันที (เผื่อทำกับบัญชีตัวเอง)
+          syncProfile:function(){ syncProfileQuietly(true); },
           // ตัวแปรเดียวกับของ app.js (หน้าแอดมินจัดลำดับเซิร์ฟเวอร์แล้วเขียนกลับ) — ห้ามส่งเป็นค่าคัดลอก
           get SERVER_RATES(){ return SERVER_RATES; },
           set SERVER_RATES(v){ SERVER_RATES = v; }

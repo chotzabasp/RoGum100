@@ -230,6 +230,7 @@ export function initAdminPanel(ctx){
       if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); loadAdminQr(); return; }
       onDone(res);
       loadAdminQr();
+      ctx.syncProfile();
     }).catch(function(err){ adminQrBusy = false; toast('ทำรายการไม่สำเร็จ: '+(err && err.message || err)); });
   }
   function openAdminPage(){ loadAdminQr(); renderAdminTopups(); }
@@ -647,6 +648,7 @@ export function initAdminPanel(ctx){
         document.getElementById('adminGrantFound').hidden = true;
         document.getElementById('adminGrantIdent').value = '';
         loadAdminQr();
+        ctx.syncProfile();
       }).catch(function(err){ adminGrantBusy = false; toast('ทำรายการไม่สำเร็จ: '+(err && err.message || err)); });
     });
   });

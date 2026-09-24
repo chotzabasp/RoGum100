@@ -1964,9 +1964,14 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-timers :is(#statItemsSoldAmount,#statMyShareAmount){display:flex;flex-direction:column;gap:.1rem;line-height:1.45}
 #view-timers :is(#statItemsSoldAmount,#statMyShareAmount) > span:first-child{color:#f4c95d}
 #view-timers :is(#statItemsSoldAmount,#statMyShareAmount) > span:last-child{color:var(--success)}
-/* Keep the existing clear-time action directly below its MVP badge. */
-#view-timers .bc-right > div:has(> .bc-kill-btn){display:flex;flex-direction:column;align-items:center;flex:none;gap:.1rem;transform:translateY(4px)}
-#view-timers .bc-right > div > .bc-delay-pill{margin-top:0;position:relative;top:5px}
+/* Clear-time action sits centred directly below the countdown box (gap clears the warning/overdue outline). */
+#view-timers .bc-time-col{display:flex;flex-direction:column;align-items:center;gap:.7rem;flex:none}
+#view-timers .bc-time-col > .bc-delay-pill{margin-top:0}
+#view-timers .bc-right > div:has(> .bc-kill-btn){display:flex;flex-direction:column;align-items:center;flex:none}
+@media(max-width:1100px){
+  #view-timers .bc-time-col{margin-right:auto}
+  #view-timers .bc-time-col > .bc-time-block{margin-right:0}
+}
 #view-timers .bc-time-block:has(> .state-normal){text-align:center}
 
 /* Custom Boss additions only: existing card geometry and MVP artwork are untouched. */

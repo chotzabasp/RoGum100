@@ -26,7 +26,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260924b">
+<link rel="stylesheet" href="assets/app.css?v=20260924c">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -53,10 +53,12 @@
       <div class="field"><label for="rg-birth">วันเดือนปีเกิด</label><input id="rg-birth" type="date" min="1900-01-01"></div>
     </div>
 
+    <!-- Captcha (Cloudflare Turnstile) — วาดตอนเปิดหน้าต่างนี้ครั้งแรก ถ้ายังไม่ได้ใส่ Site Key จะไม่แสดง -->
+    <div class="auth-captcha" id="authCaptcha" hidden></div>
     <p class="auth-error" id="authError"></p>
     <button class="btn btn-primary btn-block" id="authSubmit">เข้าสู่ระบบ</button>
     <p class="auth-switch" id="authSwitchText">ยังไม่มีบัญชี? <button id="authToggle">สมัครสมาชิก</button></p>
-    <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่<br>เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ<br>ลืมรหัสผ่านกดลิงก์ด้านบน ถ้าอีเมลที่สมัครไว้เข้าไม่ได้จริงให้ติดต่อแอดมิน</p>
+    <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่<br>เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ<br>ลืมรหัสผ่าน กดลิงก์ด้านบนเพื่อติดต่อแอดมิน</p>
   </div>
 </div>
 
@@ -1112,4 +1114,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260924e"></script>
+<script src="assets/app.js?v=20260924h"></script>

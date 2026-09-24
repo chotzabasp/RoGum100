@@ -4639,9 +4639,56 @@
     document.getElementById('authError').textContent = '';
   }
   document.getElementById('authToggle').addEventListener('click', function(){ setAuthMode(!isRegister); });
+  // ---------- Captcha (Cloudflare Turnstile) สำหรับล็อกอิน/สมัครสมาชิก ----------
+  // ใช้คู่กับ "Bot and Abuse Protection" ของ Supabase Auth: เปิดแล้ว signInWithPassword/signUp ต้องแนบ captchaToken
+  // ลำดับติดตั้ง: ใส่ Site Key ตรงนี้ + deploy ก่อน → แล้วค่อยเปิด Captcha ใน Supabase (ใส่ Secret Key)
+  // (Supabase ยังไม่เปิด = ไม่สนใจ token ที่แนบมา จึงปล่อยเว็บขึ้นก่อนได้ปลอดภัย)
+  // ว่าง = ปิดระบบ Captcha ฝั่งหน้าเว็บทั้งหมด (ไม่โหลดสคริปต์ ไม่แสดงกล่อง)
+  // token ใช้ได้ครั้งเดียว/หมดอายุใน 5 นาที → หลังกดล็อกอิน/สมัครทุกครั้งต้องขอใหม่ (resetCaptcha)
+  var TURNSTILE_SITE_KEY = '0x4AAAAAAFCEywRmevjl1Zhj'; // วิดเจ็ต "Gum100" ใน Cloudflare (hostname: gum100.com, localhost)
+  var captcha = { loading:null, widgetId:null, token:null, failed:false };
+  function ensureCaptcha(){
+    if(!TURNSTILE_SITE_KEY) return;
+    var box = document.getElementById('authCaptcha');
+    box.hidden = false;
+    if(captcha.widgetId !== null || captcha.loading) return;
+    captcha.loading = new Promise(function(resolve, reject){
+      if(window.turnstile) return resolve();
+      var s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async = true;
+      s.onload = function(){ resolve(); };
+      s.onerror = function(){ reject(new Error('turnstile load failed')); };
+      document.head.appendChild(s);
+    }).then(function(){
+      captcha.widgetId = window.turnstile.render('#authCaptcha', {
+        sitekey: TURNSTILE_SITE_KEY, theme: 'dark', size: 'flexible', language: 'th',
+        callback: function(t){ captcha.token = t; document.getElementById('authError').textContent = ''; },
+        'expired-callback': function(){ captcha.token = null; },
+        'error-callback': function(){ captcha.token = null; }
+      });
+    }).catch(function(err){
+      captcha.failed = true; captcha.loading = null;
+      console.warn('captcha', err);
+      Track.error('load', 'turnstile: ' + (err && err.message || err));
+    });
+  }
+  function resetCaptcha(){
+    captcha.token = null;
+    if(captcha.widgetId !== null && window.turnstile){ try{ window.turnstile.reset(captcha.widgetId); }catch(e){} }
+  }
+  // ก่อนกดส่ง: เปิด Captcha อยู่แต่ยังไม่ได้ token → บอกให้รอ (โหลดสคริปต์ไม่ขึ้นเลย = ปล่อยผ่าน ให้ Supabase ตัดสิน)
+  function captchaNotReady(errEl){
+    if(!TURNSTILE_SITE_KEY || captcha.failed || captcha.token) return false;
+    errEl.textContent = 'รอระบบยืนยันว่าไม่ใช่บอทสักครู่ (กล่องด้านบนปุ่ม) แล้วกดอีกครั้ง';
+    return true;
+  }
+  function captchaOptions(){ return captcha.token ? { captchaToken: captcha.token } : {}; }
+
   function openAuthModal(register){
     setAuthMode(register);
     document.getElementById('authModal').hidden = false;
+    ensureCaptcha();
   }
   document.getElementById('authModalClose').addEventListener('click', function(){ document.getElementById('authModal').hidden = true; });
   document.getElementById('authModalBackdrop').addEventListener('click', function(){ document.getElementById('authModal').hidden = true; });
@@ -4654,6 +4701,7 @@
     if(/database error saving new user/i.test(msg)) return 'สมัครไม่สำเร็จ — Username นี้อาจเพิ่งมีคนใช้ ลองเปลี่ยนแล้วสมัครใหม่';
     if(/email not confirmed/i.test(msg)) return 'บัญชีนี้ยังไม่ได้ยืนยันอีเมล กรุณากดลิงก์ยืนยันในอีเมลก่อนเข้าสู่ระบบ';
     if(/security purposes|rate limit|only request this/i.test(msg)) return 'ส่งคำขอถี่เกินไป กรุณารออีกสักครู่แล้วลองใหม่';
+    if(/captcha/i.test(msg)) return 'ยืนยันว่าไม่ใช่บอทไม่สำเร็จ — รอกล่องยืนยันด้านบนปุ่มขึ้นเครื่องหมายถูก แล้วกดอีกครั้ง (ถ้าไม่ขึ้นลองรีเฟรชหน้า)';
     return msg;
   }
 
@@ -4714,14 +4762,17 @@
       if(pass !== pass2){ errEl.textContent = 'รหัสผ่านทั้งสองช่องไม่ตรงกัน'; return; }
       var bErr = birthDateError(birth);
       if(bErr){ errEl.textContent = bErr; return; }
+      if(captchaNotReady(errEl)) return;
       authBusy = true;
       clearTimeout(usernameCheckTimer);
       checkUsername(username).then(function(ok){
         if(ok === false){ authBusy = false; errEl.textContent = 'Username นี้มีคนใช้แล้ว'; return; }
         if(ok === null){ authBusy = false; errEl.textContent = 'ตรวจสอบ Username ไม่ได้ ลองใหม่อีกครั้ง'; return; }
         // username/วันเกิด ส่งเป็น metadata → trigger handle_new_user คัดลอกลง profiles ให้
-        return supa.auth.signUp({ email:email, password:pass, options:{ data:{ display_name:name, username:username, birth_date:birth, servers:[server] } } }).then(function(res){
+        var signUpOptions = Object.assign({ data:{ display_name:name, username:username, birth_date:birth, servers:[server] } }, captchaOptions());
+        return supa.auth.signUp({ email:email, password:pass, options:signUpOptions }).then(function(res){
           authBusy = false;
+          resetCaptcha();
           if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
           Track.push('signup');
           Track.flush();
@@ -4739,18 +4790,37 @@
       var ident = document.getElementById('li-email').value.trim().toLowerCase();
       var lpass = document.getElementById('li-pass').value;
       if(!ident || !lpass){ errEl.textContent = 'กรอกข้อมูลให้ครบทุกช่อง'; return; }
+      if(captchaNotReady(errEl)) return;
       authBusy = true;
-      // ไม่มี @ = พิมพ์ username มา → ขอให้เซิร์ฟเวอร์แปลงเป็นอีเมลก่อน (RPC email_for_username)
-      var emailReady = ident.indexOf('@') !== -1 ? Promise.resolve(ident)
-        : supa.rpc('email_for_username', { u:ident }).then(function(r){
-            if(r.error) throw new Error(r.error.message);
-            if(!r.data) throw new Error('ไม่พบ Username นี้');
-            return r.data;
-          });
+      // ถามอีเมลจากเซิร์ฟเวอร์ด้วย username/อีเมล + รหัสผ่าน (email_for_login) — ได้อีเมลกลับมาเฉพาะตอนรหัสถูก
+      // ผิดได้ข้อความกลางๆ ไม่บอกว่า username มีจริงไหม · ใส่ผิดซ้ำโดนล็อกชั่วคราว (นับที่เซิร์ฟเวอร์)
+      // แล้วค่อยล็อกอินกับ Supabase Auth ด้วยอีเมลนั้นตามปกติ (Auth ตรวจรหัสซ้ำอีกชั้น)
+      // (ของเดิม email_for_username คืนอีเมลให้ใครก็ได้แค่รู้ username — ปิดไปแล้วใน 20260924000700_secure_login.sql)
+      var emailReady = supa.rpc('email_for_login', { p_ident: ident, p_password: lpass }).then(function(r){
+        if(r.error){
+          // ยังไม่ได้รัน SQL ติดตั้ง email_for_login → ใช้วิธีเดิมไปก่อน กันล็อกอินด้วย username พังระหว่างอัปเดต
+          if(/email_for_login|PGRST202|Could not find the function/i.test((r.error.message||'')+' '+(r.error.code||''))){
+            if(ident.indexOf('@') !== -1) return ident;
+            return supa.rpc('email_for_username', { u:ident }).then(function(old){
+              if(old.error || !old.data) throw new Error('อีเมล/Username หรือรหัสผ่านไม่ถูกต้อง');
+              return old.data;
+            });
+          }
+          throw new Error(r.error.message);
+        }
+        var d = r.data || {};
+        if(d.ok && d.email) return d.email;
+        if(d.error === 'locked'){
+          var mins = Math.max(1, Math.ceil((Number(d.wait_seconds) || 60) / 60));
+          throw new Error('ใส่รหัสผิดหลายครั้ง กรุณารอ '+mins+' นาทีแล้วลองใหม่');
+        }
+        throw new Error('อีเมล/Username หรือรหัสผ่านไม่ถูกต้อง');
+      });
       emailReady.then(function(lemail){
-        return supa.auth.signInWithPassword({ email:lemail, password:lpass });
+        return supa.auth.signInWithPassword({ email:lemail, password:lpass, options:captchaOptions() });
       }).then(function(res){
         authBusy = false;
+        resetCaptcha();
         if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
         // เตะเซสชันอื่นของบัญชีนี้ทิ้ง กันเอารหัสเดียวไปใช้พร้อมกันหลายเครื่อง
         supa.auth.signOut({ scope: 'others' }).then(function(r){ if(r.error) console.error('signOut others', r.error); });
@@ -6673,9 +6743,22 @@
     if(newP !== newP2){ toast('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'); return; }
     if(newP === oldP){ toast('รหัสผ่านใหม่ต้องต่างจากรหัสเดิม'); return; }
     settingsBusy = true;
-    // เช็ครหัสเดิมด้วยการล็อกอินซ้ำก่อน → เปลี่ยนรหัส → เตะเครื่องอื่นออกตามกติกา 1 เครื่อง
-    supa.auth.signInWithPassword({ email: App.session.email, password: oldP }).then(function(res){
-      if(res.error) throw new Error('รหัสผ่านเดิมไม่ถูกต้อง');
+    // เช็ครหัสเดิมที่ฐานข้อมูล (verify_my_password) → เปลี่ยนรหัส → เตะเครื่องอื่นออกตามกติกา 1 เครื่อง
+    // เดิมเช็คด้วยการล็อกอินซ้ำ แต่พอเปิด Captcha ใน Supabase การล็อกอินต้องมีกล่อง Captcha ซึ่งหน้านี้ไม่มี
+    // (ถ้ายังไม่ได้รัน SQL ติดตั้ง verify_my_password → ใช้วิธีล็อกอินซ้ำแบบเดิมไปก่อน)
+    withSkewRetry(function(){ return supa.rpc('verify_my_password', { p_password: oldP }); }).then(function(r){
+      if(r.error){
+        if(/verify_my_password|PGRST202|Could not find the function/i.test((r.error.message||'')+' '+(r.error.code||''))){
+          return supa.auth.signInWithPassword({ email: App.session.email, password: oldP }).then(function(res){
+            if(res.error) throw new Error('รหัสผ่านเดิมไม่ถูกต้อง');
+          });
+        }
+        throw new Error(r.error.message);
+      }
+      var d = r.data || {};
+      if(d.error === 'locked') throw new Error('ใส่รหัสเดิมผิดหลายครั้ง กรุณารอ '+Math.max(1, Math.ceil((Number(d.wait_seconds)||60)/60))+' นาทีแล้วลองใหม่');
+      if(!d.ok) throw new Error('รหัสผ่านเดิมไม่ถูกต้อง');
+    }).then(function(){
       return supa.auth.updateUser({ password: newP });
     }).then(function(res){
       if(res.error) throw new Error(mapAuthError(res.error.message));

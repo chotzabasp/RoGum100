@@ -7564,7 +7564,24 @@
     this.value = digits ? Number(digits).toLocaleString('th-TH') : '';
   });
 
+  // ลงประกาศใหม่ต้องมีลิงก์ Facebook ก่อน (ให้คนที่สนใจติดต่อได้) — ฐานข้อมูลเช็คซ้ำใน post_announcement()
+  function hasFacebookUrl(){ return !!(App.profile && String(App.profile.facebook_url||'').trim()); }
+  function showFacebookRequiredPopup(){
+    var okBtn = document.getElementById('confirmOkBtn'), cancelBtn = document.getElementById('confirmCancelBtn');
+    var okText = okBtn.textContent, cancelText = cancelBtn.textContent;
+    function restore(){ okBtn.textContent = okText; cancelBtn.textContent = cancelText; }
+    okBtn.textContent = 'ไปหน้าตั้งค่า'; cancelBtn.textContent = 'ปิด';
+    showConfirm('<b>กรุณาใส่ลิงก์ Facebook ที่หน้า "ตั้งค่า" ก่อนลงประกาศ</b><br>เพื่อให้คนที่สนใจติดต่อคุณได้', function(){
+      restore();
+      closePostAnnouncement();
+      switchPage('settings');
+      var fb = document.getElementById('stFacebookUrl');
+      if(fb){ fb.scrollIntoView({ block:'center' }); fb.focus(); }
+    }, restore);
+  }
+
   document.getElementById('postAnnounceSubmitBtn').addEventListener('click', function(){
+    if(!editingAnnouncementId && !hasFacebookUrl()){ showFacebookRequiredPopup(); return; }
     var serverId = document.getElementById('postAnnounceServer').value;
     var buyVal = parseFloat(document.getElementById('postAnnounceBuyPrice').value.replace(/,/g,''));
     if(!(buyVal>0)){ toast('กรอกราคารับ M'); return; }

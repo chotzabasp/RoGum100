@@ -463,8 +463,8 @@
   // ข้อควรรู้: คลัง/การตั้งค่าเป็นแบบ "บันทึกทีหลังชนะ" ถ้าสองเครื่องแก้หัวข้อเดียวกันในเวลาใกล้กันมาก
   // เลยคอยเช็คของใหม่บนคลาวด์ทุกนาที + ทุกครั้งที่กลับมาที่แท็บ ให้ช่วงที่ข้อมูลค้างสั้นที่สุด
   var CLOUD_ENTRY_SETS = {
-    merchant: { table:'merchant_entries', name:'merchantLog', stateKey:'m', get:function(){ return App.merchantLog; } },
-    farm:     { table:'farm_entries',     name:'farmLog',     stateKey:'f', get:function(){ return App.farmLog; } }
+    merchant: { table:'merchant_entries', name:'merchantLog', stateKey:'m', get:function(){ return App.merchantLog; }, plan:function(){ return hasTradePlan(); } },
+    farm:     { table:'farm_entries',     name:'farmLog',     stateKey:'f', get:function(){ return App.farmLog; },     plan:function(){ return hasFarmPlan(); } }
   };
   // ชื่อหัวข้อ = ชื่อใน DataKeys (ใช้เป็นทั้ง key บนคลาวด์และ key แคชใน localStorage)
   var CLOUD_KV = {
@@ -536,7 +536,9 @@
     var saved = store(cloudOutboxKey(), null) || {};
     var out = { kv: saved.kv || {} };
     Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){
-      out[set] = { up: (saved[set] && saved[set].up) || {}, del: (saved[set] && saved[set].del) || {} };
+      // rej = รายการที่ฐานข้อมูลปฏิเสธถาวร (เช่นเกินลิมิตบัญชีฟรีของวันนั้น) — เก็บไว้ในเครื่อง ไม่ส่งซ้ำ
+      // { id: { m: ข้อความจากฐานข้อมูล, n: แจ้งผู้ใช้แล้วหรือยัง } } · ส่งใหม่เองเมื่อมีแพ็กที่ปลดลิมิต
+      out[set] = { up: (saved[set] && saved[set].up) || {}, del: (saved[set] && saved[set].del) || {}, rej: (saved[set] && saved[set].rej) || {} };
     });
     return out;
   }
@@ -547,7 +549,9 @@
     if(Object.keys(ob.kv).length) return true;
     if(isExpiredAccount()) return false; // บัญชีหมดอายุเขียนประวัติไม่ได้ — คิวค้างไว้จนต่ออายุ
     return Object.keys(CLOUD_ENTRY_SETS).some(function(set){
-      return Object.keys(ob[set].up).length || Object.keys(ob[set].del).length;
+      return Object.keys(ob[set].up).length || Object.keys(ob[set].del).length ||
+        // เพิ่งมีแพ็กที่ปลดลิมิต → รายการที่เคยถูกปฏิเสธส่งขึ้นได้แล้ว
+        (Object.keys(ob[set].rej).length && CLOUD_ENTRY_SETS[set].plan());
     });
   }
   function cloudJsonIndex(arr){
@@ -576,10 +580,10 @@
       if(!e || !e.id) return;
       var json = JSON.stringify(e);
       next[e.id] = json;
-      if(snap[e.id] !== json){ ob.up[e.id] = true; delete ob.del[e.id]; }
+      if(snap[e.id] !== json && !ob.rej[e.id]){ ob.up[e.id] = true; delete ob.del[e.id]; }
     });
     Object.keys(snap).forEach(function(id){
-      if(!Object.prototype.hasOwnProperty.call(next, id)){ ob.del[id] = true; delete ob.up[id]; }
+      if(!Object.prototype.hasOwnProperty.call(next, id)){ ob.del[id] = true; delete ob.up[id]; delete ob.rej[id]; }
     });
     cloudSync.snap[set] = next;
     cloudSaveOutbox();
@@ -624,14 +628,76 @@
     return idx;
   }
 
+  // ฐานข้อมูลปฏิเสธ "ตัวรายการ" (ไม่ใช่เน็ต/เซิร์ฟเวอร์ล่ม): trigger raise (P0001 เช่นเกินลิมิตรายวัน /
+  // เวลาไม่ถูกต้อง), check constraint (23514 เช่นใหญ่เกิน 100KB), ข้อมูลผิดรูปแบบ (22xxx) — ส่งซ้ำก็ไม่ผ่าน
+  function cloudIsRowRejection(err){
+    var c = err && err.code;
+    return c === 'P0001' || c === '23514' || (typeof c === 'string' && c.indexOf('22') === 0);
+  }
+  // ส่งทีละชุด (สูงสุด 200) ถ้าชุดไหนโดนปฏิเสธ ทั้งชุดจะไม่ถูกบันทึก → แยกส่งทีละรายการ
+  // รายการปกติขึ้นคลาวด์ตามปกติ ตัวที่ถูกปฏิเสธจริงย้ายไปกอง rej (ไม่ส่งซ้ำ) แล้วแจ้งผู้ใช้
+  function cloudUpsertChunk(set, part, sent){
+    var cfg = CLOUD_ENTRY_SETS[set], ob = cloudSync.outbox;
+    function settle(done){
+      var now = cloudIndexById(cfg.get());
+      done.forEach(function(r){
+        // ระหว่างรอส่งถูกแก้ซ้ำ (JSON ไม่ตรงกับที่ส่งไป) → คงไว้ในคิว รอบหน้าส่งตัวล่าสุด
+        if(!now[r.id] || JSON.stringify(now[r.id]) === sent[r.id]) delete ob[set].up[r.id];
+      });
+    }
+    return supa.from(cfg.table).upsert(part, { onConflict:'user_id,id' }).then(function(res){
+      if(!res.error){ settle(part); return; }
+      if(!cloudIsRowRejection(res.error)) throw res.error;
+      return part.reduce(function(chain, r){
+        return chain.then(function(){
+          return supa.from(cfg.table).upsert([r], { onConflict:'user_id,id' }).then(function(one){
+            if(!one.error){ settle([r]); return; }
+            if(!cloudIsRowRejection(one.error)) throw one.error;
+            delete ob[set].up[r.id];
+            ob[set].rej[r.id] = { m: String(one.error.message || '').slice(0, 200), n: false };
+          });
+        });
+      }, Promise.resolve());
+    });
+  }
+  // แจ้งรายการที่เพิ่งถูกปฏิเสธ (ครั้งเดียวต่อรายการ) — รายการยังอยู่ในเครื่องนี้ ไม่หาย
+  function cloudNotifyRejected(){
+    var ob = cloudSync.outbox, items = [];
+    if(!ob || !App.session) return;
+    Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){
+      var current = cloudIndexById(CLOUD_ENTRY_SETS[set].get());
+      Object.keys(ob[set].rej).forEach(function(id){
+        var r = ob[set].rej[id], e = current[id];
+        if(!e || r.n) return;
+        r.n = true;
+        var what = set === 'merchant'
+          ? 'ซื้อ–ขาย: ' + ((e.lines || []).map(function(l){ return l.name; }).filter(Boolean).join(', ') || '-')
+          : 'ยอดฟาม' + (e.mapName ? ': ' + e.mapName : '');
+        items.push('<li>' + escapeHtml(what) + ' (' + fmtDateTime(e.ts) + ')<br><small>' + escapeHtml(r.m) + '</small></li>');
+      });
+    });
+    if(!items.length) return;
+    cloudSaveOutbox();
+    showFreeLimitPopup('<b>มี ' + items.length + ' รายการที่บันทึกขึ้นคลาวด์ไม่ได้</b>' +
+      '<ul class="confirm-detail cloud-rejected-list">' + items.slice(0, 5).join('') + (items.length > 5 ? '<li>และอีก ' + (items.length - 5) + ' รายการ</li>' : '') + '</ul>' +
+      '<span class="confirm-detail">รายการเหล่านี้ยังอยู่ในเครื่องนี้ แต่จะไม่เห็นในเครื่องอื่น · สมัครแพ็กเกจแล้วระบบจะส่งขึ้นให้อัตโนมัติ · หรือลบรายการนั้นในประวัติได้ตามปกติ</span>');
+  }
+
   function cloudFlush(){
     if(!cloudSync.ready || !App.session) return; // ยังไม่ได้รวมข้อมูลกับคลาวด์ — คิวรอไว้ก่อน
     var userId = cloudSync.userId, ob = cloudSync.outbox, jobs = [];
     var entriesAllowed = !isExpiredAccount();
+    var delJobs = [], upTasks = [];
     Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){
       if(!entriesAllowed) return;
       var cfg = CLOUD_ENTRY_SETS[set];
       var current = cloudIndexById(cfg.get());
+      // รายการที่เคยถูกปฏิเสธ: ถูกลบในเครื่องแล้ว → ลืมไป · มีแพ็กที่ปลดลิมิตแล้ว → ส่งใหม่
+      var unlocked = cfg.plan();
+      Object.keys(ob[set].rej).forEach(function(id){
+        if(!current[id]) delete ob[set].rej[id];
+        else if(unlocked){ delete ob[set].rej[id]; ob[set].up[id] = true; }
+      });
       var rows = [], sent = {};
       Object.keys(ob[set].up).forEach(function(id){
         var e = current[id];
@@ -639,23 +705,34 @@
         sent[id] = JSON.stringify(e);
         rows.push({ user_id:userId, id:id, ts:Math.round(Number(e.ts)||0), server_id:e.serverId || null, data:e });
       });
+      // เรียงตามเวลา — ถ้าเกินลิมิตรายวัน รายการที่บันทึกก่อนได้ที่ก่อน (ตรงกับที่ผู้ใช้เห็นตอนบันทึก)
+      rows.sort(function(a, b){ return a.ts - b.ts; });
       cloudChunks(rows, 200).forEach(function(part){
-        jobs.push(supa.from(cfg.table).upsert(part, { onConflict:'user_id,id' }).then(function(res){
-          if(res.error) throw res.error;
-          var now = cloudIndexById(cfg.get());
-          part.forEach(function(r){
-            // ระหว่างรอส่งถูกแก้ซ้ำ (JSON ไม่ตรงกับที่ส่งไป) → คงไว้ในคิว รอบหน้าส่งตัวล่าสุด
-            if(!now[r.id] || JSON.stringify(now[r.id]) === sent[r.id]) delete ob[set].up[r.id];
-          });
-        }));
+        upTasks.push(function(){ return cloudUpsertChunk(set, part, sent); });
       });
       cloudChunks(Object.keys(ob[set].del), 200).forEach(function(ids){
-        jobs.push(supa.from(cfg.table).delete().eq('user_id', userId).in('id', ids).then(function(res){
+        delJobs.push(supa.from(cfg.table).delete().eq('user_id', userId).in('id', ids).then(function(res){
           if(res.error) throw res.error;
           ids.forEach(function(id){ if(!ob[set].up[id]) delete ob[set].del[id]; });
         }));
       });
     });
+    // ลบก่อน แล้วค่อยเพิ่ม — ถ้าส่งพร้อมกัน รายการใหม่อาจถึงฐานข้อมูลก่อนตัวที่ถูกลบ
+    // แล้วโดนนับว่าเกินลิมิตรายวันของบัญชีฟรี ทั้งที่ในเครื่องลบไปแล้ว
+    if(delJobs.length || upTasks.length){
+      jobs.push(Promise.all(delJobs.map(function(p){
+        return p.then(function(){ return null; }, function(err){ return err || new Error('sync failed'); });
+      })).then(function(delErrors){
+        var delFailed = delErrors.filter(function(x){ return x; })[0];
+        if(delFailed) throw delFailed;
+        return Promise.all(upTasks.map(function(task){
+          return task().then(function(){ return null; }, function(err){ return err || new Error('sync failed'); });
+        })).then(function(upErrors){
+          var upFailed = upErrors.filter(function(x){ return x; })[0];
+          if(upFailed) throw upFailed;
+        });
+      }));
+    }
     var kvNames = Object.keys(ob.kv).filter(function(name){
       if(CLOUD_KV[name]) return true;
       delete ob.kv[name];
@@ -679,6 +756,7 @@
     })).then(function(errors){
       if(cloudSync.userId !== userId) return;
       cloudSaveOutbox();
+      cloudNotifyRejected();
       var failed = errors.filter(function(x){ return x; });
       if(failed.length){ cloudOnFlushError(failed[0]); return; }
       cloudOnFlushOk();
@@ -801,11 +879,12 @@
           var map = cloudIndexById(cfg.get());
           changed.forEach(function(r){ if(r && r.id && r.data) map[r.id] = r.data; });
           var pending = Object.keys(ob.up).length + Object.keys(ob.del).length;
-          if(!pending && Object.keys(map).length === serverCount) return cloudRowsFromMap(map);
+          var localOnly = Object.keys(ob.rej).filter(function(id){ return map[id]; }).length;
+          if(!pending && Object.keys(map).length - localOnly === serverCount) return cloudRowsFromMap(map);
           return cloudFetchIds(cfg.table).then(function(ids){
             var onServer = {};
             ids.forEach(function(id){ onServer[id] = true; });
-            Object.keys(map).forEach(function(id){ if(!onServer[id] && !ob.up[id]) delete map[id]; });
+            Object.keys(map).forEach(function(id){ if(!onServer[id] && !ob.up[id] && !ob.rej[id]) delete map[id]; });
             var missing = ids.filter(function(id){ return !map[id] && !ob.del[id]; });
             return cloudFetchByIds(cfg.table, missing).then(function(rows){
               rows.forEach(function(r){ if(r && r.id && r.data) map[r.id] = r.data; });
@@ -862,6 +941,11 @@
       Object.keys(ob[set].up).forEach(function(id){
         if(local[id]) byId[id] = local[id];
         else delete ob[set].up[id];
+      });
+      // รายการที่ฐานข้อมูลไม่รับ มีแค่ในเครื่องนี้ — ห้ามถูกลบเพราะ "ไม่มีบนคลาวด์"
+      Object.keys(ob[set].rej).forEach(function(id){
+        if(local[id]) byId[id] = local[id];
+        else delete ob[set].rej[id];
       });
       Object.keys(ob[set].del).forEach(function(id){ delete byId[id]; });
       values[cfg.name] = Object.keys(byId).map(function(id){ return byId[id]; })
@@ -941,6 +1025,8 @@
       cloudRefresh({}).catch(function(err){ console.warn('cloud load retry', err); });
       return;
     }
+    // เช่น เพิ่งสมัครแพ็กที่ปลดลิมิต → ส่งรายการที่เคยถูกปฏิเสธขึ้นไปเลย ไม่ต้องรอบันทึกรายการใหม่
+    if(cloudHasFlushableWork()) cloudScheduleFlush(0);
     cloudRun(function(){
       return cloudFetchState().then(function(state){ return state !== cloudSync.knownState; });
     }).then(function(changed){
@@ -2478,7 +2564,8 @@
     else if(cfg.years) d.setFullYear(d.getFullYear()-cfg.years);
     return d.getTime();
   }
-  function todayStartTs(){ var d = new Date(); d.setHours(0,0,0,0); return d.getTime(); }
+  // "วันนี้" = เที่ยงคืนตามเวลาไทย (ไม่ขึ้นกับเขตเวลาในเครื่อง) — ตรงกับที่ฐานข้อมูลนับลิมิตบัญชีฟรีรายวัน
+  function todayStartTs(){ var off = 7*3600000; return Math.floor((Date.now() + off) / 86400000) * 86400000 - off; }
   // บัญชีฟรี (ไม่มีสิทธิ์ตามพารามิเตอร์ allowed) ดูประวัติย้อนหลังได้แค่วันนี้ — ไม่ว่าตัวกรอง
   // ช่วงเวลาที่เลือกไว้จะกว้างแค่ไหนก็ตาม (ข้อมูลจริงยังอยู่ครบ แค่ไม่โชว์เกินวันนี้ให้เห็น)
   function capStartTsForPlan(rawStartTs, allowed){

@@ -895,6 +895,7 @@ body.ro-mode #historyDeleteAll, body.ro-mode .hist-del, body.ro-mode .share-chip
 body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #itemsDetailList [data-action]{opacity:.45;cursor:not-allowed}
 .confirm-message{margin:0 0 1.1rem;font-size:.88rem;color:var(--text);text-align:center;line-height:1.5}
 .confirm-detail{display:block;margin-top:.4rem;font-size:.74rem;color:var(--text-dim)}
+.cloud-rejected-list{margin:.5rem 0 0;padding-left:1.1rem;text-align:left;display:grid;gap:.35rem}.cloud-rejected-list small{color:var(--warn)}
 .confirm-warehouse-note{margin-top:.5rem;font-size:.74rem;color:var(--warning, #f2c94c)}
 .farm-oc-hint-box{width:min(500px,90vw)}
 .farm-oc-hint-message{text-align:left;white-space:nowrap}

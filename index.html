@@ -1119,7 +1119,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .pricing-cross{color:var(--text-dim);font-weight:700;flex:none}
 .pricing-feature-no{opacity:.65}
 .pricing-cta{margin-top:.2rem}
-.pricing-owned-note{margin-top:.5rem;padding:.4rem .6rem;border-radius:var(--radius-s);background:color-mix(in srgb, var(--danger) 14%, transparent);border:1px solid color-mix(in srgb, var(--danger) 40%, transparent);color:var(--danger);font-size:.72rem;font-weight:700;text-align:center;line-height:1.4}
+.pricing-owned-note{margin-top:.5rem;padding:.4rem .6rem;border-radius:var(--radius-s);background:color-mix(in srgb, var(--success) 14%, transparent);border:1px solid color-mix(in srgb, var(--success) 40%, transparent);color:var(--success);font-size:.76rem;font-weight:700;text-align:center;line-height:1.4}
 @media (max-width:760px){ .pricing-grid{grid-template-columns:1fr} }
 
 .admin-topup-list{display:flex;flex-direction:column;gap:.7rem;margin-top:1rem}
@@ -2092,7 +2092,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-badge-best{top:-.8rem;right:1rem;padding:.35rem .85rem;font-size:.75rem;background:linear-gradient(100deg,#8aaeff,#b49bf2);color:#111b32;box-shadow:0 4px 16px #0003}
 #view-pricing .pricing-card-name{min-height:0;font-size:1.2rem;line-height:1.5;font-weight:800}
 #view-pricing .pricing-card-tagline{min-height:4.8em;margin:0;font-size:.82rem;line-height:1.6;font-style:normal;color:#b8c4d7}
-#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-tagline{display:inline-block;min-height:0;margin:.25rem 0 0;font-size:.85rem;line-height:1.4;font-weight:800;color:#0f172a;background:#d9b75d;padding:.15rem .7rem;border-radius:999px;letter-spacing:normal;word-spacing:normal;word-break:normal;overflow-wrap:normal}
 #view-pricing .pricing-card-price{gap:.45rem}
 #view-pricing .pricing-card-amount{font-family:inherit;font-variant-numeric:tabular-nums;font-size:2.85rem;line-height:1.1;letter-spacing:-.03em}
 #view-pricing .pricing-card-best .pricing-card-amount{color:#d6ddff}
@@ -2103,24 +2102,22 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-promo-badge{position:absolute;top:1.25rem;right:1rem;margin:0;padding:.3rem .65rem;border:1px solid #ff737b;border-radius:5px;background:#c92e3c;color:#fff;font-size:.8rem;line-height:1.4;font-weight:900;white-space:nowrap;box-shadow:0 3px 10px #0003}
 #view-pricing .pricing-card:has(.pricing-promo-badge) .pricing-card-name{padding-right:5.25rem}
 #view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.15rem;padding-right:0}
-#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name-main{font-size:3rem;color:#d9b75d}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name-main{font-size:3rem;color:#a9c6ff}
 #view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-name-sub{font-size:1.15rem;color:#fff}
 #view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-promo-badge{position:static;transform:none}
-#view-pricing .pricing-card:has([data-plan-key="timers"]){border:2px solid #d9b75d;padding:calc(1.35rem - 1px);box-shadow:0 0 28px rgba(217,183,93,.18)}
-#view-pricing .pricing-card:has([data-plan-key="bundle"]){border:2px solid #d9b75d;padding:calc(1.35rem - 1px);box-shadow:0 0 28px rgba(217,183,93,.18)}
-#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-name{display:block;padding-right:0;font-size:3rem;text-align:center;color:#d9b75d}
+#view-pricing .pricing-card:has([data-plan-key="timers"]){border:2px solid #9fb2cc;padding:calc(1.35rem - 1px)}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]){border:2px solid #79a7ff;padding:calc(1.35rem - 1px)}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-name{display:block;padding-right:0;font-size:3rem;text-align:center;color:#dfe7f3}
 #view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-promo-badge{position:static}
 #view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-tagline{min-height:0;text-align:center}
-#view-pricing .pricing-card-tagline-badge{display:inline-block;align-self:center;margin:.35rem auto 0;font-size:.85rem;line-height:1.4;font-weight:800;text-align:center;color:#0f172a;background:#d9b75d;padding:.15rem .7rem;border-radius:999px}
 #view-pricing .pricing-promo-heading{min-height:9.1rem;display:flex;flex-direction:column;gap:.7rem}
-#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-original{font-size:1.55rem;font-weight:500;color:#b9c4d5}
-#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-original{font-size:1.55rem;font-weight:500;color:#b9c4d5}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-original,
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-original{font-size:1.2rem;font-weight:500;color:#8a96a9}
 #view-pricing .pricing-card-best.pricing-card:has(.pricing-promo-badge) .pricing-card-name{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.15rem;padding-right:0}
 #view-pricing .pricing-card-best .pricing-card-name-main{font-size:3rem;color:#d9b75d}
 #view-pricing .pricing-card-best .pricing-card-name-sub{font-size:.93rem;color:#fff}
-#view-pricing .pricing-card-best .pricing-card-tagline{display:inline-block;align-self:center;min-height:0;margin:.25rem auto 0;font-size:.85rem;line-height:1.4;font-weight:800;text-align:center;color:#0f172a;background:#d9b75d;padding:.15rem .7rem;border-radius:999px;letter-spacing:normal;word-spacing:normal}
 #view-pricing .pricing-card-best .pricing-promo-badge{position:static}
-#view-pricing .pricing-card-best .pricing-original{font-size:1.55rem;font-weight:500;color:#b9c4d5}
+#view-pricing .pricing-card-best .pricing-original{font-size:1.2rem;font-weight:500;color:#a39a86}
 #view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.15rem}
 #view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name-main{font-size:3rem}
 #view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name-sub{font-size:1.15rem;color:#d3ddef}
@@ -2142,17 +2139,59 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-card:has([data-plan-key="timers"]),
 #view-pricing .pricing-card:has([data-plan-key="bundle"]){
   background:linear-gradient(150deg,rgba(38,54,83,.72),rgba(25,35,56,.96) 68%);
-  border-color:#d9b75d;
   box-shadow:inset 0 1px 0 rgba(190,213,255,.08),0 8px 22px rgba(25,48,95,.16)
 }
-#view-pricing .pricing-card:has([data-plan-key="timers"]):hover,
-#view-pricing .pricing-card:has([data-plan-key="bundle"]):hover{border-color:#eccb7f;box-shadow:inset 0 1px 0 rgba(210,226,255,.12),0 10px 26px rgba(45,83,150,.24)}
-#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-amount,
+/* ระดับแพ็ก: จับเวลาบอส = เงิน, 3 in 1 = ฟ้า, 4 in 1 = ทอง (ทองมีใบเดียว ให้สายตาหยุดที่แพ็กแนะนำ) */
+#view-pricing .pricing-card:has([data-plan-key="timers"]):hover{border-color:#c6d4e8;box-shadow:inset 0 1px 0 rgba(210,226,255,.12),0 12px 28px rgba(20,32,55,.35)}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]):hover{border-color:#a3c2ff;box-shadow:inset 0 1px 0 rgba(210,226,255,.12),0 12px 28px rgba(45,83,150,.3)}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-card-amount{color:#e6edf7}
 #view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-card-amount{color:#c2d6ff}
+#view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-badge-best{background:#46546b;color:#e6edf7}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-badge-best{background:#79a7ff;color:#0e1a33}
 #view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-cta,
-#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-cta{background:linear-gradient(100deg,#344f7d,#3b5f91);border-color:#6f8fca;box-shadow:0 4px 14px rgba(61,102,173,.18)}
+#view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-cta{background:rgba(121,167,255,.16);border-color:#79a7ff;color:#eef3ff}
 #view-pricing .pricing-card:has([data-plan-key="timers"]) .pricing-check,
 #view-pricing .pricing-card:has([data-plan-key="bundle"]) .pricing-check{color:#82d5c0}
+#view-pricing .pricing-card{transition:transform 200ms ease,box-shadow 200ms ease,border-color 200ms ease}
+#view-pricing .pricing-card:hover{transform:translateY(-4px)}
+#view-pricing .pricing-card-best{border-width:3px;padding:calc(1.35rem - 2px);box-shadow:inset 0 1px 0 rgba(255,235,177,.14),0 0 0 1px rgba(217,183,93,.25),0 0 42px rgba(217,183,93,.32);z-index:1}
+#view-pricing .pricing-card-best:hover{border-color:#f0cf7c;box-shadow:inset 0 1px 0 rgba(255,235,177,.18),0 0 0 1px rgba(240,207,124,.35),0 0 54px rgba(217,183,93,.42)}
+#view-pricing .pricing-card-best .pricing-badge-best{padding:.4rem 1rem;font-size:.8rem;font-weight:900;background:linear-gradient(100deg,#f2d488,#c99a3c);color:#2b1d05;box-shadow:0 4px 16px rgba(201,154,60,.35)}
+#view-pricing .pricing-card-best .pricing-cta{background:linear-gradient(100deg,#f0cf7c,#c99a3c);color:#241703;border-color:#f5dc9c;box-shadow:0 6px 20px rgba(201,154,60,.3)}
+@media (min-width:901px){
+  #view-pricing .pricing-card-best{transform:scale(1.03)}
+  #view-pricing .pricing-card-best:hover{transform:scale(1.03) translateY(-4px)}
+}
+@media (prefers-reduced-motion:reduce){
+  #view-pricing .pricing-card{transition:none}
+  #view-pricing .pricing-card:hover{transform:none}
+  #view-pricing .pricing-card-best:hover{transform:none}
+}
+@media (min-width:901px) and (prefers-reduced-motion:reduce){
+  #view-pricing .pricing-card-best,#view-pricing .pricing-card-best:hover{transform:scale(1.03)}
+}
+/* ราคาเฉลี่ยต่อวัน: ป้ายเน้นสีเขียวใต้ราคา */
+#view-pricing .pricing-bundle-price .pricing-perday{margin:0;font-size:.8rem;font-weight:700;color:#8fe0bf;background:rgba(74,196,146,.12);border:1px solid rgba(74,196,146,.3);border-radius:999px;padding:.2rem .75rem;white-space:nowrap}
+/* แถวระบบในการ์ดแพ็กรวม */
+#view-pricing .pricing-modules{list-style:none;margin:.25rem 0 0;padding:1rem 0 0;border-top:1px solid #ffffff14;display:flex;flex-direction:column;gap:.5rem}
+#view-pricing .pricing-module{display:flex;align-items:center;gap:.7rem;padding:.55rem .7rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+#view-pricing .pricing-module .icon{width:22px;height:22px;flex:none;color:#9fc0ff}
+#view-pricing .pricing-card-best .pricing-module .icon{color:#f0cf7c}
+#view-pricing .pricing-module-text{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.35}
+#view-pricing .pricing-module-text b{font-size:.88rem;color:#eef3fa}
+#view-pricing .pricing-module-text small{font-size:.72rem;color:#aab6c8}
+#view-pricing .pricing-module-mark{flex:none;font-weight:800;color:#82d5c0}
+#view-pricing .pricing-module-off{background:transparent;border-style:dashed}
+#view-pricing .pricing-module-off .icon,#view-pricing .pricing-module-off .pricing-module-text b,#view-pricing .pricing-module-off .pricing-module-mark{color:#6b778a}
+#view-pricing .pricing-module-off .pricing-module-text small{color:#6b778a}
+#view-pricing .pricing-modules + .pricing-features{margin-top:.1rem}
+#view-pricing .pricing-features-spacer{flex:1}
+#view-pricing .pricing-details-toggle{align-self:center;display:inline-flex;align-items:center;gap:.3rem;margin-top:.1rem;padding:.35rem .9rem;border-radius:999px;border:1px solid #3d4a61;background:transparent;color:#b9c6da;font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;transition:background-color 160ms ease,color 160ms ease,border-color 160ms ease}
+#view-pricing .pricing-details-toggle:hover{background:rgba(255,255,255,.06);color:#eef3fa;border-color:#58678a}
+#view-pricing .pricing-details-toggle:focus-visible{outline:3px solid #c1d3ff;outline-offset:2px}
+#view-pricing .pricing-details-toggle + .pricing-features{border-top:none;padding-top:.25rem}
+#view-pricing .pricing-features > .pricing-feature-divider:first-child{border-top:none;margin-top:0;padding-top:0}
+#view-pricing .pricing-pay-note{display:block;margin-top:.45rem;text-align:center;font-size:.7rem;color:#8f9bb0}
 #view-pricing .pricing-cta:focus-visible,#view-pricing .seg-btn:focus-visible{outline:3px solid #c1d3ff;outline-offset:3px}
 #view-pricing .pricing-cta:disabled{opacity:1;color:#aebace;background:#222c3b;border-color:#3b4658;cursor:default}
 #view-pricing .pricing-card:nth-child(n+4){padding-block:1rem;gap:.5rem}
@@ -2210,6 +2249,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-settings .settings-servers-head-actions{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap}
 #view-settings .settings-servers .panel-head .party-panel-summary{font-size:.78rem;color:#a9c4f5;font-weight:700;white-space:nowrap}
 #view-settings .settings-servers-head-actions .settings-package-upgrade{padding:.3rem .65rem;min-height:0;font-size:.72rem;white-space:nowrap}
+#view-settings .settings-package-upgrade:disabled,#view-settings .settings-package-upgrade:disabled:hover{background:var(--surface-2);border-color:var(--border);color:var(--text-dim);box-shadow:none;cursor:not-allowed}
 #view-settings .settings-servers .settings-note{margin:.15rem 0 .65rem;font-size:.72rem}
 #view-settings .settings-servers .server-pick-list{gap:.35rem;margin-bottom:.55rem}
 #view-settings .settings-servers .server-pick-list .share-chip{font-size:.78rem;padding:.28rem .62rem}
@@ -3134,7 +3174,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
             <div class="settings-servers-head-actions">
               <span class="party-panel-summary" id="stServersSummary"></span>
               <!-- ซื้อช่องเซิร์ฟเวอร์เพิ่มแบบเดียวกับปุ่ม "+ เพิ่มเซิร์ฟเวอร์" หน้าแรก (buyServerSlotFlow มี
-                   popup ยืนยันก่อนหักแต้มอยู่แล้ว จึงกดได้เสมอแม้โควต้ายังไม่เต็ม ไม่ต้องคอยซ่อน/ปิดปุ่มเอง) -->
+                   popup ยืนยันก่อนหักแต้มอยู่แล้ว จึงกดได้แม้โควต้ายังไม่เต็ม — ปิดปุ่มเฉพาะตอนครบเพดาน 12 ช่อง ดู updateServersSummary) -->
               <button type="button" class="btn btn-sm settings-package-upgrade" id="stAddServerSlotBtn">+ เพิ่มเซิร์ฟเวอร์</button>
             </div>
           </div>
@@ -3714,6 +3754,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // การ์ดใหม่จะซ้ำกับเซิร์ฟแรกไปก่อน จนกว่าผู้ใช้จะไปเลือกเซิร์ฟที่ 2 เองที่หน้าตั้งค่า
   // (แต้มหักที่ฝั่งเซิร์ฟเวอร์เท่านั้น ตรงนี้เช็คก่อนแค่เพื่อไม่ต้องยิง RPC ทิ้ง)
   function buyServerSlotFlow(){
+    // เพดานช่องเท่ากับจำนวนการ์ดเรทสูงสุด — ซื้อเกินนี้ไม่มีที่ใช้ (ฐานข้อมูลก็บล็อกซ้ำใน buy_server_slot)
+    if(serverQuota() >= MAX_RATE_CHIP_SLOTS){
+      toast('มีช่องเซิร์ฟเวอร์ครบ '+MAX_RATE_CHIP_SLOTS+' ช่องแล้ว (สูงสุด)');
+      return;
+    }
     var have = (App.profile && App.profile.points) || 0;
     if(have < SERVER_SLOT_COST){
       toast('แต้มไม่พอ (ต้องการ '+SERVER_SLOT_COST+' แต้ม · มีอยู่ '+fmtNum(have)+')');
@@ -9475,6 +9520,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       ] },
     // New monthly-only packages are supported by Production buy_plan.
     { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาม</span>', monthly:99, promoMonthly:99, badge:'สายฟาร์ม',
+      modules:['farm'],
       tagline:'สายฟามห้ามพลาด', features:[
         'บันทึกยอดฟาม ต้นทุน กำไร ในแต่ละรอบ',
         'บันทึกได้ทั้งแบบ Zeny และบาท ไม่ต้องแยกบันทึก ไม่จำกัด',
@@ -9487,6 +9533,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         {divider:'หมวดอื่นๆ ใช้สิทธิ์แบบแพ็กฟรีทั้งหมด'}
       ] },
     { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:149, promoMonthly:149, badge:'จัดการซื้อขาย',
+      modules:['investor','items'],
       tagline:'พ่อค้า-แม่ค้าหัวเครดิตและคนทั่วไป', features:[
         'บันทึกรายการซื้อ–ขาย M / ไอเทม / อื่นๆ ไม่จำกัด',
         'ดูรายการทั้งหมดพร้อมคำนวณกำไรสุทธิ',
@@ -9502,12 +9549,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         {divider:'หมวดอื่นๆ ใช้สิทธิ์แบบแพ็กฟรีทั้งหมด'}
       ] },
     { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาม</span>', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'ยอดนิยม',
-      tagline:'สุดคุ้ม',
-      features:[
-        'ได้รับฟังก์ชันหลักของ บัญชีนักลงทุน + คลังไอเทม + ยอดนักฟาม',
-        {no:'จับเวลาบอส เหมือนฟังก์ชันแพ็กฟรีทั้งหมด'}
-      ] },
+      // แพ็กรวม: บอกว่าได้ระบบไหนบ้างด้วยแถวระบบ (modules) แทนรายการฟีเจอร์ยาว — ระบบที่ไม่ได้แสดงเป็นสีเทา
+      modules:['investor','items','farm'],
+      // รายละเอียด (ส่วนที่กดดูได้) = รวมรายการของแพ็กย่อยที่อยู่ในแพ็กนี้ แบ่งหัวข้อตามระบบ
+      detailFrom:[['ยอดนักฟาม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems']] },
     { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'สายล่าบอส',
+      modules:['timers'],
       tagline:'ระบบล่าบอสครบในทีเดียว',
       features:[
         'เพิ่มบอสได้ไม่จำกัดจำนวน',
@@ -9521,13 +9568,34 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         'ติดตามส่วนแบ่งของปาร์ตี้',
         'ปักหมุดจุดบอสตายบนแผนที่'
       ] },
-    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาม/จับเวลาบอส</span>', monthly:349, yearly:3490, promoMonthly:175, promoYearly:1750, best:true, badge:'คุ้มที่สุด',
-      tagline:'สุดคุ้มที่สุด',
-      features:[
-        'ได้รับฟังก์ชันหลักของ บัญชีนักลงทุน + คลังไอเทม + ยอดนักฟาม + จับเวลาบอส'
-      ] }
+    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาม/จับเวลาบอส</span>', monthly:349, yearly:3490, promoMonthly:175, promoYearly:1750, best:true, badge:'แนะนำ · คุ้มที่สุด',
+      modules:['investor','items','farm','timers'],
+      detailFrom:[['ยอดนักฟาม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems'],['จับเวลาบอส','timers']] }
   ];
+  // แถวระบบในการ์ดแพ็กรวม — ไอคอนชุดเดียวกับเมนูด้านซ้าย (ยอดนักฟาม = ธนู, จับเวลาบอส = นาฬิกา)
+  var PRICING_MODULES = [
+    { key:'investor', name:'บัญชีนักลงทุน',
+      icon:'<rect x="2" y="4" width="17" height="13" rx="2"/><path d="M7 6v10"/><path d="M9 8.3c-.5-.7-1.6-1-2.5-.7-1.3.4-1.7 1.8-.6 2.5.6.4 1.6.5 2.4.7 1.3.4 1.7 1.8.4 2.5-.9.5-2 .3-2.6-.4"/><path d="M12 7.5h5"/><path d="M12 10.5h3"/><path d="M14 21h3l6-6a2 2 0 00-3-3l-6 6z"/><path d="M18.5 13.5l3 3"/>' },
+    { key:'items', name:'คลังไอเทม',
+      icon:'<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/>' },
+    { key:'farm', name:'ยอดนักฟาม',
+      icon:'<path d="M17 3h4v4m0-4L6 18m-3 0h3v3m10.5-1c1.576-1.576 2.5-4.095 2.5-6.5C19 8.69 15.31 5 10.5 5C8.085 5 5.578 5.913 4 7.5z"/>' },
+    { key:'timers', name:'จับเวลาบอส',
+      icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>' }
+  ];
+  function pricingModulesHtml(p){
+    if(!p.modules) return '';
+    return '<ul class="pricing-modules">'+PRICING_MODULES.map(function(m){
+      var on = p.modules.indexOf(m.key) !== -1;
+      return '<li class="pricing-module'+(on?'':' pricing-module-off')+'">'+
+        '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+m.icon+'</svg>'+
+        '<span class="pricing-module-text"><b>'+m.name+'</b><small>'+(on ? 'ใช้งานแบบไม่จำกัด' : 'ใช้สิทธิ์แบบแพ็กฟรี')+'</small></span>'+
+        '<span class="pricing-module-mark" aria-label="'+(on?'ได้':'ไม่ได้')+'">'+(on?'✓':'—')+'</span>'+
+      '</li>';
+    }).join('')+'</ul>';
+  }
   var pricingCycle = 'monthly';
+  var pricingDetailsOpen = false; // รายละเอียดในการ์ดแพ็ก (ยกเว้นฟรี) ซ่อนไว้เป็นค่าเริ่มต้น
 
   // วันสิ้นสุดโปร (ระบุเขตเวลา) — หลังจากนี้หน้าเว็บแสดงราคาปกติ และเซิร์ฟเวอร์ (buy_plan → promo_active) หักราคาปกติ
   // ฝั่งเซิร์ฟเวอร์ตั้งให้สิ้นสุดช้ากว่านี้ 5 นาที กันนาฬิกาเครื่องผู้ใช้เร็วกว่าแล้วโดนหักแพงกว่าราคาที่เห็น
@@ -9590,14 +9658,19 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     grid.innerHTML = [PRICING_PLANS[4],PRICING_PLANS[3],PRICING_PLANS[5]].concat(PRICING_PLANS.slice(0,3)).map(function(p){
       var monthly = pricingCycle==='monthly' || (p.yearly == null && p.displayYearly == null);
       var unit = monthly ? '/ เดือน' : '/ ปี';
-      var features = (p.features||[]).map(function(f){
+      // แพ็กรวม (3 in 1 / 4 in 1) ไม่มีรายการของตัวเอง — ดึงรายการของแพ็กย่อยมารวม ใส่หัวข้อระบบคั่น
+      // (ตัดบรรทัด "หมวดอื่นๆ ใช้สิทธิ์แบบแพ็กฟรี" ของแพ็กย่อยทิ้ง เพราะแพ็กรวมได้ระบบนั้นครบแล้ว)
+      var featureList = p.detailFrom ? p.detailFrom.reduce(function(out, pair){
+        var src = PRICING_PLANS.find(function(x){ return x.key===pair[1]; });
+        return out.concat([{divider:pair[0]}], ((src && src.features)||[]).filter(function(f){ return !(f && f.divider); }));
+      }, []) : (p.features||[]);
+      var features = featureList.map(function(f){
         if(f && f.divider) return '<li class="pricing-feature-divider">'+escapeHtml(f.divider)+'</li>';
         if(f && f.no) return '<li class="pricing-feature-no"><span class="pricing-cross">✕</span><span>'+escapeHtml(f.no)+'</span></li>';
         return '<li><span class="pricing-check">✓</span><span>'+escapeHtml(f)+'</span></li>';
       }).join('');
       var taglineHtml = p.tagline ? '<div class="pricing-card-tagline">'+escapeHtml(p.tagline)+'</div>' : '';
-      if(p.key==='bundle') taglineHtml = '';
-      if(p.key==='timers') taglineHtml += '<div class="pricing-card-tagline-badge">คุ้ม</div>';
+      var ownedUntil = p.free ? 0 : planActiveUntil(p.key);
       var priceHtml, ctaHtml;
       if(p.free){
         priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">ฟรี</span></div>';
@@ -9609,29 +9682,45 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         priceHtml = (original > price ? '<div class="pricing-card-price"><span class="pricing-original">'+fmtNum(original)+' บ'+unit+'</span><span class="pricing-promo-badge">ลด 50%</span></div>' : '')+
           '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
           '<div class="pricing-perday">เฉลี่ย ~'+perDay.toFixed(1)+' บ/วัน</div>';
-        var ctaLabel = p.best ? 'เลือกแพ็กนี้' : 'ซื้อแพ็กนี้';
+        // มีแพ็กนี้อยู่แล้ว = กดซื้อคือต่ออายุ — บอกตรงๆ บนปุ่ม พร้อมราคาแต้ม
+        var ctaLabel = (ownedUntil ? 'ต่ออายุ' : 'ซื้อเลย')+' · '+fmtNum(price)+' แต้ม';
         // p.name อาจมี <span> ฝังไว้กันตัดคำกลางคำ (การ์ด 4 in 1) — ตัด tag ออกก่อนใส่ใน attribute
         // เพราะ data-plan-name ใช้เป็นข้อความล้วนในกล่องยืนยัน/toast ไม่ใช่ HTML ที่ต้อง render
         var planNamePlain = p.name.replace(/<[^>]*>/g, '');
         ctaHtml = p.yearly==null && pricingCycle==='yearly'
           ? (p.displayYearly != null ? '<small class="pricing-pending-note">รอเปิดใช้งานการซื้อรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ยังไม่เปิดซื้อรายปี</button>' : '<small class="pricing-pending-note">แสดงราคาต่อเดือน · ยังไม่มีแพ็กรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>รองรับเฉพาะรายเดือน</button>')
-          : '<button type="button" class="btn '+(p.best?'btn-primary':'btn-ghost')+' btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+escapeHtml(planNamePlain)+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>';
+          : '<button type="button" class="btn btn-ghost btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+escapeHtml(planNamePlain)+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>';
       }
-      var ownedUntil = p.free ? 0 : planActiveUntil(p.key);
-      var ownedHtml = ownedUntil ? '<div class="pricing-owned-note">⚠ ใช้งานอยู่แล้ว'+(ownedUntil===Infinity ? '' : ' ถึง '+fmtDate(ownedUntil))+' — กดซื้อเพื่อต่ออายุเพิ่ม</div>' : '';
+      // มีแพ็กนี้อยู่แล้ว: ป้ายสีเขียวบอกวันหมดอายุ (ไม่บล็อกปุ่ม — กดซื้อซ้ำ = ต่ออายุเพิ่ม)
+      var ownedHtml = ownedUntil ? '<div class="pricing-owned-note">✓ ใช้งานอยู่'+(ownedUntil===Infinity ? ' (ไม่จำกัดเวลา)' : ' ถึง '+fmtDate(ownedUntil))+'</div>' : '';
+      var payNote = (!p.free && ctaHtml.indexOf('disabled') === -1) ? '<small class="pricing-pay-note">จ่ายด้วยแต้ม · ไม่ต่ออายุอัตโนมัติ</small>' : '';
       return '<div class="pricing-card'+(p.best?' pricing-card-best':'')+'" data-plan-key="'+p.key+'">'+
         (p.badge ? '<span class="pricing-badge-best'+(p.best?'':' pricing-badge-secondary')+'">'+escapeHtml(p.badge)+'</span>' : '')+
         (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '<div class="pricing-promo-heading">' : '')+
-        '<div class="pricing-card-name">'+p.name+(p.key==='bundle' ? ' <span class="pricing-card-tagline">'+escapeHtml(p.tagline)+'</span>' : '')+'</div>'+
+        '<div class="pricing-card-name">'+p.name+'</div>'+
         taglineHtml+
         (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '</div>' : '')+
         (p.key==='bundle' || p.key==='timers' || p.key==='all' || p.key==='farm' || p.key==='accountItems' ? '<div class="pricing-bundle-price">'+priceHtml+'</div>' : priceHtml)+
-        '<ul class="pricing-features">'+features+'</ul>'+
+        pricingModulesHtml(p)+
+        // การ์ดจ่ายเงิน: รายละเอียดซ่อนไว้ก่อน กดปุ่มเดียวกางพร้อมกันทุกใบ (การ์ดแถวเดียวกันสูงเท่ากันเสมอ)
+        // การ์ดฟรีแสดงรายการเต็มตลอด
+        (p.free ? '<ul class="pricing-features">'+features+'</ul>'
+          : (features
+              ? '<button type="button" class="pricing-details-toggle" aria-expanded="'+pricingDetailsOpen+'">'+(pricingDetailsOpen ? 'ซ่อนรายละเอียด ▴' : 'ดูรายละเอียด ▾')+'</button>'+
+                (pricingDetailsOpen ? '<ul class="pricing-features">'+features+'</ul>' : '<div class="pricing-features-spacer"></div>')
+              : '<div class="pricing-features-spacer"></div>'))+
         ownedHtml+
         ctaHtml+
+        payNote+
       '</div>';
     }).join('');
   }
+
+  document.getElementById('pricingGrid').addEventListener('click', function(e){
+    if(!e.target.closest('.pricing-details-toggle')) return;
+    pricingDetailsOpen = !pricingDetailsOpen;
+    renderPricingPage();
+  });
 
   document.getElementById('pricingCycleToggle').addEventListener('click', function(e){
     var btn = e.target.closest('[data-cycle]');
@@ -9831,6 +9920,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var el = document.getElementById('stServersSummary');
     var count = (App.profile && App.profile.servers || []).length;
     el.textContent = 'เล่นอยู่ '+count+'/'+serverQuota();
+    // ครบเพดานแล้วปิดปุ่มซื้อช่อง กันกดซื้อเกินจนเสียแต้มฟรี
+    var btn = document.getElementById('stAddServerSlotBtn');
+    var full = serverQuota() >= MAX_RATE_CHIP_SLOTS;
+    btn.disabled = full;
+    btn.textContent = full ? 'ครบ '+MAX_RATE_CHIP_SLOTS+' ช่องแล้ว' : '+ เพิ่มเซิร์ฟเวอร์';
   }
   document.addEventListener('click', function(e){
     var chip = e.target.closest('[data-server-pick]');
@@ -10166,10 +10260,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 
   // ---------- โหมดผู้เยี่ยมชม (ยังไม่ล็อกอิน): ดูได้เฉพาะที่ระบุไว้ ที่เหลือกดแล้วเด้ง popup login ทันที ----------
   // GUEST_ALLOW = ตัวฟอร์มล็อกอิน/สมัคร · GUEST_VIEW_ALLOW = ที่ผู้เยี่ยมชมกดดูได้: เมนูซ้ายทุกหน้า (ยกเว้นตั้งค่า),
-  // สลับรายเดือน/รายปีในหน้าเติมแพ็กเกจ, ช่องค้นหาบอส · ปุ่มซื้อแพ็กเกจ/บันทึก/เพิ่มบอส/ตัวกรอง ยังเด้งล็อกอิน
+  // สลับรายเดือน/รายปี + ดูรายละเอียดแพ็กในหน้าเติมแพ็กเกจ, ช่องค้นหาบอส · ปุ่มซื้อแพ็กเกจ/บันทึก/เพิ่มบอส/ตัวกรอง ยังเด้งล็อกอิน
   // (เพิ่มรายการที่ให้ผู้เยี่ยมชมกดได้ ต้องเพิ่มที่นี่เท่านั้น — ค่าเริ่มต้นคือกันทั้งหมด)
   var GUEST_ALLOW = '#authModal, #forgotPasswordOverlay, #recoveryPasswordOverlay, #guestLoginBtn, #guestRegisterBtn';
-  var GUEST_VIEW_ALLOW = '.rail-btn:not([data-page="settings"]), #pricingCycleToggle, #searchInput, .rail-logo-fb';
+  var GUEST_VIEW_ALLOW = '.rail-btn:not([data-page="settings"]), #pricingCycleToggle, .pricing-details-toggle, #searchInput, .rail-logo-fb';
   function guestBlock(e){
     if(!App.isGuest || e.target.closest(GUEST_ALLOW) || e.target.closest(GUEST_VIEW_ALLOW)) return;
     e.preventDefault();

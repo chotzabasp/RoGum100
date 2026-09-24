@@ -3623,6 +3623,54 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   );
   var CustomAPI = (await import('./assets/custom-boss-api.js')).createCustomBossAPI(supa);
 
+  // ---------- บันทึกการใช้งานเว็บ (ส่งเข้า log_events → แดชบอร์ดแอดมิน admin.html) ----------
+  // เก็บแค่: เข้าเว็บ, เปิดหน้าไหน/อยู่นานเท่าไหร่, ขั้นตอนการซื้อแพ็กเกจ, สมัครสมาชิก
+  // แต่ละเครื่องมีรหัสสุ่ม (ไม่ใช่ข้อมูลส่วนตัว) · ส่งเป็นชุดทุก 10 วินาที/ตอนสลับแท็บ · ส่งไม่ผ่านก็ทิ้ง ไม่กระทบการใช้งาน
+  // ชื่อเหตุการณ์/หน้าต้องอยู่ในรายการที่ log_events อนุญาต (supabase/migrations/20260924000400_app_events.sql)
+  var Track = (function(){
+    var vid, queue = [], timer = null, curPage = null, acc = 0;
+    var visibleSince = document.hidden ? 0 : Date.now();
+    try{
+      vid = localStorage.getItem('gum100_vid');
+      if(!vid || !/^[A-Za-z0-9-]{8,40}$/.test(vid)){
+        vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12));
+        localStorage.setItem('gum100_vid', vid);
+      }
+    }catch(e){ vid = 'tmp-'+Math.random().toString(36).slice(2,12); }
+    function flush(){
+      if(!queue.length) return;
+      var batch = queue.splice(0, 30);
+      supa.rpc('log_events', { p_visitor: vid, p_events: batch }).then(function(){}, function(){});
+      if(queue.length) flush();
+    }
+    function push(e, page, value, meta){
+      queue.push({ e:e, p:page||null, v:value==null ? null : Math.max(0, Math.round(value)), m:meta||null });
+      if(queue.length >= 25){ flush(); return; }
+      if(!timer) timer = setTimeout(function(){ timer = null; flush(); }, 10000);
+    }
+    // เวลาที่อยู่ในหน้าเดิม: นับเฉพาะตอนแท็บเปิดดูอยู่ ส่งทีละช่วง (ตอนเปลี่ยนหน้า/ซ่อนแท็บ) ช่วงละไม่เกิน 30 นาที
+    function sendPageTime(){
+      if(visibleSince){ acc += Date.now() - visibleSince; visibleSince = document.hidden ? 0 : Date.now(); }
+      var s = Math.min(1800, Math.round(acc/1000));
+      acc = 0;
+      if(curPage && s >= 2) push('page_time', curPage, s);
+    }
+    function page(p){
+      if(!p || p === curPage) return;
+      sendPageTime();
+      curPage = p;
+      push('page_view', p);
+    }
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden){ sendPageTime(); visibleSince = 0; flush(); }
+      else visibleSince = Date.now();
+    });
+    try{
+      if(!sessionStorage.getItem('gum100_visit')){ sessionStorage.setItem('gum100_visit', '1'); push('visit'); }
+    }catch(e){ push('visit'); }
+    return { push:push, page:page, flush:flush };
+  })();
+
   var pad2 = function(n){ return String(n).padStart(2,'0'); };
   var todayKey = function(ts){ return new Date(ts).toDateString(); };
   var dayShift = function(ts, days){ return new Date(new Date(ts).setDate(new Date(ts).getDate()+days)); };
@@ -8253,6 +8301,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         return supa.auth.signUp({ email:email, password:pass, options:{ data:{ display_name:name, username:username, birth_date:birth, servers:[server] } } }).then(function(res){
           authBusy = false;
           if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
+          Track.push('signup');
+          Track.flush();
           // โปรเจกต์เปิด "ยืนยันอีเมล" ไว้: สมัครแล้วยังไม่มีเซสชันจนกว่าจะกดลิงก์ในอีเมล → พาไปหน้าล็อกอินพร้อมบอกให้ไปยืนยัน
           if(!res.data.session){
             document.getElementById('authToggle').click();
@@ -9508,6 +9558,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   var GUEST_PAGES = ['home','farm','timers','items','pricing'];
   function switchPage(page){
     if((!App.session || !App.session.id) && GUEST_PAGES.indexOf(page)===-1) page = 'home';
+    Track.page(page);
     var tfUser = App.session ? App.session.id : null;
     var resetMerchantTf = page==='home' && (merchantTfPage!=='home' || merchantTfUser!==tfUser);
     merchantTfPage = page;
@@ -9816,7 +9867,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var planName = btn.dataset.planName, planKey = btn.dataset.planKey, cycle = btn.dataset.cycle;
     var days = cycle === 'yearly' ? 365 : 30;
     var have = App.profile ? (App.profile.points||0) : 0;
+    Track.push('buy_click', 'pricing', price, planKey+':'+cycle);
     if(have < price){
+      Track.push('buy_insufficient', 'pricing', price, planKey+':'+cycle);
       toast('แต้มไม่พอ ขาดอีก '+fmtNum(price-have)+' แต้ม — เติมแต้มก่อนนะ');
       openTopup();
       return;
@@ -9841,6 +9894,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     showConfirm('ยืนยันสมัคร "'+escapeHtml(planName)+'" ('+(cycle==='yearly' ? 'รายปี +1 ปี' : 'รายเดือน +30 วัน')+') ด้วย '+fmtNum(price)+' แต้ม'+(discounted?' (ราคาโปรลด 50%)':'')+'?<br>'+expiryText, function(){
       supa.rpc('buy_plan', { p_plan_key: planKey, p_cycle: cycle }).then(function(res){
         if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
+        Track.push('buy_success', 'pricing', price, planKey+':'+cycle);
         refreshProfile().then(renderPricingPage);
         toast('สมัคร '+planName+' สำเร็จ — '+(planKey==='all'?'ใช้งานครบทุกระบบได้ถึง ':'ใช้งานได้ถึง ')+fmtDate(new Date(res.data).getTime()));
       });
@@ -10338,6 +10392,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   var GUEST_VIEW_ALLOW = '.rail-btn:not([data-page="settings"]), #pricingCycleToggle, .pricing-details-toggle, #searchInput, .rail-logo-fb';
   function guestBlock(e){
     if(!App.isGuest || e.target.closest(GUEST_ALLOW) || e.target.closest(GUEST_VIEW_ALLOW)) return;
+    // ผู้เยี่ยมชมกดซื้อแพ็กเกจ (ถูกพาไปล็อกอิน) — นับเป็นขั้น "กดซื้อ" ในเส้นทางการซื้อด้วย
+    var guestCta = e.type === 'click' && e.target.closest('.pricing-cta[data-plan-key]');
+    if(guestCta) Track.push('buy_click_guest', 'pricing', parseInt(guestCta.dataset.price,10)||0, guestCta.dataset.planKey+':'+guestCta.dataset.cycle);
     e.preventDefault();
     e.stopImmediatePropagation();
     openAuthModal(false);

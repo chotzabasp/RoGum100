@@ -176,6 +176,19 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 .stat.hot{border-color:rgba(227,185,94,.45)}
 .stat.hot b{color:var(--gold)}
 .feature-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.7rem}
+.traffic-stats .stat small{display:block;font-size:.68rem;color:var(--text-mute);margin-top:.15rem}
+
+/* เส้นทางการซื้อ: ขั้นละแถว ความกว้างแท่ง = สัดส่วนเทียบขั้นแรก */
+.funnel{display:flex;flex-direction:column;gap:.55rem}
+.funnel-step{display:grid;grid-template-columns:minmax(0,11rem) minmax(0,1fr) auto;gap:.7rem;align-items:center;font-size:.8rem}
+.funnel-label{color:var(--text-dim)}
+.funnel-label small{display:block;font-size:.68rem;color:var(--text-mute)}
+.funnel-track{height:22px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.funnel-track span{display:block;height:100%;border-radius:6px;background:var(--bar,var(--c1))}
+.funnel-val{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;min-width:6.5rem}
+.funnel-val b{color:var(--text)}
+.funnel-val span{color:var(--text-mute);font-size:.72rem;margin-left:.35rem}
+@media (max-width:600px){ .funnel-step{grid-template-columns:minmax(0,1fr) auto} .funnel-track{grid-column:1 / -1;grid-row:2} }
 
 @media (max-width:1200px){
   .grid-main{grid-template-columns:minmax(0,1fr)}
@@ -267,6 +280,44 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     </div>
     <div class="plans" id="plans"></div>
   </section>
+
+  <!-- กลุ่ม 2: การเข้าชมเว็บ (จากตาราง app_events — มีข้อมูลตั้งแต่วันที่ติดตั้ง) -->
+  <section class="card" aria-label="การเข้าชมเว็บ">
+    <div class="card-head">
+      <div class="card-title">การเข้าชมเว็บ</div>
+      <span class="card-note" id="trafficSince"></span>
+    </div>
+    <p class="empty" id="trafficEmpty" hidden></p>
+    <div id="trafficBody">
+      <div class="traffic-top">
+        <div class="stat-grid stat-grid-4 traffic-stats" id="trafficStats"></div>
+      </div>
+      <div class="chart-box sm"><canvas id="chartVisitors" aria-label="กราฟจำนวนผู้เข้าชมเว็บรายวัน" role="img"></canvas></div>
+      <div class="legend"><span><i style="background:var(--c1)"></i>ผู้เข้าชมทั้งหมด</span><span><i style="background:var(--c2)"></i>ล็อกอินแล้ว</span></div>
+    </div>
+  </section>
+
+  <div class="grid-2" id="trafficDetail">
+    <section class="card">
+      <div class="card-head"><div class="card-title">หน้าที่คนเปิด</div><span class="card-note">เวลาเฉลี่ย = ต่อครั้งที่เปิดดู</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>หน้า</th><th class="num">ครั้งที่เปิด</th><th class="num">คน</th><th class="num">เวลาเฉลี่ย</th><th class="num">เวลารวม</th></tr></thead>
+          <tbody id="pagesTable"></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><div class="card-title">เส้นทางการซื้อแพ็กเกจ</div><span class="card-note">นับเป็นจำนวนคน</span></div>
+      <div class="funnel" id="funnel"></div>
+      <div class="table-wrap" style="margin-top:1rem">
+        <table>
+          <thead><tr><th>แพ็ก</th><th class="num">กดซื้อ</th><th class="num">แต้มไม่พอ</th><th class="num">ซื้อสำเร็จ</th></tr></thead>
+          <tbody id="funnelPlans"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 
   <div class="grid-main">
     <div class="col">
@@ -579,6 +630,71 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     $('features').innerHTML = items.map(function(i){ return '<div class="stat"><b>' + fmt(i[0]) + '</b><span>' + i[1] + '</span></div>'; }).join('');
   }
 
+  // ---------- กลุ่ม 2: การเข้าชมเว็บ ----------
+  var PAGE_LABEL = { home:'บัญชีนักลงทุน', farm:'ยอดนักฟาม', timers:'จับเวลาบอส', items:'คลังไอเทม', pricing:'เติมแพ็กเกจ', settings:'ตั้งค่า', admin:'แอดมิน' };
+  function fmtDuration(sec){
+    sec = Math.round(Number(sec || 0));
+    if(sec < 60) return sec + ' วิ';
+    if(sec < 3600) return Math.floor(sec / 60) + ' นาที' + (sec % 60 ? ' ' + (sec % 60) + ' วิ' : '');
+    return Math.floor(sec / 3600) + ' ชม. ' + Math.floor(sec % 3600 / 60) + ' นาที';
+  }
+  function renderTraffic(t, err){
+    var detail = $('trafficDetail');
+    if(err || !t){
+      $('trafficBody').hidden = true; detail.hidden = true;
+      $('trafficEmpty').hidden = false;
+      $('trafficEmpty').textContent = err || 'ยังไม่มีข้อมูล';
+      $('trafficSince').textContent = '';
+      return;
+    }
+    $('trafficBody').hidden = false; detail.hidden = false; $('trafficEmpty').hidden = true;
+    $('trafficSince').textContent = t.since ? 'เริ่มเก็บข้อมูล ' + fmtDateTime(t.since) + ' · ไม่นับเครื่องของแอดมิน' : 'ยังไม่มีข้อมูล — จะเริ่มนับเมื่อมีคนเข้าเว็บ';
+    var rate = t.new_guest_visitors ? (t.signups / t.new_guest_visitors * 100) : 0;
+    var stats = [
+      [fmt(t.visitors_today), 'ผู้เข้าชมวันนี้', 'เมื่อวาน ' + fmt(t.visitors_yesterday) + ' คน'],
+      [fmt(t.visitors_period), 'ผู้เข้าชม ' + state.days + ' วัน', 'ล็อกอินแล้ว ' + fmt(t.members_period) + ' คน'],
+      [fmt(t.new_guest_visitors), 'ผู้เข้าชมใหม่ (ยังไม่ล็อกอิน)', 'เข้าเว็บครั้งแรกในช่วงนี้'],
+      [rate.toFixed(1) + '%', 'สมัครสมาชิก', fmt(t.signups) + ' คนจากผู้เข้าชมใหม่']
+    ];
+    $('trafficStats').innerHTML = stats.map(function(s, i){
+      return '<div class="stat' + (i === 3 && t.signups > 0 ? ' hot' : '') + '"><b>' + s[0] + '</b><span>' + s[1] + '</span><small>' + s[2] + '</small></div>';
+    }).join('');
+
+    var series = t.series || [];
+    var c1 = css('--c1'), c2 = css('--c2');
+    var ds = function(label, key, color){
+      return { label:label, data:series.map(function(s){ return Number(s[key] || 0); }), borderColor:color, backgroundColor:alpha(color, .16),
+               fill:true, cubicInterpolationMode:'monotone', borderWidth:2, pointRadius:0, pointHoverRadius:5, pointHoverBackgroundColor:'#101521' };
+    };
+    drawChart('chartVisitors', { type:'line', data:{ labels:series.map(function(s){ return fmtDate(s.day + 'T00:00:00'); }),
+      datasets:[ ds('ผู้เข้าชมทั้งหมด', 'visitors', c1), ds('ล็อกอินแล้ว', 'members', c2) ] }, options:baseOptions() });
+
+    var pages = t.pages || [];
+    $('pagesTable').innerHTML = pages.length ? pages.map(function(p){
+      return '<tr><td>' + esc(PAGE_LABEL[p.page] || p.page) + '</td><td class="num">' + fmt(p.views) + '</td><td class="num">' + fmt(p.visitors) + '</td>' +
+        '<td class="num">' + fmtDuration(p.avg_seconds) + '</td><td class="num">' + fmt(p.total_minutes) + ' นาที</td></tr>';
+    }).join('') : '<tr><td colspan="5" class="empty">ยังไม่มีข้อมูลในช่วงนี้</td></tr>';
+
+    var f = t.funnel || {};
+    var steps = [
+      ['เปิดหน้าเติมแพ็กเกจ', '', f.pricing_visitors, css('--c1')],
+      ['กดปุ่มซื้อ', f.guest_clicked ? 'ในนี้ยังไม่ล็อกอิน ' + fmt(f.guest_clicked) + ' คน' : '', f.clicked, css('--c2')],
+      ['แต้มไม่พอ', 'ถูกพาไปหน้าเติมแต้ม', f.insufficient, css('--warn')],
+      ['ซื้อสำเร็จ', '', f.success, css('--c3')]
+    ];
+    var top = Math.max(1, Number(f.pricing_visitors || 0));
+    $('funnel').innerHTML = steps.map(function(s){
+      var n = Number(s[2] || 0);
+      return '<div class="funnel-step"><span class="funnel-label">' + s[0] + (s[1] ? '<small>' + esc(s[1]) + '</small>' : '') + '</span>' +
+        '<span class="funnel-track"><span style="width:' + Math.min(100, n / top * 100) + '%;--bar:' + s[3] + '"></span></span>' +
+        '<span class="funnel-val"><b>' + fmt(n) + '</b><span>' + (f.pricing_visitors ? Math.round(n / top * 100) + '%' : '-') + '</span></span></div>';
+    }).join('');
+    var plans = t.plans || [];
+    $('funnelPlans').innerHTML = plans.length ? plans.map(function(p){
+      return '<tr><td>' + esc(PLAN_LABEL[p.plan] || p.plan) + '</td><td class="num">' + fmt(p.clicks) + '</td><td class="num">' + fmt(p.insufficient) + '</td><td class="num">' + fmt(p.success) + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="empty">ยังไม่มีคนกดซื้อในช่วงนี้</td></tr>';
+  }
+
   function render(d){
     state.data = d;
     renderKpis(d.kpi || {});
@@ -604,7 +720,12 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     if(loading) return;
     loading = true;
     $('refreshBtn').disabled = true;
+    // การเข้าชม (กลุ่ม 2) ดึงคู่กันไป ถ้าพัง/ยังไม่ติดตั้ง ให้ขึ้นข้อความเฉพาะการ์ดนั้น ส่วนอื่นยังแสดงตามปกติ
+    var trafficJob = supa.rpc('admin_traffic', { p_days: state.days }).then(function(r){ return r; }, function(e){ return { error:e }; });
     supa.rpc('admin_dashboard', { p_days: state.days }).then(function(res){
+      return trafficJob.then(function(tr){ return { res:res, tr:tr }; });
+    }).then(function(both){
+      var res = both.res, tr = both.tr;
       loading = false;
       $('refreshBtn').disabled = false;
       if(res.error){
@@ -615,6 +736,10 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         return;
       }
       render(res.data || {});
+      var tmsg = tr && tr.error ? (tr.error.message || String(tr.error)) : '';
+      renderTraffic(tr && tr.data, tmsg ? (/admin_traffic|function|does not exist|schema cache/i.test(tmsg)
+        ? 'ยังไม่ได้ติดตั้งระบบเก็บการเข้าชม — รันไฟล์ SQL 20260924000400_app_events.sql ใน Supabase ก่อน'
+        : 'โหลดข้อมูลการเข้าชมไม่สำเร็จ: ' + tmsg) : '');
     }, function(err){
       loading = false;
       $('refreshBtn').disabled = false;

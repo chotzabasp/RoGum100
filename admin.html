@@ -190,6 +190,15 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 .funnel-val span{color:var(--text-mute);font-size:.72rem;margin-left:.35rem}
 @media (max-width:600px){ .funnel-step{grid-template-columns:minmax(0,1fr) auto} .funnel-track{grid-column:1 / -1;grid-row:2} }
 
+/* อุปกรณ์ (การ์ดแคบ) + error (การ์ดกว้าง) */
+.grid-side{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:1.1rem;align-items:start}
+.device-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface-2);margin-bottom:.9rem;gap:2px}
+.device-bar span{display:block;height:100%}
+.device-dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:.45rem;vertical-align:0}
+.errors-table td{vertical-align:top}
+.errors-table .err-msg{font-family:var(--font-mono);font-size:.74rem;color:var(--text);word-break:break-word;min-width:14rem}
+@media (max-width:1200px){ .grid-side{grid-template-columns:minmax(0,1fr)} }
+
 @media (max-width:1200px){
   .grid-main{grid-template-columns:minmax(0,1fr)}
   .plans{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -314,6 +323,28 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         <table>
           <thead><tr><th>แพ็ก</th><th class="num">กดซื้อ</th><th class="num">แต้มไม่พอ</th><th class="num">ซื้อสำเร็จ</th></tr></thead>
           <tbody id="funnelPlans"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid-side" id="trafficDetail2">
+    <section class="card">
+      <div class="card-head"><div class="card-title">อุปกรณ์ที่ใช้เข้าเว็บ</div><span class="card-note">จำนวนคน</span></div>
+      <div class="device-bar" id="deviceBar" aria-hidden="true"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>อุปกรณ์</th><th class="num">ผู้เข้าชม</th><th class="num">สัดส่วน</th><th class="num">สมัคร</th></tr></thead>
+          <tbody id="devicesTable"></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><div class="card-title">Error ที่ผู้ใช้เจอ</div><span class="pill pill-mute" id="errorsTotal">0 ครั้ง</span></div>
+      <div class="table-wrap">
+        <table class="errors-table">
+          <thead><tr><th>ประเภท</th><th>ข้อความ</th><th class="num">ครั้ง</th><th class="num">คน</th><th>หน้า</th><th class="num">ล่าสุด</th></tr></thead>
+          <tbody id="errorsTable"></tbody>
         </table>
       </div>
     </section>
@@ -638,8 +669,37 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     if(sec < 3600) return Math.floor(sec / 60) + ' นาที' + (sec % 60 ? ' ' + (sec % 60) + ' วิ' : '');
     return Math.floor(sec / 3600) + ' ชม. ' + Math.floor(sec % 3600 / 60) + ' นาที';
   }
+  var DEVICE_META = { mobile:['มือถือ', '#6ea8ff'], tablet:['แท็บเล็ต', '#34c9a5'], desktop:['คอมพิวเตอร์', '#e8b04a'], unknown:['ไม่ทราบ (ก่อนเริ่มเก็บ)', '#56647c'] };
+  var ERROR_KIND = { js:['โค้ดหน้าเว็บ', 'pill-danger'], promise:['งานเบื้องหลัง', 'pill-warn'], sync:['ซิงก์ขึ้นคลาวด์', 'pill-warn'], load:['โหลดจากคลาวด์', 'pill-warn'] };
+  function renderDevicesErrors(t){
+    var devices = t.devices || [];
+    var total = devices.reduce(function(a, d){ return a + Number(d.visitors || 0); }, 0);
+    $('deviceBar').innerHTML = devices.map(function(d){
+      var m = DEVICE_META[d.device] || [d.device, '#56647c'];
+      return '<span style="flex:' + Number(d.visitors || 0) + ';background:' + m[1] + '" title="' + esc(m[0]) + '"></span>';
+    }).join('');
+    $('devicesTable').innerHTML = devices.length ? devices.map(function(d){
+      var m = DEVICE_META[d.device] || [d.device, '#56647c'];
+      return '<tr><td><span class="device-dot" style="background:' + m[1] + '"></span>' + esc(m[0]) + '</td>' +
+        '<td class="num">' + fmt(d.visitors) + '</td><td class="num">' + (total ? Math.round(d.visitors / total * 100) : 0) + '%</td><td class="num">' + fmt(d.signups) + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="empty">ยังไม่มีข้อมูลในช่วงนี้</td></tr>';
+
+    var errs = t.errors || [];
+    $('errorsTotal').textContent = fmt(t.errors_total) + ' ครั้ง';
+    $('errorsTotal').className = 'pill ' + (Number(t.errors_total) > 0 ? 'pill-warn' : 'pill-ok');
+    $('errorsTable').innerHTML = errs.length ? errs.map(function(x){
+      var k = ERROR_KIND[x.kind] || [x.kind, 'pill-mute'];
+      var pages = String(x.pages || '').split(', ').map(function(p){ return PAGE_LABEL[p] || p; }).join(', ');
+      return '<tr><td><span class="pill ' + k[1] + '">' + esc(k[0]) + '</span></td><td class="err-msg">' + esc(x.detail) + '</td>' +
+        '<td class="num">' + fmt(x.count) + '</td><td class="num">' + fmt(x.visitors) + '</td><td>' + esc(pages) + '</td>' +
+        '<td class="num" title="' + esc(fmtDateTime(x.last_at)) + '">' + timeAgo(x.last_at) + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="empty">ไม่มี error ในช่วงนี้</td></tr>';
+  }
+
   function renderTraffic(t, err){
     var detail = $('trafficDetail');
+    $('trafficDetail2').hidden = !!(err || !t);
+    if(!(err || !t)) renderDevicesErrors(t);
     if(err || !t){
       $('trafficBody').hidden = true; detail.hidden = true;
       $('trafficEmpty').hidden = false;

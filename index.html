@@ -3665,10 +3665,39 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       if(document.hidden){ sendPageTime(); visibleSince = 0; flush(); }
       else visibleSince = Date.now();
     });
+    // ประเภทอุปกรณ์ (แนบไปกับ 'visit'): จอสัมผัส + ด้านสั้นของจอ < 600px = มือถือ, จอสัมผัสที่ใหญ่กว่านั้น = แท็บเล็ต
+    function deviceType(){
+      var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+      var shortSide = Math.min(screen.width || 0, screen.height || 0) || Math.min(window.innerWidth, window.innerHeight);
+      if(coarse && shortSide < 600) return 'mobile';
+      return coarse ? 'tablet' : 'desktop';
+    }
     try{
-      if(!sessionStorage.getItem('gum100_visit')){ sessionStorage.setItem('gum100_visit', '1'); push('visit'); }
-    }catch(e){ push('visit'); }
-    return { push:push, page:page, flush:flush };
+      if(!sessionStorage.getItem('gum100_visit')){ sessionStorage.setItem('gum100_visit', '1'); push('visit', null, null, deviceType()); }
+    }catch(e){ push('visit', null, null, deviceType()); }
+    // error ที่ผู้ใช้เจอ: error เดิมส่งครั้งเดียวต่อการเปิดเว็บ และไม่เกิน 10 เรื่อง (ฐานข้อมูลกันซ้ำอีกชั้น)
+    // kind: 'js' โค้ดพัง · 'promise' งานเบื้องหลังล้มเหลว · 'sync' ซิงก์ขึ้นคลาวด์ไม่ได้ · 'load' โหลดจากคลาวด์ไม่ได้
+    var errSent = {}, errCount = 0;
+    function error(kind, msg){
+      msg = String(msg == null ? '' : msg).replace(/\s+/g, ' ').trim().slice(0, 200);
+      var key = kind + '|' + msg;
+      if(!msg || errSent[key] || errCount >= 10) return;
+      errSent[key] = true; errCount++;
+      queue.push({ e:'client_error', p:curPage, v:null, m:kind, d:msg });
+      if(!timer) timer = setTimeout(function(){ timer = null; flush(); }, 10000);
+    }
+    function errText(x){
+      if(!x) return '';
+      if(typeof x === 'string') return x;
+      return x.message || x.error_description || x.msg || (x.code ? 'code ' + x.code : '') || String(x);
+    }
+    window.addEventListener('error', function(ev){
+      if(!ev || !ev.message) return; // ไม่ใช่ error ของโค้ด (เช่นรูปโหลดไม่ขึ้น) ไม่นับ
+      var at = ev.filename ? ' @' + String(ev.filename).split('/').pop().split('?')[0] + ':' + (ev.lineno || 0) : '';
+      error('js', ev.message + at);
+    });
+    window.addEventListener('unhandledrejection', function(ev){ error('promise', errText(ev && ev.reason)); });
+    return { push:push, page:page, flush:flush, error:function(kind, x){ error(kind, errText(x)); } };
   })();
 
   var pad2 = function(n){ return String(n).padStart(2,'0'); };
@@ -4267,6 +4296,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
   function cloudOnFlushError(err){
     console.warn('cloud sync failed', err);
+    Track.error('sync', err);
     cloudSync.retryDelay = Math.min(60000, cloudSync.retryDelay ? cloudSync.retryDelay*2 : 5000);
     cloudScheduleFlush(cloudSync.retryDelay);
     if(!cloudSync.failNotified){
@@ -4569,6 +4599,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         settled = true; clearTimeout(timer); resolve();
       }, function(err){
         console.warn('cloud load failed — showing local data for now', err);
+        Track.error('load', err);
         if(settled) return;
         settled = true; clearTimeout(timer); resolve();
       });

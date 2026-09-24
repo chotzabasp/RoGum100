@@ -217,6 +217,8 @@ svg.icon{width:18px;height:18px;display:block}
 
 .home-banner-zone{
   position:relative;
+  /* สูงขั้นต่ำเท่ากันทุกสถานะ (ล็อกอิน/ยังไม่ล็อกอิน) — ไม่งั้นตอนไม่มีการ์ดเรทกรอบจะเตี้ย รูปโดนตัดโลโก้ */
+  min-height:272px;
   border-radius:var(--radius-l);overflow:hidden;margin-bottom:1.4rem;
   background:
     linear-gradient(90deg, rgba(8,10,16,.75) 0%, rgba(8,10,16,.4) 55%, rgba(8,10,16,.75) 100%),
@@ -1357,6 +1359,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .home-grid{grid-template-columns:1fr}
   .panel{padding:1rem}
   .panel-side{min-height:0}
+  .home-banner-zone{min-height:180px}
   .home-banner-zone .util-bar{padding:1rem}
   .hero-row{padding:.5rem 1rem 1.25rem}
   .hero-line2{font-size:1.8rem}

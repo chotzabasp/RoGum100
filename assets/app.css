@@ -956,6 +956,10 @@ body.ro-mode .items-dropzone, body.ro-mode .items-pending-row, body.ro-mode #ite
 #topupOverlay .topup-qr-panel{display:grid;grid-template-columns:138px minmax(0,1fr);gap:.75rem;padding:.8rem;border:1px solid rgba(109,157,231,.4);border-radius:13px;background:rgba(7,17,34,.7);box-shadow:inset 0 1px 0 rgba(210,228,255,.06)}
 #topupOverlay .topup-qr-frame{display:grid;place-items:center;aspect-ratio:1;border-radius:10px;background:#fff;padding:.4rem;overflow:hidden}
 #topupOverlay .topup-qr-frame img{display:block;width:100%;height:100%;object-fit:contain}
+/* QR used up (expired / failed / paid): hide the code itself so it can't be scanned again, show why instead. */
+#topupOverlay .topup-qr-frame{position:relative}
+#topupOverlay .topup-qr-frame.is-covered img{visibility:hidden}
+#topupOverlay .topup-qr-frame.is-covered::after{content:attr(data-label);position:absolute;inset:0;display:grid;place-items:center;padding:.5rem;text-align:center;font-size:.8rem;font-weight:800;line-height:1.35;color:#5b6b82;background:repeating-linear-gradient(135deg,#f3f5f9 0 8px,#e8ecf2 8px 16px)}
 #topupOverlay .topup-qr-details{display:grid;align-content:center;gap:.38rem}
 #topupOverlay .topup-qr-details>div{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;font-size:.7rem;color:#aebfd6}
 #topupOverlay .topup-qr-details b{font-size:.78rem;color:#edf5ff;font-variant-numeric:tabular-nums;text-align:right}

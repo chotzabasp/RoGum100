@@ -7111,6 +7111,14 @@
     clearInterval(topupQrPollTimer); clearInterval(topupQrClockTimer);
     topupQrPollTimer = null; topupQrClockTimer = null;
   }
+  // ปิดรูป QR เมื่อใช้ต่อไม่ได้แล้ว (หมดอายุ / ไม่สำเร็จ / จ่ายแล้ว) กันลูกค้าสแกน QR เก่าจ่ายซ้ำ
+  // ซึ่งเงินอาจเข้าแต่ระบบไม่เติมแต้มให้ — label = ข้อความที่แสดงแทนรูป, '' = แสดงรูปตามปกติ
+  function setTopupQrCover(label){
+    var frame = document.querySelector('#topupQrPanel .topup-qr-frame');
+    frame.classList.toggle('is-covered', !!label);
+    frame.setAttribute('data-label', label || '');
+    document.getElementById('topupQrImage').setAttribute('aria-hidden', label ? 'true' : 'false');
+  }
   function setTopupPaymentStatus(kind, text){
     var el = document.getElementById('topupPaymentStatus');
     el.className = 'topup-payment-status '+kind;
@@ -7124,6 +7132,7 @@
     document.getElementById('topupQrPanel').hidden = true;
     document.getElementById('topupQrImage').removeAttribute('src');
     document.getElementById('topupQrExpiry').textContent = '--:--';
+    setTopupQrCover('');
     setTopupPaymentStatus('pending','กำลังรอการชำระเงิน...');
   }
   function topupQrSource(value){
@@ -7160,6 +7169,7 @@
     document.getElementById('topupQrExpiry').textContent = pad2(Math.floor(totalSeconds/60))+':'+pad2(totalSeconds%60);
     if(remaining<=0){
       stopTopupQrWatch();
+      setTopupQrCover('QR หมดอายุ');
       setTopupPaymentStatus('expired','QR หมดอายุ กรุณาสร้างใหม่');
       var button=document.getElementById('topupCreateQrBtn'); button.disabled=false; button.textContent='สร้าง QR ใหม่';
     }
@@ -7173,18 +7183,21 @@
     var status=String(row.status||'pending').toLowerCase();
     if(status==='credited'){
       stopTopupQrWatch();
+      setTopupQrCover('✓ ชำระแล้ว');
       var creditedPoints=Number(row.points);
       setTopupPaymentStatus('credited','✓ เติมแต้มสำเร็จ'+(creditedPoints>0 ? ' ได้รับ '+fmtNum(creditedPoints)+' แต้ม' : ''));
       showTopupDone();
       refreshProfile().then(function(){ renderUser(); loadTopupHistory(); });
     } else if(status==='failed'){
       stopTopupQrWatch();
+      setTopupQrCover('ใช้ QR นี้ไม่ได้');
       setTopupPaymentStatus('failed','เติมแต้มไม่สำเร็จ กรุณาลองใหม่หรือติดต่อ Admin');
       var failedButton=document.getElementById('topupCreateQrBtn'); failedButton.disabled=false; failedButton.textContent='สร้าง QR ใหม่';
     } else if(status==='manual_review'){
       setTopupPaymentStatus('review','รายการกำลังรอตรวจสอบโดย Admin');
     } else if(status==='expired'){
       stopTopupQrWatch();
+      setTopupQrCover('QR หมดอายุ');
       setTopupPaymentStatus('expired','QR หมดอายุ กรุณาสร้างใหม่');
       var expiredButton=document.getElementById('topupCreateQrBtn'); expiredButton.disabled=false; expiredButton.textContent='สร้าง QR ใหม่';
     } else {

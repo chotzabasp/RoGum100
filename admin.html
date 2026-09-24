@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Gum100 Admin</title>
+<link rel="icon" type="image/png" href="logo-gum100.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  แดชบอร์ดภาพรวมสำหรับแอดมิน — แยกจาก index.html ให้ผู้ใช้ทั่วไปไม่ต้องโหลดโค้ด/กราฟส่วนนี้
+  ใช้ล็อกอินเดียวกับหน้าหลัก (Supabase เก็บ session ใน localStorage ของโดเมนเดียวกัน)
+  ข้อมูลทั้งหมดมาจาก RPC admin_dashboard (supabase/migrations/20260924000300_admin_dashboard.sql)
+  ซึ่งเช็ค is_admin() ฝั่งฐานข้อมูล — ใครเปิดไฟล์นี้ได้ก็จริง แต่ถ้าไม่ใช่แอดมินจะดึงข้อมูลไม่ได้
+  สีและฟอนต์ชุดเดียวกับ index.html (ธีมมืดอย่างเดียว เหมือนเว็บหลัก)
+-->
+<style>
+:root{
+  --bg:#101521;
+  --surface:#192233;
+  --surface-2:#202c40;
+  --surface-3:#141b29;
+  --border:#334158;
+  --border-soft:#26324a;
+  --text:#f2f5fa;
+  --text-dim:#adb9cd;
+  --text-mute:#7f8ca3;
+  --accent:#79a7ff;
+  --warn:#e0ab3c;
+  --danger:#ef5a56;
+  --success:#3fbd75;
+  --gold:#e3b95e;
+  /* สีข้อมูลในกราฟ (ลำดับตายตัว ไม่วน) */
+  --c1:#6ea8ff;
+  --c2:#34c9a5;
+  --c3:#e8b04a;
+  --c4:#d77bd6;
+  --font-ui:"Inter","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-ui);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+h1,h2,h3{margin:0;font-weight:700;text-wrap:balance;line-height:1.4}
+a{color:var(--accent)}
+button{font-family:inherit}
+[hidden]{display:none!important}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ---------- แถบบน ---------- */
+.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:.8rem 1.5rem;background:rgba(16,21,33,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border-soft)}
+.brand{display:flex;align-items:center;gap:.65rem;min-width:0}
+.brand img{width:34px;height:34px;border-radius:9px}
+.brand-eyebrow{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.14em;color:var(--text-mute);text-transform:uppercase}
+.brand h1{font-size:1.05rem}
+.topbar-spacer{flex:1}
+.seg{display:inline-flex;padding:3px;border:1px solid var(--border);border-radius:10px;background:var(--surface-3)}
+.seg button{border:0;background:transparent;color:var(--text-dim);font-size:.8rem;font-weight:700;padding:.38rem .8rem;border-radius:7px;cursor:pointer}
+.seg button.active{background:var(--surface-2);color:var(--text);box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
+.btn{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:.8rem;font-weight:700;padding:.45rem .85rem;border-radius:10px;cursor:pointer;text-decoration:none;transition:background-color 150ms ease,border-color 150ms ease}
+.btn:hover{background:#28364d;border-color:#46577a}
+.btn[disabled]{opacity:.6;cursor:wait}
+.updated{font-size:.72rem;color:var(--text-mute)}
+
+main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;flex-direction:column;gap:1.1rem}
+
+/* ---------- สถานะหน้า (โหลด / ไม่ได้ล็อกอิน / ไม่ใช่แอดมิน) ---------- */
+.state{max-width:520px;margin:12vh auto 0;text-align:center;padding:2rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+.state h2{font-size:1.2rem;margin-bottom:.4rem}
+.state p{color:var(--text-dim);margin:0 0 1.1rem;font-size:.9rem}
+
+/* ---------- การ์ดพื้นฐาน ---------- */
+.card{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);padding:1.1rem 1.2rem;min-width:0}
+.card-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.35rem .75rem;margin-bottom:.85rem}
+.card-title{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:.5rem}
+.card-title::before{content:"";width:3px;height:14px;border-radius:2px;background:var(--accent)}
+.card-note{font-size:.72rem;color:var(--text-mute)}
+.pill{display:inline-flex;align-items:center;gap:.3rem;font-size:.7rem;font-weight:800;padding:.18rem .55rem;border-radius:999px;white-space:nowrap}
+.pill-warn{background:rgba(224,171,60,.14);color:var(--warn);border:1px solid rgba(224,171,60,.35)}
+.pill-danger{background:rgba(239,90,86,.14);color:#ff8a86;border:1px solid rgba(239,90,86,.35)}
+.pill-ok{background:rgba(63,189,117,.14);color:#6fdc9c;border:1px solid rgba(63,189,117,.35)}
+.pill-mute{background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border)}
+.empty{color:var(--text-mute);font-size:.82rem;padding:.6rem 0}
+
+/* ---------- A. ตัวเลขหลัก ---------- */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.kpi{position:relative;overflow:hidden}
+.kpi-top{display:flex;align-items:flex-start;gap:.8rem}
+.kpi-icon{flex:none;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:rgba(121,167,255,.12);color:var(--accent);border:1px solid rgba(121,167,255,.25)}
+.kpi-icon svg{width:20px;height:20px}
+.kpi-label{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim)}
+.kpi-value{font-family:var(--font-mono);font-size:2.2rem;font-weight:700;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi-value small{font-size:.9rem;color:var(--text-dim);font-weight:500;margin-left:.2rem}
+.kpi-foot{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.8rem;font-size:.74rem;color:var(--text-mute)}
+.delta{display:inline-flex;align-items:center;gap:.2rem;font-family:var(--font-mono);font-size:.72rem;font-weight:700;padding:.15rem .45rem;border-radius:6px}
+.delta.up{color:#6fdc9c;background:rgba(63,189,117,.13)}
+.delta.down{color:#ff8a86;background:rgba(239,90,86,.13)}
+.delta.flat{color:var(--text-dim);background:var(--surface-2)}
+.kpi-icon.gold{background:rgba(227,185,94,.12);color:var(--gold);border-color:rgba(227,185,94,.3)}
+.kpi-icon.green{background:rgba(63,189,117,.12);color:#6fdc9c;border-color:rgba(63,189,117,.3)}
+.kpi-icon.pink{background:rgba(215,123,214,.12);color:var(--c4);border-color:rgba(215,123,214,.3)}
+
+/* ---------- B. สถานะแพ็กเกจ (แถวการ์ดเล็ก) ---------- */
+.plans{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.8rem}
+.plan{background:var(--surface-3);border:1px solid var(--border-soft);border-radius:12px;padding:.8rem .9rem;display:flex;flex-direction:column;gap:.35rem}
+.plan-head{display:flex;align-items:center;justify-content:space-between;gap:.4rem}
+.plan-name{font-weight:800;font-size:.86rem;display:flex;align-items:center;gap:.45rem}
+.plan-name::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot,var(--accent));box-shadow:0 0 8px var(--dot,var(--accent))}
+.plan-count{font-family:var(--font-mono);font-size:1.7rem;font-weight:700;line-height:1.1}
+.plan-count small{font-size:.72rem;color:var(--text-dim);font-weight:500;margin-left:.25rem}
+.plan-bar{height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden}
+.plan-bar span{display:block;height:100%;background:var(--dot,var(--accent));border-radius:2px}
+.plan-meta{display:grid;grid-template-columns:1fr 1fr;gap:.2rem .6rem;font-size:.68rem;color:var(--text-mute)}
+.plan-meta b{display:block;font-family:var(--font-mono);font-size:.82rem;color:var(--text);font-weight:600}
+
+/* ---------- เลย์เอาต์หลัก ---------- */
+.grid-main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:1.1rem;align-items:start}
+.col{display:flex;flex-direction:column;gap:1.1rem;min-width:0}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.1rem}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1rem}
+
+/* กราฟ */
+.chart-hero{display:flex;align-items:baseline;gap:.6rem;margin:-.2rem 0 .6rem}
+.chart-hero b{font-family:var(--font-mono);font-size:1.6rem;color:var(--c1)}
+.chart-hero span{font-size:.74rem;color:var(--text-mute)}
+.chart-box{position:relative;height:260px}
+.chart-box.sm{height:200px}
+.legend{display:flex;flex-wrap:wrap;gap:.35rem .9rem;margin-top:.6rem;font-size:.74rem;color:var(--text-dim)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:.35rem;vertical-align:-1px}
+
+/* รายการด้านขวา */
+.list{display:flex;flex-direction:column}
+.row{display:flex;align-items:flex-start;gap:.7rem;padding:.6rem 0;border-top:1px solid var(--border-soft)}
+.row:first-child{border-top:0;padding-top:0}
+.row-stripe{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--stripe,var(--accent))}
+.row-main{flex:1;min-width:0}
+.row-title{font-size:.84rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-sub{font-size:.72rem;color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-side{flex:none;text-align:right;font-size:.72rem;color:var(--text-mute);font-family:var(--font-mono)}
+.row-side b{display:block;color:var(--text);font-size:.82rem}
+.queue-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem}
+.queue-item{background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px;padding:.6rem .7rem}
+.queue-item b{display:block;font-family:var(--font-mono);font-size:1.4rem;line-height:1.2}
+.queue-item span{font-size:.7rem;color:var(--text-mute)}
+.queue-item.alert{border-color:rgba(224,171,60,.45)}
+.queue-item.alert b{color:var(--warn)}
+
+/* ตาราง */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{text-align:left;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-mute);font-weight:600;padding:0 .5rem .5rem;border-bottom:1px solid var(--border-soft);white-space:nowrap}
+td{padding:.55rem .5rem;border-bottom:1px solid var(--border-soft);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.user-cell b{display:block;font-weight:700}
+.user-cell span{font-size:.7rem;color:var(--text-mute)}
+
+/* แถบแนวนอน (เซิร์ฟเวอร์ / แต้ม) */
+.hbars{display:flex;flex-direction:column;gap:.55rem}
+.hbar-row{display:grid;grid-template-columns:minmax(0,9rem) minmax(0,1fr) auto;gap:.6rem;align-items:center;font-size:.78rem}
+.hbar-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-dim)}
+.hbar-track{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.hbar-track span{display:block;height:100%;border-radius:4px;background:var(--bar,var(--c1))}
+.hbar-val{font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text);min-width:3.5rem;text-align:right}
+
+/* ตัวเลขสรุปเล็ก */
+.stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
+.stat{background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px;padding:.65rem .75rem}
+.stat b{display:block;font-family:var(--font-mono);font-size:1.35rem;line-height:1.2}
+.stat span{font-size:.7rem;color:var(--text-mute)}
+.stat-grid-4{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:1rem}
+.stat.hot{border-color:rgba(227,185,94,.45)}
+.stat.hot b{color:var(--gold)}
+.feature-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.7rem}
+
+@media (max-width:1200px){
+  .grid-main{grid-template-columns:minmax(0,1fr)}
+  .plans{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .feature-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (max-width:900px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-3,.grid-2{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:600px){
+  .topbar{padding:.7rem 1rem;position:static}
+  main{padding:1rem 1rem 2.5rem}
+  .kpis,.plans{grid-template-columns:minmax(0,1fr)}
+  .stat-grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi-value{font-size:1.9rem}
+  .queue-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <img src="logo-gum100.png?v=2" alt="">
+    <div>
+      <div class="brand-eyebrow">Gum100 · Admin</div>
+      <h1>ภาพรวมระบบ</h1>
+    </div>
+  </div>
+  <div class="topbar-spacer"></div>
+  <div class="seg" id="rangeSeg" role="group" aria-label="ช่วงเวลาของกราฟและสถิติ">
+    <button type="button" data-days="7">7 วัน</button>
+    <button type="button" data-days="30" class="active">30 วัน</button>
+    <button type="button" data-days="90">90 วัน</button>
+  </div>
+  <button type="button" class="btn" id="refreshBtn">รีเฟรช</button>
+  <span class="updated" id="updatedAt"></span>
+  <a class="btn" href="./">← กลับหน้าเว็บ</a>
+</header>
+
+<div id="stateBox" class="state">
+  <h2 id="stateTitle">กำลังโหลด...</h2>
+  <p id="stateText">กำลังตรวจสอบสิทธิ์และดึงข้อมูลสรุป</p>
+  <a class="btn" id="stateLink" href="./" hidden>ไปหน้าเว็บเพื่อล็อกอิน</a>
+</div>
+
+<main id="dash" hidden>
+
+  <!-- A. ตัวเลขหลัก -->
+  <section class="kpis" aria-label="ตัวเลขหลัก">
+    <div class="card kpi">
+      <div class="kpi-top">
+        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <div><div class="kpi-label">สมาชิกทั้งหมด</div><div class="kpi-value" id="kMembers">-</div></div>
+      </div>
+      <div class="kpi-foot"><span class="delta" id="kNewDelta">-</span><span id="kNewText">สมัครใหม่วันนี้</span></div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-top">
+        <div class="kpi-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div><div class="kpi-label">ใช้งานจริง 7 วัน</div><div class="kpi-value" id="kActive">-</div></div>
+      </div>
+      <div class="kpi-foot"><span class="delta" id="kActiveDelta">-</span><span>เทียบ 7 วันก่อนหน้า</span></div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-top">
+        <div class="kpi-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></div>
+        <div><div class="kpi-label">รายได้เดือนนี้</div><div class="kpi-value" id="kRevenue">-</div></div>
+      </div>
+      <div class="kpi-foot"><span class="delta" id="kRevenueDelta">-</span><span id="kRevenueText">เทียบเดือนก่อน</span></div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-top">
+        <div class="kpi-icon pink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg></div>
+        <div><div class="kpi-label">ลูกค้าที่จ่ายเงิน</div><div class="kpi-value" id="kPaid">-</div></div>
+      </div>
+      <div class="kpi-foot"><span class="delta flat" id="kPaidRate">-</span><span id="kPaidText">ของสมาชิกทั้งหมด</span></div>
+    </div>
+  </section>
+
+  <!-- B. สถานะแพ็กเกจ -->
+  <section class="card" aria-label="แพ็กเกจที่ใช้งานอยู่">
+    <div class="card-head">
+      <div class="card-title">แพ็กเกจที่ใช้งานอยู่ · ยอดขายในช่วงที่เลือก</div>
+      <span class="card-note" id="plansNote"></span>
+    </div>
+    <div class="plans" id="plans"></div>
+  </section>
+
+  <div class="grid-main">
+    <div class="col">
+      <!-- D. กราฟ -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-title">ผู้ใช้งานรายวัน</div>
+          <span class="card-note">นับจากการบันทึก/แก้ไขข้อมูล หรือล็อกอิน</span>
+        </div>
+        <div class="chart-hero"><b id="avgActive">-</b><span>คนต่อวันโดยเฉลี่ย · สมัครใหม่ในช่วงนี้ <span id="newPeriod">-</span> คน</span></div>
+        <div class="chart-box"><canvas id="chartUsers" aria-label="กราฟผู้ใช้งานและสมัครใหม่รายวัน" role="img"></canvas></div>
+        <div class="legend"><span><i style="background:var(--c1)"></i>ผู้ใช้งาน</span><span><i style="background:var(--c2)"></i>สมัครใหม่</span></div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card">
+          <div class="card-head"><div class="card-title">การใช้งานฟีเจอร์รายวัน</div></div>
+          <div class="chart-box sm"><canvas id="chartFeatures" aria-label="กราฟจำนวนรายการที่บันทึกต่อวันแยกตามฟีเจอร์" role="img"></canvas></div>
+          <div class="legend"><span><i style="background:var(--c1)"></i>ซื้อ–ขาย</span><span><i style="background:var(--c3)"></i>ยอดฟาม</span><span><i style="background:var(--c4)"></i>ฆ่าบอส</span></div>
+        </section>
+        <section class="card">
+          <div class="card-head"><div class="card-title">รายได้รายวัน (บาท)</div><span class="card-note" id="periodRevenue"></span></div>
+          <div class="chart-box sm"><canvas id="chartRevenue" aria-label="กราฟรายได้รายวันเป็นบาท" role="img"></canvas></div>
+          <div class="legend"><span><i style="background:var(--c3)"></i>รายได้จากการเติมเงิน</span></div>
+        </section>
+      </div>
+
+      <!-- C. สัญญาณอยากอัปเกรด -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-title">สัญญาณอยากอัปเกรด</div>
+          <span class="card-note">บัญชีฟรีที่ใช้ครบลิมิต หรือใช้งานต่อเนื่องแต่ยังไม่ซื้อ</span>
+        </div>
+        <div class="stat-grid stat-grid-4" id="upgradeStats"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ผู้ใช้</th><th class="num">วันที่ครบลิมิตซื้อ–ขาย</th><th class="num">วันที่ครบลิมิตฟาม</th><th class="num">วันที่เข้าใช้งาน</th></tr></thead>
+            <tbody id="candidates"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <!-- F. คิวงาน + ความเคลื่อนไหว -->
+      <section class="card">
+        <div class="card-head"><div class="card-title">คิวงานแอดมิน</div><a class="card-note" href="./#admin">ไปหน้าจัดการ ↗</a></div>
+        <div class="queue-grid" id="queue"></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div class="card-title">แพ็กที่จะหมดอายุใน 7 วัน</div><span class="pill pill-warn" id="expiringCount">0</span></div>
+        <div class="list" id="expiring"></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div class="card-title">ความเคลื่อนไหวล่าสุด</div></div>
+        <div class="list" id="feed"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <!-- B. แต้ม -->
+    <section class="card">
+      <div class="card-head"><div class="card-title">แต้มเข้า–ออก</div><span class="card-note" id="pointsOutstanding"></span></div>
+      <h3 style="font-size:.78rem;color:var(--text-dim);margin-bottom:.5rem">แต้มเข้า</h3>
+      <div class="hbars" id="pointsIn"></div>
+      <h3 style="font-size:.78rem;color:var(--text-dim);margin:1rem 0 .5rem">แต้มที่ใช้ไป</h3>
+      <div class="hbars" id="pointsOut"></div>
+    </section>
+    <!-- E. เซิร์ฟเวอร์ -->
+    <section class="card">
+      <div class="card-head"><div class="card-title">เซิร์ฟเวอร์ยอดนิยม</div><span class="card-note">จำนวนผู้ใช้ที่เลือกเล่น</span></div>
+      <div class="hbars" id="servers"></div>
+    </section>
+    <!-- B. โค้ดโปรโมชัน -->
+    <section class="card">
+      <div class="card-head"><div class="card-title">โค้ดโปรโมชัน</div><span class="card-note">10 โค้ดล่าสุด</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>โค้ด</th><th>รางวัล</th><th class="num">ใช้แล้ว</th><th class="num">ช่วงนี้</th></tr></thead>
+          <tbody id="promo"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- D. ยอดรวมการใช้งาน -->
+  <section class="card">
+    <div class="card-head"><div class="card-title">ยอดรวมการใช้งานทั้งหมด</div><span class="card-note">ไม่นับบัญชีแอดมิน</span></div>
+    <div class="feature-grid" id="features"></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var supa = window.supabase.createClient(
+    'https://jnwckkcjurchnppekhpc.supabase.co',
+    'sb_publishable_Z_xnoeSTMY2t-VqaDfPmKg_FfOCjTOf'
+  );
+
+  var state = { days: 30, data: null, charts: {} };
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n){ return Number(n || 0).toLocaleString('th-TH'); };
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
+  var css = function(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); };
+
+  var REASON_LABEL = {
+    topup:'เติมผ่าน QR', admin_confirm_topup:'แอดมินยืนยัน QR', slip_topup:'สลิป (ระบบเก่า)',
+    admin_grant:'แอดมินเติมให้', promo_code:'โค้ดโปรโมชัน', admin_reverse:'แอดมินยกเลิก',
+    admin_deduct:'แอดมินหักแต้ม', plan_purchase:'ซื้อแพ็กเกจ', server_slot:'ซื้อช่องเซิร์ฟเวอร์',
+    party_slot:'ซื้อช่องปาร์ตี้', announcement:'ลงประกาศ', spend:'ใช้แต้ม', other:'อื่นๆ'
+  };
+  var PLAN_LABEL = { all:'4 in 1', bundle:'3 in 1', timers:'จับเวลาบอส', accountItems:'2 in 1', farm:'1 in 1' };
+  var PLAN_COLOR = { all:'#e3b95e', bundle:'#79a7ff', timers:'#b7c5da', accountItems:'#34c9a5', farm:'#d77bd6' };
+
+  // linkText: ข้อความปุ่มกลับหน้าเว็บ (ไม่ใส่ = ไม่มีปุ่ม) — ยังไม่ล็อกอินชวนไปล็อกอิน, ล็อกอินแล้วแค่ "กลับหน้าเว็บ"
+  function showState(title, text, linkText){
+    $('dash').hidden = true;
+    $('stateBox').hidden = false;
+    $('stateTitle').textContent = title;
+    $('stateText').textContent = text;
+    $('stateLink').hidden = !linkText;
+    if(linkText) $('stateLink').textContent = linkText;
+  }
+
+  function delta(el, now, prev, unit){
+    now = Number(now || 0); prev = Number(prev || 0);
+    var d = now - prev;
+    el.className = 'delta ' + (d > 0 ? 'up' : d < 0 ? 'down' : 'flat');
+    el.textContent = (d > 0 ? '▲ +' : d < 0 ? '▼ ' : '± ') + fmt(d) + (unit || '');
+  }
+
+  function timeAgo(ts){
+    var s = Math.max(0, (Date.now() - new Date(ts).getTime()) / 1000);
+    if(s < 60) return 'เมื่อสักครู่';
+    if(s < 3600) return Math.floor(s / 60) + ' นาทีที่แล้ว';
+    if(s < 86400) return Math.floor(s / 3600) + ' ชม.ที่แล้ว';
+    return Math.floor(s / 86400) + ' วันที่แล้ว';
+  }
+  function fmtDate(ts){ return new Date(ts).toLocaleDateString('th-TH', { day:'numeric', month:'short' }); }
+  function fmtDateTime(ts){ return new Date(ts).toLocaleString('th-TH', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }); }
+
+  // ---------- A. ตัวเลขหลัก ----------
+  function renderKpis(k){
+    $('kMembers').textContent = fmt(k.members);
+    delta($('kNewDelta'), k.new_today, k.new_yesterday);
+    $('kNewText').textContent = 'สมัครใหม่วันนี้ ' + fmt(k.new_today) + ' คน (เมื่อวาน ' + fmt(k.new_yesterday) + ')';
+    $('kActive').textContent = fmt(k.active_7d);
+    delta($('kActiveDelta'), k.active_7d, k.active_prev_7d);
+    $('kRevenue').innerHTML = fmt(k.revenue_month) + '<small>บาท</small>';
+    delta($('kRevenueDelta'), k.revenue_month, k.revenue_prev_month);
+    $('kRevenueText').textContent = 'เทียบเดือนก่อน' + (k.admin_grant_month ? ' · แอดมินเติมให้ ' + fmt(k.admin_grant_month) + ' แต้ม (ไม่รวม)' : '');
+    $('kPaid').textContent = fmt(k.paid_users);
+    var rate = k.members ? (k.paid_users / k.members * 100) : 0;
+    $('kPaidRate').textContent = rate.toFixed(1) + '%';
+    $('kPaidText').textContent = 'ของสมาชิก · ฟรี ' + fmt(k.free_users) + ' · บัญชีเก่าไม่จำกัด ' + fmt(k.legacy_users);
+  }
+
+  // ---------- B. แพ็กเกจ ----------
+  function renderPlans(r){
+    var sales = {};
+    (r.plan_sales || []).forEach(function(s){
+      var o = sales[s.plan_key] || (sales[s.plan_key] = { count:0, points:0 });
+      o.count += Number(s.count || 0); o.points += Number(s.points || 0);
+    });
+    var active = r.active_plans || {};
+    var max = Math.max(1, ['all','bundle','timers','accountItems','farm'].reduce(function(m, k){ return Math.max(m, Number(active[k] || 0)); }, 0));
+    $('plans').innerHTML = ['all','bundle','timers','accountItems','farm'].map(function(k){
+      var n = Number(active[k] || 0), s = sales[k] || { count:0, points:0 };
+      return '<div class="plan" style="--dot:' + PLAN_COLOR[k] + '">' +
+        '<div class="plan-head"><span class="plan-name">' + PLAN_LABEL[k] + '</span>' +
+          (n ? '<span class="pill pill-ok">ใช้งาน</span>' : '<span class="pill pill-mute">ว่าง</span>') + '</div>' +
+        '<div class="plan-count">' + fmt(n) + '<small>คน</small></div>' +
+        '<div class="plan-bar"><span style="width:' + (n / max * 100) + '%"></span></div>' +
+        '<div class="plan-meta"><div>ขายได้<b>' + fmt(s.count) + ' ครั้ง</b></div><div>แต้มที่ได้<b>' + fmt(s.points) + '</b></div></div>' +
+      '</div>';
+    }).join('');
+    $('plansNote').textContent = 'ยอดขาย ' + state.days + ' วันล่าสุด · 4 in 1 นับจากคนที่มีทั้งแพ็กรวมและจับเวลาบอส';
+  }
+
+  // ---------- D. กราฟ ----------
+  function baseOptions(){
+    var grid = '#26324a', tick = css('--text-mute');
+    return {
+      responsive:true, maintainAspectRatio:false, animation:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:'#0c111c', borderColor:'#334158', borderWidth:1, titleColor:'#f2f5fa', bodyColor:'#adb9cd', padding:10, boxPadding:4 } },
+      scales:{
+        x:{ grid:{ display:false }, ticks:{ color:tick, maxRotation:0, autoSkipPadding:14, font:{ family:'JetBrains Mono', size:10 } }, border:{ color:grid } },
+        y:{ beginAtZero:true, grid:{ color:grid }, ticks:{ color:tick, precision:0, font:{ family:'JetBrains Mono', size:10 } }, border:{ display:false } }
+      }
+    };
+  }
+  function drawChart(id, config){
+    if(state.charts[id]) state.charts[id].destroy();
+    if(!window.Chart){ return; }
+    state.charts[id] = new Chart($(id), config);
+  }
+  function alpha(hex, a){
+    var n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  function renderCharts(series){
+    var labels = series.map(function(s){ return fmtDate(s.day + 'T00:00:00'); });
+    var c1 = css('--c1'), c2 = css('--c2'), c3 = css('--c3'), c4 = css('--c4');
+    var avg = series.length ? series.reduce(function(a, s){ return a + Number(s.active || 0); }, 0) / series.length : 0;
+    $('avgActive').textContent = avg.toFixed(1);
+
+    var line = function(label, key, color, fill){
+      return { label:label, data:series.map(function(s){ return Number(s[key] || 0); }), borderColor:color, backgroundColor:fill ? alpha(color, .16) : color,
+               // monotone = เส้นโค้งที่ไม่พุ่งเกินค่าจริง (ข้อมูลรายวันเป็นจำนวนเต็มเล็กๆ เส้นโค้งธรรมดาจะป่องหลอกตา)
+               fill:!!fill, cubicInterpolationMode:'monotone', borderWidth:2, pointRadius:0, pointHoverRadius:5, pointHoverBorderWidth:2, pointHoverBackgroundColor:'#101521' };
+    };
+    drawChart('chartUsers', { type:'line', data:{ labels:labels, datasets:[ line('ผู้ใช้งาน', 'active', c1, true), line('สมัครใหม่', 'signups', c2, true) ] }, options:baseOptions() });
+    drawChart('chartFeatures', { type:'line', data:{ labels:labels, datasets:[ line('ซื้อ–ขาย', 'merchant', c1), line('ยอดฟาม', 'farm', c3), line('ฆ่าบอส', 'kills', c4) ] }, options:baseOptions() });
+    var revOpts = baseOptions();
+    revOpts.plugins.tooltip.callbacks = { label:function(ctx){ return ' รายได้ ' + fmt(ctx.parsed.y) + ' บาท'; } };
+    drawChart('chartRevenue', { type:'bar', data:{ labels:labels, datasets:[{ label:'รายได้', data:series.map(function(s){ return Number(s.revenue || 0); }),
+      backgroundColor:alpha(c3, .85), hoverBackgroundColor:c3, borderRadius:{ topLeft:4, topRight:4 }, borderSkipped:'bottom', maxBarThickness:22 }] }, options:revOpts });
+  }
+
+  // ---------- C. สัญญาณอยากอัปเกรด ----------
+  function renderUpgrade(u){
+    var stats = [
+      [u.trade_limit_users, 'คนที่ครบลิมิตซื้อ–ขาย', true],
+      [u.trade_limit_days, 'ครั้ง (วัน) ที่ครบลิมิตซื้อ–ขาย'],
+      [u.farm_limit_users, 'คนที่ครบลิมิตฟาม', true],
+      [u.farm_limit_days, 'ครั้ง (วัน) ที่ครบลิมิตฟาม']
+    ];
+    $('upgradeStats').innerHTML = stats.map(function(s){
+      return '<div class="stat' + (s[2] && Number(s[0]) > 0 ? ' hot' : '') + '"><b>' + fmt(s[0]) + '</b><span>' + s[1] + '</span></div>';
+    }).join('');
+    var rows = u.candidates || [];
+    $('candidates').innerHTML = rows.length ? rows.map(function(c){
+      return '<tr><td class="user-cell"><b>' + esc(c.name || '-') + '</b><span>@' + esc(c.username || '-') + '</span></td>' +
+        '<td class="num">' + fmt(c.trade_days) + '</td><td class="num">' + fmt(c.farm_days) + '</td><td class="num">' + fmt(c.active_days) + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="empty">ยังไม่มีบัญชีฟรีที่เข้าเกณฑ์ในช่วงนี้</td></tr>';
+  }
+
+  // ---------- F. คิว / หมดอายุ / ความเคลื่อนไหว ----------
+  function renderQueue(q){
+    var items = [
+      [q.qr_attention, 'QR รอตรวจ / ยอดไม่ตรง', Number(q.qr_attention) > 0],
+      [q.slip_pending, 'สลิปรออนุมัติ (ระบบเก่า)', Number(q.slip_pending) > 0],
+      [q.qr_pending, 'QR ที่สร้างแล้วยังไม่จ่าย', false]
+    ];
+    $('queue').innerHTML = items.map(function(i){
+      return '<div class="queue-item' + (i[2] ? ' alert' : '') + '"><b>' + fmt(i[0]) + '</b><span>' + i[1] + '</span></div>';
+    }).join('');
+  }
+  function renderExpiring(list){
+    $('expiringCount').textContent = fmt(list.length);
+    $('expiring').innerHTML = list.length ? list.map(function(x){
+      var days = Math.max(0, Math.ceil((new Date(x.expires_at).getTime() - Date.now()) / 86400000));
+      return '<div class="row" style="--stripe:' + (days <= 2 ? 'var(--danger)' : 'var(--warn)') + '"><span class="row-stripe"></span>' +
+        '<div class="row-main"><div class="row-title">' + esc(x.name || '-') + ' <span style="color:var(--text-mute);font-weight:500">@' + esc(x.username || '-') + '</span></div>' +
+        '<div class="row-sub">' + esc(x.plan) + '</div></div>' +
+        '<div class="row-side"><b>' + (days === 0 ? 'วันนี้' : 'อีก ' + days + ' วัน') + '</b>' + fmtDate(x.expires_at) + '</div></div>';
+    }).join('') : '<div class="empty">ไม่มีแพ็กที่จะหมดอายุใน 7 วัน</div>';
+  }
+  var FEED_META = {
+    signup:['สมัครสมาชิก', 'var(--c2)'], purchase:['ซื้อแพ็กเกจ', 'var(--gold)'], topup:['เติมแต้ม', 'var(--c1)'],
+    reverse:['ยกเลิกการเติม', 'var(--danger)'], promo:['ใช้โค้ดโปรโมชัน', 'var(--c4)']
+  };
+  function renderFeed(list){
+    $('feed').innerHTML = list.length ? list.map(function(x){
+      var m = FEED_META[x.type] || [x.type, 'var(--accent)'];
+      return '<div class="row" style="--stripe:' + m[1] + '"><span class="row-stripe"></span>' +
+        '<div class="row-main"><div class="row-title">' + esc(x.name || '-') + '</div><div class="row-sub">' + m[0] + (x.detail ? ' · ' + esc(x.detail) : '') + '</div></div>' +
+        '<div class="row-side" title="' + esc(fmtDateTime(x.at)) + '">' + timeAgo(x.at) + '</div></div>';
+    }).join('') : '<div class="empty">ยังไม่มีความเคลื่อนไหว</div>';
+  }
+
+  // ---------- แถบแนวนอน: แต้ม / เซิร์ฟเวอร์ ----------
+  function hbars(el, rows, color, unit){
+    var max = Math.max(1, rows.reduce(function(m, r){ return Math.max(m, Number(r.value || 0)); }, 0));
+    el.innerHTML = rows.length ? rows.map(function(r){
+      return '<div class="hbar-row"><span class="hbar-label" title="' + esc(r.label) + '">' + esc(r.label) + '</span>' +
+        '<span class="hbar-track"><span style="width:' + (Number(r.value || 0) / max * 100) + '%;--bar:' + color + '"></span></span>' +
+        '<span class="hbar-val">' + fmt(r.value) + (unit || '') + '</span></div>';
+    }).join('') : '<div class="empty">ไม่มีข้อมูลในช่วงนี้</div>';
+  }
+  function renderPoints(r){
+    $('pointsOutstanding').textContent = 'แต้มค้างในระบบ ' + fmt(r.points_outstanding);
+    hbars($('pointsIn'), (r.points_in || []).map(function(x){ return { label:REASON_LABEL[x.reason] || x.reason, value:x.points }; }), css('--c2'));
+    hbars($('pointsOut'), (r.points_out || []).map(function(x){ return { label:REASON_LABEL[x.reason] || x.reason, value:x.points }; }), css('--c4'));
+  }
+  function renderServers(list){
+    hbars($('servers'), list.map(function(s){ return { label:(s.name || s.id) + (s.active ? '' : ' (พัก)'), value:s.users }; }), css('--c1'), ' คน');
+  }
+  function renderPromo(list){
+    $('promo').innerHTML = list.length ? list.map(function(p){
+      var expired = p.expires_at && new Date(p.expires_at).getTime() < Date.now();
+      var full = Number(p.used) >= Number(p.max);
+      var reward = p.reward_type === 'plan_days' ? '4 in 1 ' + fmt(p.plan_days) + ' วัน' : fmt(p.points) + ' แต้ม';
+      return '<tr><td><b class="mono">' + esc(p.code) + '</b>' + (expired ? ' <span class="pill pill-mute">หมดอายุ</span>' : full ? ' <span class="pill pill-mute">ครบแล้ว</span>' : '') + '</td>' +
+        '<td>' + reward + '</td><td class="num">' + fmt(p.used) + '/' + fmt(p.max) + '</td><td class="num">' + fmt(p.used_period) + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="empty">ยังไม่มีโค้ดโปรโมชัน</td></tr>';
+  }
+  function renderFeatures(f){
+    var items = [
+      [f.merchant_total, 'รายการซื้อ–ขาย'], [f.farm_total, 'รายการยอดฟาม'], [f.kills_total, 'บันทึกฆ่าบอส'],
+      [f.bosses_tracked, 'บอสที่จับเวลาอยู่'], [f.parties_active, 'ปาร์ตี้ที่มีสมาชิก'], [f.custom_bosses, 'บอส Custom'],
+      [f.announcements_active, 'ประกาศรับ M ที่ยังไม่หมดอายุ']
+    ];
+    $('features').innerHTML = items.map(function(i){ return '<div class="stat"><b>' + fmt(i[0]) + '</b><span>' + i[1] + '</span></div>'; }).join('');
+  }
+
+  function render(d){
+    state.data = d;
+    renderKpis(d.kpi || {});
+    renderPlans(d.revenue || {});
+    renderCharts(d.series || []);
+    $('newPeriod').textContent = fmt((d.kpi || {}).new_period);
+    $('periodRevenue').textContent = 'รวม ' + fmt((d.revenue || {}).period_revenue) + ' บาท';
+    renderUpgrade(d.upgrade || {});
+    renderQueue(d.queue || {});
+    renderExpiring((d.revenue || {}).expiring || []);
+    renderFeed(d.feed || []);
+    renderPoints(d.revenue || {});
+    renderServers(d.servers || []);
+    renderPromo((d.revenue || {}).promo || []);
+    renderFeatures(d.features || {});
+    $('updatedAt').textContent = 'อัปเดต ' + new Date(d.generated_at || Date.now()).toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+    $('stateBox').hidden = true;
+    $('dash').hidden = false;
+  }
+
+  var loading = false;
+  function load(){
+    if(loading) return;
+    loading = true;
+    $('refreshBtn').disabled = true;
+    supa.rpc('admin_dashboard', { p_days: state.days }).then(function(res){
+      loading = false;
+      $('refreshBtn').disabled = false;
+      if(res.error){
+        var msg = res.error.message || '';
+        if(msg.indexOf('แอดมิน') !== -1) showState('สำหรับแอดมินเท่านั้น', 'บัญชีที่ล็อกอินอยู่ไม่มีสิทธิ์ดูหน้านี้', 'กลับหน้าเว็บ');
+        else if(/admin_dashboard|function|does not exist|schema cache/i.test(msg)) showState('ยังไม่ได้ติดตั้งฟังก์ชันสรุปข้อมูล', 'ต้องรันไฟล์ SQL 20260924000300_admin_dashboard.sql ใน Supabase ก่อน');
+        else showState('โหลดข้อมูลไม่สำเร็จ', msg || 'ลองกดรีเฟรชอีกครั้ง');
+        return;
+      }
+      render(res.data || {});
+    }, function(err){
+      loading = false;
+      $('refreshBtn').disabled = false;
+      showState('โหลดข้อมูลไม่สำเร็จ', String(err && err.message || err));
+    });
+  }
+
+  $('rangeSeg').addEventListener('click', function(e){
+    var b = e.target.closest('[data-days]');
+    if(!b || loading) return;
+    state.days = Number(b.dataset.days);
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.classList.toggle('active', x === b); });
+    load();
+  });
+  $('refreshBtn').addEventListener('click', load);
+  // เปิดค้างไว้: ดึงข้อมูลใหม่ทุก 5 นาที เฉพาะตอนแท็บนี้เปิดดูอยู่
+  setInterval(function(){ if(!document.hidden && state.data) load(); }, 300000);
+
+  supa.auth.getSession().then(function(res){
+    var session = res && res.data && res.data.session;
+    if(!session){ showState('ยังไม่ได้ล็อกอิน', 'ล็อกอินด้วยบัญชีแอดมินที่หน้าเว็บก่อน แล้วกลับมาเปิดหน้านี้อีกครั้ง', 'ไปหน้าเว็บเพื่อล็อกอิน'); return; }
+    load();
+  });
+})();
+</script>
+</body>
+</html>

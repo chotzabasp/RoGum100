@@ -2118,6 +2118,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-card-best .pricing-card-name-sub{font-size:.93rem;color:#fff}
 #view-pricing .pricing-card-best .pricing-promo-badge{position:static}
 #view-pricing .pricing-card-best .pricing-original{font-size:1.2rem;font-weight:500;color:#a39a86}
+#view-pricing .pricing-card[data-plan-key="free"] .pricing-card-name{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.15rem}
+#view-pricing .pricing-card[data-plan-key="free"] .pricing-card-name-main{font-size:3rem}
+#view-pricing .pricing-card[data-plan-key="free"] .pricing-card-name-sub{font-size:1.15rem;color:#d3ddef}
+#view-pricing .pricing-card[data-plan-key="free"] .pricing-card-tagline{text-align:center}
 #view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.15rem}
 #view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name-main{font-size:3rem}
 #view-pricing .pricing-card:has([data-plan-key="farm"]) .pricing-card-name-sub{font-size:1.15rem;color:#d3ddef}
@@ -2185,22 +2189,19 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-module-off .icon,#view-pricing .pricing-module-off .pricing-module-text b,#view-pricing .pricing-module-off .pricing-module-mark{color:#6b778a}
 #view-pricing .pricing-module-off .pricing-module-text small{color:#6b778a}
 #view-pricing .pricing-modules + .pricing-features{margin-top:.1rem}
+#view-pricing .pricing-module-limited .icon,#view-pricing .pricing-module-limited .pricing-module-mark{color:#e3b95e}
 #view-pricing .pricing-features-spacer{flex:1}
 #view-pricing .pricing-details-toggle{align-self:center;display:inline-flex;align-items:center;gap:.3rem;margin-top:.1rem;padding:.35rem .9rem;border-radius:999px;border:1px solid #3d4a61;background:transparent;color:#b9c6da;font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;transition:background-color 160ms ease,color 160ms ease,border-color 160ms ease}
 #view-pricing .pricing-details-toggle:hover{background:rgba(255,255,255,.06);color:#eef3fa;border-color:#58678a}
 #view-pricing .pricing-details-toggle:focus-visible{outline:3px solid #c1d3ff;outline-offset:2px}
 #view-pricing .pricing-details-toggle + .pricing-features{border-top:none;padding-top:.25rem}
-#view-pricing .pricing-features > .pricing-feature-divider:first-child{border-top:none;margin-top:0;padding-top:0}
-#view-pricing .pricing-pay-note{display:block;margin-top:.45rem;text-align:center;font-size:.7rem;color:#8f9bb0}
-#view-pricing .pricing-cta:focus-visible,#view-pricing .seg-btn:focus-visible{outline:3px solid #c1d3ff;outline-offset:3px}
+#view-pricing .pricing-features > .pricing-feature-divider:first-child{border-top:none;margin-top:0;padding-top:0}#view-pricing .pricing-cta:focus-visible,#view-pricing .seg-btn:focus-visible{outline:3px solid #c1d3ff;outline-offset:3px}
 #view-pricing .pricing-cta:disabled{opacity:1;color:#aebace;background:#222c3b;border-color:#3b4658;cursor:default}
 #view-pricing .pricing-card:nth-child(n+4){padding-block:1rem;gap:.5rem}
 #view-pricing .pricing-card:nth-child(n+4) .pricing-card-tagline{min-height:0}
-#view-pricing .pricing-card:nth-child(n+4) > .pricing-bundle-price,
-#view-pricing .pricing-card:nth-child(4) > .pricing-card-price{margin-top:.65rem}
+#view-pricing .pricing-card:nth-child(n+4) > .pricing-bundle-price{margin-top:.65rem}
 #view-pricing .pricing-card:nth-child(n+4) .pricing-features{padding-top:.75rem;margin-top:.15rem}
 #view-pricing .pricing-card:nth-child(n+4) .pricing-cta{margin-top:.5rem}
-#view-pricing .pricing-card:nth-child(4) > .pricing-card-price{justify-content:center;min-height:4.85rem}
 @media(min-width:901px){
   #view-pricing .pricing-grid{grid-template-rows:auto auto}
 }
@@ -9492,7 +9493,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   // ---------- เติมแพ็กเกจ ----------
   // Existing yearly prices are preserved; new packages have approved monthly prices only.
   var PRICING_PLANS = [
-    { key:'free', name:'ฟรี', monthly:0, yearly:0, free:true,
+    { key:'free', name:'<span class="pricing-card-name-main">— ฟรี —</span><span class="pricing-card-name-sub">ทดลองใช้ทุกระบบ</span>', monthly:0, yearly:0, free:true,
+      modules:['investor','items','farm','timers'],
       tagline:'เริ่มต้นทดลองใช้ระบบพื้นฐานได้ฟรี',
       features:[
         {divider:'บัญชีนักลงทุน'},
@@ -9587,15 +9589,17 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     if(!p.modules) return '';
     return '<ul class="pricing-modules">'+PRICING_MODULES.map(function(m){
       var on = p.modules.indexOf(m.key) !== -1;
-      return '<li class="pricing-module'+(on?'':' pricing-module-off')+'">'+
+      // การ์ดฟรี: ได้ทุกระบบแต่จำกัดสิทธิ์ — แถวปกติ ติ๊กสีเหลือง
+      var limited = on && p.free;
+      return '<li class="pricing-module'+(on?'':' pricing-module-off')+(limited?' pricing-module-limited':'')+'">'+
         '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+m.icon+'</svg>'+
-        '<span class="pricing-module-text"><b>'+m.name+'</b><small>'+(on ? 'ใช้งานแบบไม่จำกัด' : 'ใช้สิทธิ์แบบแพ็กฟรี')+'</small></span>'+
-        '<span class="pricing-module-mark" aria-label="'+(on?'ได้':'ไม่ได้')+'">'+(on?'✓':'—')+'</span>'+
+        '<span class="pricing-module-text"><b>'+m.name+'</b><small>'+(limited ? 'จำกัดสิทธิการใช้งาน' : on ? 'ใช้งานแบบไม่จำกัด' : 'ใช้สิทธิ์แบบแพ็กฟรี')+'</small></span>'+
+        '<span class="pricing-module-mark" aria-label="'+(limited?'ได้แบบจำกัด':on?'ได้':'ไม่ได้')+'">'+(on?'✓':'—')+'</span>'+
       '</li>';
     }).join('')+'</ul>';
   }
   var pricingCycle = 'monthly';
-  var pricingDetailsOpen = false; // รายละเอียดในการ์ดแพ็ก (ยกเว้นฟรี) ซ่อนไว้เป็นค่าเริ่มต้น
+  var pricingDetailsOpen = false; // รายละเอียดในการ์ดแพ็กทุกใบ ซ่อนไว้เป็นค่าเริ่มต้น
 
   // วันสิ้นสุดโปร (ระบุเขตเวลา) — หลังจากนี้หน้าเว็บแสดงราคาปกติ และเซิร์ฟเวอร์ (buy_plan → promo_active) หักราคาปกติ
   // ฝั่งเซิร์ฟเวอร์ตั้งให้สิ้นสุดช้ากว่านี้ 5 นาที กันนาฬิกาเครื่องผู้ใช้เร็วกว่าแล้วโดนหักแพงกว่าราคาที่เห็น
@@ -9673,7 +9677,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       var ownedUntil = p.free ? 0 : planActiveUntil(p.key);
       var priceHtml, ctaHtml;
       if(p.free){
-        priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">ฟรี</span></div>';
+        // โครงเดียวกับการ์ดจ่ายเงิน (ราคา + ป้ายเขียว) ให้แถวระบบ/ปุ่มอยู่ระดับเดียวกับการ์ดข้างๆ
+        priceHtml = '<div class="pricing-card-price"><span class="pricing-card-amount">0</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
+          '<div class="pricing-perday">ใช้ฟรีตลอด ไม่มีวันหมดอายุ</div>';
         ctaHtml = '<button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>เริ่มใช้ฟรี</button>';
       } else {
         var original = monthly ? p.monthly : (p.yearly == null ? p.displayYearly : p.yearly);
@@ -9693,25 +9699,21 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
       }
       // มีแพ็กนี้อยู่แล้ว: ป้ายสีเขียวบอกวันหมดอายุ (ไม่บล็อกปุ่ม — กดซื้อซ้ำ = ต่ออายุเพิ่ม)
       var ownedHtml = ownedUntil ? '<div class="pricing-owned-note">✓ ใช้งานอยู่'+(ownedUntil===Infinity ? ' (ไม่จำกัดเวลา)' : ' ถึง '+fmtDate(ownedUntil))+'</div>' : '';
-      var payNote = (!p.free && ctaHtml.indexOf('disabled') === -1) ? '<small class="pricing-pay-note">จ่ายด้วยแต้ม · ไม่ต่ออายุอัตโนมัติ</small>' : '';
       return '<div class="pricing-card'+(p.best?' pricing-card-best':'')+'" data-plan-key="'+p.key+'">'+
         (p.badge ? '<span class="pricing-badge-best'+(p.best?'':' pricing-badge-secondary')+'">'+escapeHtml(p.badge)+'</span>' : '')+
         (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '<div class="pricing-promo-heading">' : '')+
         '<div class="pricing-card-name">'+p.name+'</div>'+
         taglineHtml+
         (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '</div>' : '')+
-        (p.key==='bundle' || p.key==='timers' || p.key==='all' || p.key==='farm' || p.key==='accountItems' ? '<div class="pricing-bundle-price">'+priceHtml+'</div>' : priceHtml)+
+        '<div class="pricing-bundle-price">'+priceHtml+'</div>'+
         pricingModulesHtml(p)+
-        // การ์ดจ่ายเงิน: รายละเอียดซ่อนไว้ก่อน กดปุ่มเดียวกางพร้อมกันทุกใบ (การ์ดแถวเดียวกันสูงเท่ากันเสมอ)
-        // การ์ดฟรีแสดงรายการเต็มตลอด
-        (p.free ? '<ul class="pricing-features">'+features+'</ul>'
-          : (features
-              ? '<button type="button" class="pricing-details-toggle" aria-expanded="'+pricingDetailsOpen+'">'+(pricingDetailsOpen ? 'ซ่อนรายละเอียด ▴' : 'ดูรายละเอียด ▾')+'</button>'+
-                (pricingDetailsOpen ? '<ul class="pricing-features">'+features+'</ul>' : '<div class="pricing-features-spacer"></div>')
-              : '<div class="pricing-features-spacer"></div>'))+
+        // รายละเอียดซ่อนไว้ก่อนทุกใบ กดปุ่มเดียวกางพร้อมกันทุกใบ (การ์ดแถวเดียวกันสูงเท่ากันเสมอ)
+        (features
+          ? '<button type="button" class="pricing-details-toggle" aria-expanded="'+pricingDetailsOpen+'">'+(pricingDetailsOpen ? 'ซ่อนรายละเอียด ▴' : 'ดูรายละเอียด ▾')+'</button>'+
+            (pricingDetailsOpen ? '<ul class="pricing-features">'+features+'</ul>' : '<div class="pricing-features-spacer"></div>')
+          : '<div class="pricing-features-spacer"></div>')+
         ownedHtml+
         ctaHtml+
-        payNote+
       '</div>';
     }).join('');
   }

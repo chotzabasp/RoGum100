@@ -537,6 +537,9 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-row-remove:hover{color:var(--danger)}
 .mr-row-remove:disabled{opacity:.3;cursor:not-allowed}
 .mr-confirm-row{display:flex;gap:.5rem}
+/* บัญชีฟรี: เหลือบันทึกได้อีกกี่ครั้งวันนี้ (ใต้ปุ่มบันทึก) */
+.free-quota-note{margin:.45rem 0 0;font-size:.76rem;line-height:1.5;color:var(--text-dim);text-align:center}
+.free-quota-note.is-empty{color:var(--warn);font-weight:700}
 .mr-confirm-row .btn-block{flex:1}
 .mr-entry-actions{display:flex;gap:.3rem}
 .mr-entry-actions button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.85rem;padding:.1rem .2rem}
@@ -2734,6 +2737,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
           <div class="mr-confirm-row">
             <button class="btn btn-gradient btn-block" id="mrConfirm">ยืนยันและบันทึก</button>
           </div>
+          <p class="free-quota-note" id="mrFreeQuota" hidden></p>
         </div>
         <div class="home-left">
           <div class="panel">
@@ -2935,6 +2939,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
               <button class="btn btn-gradient btn-block" id="farmLogConfirm" type="button">บันทึก</button>
               <button class="btn btn-ghost" id="farmCancelEdit" hidden type="button">ยกเลิก</button>
             </div>
+            <p class="free-quota-note" id="farmFreeQuota" hidden></p>
           </div>
         </div>
       </div>
@@ -6443,6 +6448,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   var FARM_HISTORY_PAGE_SIZE_OPTIONS = [5,10,15,20,30];
 
   function renderFarmHistory(){
+    var farmRangeAllowed = !App.profile || hasFarmPlan();
+    if(!farmRangeAllowed) farmHistoryRange = 'today';
+    lockHistoryRangeSelect(document.getElementById('farmHistoryRange'), farmRangeAllowed);
+    renderFreeQuotaNotes();
     var list = document.getElementById('farmHistoryList');
     var pag = document.getElementById('farmHistoryPagination');
     // ประวัติการฟามใช้ TF ชุดเดียวกับกราฟ ไม่ต้องเลือกวันที่เริ่ม-สิ้นสุดเองแล้ว
@@ -6755,7 +6764,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     renderFarmChart();
     document.getElementById('farmHistoryRange').value = farmHistoryRange;
     document.getElementById('farmTimeframeSelect').value = farmTimeframe;
-    document.getElementById('farmHistoryRange').title = hasFarmPlan() ? '' : 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจที่มีสิทธิ์ยอดนักฟามเพื่อดูย้อนหลังทั้งหมด';
     renderFarmHistory();
     renderFarmRetiredState();
   }
@@ -7860,6 +7868,11 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   }
 
   function renderMerchantHistory(){
+    // บัญชีฟรี (ล็อกอินแล้ว): ช่วงเวลาประวัติเลือกได้แค่ "วันนี้"
+    var tradeRangeAllowed = !App.profile || hasTradePlan();
+    if(!tradeRangeAllowed) historyState.range = 'today';
+    lockHistoryRangeSelect(document.getElementById('mrHistoryRange'), tradeRangeAllowed);
+    renderFreeQuotaNotes();
     populateHistoryServerFilter();
     renderMerchantSummary();
     var list = document.getElementById('mrHistoryList');
@@ -8737,6 +8750,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     var usedImagePaths = [];
     var previewUrls = {};
     if(!App.currentServerId){ toast('เพิ่มเซิร์ฟเวอร์ก่อนบันทึก'); return usedImagePaths; }
+    if(tradeLimitReached()) return usedImagePaths;
     var validRows = activeRows().filter(function(r){
       return r.name.trim() && (parseFloat(r.price)>0) && (parseFloat(r.qty)>0);
     });
@@ -8837,8 +8851,16 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
     btn.disabled = busy;
     btn.textContent = busy ? 'กำลังอัพรูป...' : 'ยืนยันและบันทึก';
   }
+  function tradeLimitReached(){
+    if(freeTradeLeft() > 0) return false;
+    showFreeLimitPopup('บัญชีฟรีบันทึกซื้อ–ขายได้ '+FREE_TRADE_DAILY_MAX+' รายการต่อวัน — วันนี้ครบแล้ว'+
+      '<span class="confirm-detail">สมัครแพ็กเกจ 2 in 1, 3 in 1 หรือ 4 in 1 เพื่อบันทึกได้ไม่จำกัด (พรุ่งนี้บันทึกแบบฟรีได้อีก '+FREE_TRADE_DAILY_MAX+' รายการ)</span>');
+    return true;
+  }
   document.getElementById('mrConfirm').addEventListener('click', function(){
     if(mrSaving) return;
+    // เช็คลิมิตบัญชีฟรีก่อนอัพรูป — ไม่งั้นรูปขึ้นไปแล้วบันทึกไม่ได้
+    if(tradeLimitReached()) return;
     function rowIsValid(r){ return r.name.trim() && (parseFloat(r.price)>0) && (parseFloat(r.qty)>0); }
     var rowsWithImage = activeRows().filter(function(r){ return r.imageBlob && rowIsValid(r); });
     // ไม่มีรูปให้อัพ หรือฟอร์มยังบันทึกไม่ได้ → ไปทางเดิม (commit เป็นคนเตือนเองว่าขาดอะไร)
@@ -9045,6 +9067,54 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   var ITEM_WAREHOUSE_TIERS = ['A','B','C','D','E','S'];
   var FREE_WAREHOUSE_TIER = 'S';       // คลังเดียวที่บัญชีฟรีใช้ได้ (ที่เหลือล็อกหมด)
   var FREE_WAREHOUSE_MAX_ITEMS = 3;    // จำกัดจำนวนรายการ (นับรวมรายการชื่อซ้ำด้วย ไม่ใช่นับจำนวนชิ้น)
+
+  // ---------- กติกาบัญชีฟรี: บัญชีนักลงทุน / ยอดนักฟาม ----------
+  // (ปลดล็อกด้วยแพ็กที่มีระบบนั้น — hasTradePlan / hasFarmPlan · บัญชีเก่าไม่จำกัดกับแอดมินไม่โดน)
+  // "ต่อวัน" = นับรายการที่บันทึกตั้งแต่เที่ยงคืนวันนี้ ทุกเซิร์ฟเวอร์รวมกัน · 1 ครั้งที่กดบันทึก = 1 รายการ
+  // แก้ไขรายการเดิมไม่นับเพิ่ม · ข้อมูลส่วนนี้เก็บเป็นก้อนเดียวในบัญชี จึงกันที่หน้าเว็บเท่านั้น (แบบเดียวกับคลังไอเทม)
+  var FREE_TRADE_DAILY_MAX = 5;        // บันทึกซื้อ–ขายต่อวัน (ซื้อ+ขาย ทุกหมวดรวมกัน)
+  var FREE_FARM_DAILY_MAX = 3;         // บันทึกต้นทุนต่อกั้มต่อวัน
+  function countLoggedToday(log){
+    var t = todayStartTs();
+    return (log||[]).filter(function(e){ return e && e.ts >= t; }).length;
+  }
+  function freeTradeLeft(){ return hasTradePlan() ? Infinity : Math.max(0, FREE_TRADE_DAILY_MAX - countLoggedToday(App.merchantLog)); }
+  function freeFarmLeft(){ return hasFarmPlan() ? Infinity : Math.max(0, FREE_FARM_DAILY_MAX - countLoggedToday(App.farmLog)); }
+  // กล่องแจ้งครบลิมิต — ใช้กล่องยืนยันตัวเดิม แค่เปลี่ยนชื่อปุ่มชั่วคราว (ดูแพ็กเกจ / ปิด)
+  function showFreeLimitPopup(message){
+    var ok = document.getElementById('confirmOkBtn'), cancel = document.getElementById('confirmCancelBtn');
+    var okText = ok.textContent, cancelText = cancel.textContent;
+    ok.textContent = 'ดูแพ็กเกจ'; cancel.textContent = 'ปิด';
+    function restore(){ ok.textContent = okText; cancel.textContent = cancelText; }
+    showConfirm(message, function(){ restore(); switchPage('pricing'); }, restore);
+  }
+  // ตัวเลขเหลือกี่รายการใต้ปุ่มบันทึก
+  function renderFreeQuotaNotes(){
+    var loggedIn = !!App.profile && !App.isGuest;
+    [['mrFreeQuota', freeTradeLeft(), FREE_TRADE_DAILY_MAX, 'บันทึกซื้อ–ขาย', 'รายการ'],
+     ['farmFreeQuota', freeFarmLeft(), FREE_FARM_DAILY_MAX, 'บันทึกต้นทุนต่อกั้ม', 'ครั้ง']].forEach(function(q){
+      var el = document.getElementById(q[0]);
+      if(!el) return;
+      el.hidden = !loggedIn || q[1] === Infinity;
+      if(el.hidden) return;
+      el.classList.toggle('is-empty', q[1] === 0);
+      el.textContent = q[1] === 0
+        ? 'บัญชีฟรี: วันนี้'+q[3]+'ครบ '+q[2]+' '+q[4]+'แล้ว — สมัครแพ็กเกจเพื่อบันทึกไม่จำกัด'
+        : 'บัญชีฟรี: วันนี้'+q[3]+'ได้อีก '+q[1]+'/'+q[2]+' '+q[4];
+    });
+  }
+  // ตัวเลือกช่วงเวลาของประวัติ: บัญชีฟรีเลือกได้แค่ "วันนี้" ที่เหลือขึ้น 🔒 กดเลือกไม่ได้
+  function lockHistoryRangeSelect(sel, allowed){
+    if(!sel) return;
+    Array.prototype.forEach.call(sel.options, function(opt){
+      if(opt.value === 'today') return;
+      if(!opt.dataset.label) opt.dataset.label = opt.textContent;
+      opt.disabled = !allowed;
+      opt.textContent = opt.dataset.label + (allowed ? '' : ' 🔒');
+    });
+    if(!allowed && sel.value !== 'today') sel.value = 'today';
+    sel.title = allowed ? '' : 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจเพื่อดูย้อนหลังทั้งหมด';
+  }
   // Warehouse "S" is displayed as "อื่นๆ" (its internal tier code stays 'S' so existing
   // saved warehouse data keeps working without a migration).
   function itemTierLabel(tier){ return tier==='S' ? 'อื่นๆ' : tier; }
@@ -9505,9 +9575,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
         {divider:'คลังไอเทม'},
         'ได้คลัง 1 กล่อง จำกัด 3 รายการ',
         {divider:'ยอดนักฟาม'},
-        'บันทึกต้นทุน กำไร ได้ทั้งแบบ Zeny และบาท ไม่ต้องแยกบันทึก จำกัด 3 ครั้ง',
-        'จำกัดบันทึกรายการต้นทุน 2 รายการ',
-        'จำกัดบันทึกรายการไอเทมแรร์ 1 รายการ',
+        'บันทึกต้นทุน กำไร ได้ทั้งแบบ Zeny และบาท ไม่ต้องแยกบันทึก จำกัด 3 ครั้งต่อวัน',
         'กราฟสรุปยอดฟามแบบละเอียดใน 1 วัน',
         'ประวัติย้อนหลัง 1 วัน',
         {divider:'จับเวลาบอส'},
@@ -11790,6 +11858,12 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   });
 
   document.getElementById('farmLogConfirm').addEventListener('click', function(){
+    // บัญชีฟรี: บันทึกใหม่ได้วันละ 3 ครั้ง (แก้ไขรายการเดิมไม่นับ)
+    if(!editingFarmId && freeFarmLeft() <= 0){
+      showFreeLimitPopup('บัญชีฟรีบันทึกต้นทุนต่อกั้มได้ '+FREE_FARM_DAILY_MAX+' ครั้งต่อวัน — วันนี้ครบแล้ว'+
+        '<span class="confirm-detail">สมัครแพ็กเกจ 1 in 1, 3 in 1 หรือ 4 in 1 เพื่อบันทึกได้ไม่จำกัด (พรุ่งนี้บันทึกแบบฟรีได้อีก '+FREE_FARM_DAILY_MAX+' ครั้ง)</span>');
+      return;
+    }
     var countInput = document.getElementById('farmCountInput');
     var earnedInput = document.getElementById('farmEarnedInput');
     var count = parseInt(countInput.value, 10) || 1;

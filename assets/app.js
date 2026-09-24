@@ -4646,7 +4646,9 @@
   // ว่าง = ปิดระบบ Captcha ฝั่งหน้าเว็บทั้งหมด (ไม่โหลดสคริปต์ ไม่แสดงกล่อง)
   // token ใช้ได้ครั้งเดียว/หมดอายุใน 5 นาที → หลังกดล็อกอิน/สมัครทุกครั้งต้องขอใหม่ (resetCaptcha)
   var TURNSTILE_SITE_KEY = '0x4AAAAAAFCEywRmevjl1Zhj'; // วิดเจ็ต "Gum100" ใน Cloudflare (hostname: gum100.com, localhost)
-  var captcha = { loading:null, widgetId:null, token:null, failed:false };
+  // errored = กล่อง Captcha แจ้งล้มเหลว (เช่น Cloudflare สงสัยบอท/ส่วนเสริมบล็อก) → ปล่อยให้กดส่งได้ ให้ Supabase ตัดสิน
+  // ไม่งั้นถ้าแอดมินปิด Captcha ใน Supabase เป็นทางแก้ฉุกเฉิน หน้าเว็บก็ยังไม่ยอมให้ล็อกอินอยู่ดี
+  var captcha = { loading:null, widgetId:null, token:null, failed:false, errored:false };
   function ensureCaptcha(){
     if(!TURNSTILE_SITE_KEY) return;
     var box = document.getElementById('authCaptcha');
@@ -4663,9 +4665,12 @@
     }).then(function(){
       captcha.widgetId = window.turnstile.render('#authCaptcha', {
         sitekey: TURNSTILE_SITE_KEY, theme: 'dark', size: 'flexible', language: 'th',
-        callback: function(t){ captcha.token = t; document.getElementById('authError').textContent = ''; },
+        callback: function(t){ captcha.token = t; captcha.errored = false; document.getElementById('authError').textContent = ''; },
         'expired-callback': function(){ captcha.token = null; },
-        'error-callback': function(){ captcha.token = null; }
+        'error-callback': function(code){
+          captcha.token = null; captcha.errored = true;
+          Track.error('load', 'turnstile error ' + code);
+        }
       });
     }).catch(function(err){
       captcha.failed = true; captcha.loading = null;
@@ -4679,7 +4684,7 @@
   }
   // ก่อนกดส่ง: เปิด Captcha อยู่แต่ยังไม่ได้ token → บอกให้รอ (โหลดสคริปต์ไม่ขึ้นเลย = ปล่อยผ่าน ให้ Supabase ตัดสิน)
   function captchaNotReady(errEl){
-    if(!TURNSTILE_SITE_KEY || captcha.failed || captcha.token) return false;
+    if(!TURNSTILE_SITE_KEY || captcha.failed || captcha.errored || captcha.token) return false;
     errEl.textContent = 'รอระบบยืนยันว่าไม่ใช่บอทสักครู่ (กล่องด้านบนปุ่ม) แล้วกดอีกครั้ง';
     return true;
   }

@@ -7085,6 +7085,14 @@
   var topupQrClockTimer = null;
   var topupQrTransactionId = null;
   var topupQrExpiresAt = 0;
+  // เติมสำเร็จแล้ว: ซ่อน "ยกเลิก" และเปลี่ยนปุ่มหลักเป็น "เสร็จสิ้น" (กดแล้วปิดหน้าต่าง) กันผู้ใช้เข้าใจว่ายังรอจ่ายอยู่
+  var topupDone = false;
+  function showTopupDone(){
+    topupDone = true;
+    document.getElementById('topupCancelBtn').hidden = true;
+    var doneButton = document.getElementById('topupCreateQrBtn');
+    doneButton.disabled = false; doneButton.textContent = 'เสร็จสิ้น';
+  }
   document.getElementById('topupCustomAmount').min = String(TOPUP_MIN_AMOUNT);
   function stopTopupQrWatch(){
     clearInterval(topupQrPollTimer); clearInterval(topupQrClockTimer);
@@ -7098,6 +7106,8 @@
   function resetTopupQrPanel(){
     stopTopupQrWatch();
     topupQrTransactionId = null; topupQrExpiresAt = 0;
+    topupDone = false;
+    document.getElementById('topupCancelBtn').hidden = false;
     document.getElementById('topupQrPanel').hidden = true;
     document.getElementById('topupQrImage').removeAttribute('src');
     document.getElementById('topupQrExpiry').textContent = '--:--';
@@ -7150,8 +7160,9 @@
     var status=String(row.status||'pending').toLowerCase();
     if(status==='credited'){
       stopTopupQrWatch();
-      setTopupPaymentStatus('credited','เติมแต้มสำเร็จ');
-      document.getElementById('topupCreateQrBtn').disabled=true;
+      var creditedPoints=Number(row.points);
+      setTopupPaymentStatus('credited','✓ เติมแต้มสำเร็จ'+(creditedPoints>0 ? ' ได้รับ '+fmtNum(creditedPoints)+' แต้ม' : ''));
+      showTopupDone();
       refreshProfile().then(function(){ renderUser(); loadTopupHistory(); });
     } else if(status==='failed'){
       stopTopupQrWatch();
@@ -7189,7 +7200,7 @@
     error.textContent = message;
     error.hidden = !message;
     input.setAttribute('aria-invalid',message ? 'true' : 'false');
-    document.getElementById('topupCreateQrBtn').disabled = !valid;
+    document.getElementById('topupCreateQrBtn').disabled = topupDone ? false : !valid;
     document.getElementById('topupBahtPreview').textContent = fmtNum(topupAmount);
     document.getElementById('topupPointsPreview').textContent = fmtNum(topupAmount);
   }
@@ -7231,6 +7242,7 @@
   });
   document.getElementById('topupCreateQrBtn').addEventListener('click', function(){
     var button=this;
+    if(topupDone){ closeTopup(); return; }
     if(topupBusy || button.disabled) return;
     if(!App.session){ toast('กรุณาเข้าสู่ระบบก่อนเติมแต้ม'); return; }
     if(!Number.isSafeInteger(topupAmount) || topupAmount<TOPUP_MIN_AMOUNT){ updateTopupPreview(); return; }

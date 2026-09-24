@@ -1419,9 +1419,99 @@
     return supa.from('user_bosses').update({ marker_x:x, marker_y:y }).eq('user_id', activeOwnerId()).eq('boss_id', bossId).then(bossAfterWrite);
   }
   // ประวัติการฆ่า+ไอเทมของปาร์ตี้ที่กำลังดูอยู่ — ผูกกับหัวปาร์ตี้เหมือน user_bosses
+  // โหลดทีละหน้า (ล่าสุด HISTORY_PAGE รอบ + ปุ่ม "โหลดเก่ากว่านี้") ส่วนตัวเลขรวม/มุมมองตามบอส ให้ฐานข้อมูล
+  // คำนวณจากทุกแถว (boss_history_* ใน migration 20260925000500) — เดิมดึงทั้งหมดมานับในเครื่อง พอเกิน
+  // 1,000 แถว (ลิมิตของ API) ประวัติเก่าหายและตัวเลขผิด · ถ้าฟังก์ชันยังไม่มีในฐานข้อมูล ถอยไปใช้วิธีเดิม (legacy*)
+  var HISTORY_PAGE = 200;
+  App.killsHasMore = false; App.killStats = null; App.killStatsToday = null; App.killsVersion = 0; App.killsScopeKey = null;
   function loadKills(){
-    if(!App.session || !App.session.id){ App.kills = []; return Promise.resolve(); }
-    return Promise.all([loadKillsForActiveOwner(), loadMyLifetimeShare()]);
+    if(!App.session || !App.session.id){ App.kills = []; App.killsHasMore = false; App.killStats = null; App.killStatsToday = null; return Promise.resolve(); }
+    return Promise.all([loadKillsForActiveOwner(), loadKillStats(), loadMyLifetimeShare()]).then(function(){ App.killsVersion++; });
+  }
+  function historyScopeArgs(){ return { p_host: activeOwnerId(), p_include_self: !!App.viewingHostId }; }
+  function mapKillRow(k){
+    return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(), rawKilledAt:k.killed_at,
+      serverId:k.server_id || null, hostId:k.host_id || null, killedById:k.killed_by || null, killedBy:k.killer_name || null,
+      // เรียงชื่อไอเทมในรอบเดียวกันให้คงที่ (ฐานข้อมูลเรียงตามชื่อมาให้แล้ว เรียงซ้ำกันไว้)
+      items:(k.items||[]).map(function(i){
+        return { id:i.id, name:i.name, sharedWith:i.shared_with||[], soldAmount:i.sold_amount==null?null:Number(i.sold_amount), soldCurrency:i.sold_currency||'zeny', soldAt:i.sold_at, keptAt:i.kept_at||null };
+      }).sort(function(a,b){ return a.name.localeCompare(b.name); }) };
+  }
+  // before = รายการสุดท้ายที่มีอยู่ (ใช้เวลาดิบจากฐานข้อมูล ไม่ใช่ ts ที่ตัดเหลือมิลลิวินาที กันข้ามแถว)
+  function fetchHistoryPage(before, limit){
+    var args = historyScopeArgs();
+    args.p_limit = limit;
+    if(before){ args.p_before = before.rawKilledAt || new Date(before.ts).toISOString(); args.p_before_id = before.id; }
+    return withSkewRetry(function(){ return supa.rpc('boss_history_page', args); });
+  }
+  function loadKillsForActiveOwner(){
+    var owner = activeOwnerId(), scopeKey = owner+'|'+(!!App.viewingHostId);
+    // รีโหลด (เช่นมีคนกด MVP) ให้ได้จำนวนเท่าที่โหลดไว้แล้ว ไม่หดกลับเหลือหน้าแรก
+    var want = Math.min(1000, Math.max(HISTORY_PAGE, App.killsScopeKey === scopeKey ? App.kills.length : 0));
+    return fetchHistoryPage(null, want).then(function(res){
+      if(res.error){
+        if(res.error.code === 'PGRST202') return legacyLoadKillsForActiveOwner();
+        console.error('loadKills', res.error); return;
+      }
+      if(activeOwnerId() !== owner) return;
+      var rows = (res.data || []).map(mapKillRow);
+      var hasMore = rows.length === want;
+      // "เฉพาะวันนี้" ต้องได้ของวันนี้ครบ — หน้าแรกยังไม่ถึงเมื่อวานก็โหลดต่อ (สูงสุด 5 หน้า)
+      var todayStart = todayStartTs(), rounds = 0;
+      function more(){
+        if(!hasMore || rounds >= 5 || !rows.length || rows[rows.length-1].ts < todayStart) return Promise.resolve();
+        rounds++;
+        return fetchHistoryPage(rows[rows.length-1], HISTORY_PAGE).then(function(r2){
+          if(r2.error){ console.error('loadKills more', r2.error); return; }
+          var next = (r2.data || []).map(mapKillRow);
+          rows = rows.concat(next);
+          hasMore = next.length === HISTORY_PAGE;
+          return more();
+        });
+      }
+      return more().then(function(){
+        if(activeOwnerId() !== owner) return;
+        App.kills = rows; App.killsHasMore = hasMore; App.killsScopeKey = scopeKey;
+      });
+    });
+  }
+  function loadOlderKills(){
+    if(!App.killsHasMore || !App.kills.length || App.killsLoadingMore) return Promise.resolve();
+    App.killsLoadingMore = true;
+    var owner = activeOwnerId();
+    return fetchHistoryPage(App.kills[App.kills.length-1], HISTORY_PAGE).then(function(res){
+      App.killsLoadingMore = false;
+      if(res.error){ toast('โหลดประวัติไม่สำเร็จ: '+res.error.message); return; }
+      if(activeOwnerId() !== owner) return;
+      var seen = {}; App.kills.forEach(function(k){ seen[k.id] = true; });
+      var data = res.data || [];
+      App.kills = App.kills.concat(data.map(mapKillRow).filter(function(k){ return !seen[k.id]; }));
+      App.killsHasMore = data.length === HISTORY_PAGE;
+    }, function(err){ App.killsLoadingMore = false; toast('โหลดประวัติไม่สำเร็จ'); console.error('loadOlderKills', err); });
+  }
+  function mapKillStats(d){
+    d = d || {};
+    return { kills:Number(d.kills)||0, items:Number(d.items)||0, soldCount:Number(d.sold_count)||0,
+      sold:{ zeny:Number(d.sold_zeny)||0, baht:Number(d.sold_baht)||0 },
+      mineCount:Number(d.mine_count)||0, mine:{ zeny:Number(d.mine_zeny)||0, baht:Number(d.mine_baht)||0 } };
+  }
+  // ยอดรวมทั้งหมด (การ์ดสรุป) + ยอดวันนี้ (สรุปแท็บไอเทมตอนติ๊ก "เฉพาะวันนี้") — นับจากทุกแถวในฐานข้อมูล
+  function loadKillStats(){
+    var args = historyScopeArgs(), owner = args.p_host;
+    var argsToday = Object.assign({}, args, { p_since: new Date(todayStartTs()).toISOString() });
+    return Promise.all([
+      withSkewRetry(function(){ return supa.rpc('boss_history_stats', args); }),
+      withSkewRetry(function(){ return supa.rpc('boss_history_stats', argsToday); })
+    ]).then(function(rs){
+      if(activeOwnerId() !== owner) return;
+      var err = rs[0].error || rs[1].error;
+      if(err){
+        if(err.code !== 'PGRST202') console.error('boss_history_stats', err);
+        App.killStats = null; App.killStatsToday = null; return;
+      }
+      App.killStats = mapKillStats(rs[0].data);
+      App.killStatsToday = mapKillStats(rs[1].data);
+    });
   }
   var KILL_SELECT_COLS = 'id, host_id, boss_id, boss_name, killed_at, killed_by, server_id, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)';
   function fetchKillsFor(hostId){
@@ -1445,7 +1535,9 @@
   // สมาชิกปาร์ตี้ (กำลังดูของหัวปาร์ตี้คนอื่นอยู่) ต้องยังเห็นประวัติส่วนตัวของตัวเอง (ก่อนเข้าปาร์ตี้)
   // รวมอยู่ในรายการเดียวกับของปาร์ตี้ด้วย เรียงตามเวลาปนกันไปเลย ไม่แยกเป็นคนละชุด — หัวปาร์ตี้เองไม่ต้อง
   // ดึงซ้ำ เพราะ activeOwnerId() ก็คือตัวเองอยู่แล้ว
-  function loadKillsForActiveOwner(){
+  // วิธีเดิม (ดึงทั้งหมด ไม่แบ่งหน้า) — ใช้เฉพาะตอนฐานข้อมูลยังไม่มี boss_history_page
+  function legacyLoadKillsForActiveOwner(){
+    App.killsHasMore = false;
     var owner = activeOwnerId();
     var jobs = [fetchKillsFor(owner)];
     if(App.viewingHostId && App.session && App.session.id) jobs.push(fetchKillsFor(App.session.id));
@@ -1476,6 +1568,16 @@
   // shared_with ฝั่งนี้อีกที
   function loadMyLifetimeShare(){
     if(!App.session || !App.session.id){ App.myLifetimeShare = {zeny:0,baht:0,count:0}; return Promise.resolve(); }
+    return withSkewRetry(function(){ return supa.rpc('my_lifetime_share'); }).then(function(res){
+      if(res.error){
+        if(res.error.code === 'PGRST202') return legacyLoadMyLifetimeShare();
+        console.error('my_lifetime_share', res.error); return;
+      }
+      var d = res.data || {};
+      App.myLifetimeShare = { zeny:Number(d.zeny)||0, baht:Number(d.baht)||0, count:Number(d.count)||0 };
+    });
+  }
+  function legacyLoadMyLifetimeShare(){
     return withSkewRetry(function(){ return supa.from('kill_items').select('sold_amount, sold_currency, shared_with').not('sold_amount','is',null); }).then(function(res){
       if(res.error){ console.error('loadMyLifetimeShare', res.error); return; }
       var mine = {zeny:0, baht:0}, count = 0;
@@ -1849,6 +1951,10 @@
   }
 
   function computeStats(){
+    if(App.killStats){
+      var ks = App.killStats;
+      return { totalKills:ks.kills, totalItems:ks.items, soldCount:ks.soldCount, sold:ks.sold, mineCount:ks.mineCount, mine:ks.mine };
+    }
     var totalKills = App.kills.length;
     var totalItems = App.kills.reduce(function(s,l){ return s + l.items.length; }, 0);
     var allLootRows = [];
@@ -2020,15 +2126,17 @@
     todayOnlyBox.disabled = !timersAllowed;
     todayOnlyBox.title = timersAllowed ? '' : 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจ "จับเวลาบอส" เพื่อดูย้อนหลังทั้งหมด';
     var onlyToday = todayOnlyBox.checked || !timersAllowed;
-    var entries = App.kills.filter(function(l){ return !onlyToday || todayKey(l.ts)===today; })
+    // "วันนี้" ตามเวลาไทย — ตรงกับที่ฐานข้อมูลนับให้ (boss_history_stats / by_boss)
+    var todayStart = todayStartTs();
+    var entries = App.kills.filter(function(l){ return !onlyToday || l.ts >= todayStart; })
                           .slice().sort(function(a,b){ return b.ts-a.ts; });
     document.getElementById('htabKills').className = App.historyTab==='kills' ? 'active' : '';
     document.getElementById('htabItems').className = App.historyTab==='items' ? 'active' : '';
     document.getElementById('htabBoss').className = App.historyTab==='boss' ? 'active' : '';
     document.getElementById('historyDeleteAll').hidden = !App.kills.length || isFreePartyMember();
-    if(App.historyTab==='items'){ renderLootView(list, entries.filter(function(l){ return l.items.length>0; })); return; }
-    if(App.historyTab==='boss'){ renderBossView(list, entries); return; }
-    if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>'; return; }
+    if(App.historyTab==='items'){ renderLootView(list, entries.filter(function(l){ return l.items.length>0; }), onlyToday); return; }
+    if(App.historyTab==='boss'){ renderBossView(list, entries, onlyToday); return; }
+    if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>' + historyMoreHtml(onlyToday); return; }
     list.innerHTML = entries.map(function(l){
       // รายการของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) หรือ
       // เป็นสมาชิกฟรีของปาร์ตี้ปัจจุบัน (isFreePartyMember) ลบไม่ได้
@@ -2039,7 +2147,13 @@
           delBtn+'</div>'+
         '<div class="boss">'+escapeHtml(l.bossName)+'</div>'+
         '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+itemIconHtml(it.name,'item-ic')+escapeHtml(it.name)+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div></div>';
-    }).join('');
+    }).join('') + historyMoreHtml(onlyToday);
+  }
+  // ท้ายรายการ: ยังมีประวัติเก่ากว่าที่โหลดมา → ปุ่มโหลดเพิ่ม (ช่วง "เฉพาะวันนี้" โหลดของวันนี้ครบแล้วเสมอ)
+  function historyMoreHtml(onlyToday){
+    if(onlyToday || !App.killsHasMore) return '';
+    return '<div class="history-more"><span>แสดง '+fmtNum(App.kills.length)+' รอบล่าสุด</span>'+
+      '<button type="button" class="btn btn-ghost btn-sm" data-history-more>โหลดเก่ากว่านี้</button></div>';
   }
 
   // ---------- รอบ 2: ของที่ได้ — หารกับปาร์ตี้ / บันทึกขาย / ส่วนแบ่ง ----------
@@ -2186,16 +2300,25 @@
       bodyHtml+
     '</div></div>';
   }
-  function renderLootView(list, entries){
+  function statsSummaryHtml(s){
+    return '<div class="loot-summary">'+
+      '<div><span class="lbl">ได้ของทั้งหมด</span><b>'+fmtNum(s.items)+' ชิ้น</b></div>'+
+      '<div><span class="lbl">ขายแล้ว '+fmtNum(s.soldCount)+' ชิ้น</span><b>'+lootPairText(s.sold)+'</b></div>'+
+      '<div><span class="lbl">ส่วนแบ่งของฉัน</span><b>'+lootPairText(s.mine)+'</b></div>'+
+    '</div>';
+  }
+  function renderLootView(list, entries, onlyToday){
     var allRows = lootRows(entries, false);
     var rows = lootRows(entries, true);
+    // สรุปด้านบนนับจากทุกแถวในฐานข้อมูล (ไม่ใช่แค่ที่โหลดมา) — ถอยไปนับเองถ้ายังไม่มีฟังก์ชันในฐานข้อมูล
+    var totals = onlyToday ? App.killStatsToday : App.killStats;
     var filterHtml = '<div class="loot-filter">'+
       '<button type="button" class="'+(lootFilter==='all'?'active':'')+'" data-loot-filter="all">ทั้งหมด</button>'+
       '<button type="button" class="'+(lootFilter==='unsold'?'active':'')+'" data-loot-filter="unsold">ยังไม่ขาย</button>'+
       '<button type="button" class="'+(lootFilter==='sold'?'active':'')+'" data-loot-filter="sold">ขายแล้ว</button>'+
       '<button type="button" class="'+(lootFilter==='kept'?'active':'')+'" data-loot-filter="kept">เก็บไว้</button></div>';
-    list.innerHTML = lootSummaryHtml(allRows) + filterHtml +
-      (rows.length ? rows.map(lootRowHtml).join('') : '<p class="empty-note">ไม่มีไอเทมในช่วงนี้</p>');
+    list.innerHTML = (totals ? statsSummaryHtml(totals) : lootSummaryHtml(allRows)) + filterHtml +
+      (rows.length ? rows.map(lootRowHtml).join('') : '<p class="empty-note">ไม่มีไอเทมในช่วงนี้</p>') + historyMoreHtml(onlyToday);
   }
   function findKillItem(itemId){
     for(var i=0;i<App.kills.length;i++){
@@ -2225,7 +2348,69 @@
     });
     return opts;
   }
-  function renderBossView(list, entries){
+  // มุมมอง "ตามบอส": ฐานข้อมูลรวมยอดจากทุกแถว (boss_history_by_boss) — นับครบแม้ยังไม่ได้โหลดประวัติเก่า
+  var bossView = { req:0, argsKey:null, version:-1, data:null };
+  App.bossGroupsIndex = {}; App.bossKillersIndex = {};
+  function renderBossView(list, entries, onlyToday){
+    var todayIso = new Date(todayStartTs()).toISOString();
+    var args = historyScopeArgs();
+    args.p_since = onlyToday ? todayIso : null;
+    args.p_today_start = todayIso;
+    args.p_killer = bossKillerFilter === 'all' ? null : bossKillerFilter;
+    var argsKey = JSON.stringify(args);
+    if(bossView.argsKey === argsKey && bossView.data){
+      drawBossView(list, bossView.data);
+      if(bossView.version === App.killsVersion) return;   // ข้อมูลยังไม่เปลี่ยน ไม่ต้องถามใหม่
+    } else {
+      list.innerHTML = '<p class="empty-note">กำลังโหลด...</p>';
+    }
+    var req = ++bossView.req, version = App.killsVersion;
+    withSkewRetry(function(){ return supa.rpc('boss_history_by_boss', args); }).then(function(res){
+      if(req !== bossView.req || App.historyTab !== 'boss' || document.getElementById('historyOverlay').hidden) return;
+      if(res.error){
+        if(res.error.code === 'PGRST202'){ legacyRenderBossView(list, entries); return; }
+        console.error('boss_history_by_boss', res.error);
+        list.innerHTML = '<p class="empty-note">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>';
+        return;
+      }
+      bossView.argsKey = argsKey; bossView.version = version; bossView.data = res.data || {};
+      drawBossView(list, bossView.data);
+    }, function(err){ console.error('boss_history_by_boss', err); });
+  }
+  function drawBossView(list, data){
+    var killers = data.killers || [], groups = data.groups || [];
+    // ปุ่มเลือกคน = สมาชิกปาร์ตี้ปัจจุบัน + ทุกคนที่เคยกด (จากฐานข้อมูล แม้ออกจากปาร์ตี้ไปแล้ว)
+    var seen = {}, opts = [], counts = {};
+    App.bossKillersIndex = {};
+    killers.forEach(function(k){ counts[k.id] = Number(k.count)||0; App.bossKillersIndex[k.id] = k.name; });
+    (App.partyRoster||[]).forEach(function(p){ if(!seen[p.id]){ seen[p.id] = true; opts.push({ id:p.id, name:p.name }); } });
+    killers.forEach(function(k){ if(!seen[k.id]){ seen[k.id] = true; opts.push({ id:k.id, name:k.name }); } });
+    if(bossKillerFilter!=='all' && !opts.some(function(o){ return o.id===bossKillerFilter; })){ bossKillerFilter = 'all'; renderHistory(); return; }
+    var multi = opts.length > 1;
+    var killer = multi ? bossKillerFilter : null;
+    var chips = multi ? '<div class="loot-filter">'+
+      '<button type="button" class="'+(bossKillerFilter==='all'?'active':'')+'" data-boss-killer="all">ทั้งหมด</button>'+
+      opts.map(function(o){
+        return '<button type="button" class="'+(bossKillerFilter===o.id?'active':'')+'" data-boss-killer="'+escapeHtml(o.id)+'">'+escapeHtml(o.name)+' ('+(counts[o.id]||0)+')</button>';
+      }).join('')+'</div>' : '';
+    App.bossGroupsIndex = {};
+    var delAttr = (killer && killer!=='all') ? ' data-del-killer="'+escapeHtml(killer)+'"' : '';
+    var cards = groups.map(function(g){
+      var sid = g.server_id || '';
+      var items = g.items || [];
+      App.bossGroupsIndex[g.boss_id+''+sid] = { name:g.boss_name, kills:Number(g.kills)||0, items:items.reduce(function(s,i){ return s+(Number(i.count)||0); }, 0) };
+      var byHtml = killer==='all' ? '<div class="hist-by">กดโดย '+(g.by||[]).map(function(b){ return escapeHtml(b.name)+' ×'+b.count; }).join(' · ')+'</div>' : '';
+      var svAttr = ' data-del-server="'+escapeHtml(sid)+'"';
+      return '<div class="log-row">'+historyAvatarHtml(g.boss_id, g.boss_name)+'<div class="log-body">'+
+        '<div class="hist-head"><div class="when">ฆ่าแล้ว '+fmtNum(g.kills)+' ครั้ง · วันนี้ '+fmtNum(g.today)+' · ล่าสุด '+fmtDateTime(new Date(g.last_at).getTime())+'</div>'+
+          '<button type="button" class="hist-del" data-del-boss="'+String(g.boss_id).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>'+
+        '<div class="boss">'+escapeHtml(g.boss_name)+'</div>'+byHtml+
+        '<div class="chip-row">'+(items.length ? items.map(function(it){ return '<span class="chip">'+itemIconHtml(it.name,'item-ic')+escapeHtml(it.name)+(it.count>1 ? ' ×'+it.count : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div></div>';
+    }).join('');
+    list.innerHTML = chips + (cards || '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>');
+  }
+  // วิธีเดิม (นับจากประวัติที่โหลดมาในเครื่อง) — ใช้เฉพาะตอนฐานข้อมูลยังไม่มี boss_history_by_boss
+  function legacyRenderBossView(list, entries){
     var opts = killerOptions();
     if(bossKillerFilter!=='all' && !opts.some(function(o){ return o.id===bossKillerFilter; })) bossKillerFilter = 'all';
     var counts = {};
@@ -6923,7 +7108,7 @@
     '#expiryOverlay', '#expiryBanner', '#serverPickOverlay', '#topupOverlay', '#confirmOverlay', '#farmOcHintOverlay', '#farmRateRequiredOverlay', '#mrRateRequiredOverlay', '#forgotPasswordOverlay', '#recoveryPasswordOverlay',
     '.rail', '.util-bar', '#view-pricing', '#view-settings', '#view-admin',
     // ประวัติการล่า: เปลี่ยนแท็บ/ตัวกรอง/ปิดได้ แต่ลบ/หาร/ขาย/เก็บไว้ไม่ได้
-    '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]',
+    '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]', '[data-history-more]',
     // บัญชีนักลงทุน: กราฟ/ตัวกรอง/ค้นหา/กางการ์ดประวัติ (ไม่รวมฟอร์มรับ-ขาย, ลงประกาศ, แก้/ลบรายการ)
     '#mrChartCategoryToggle', '#mrChartServerSelect', '#mrChartTimeframeSelect', '#mrSeriesDropdownBtn', '#mrSeriesDropdown', '#mrSeriesChips', '#mrChartLegend',
     '#historyCategoryToggle', '#historyServerFilter', '#mrHistorySearch', '#mrHistoryRange', '#mrItSoldToggle', '.mr-ic-head', '.mr-ic-day-head', '.mr-rate-hover', '.mr-edited-hover',
@@ -8360,7 +8545,8 @@
     });
   }
   document.getElementById('historyDeleteAll').addEventListener('click', function(){
-    var n = App.kills.length, m = App.kills.reduce(function(s,k){ return s+k.items.length; }, 0);
+    var n = App.killStats ? App.killStats.kills : App.kills.length;
+    var m = App.killStats ? App.killStats.items : App.kills.reduce(function(s,k){ return s+k.items.length; }, 0);
     if(!n) return;
     showConfirm('ลบประวัติทั้งหมดของปาร์ตี้นี้ '+n+' การฆ่า · '+m+' ไอเทม (รวมข้อมูลหาร/ยอดขาย)? ลบแล้วกู้คืนไม่ได้', function(){
       runHistoryDelete(supa.from('kills').delete().eq('host_id', activeOwnerId()).select('id'), 'ลบประวัติทั้งหมดแล้ว');
@@ -8368,6 +8554,12 @@
   });
 
   document.getElementById('historyList').addEventListener('click', function(e){
+    var hm = e.target.closest('[data-history-more]');
+    if(hm){
+      hm.disabled = true; hm.textContent = 'กำลังโหลด...';
+      loadOlderKills().then(loadDepartedSharerNames).then(renderHistory);
+      return;
+    }
     var dk = e.target.closest('[data-del-kill]');
     if(dk){
       var kill = App.kills.filter(function(k){ return k.id===dk.dataset.delKill; })[0];
@@ -8393,10 +8585,15 @@
       var sid = db.dataset.delServer || ''; // '' = การ์ดของรอบเก่าที่ไม่มีเซิร์ฟเวอร์เก็บไว้
       var who = db.dataset.delKiller; // ไม่มี = ทุกคน, 'none' = รอบที่ไม่รู้ว่าใครกด, อื่นๆ = uuid ของคนที่กำลังดูอยู่
       var ks = App.kills.filter(function(k){ return k.bossId===bid && (k.serverId||'')===sid && (who==null || (k.killedById||'none')===who); });
-      if(!ks.length) return;
-      var itemCount = ks.reduce(function(s,k){ return s+k.items.length; }, 0);
-      var scopeText = who==null ? ' ทั้งหมด' : ' เฉพาะรอบที่ '+escapeHtml(killerNameOf(ks[0]))+' กด';
-      showConfirm('ลบประวัติ '+escapeHtml(ks[0].bossName)+scopeText+' '+ks.length+' ครั้ง'+(itemCount ? ' พร้อมไอเทม '+itemCount+' ชิ้น (รวมข้อมูลหาร/ยอดขาย)' : '')+(who==null ? '' : ' (ของคนอื่นยังอยู่)')+'? ลบแล้วกู้คืนไม่ได้', function(){
+      // จำนวนจากฐานข้อมูล (การ์ดที่กดอยู่) — ประวัติในเครื่องอาจโหลดมาไม่ครบ
+      var gi = App.bossGroupsIndex[bid+''+sid];
+      var killCount = gi ? gi.kills : ks.length;
+      if(!killCount) return;
+      var itemCount = gi ? gi.items : ks.reduce(function(s,k){ return s+k.items.length; }, 0);
+      var delBossName = gi ? gi.name : ks[0].bossName;
+      var killerLabel = who==null ? '' : (App.bossKillersIndex[who] || (ks[0] ? killerNameOf(ks[0]) : ''));
+      var scopeText = who==null ? ' ทั้งหมด' : ' เฉพาะรอบที่ '+escapeHtml(killerLabel)+' กด';
+      showConfirm('ลบประวัติ '+escapeHtml(delBossName)+scopeText+' '+killCount+' ครั้ง'+(itemCount ? ' พร้อมไอเทม '+itemCount+' ชิ้น (รวมข้อมูลหาร/ยอดขาย)' : '')+(who==null ? '' : ' (ของคนอื่นยังอยู่)')+'? ลบแล้วกู้คืนไม่ได้', function(){
         var q = supa.from('kills').delete().eq('host_id', activeOwnerId()).eq('boss_id', bid);
         q = sid ? q.eq('server_id', sid) : q.is('server_id', null);
         if(who==='none') q = q.is('killed_by', null); else if(who!=null) q = q.eq('killed_by', who);

@@ -1602,6 +1602,13 @@
   // (กันคนละเครื่องกดพร้อมกันอยู่ที่ฐานข้อมูล: record_kill รวมการฆ่าที่ห่างกันไม่เกิน 60 วินาที)
   var KILL_LOCK_MS = 3000;
   var killSaving = {};
+  // กด MVP แล้วฐานข้อมูลรวมเข้ารายการเดิม (มีการฆ่าบอสตัวนี้ห่างไม่เกิน 60 วิอยู่แล้ว)
+  function killMergedToast(boss, rec, deathTs, items){
+    if(!rec || rec.ts === deathTs) return; // รายการใหม่ ไม่ต้องแจ้ง
+    var itemsNote = items.length ? ' · เพิ่มไอเทมที่เลือกเข้ารายการเดิมแล้ว' : '';
+    if(rec.killedById && rec.killedById !== App.session.id) toast('มีคนในปาร์ตี้บันทึกการฆ่า '+boss.name+' นี้ไปแล้ว'+itemsNote);
+    else toast('บันทึกการฆ่า '+boss.name+' นี้ไปแล้ว — เริ่มนับเวลาใหม่'+itemsNote);
+  }
   function lockKill(bossId){ killSaving[bossId] = Date.now(); setKillBtnState(bossId); }
   function unlockKill(bossId, failed){
     var startedAt = killSaving[bossId];
@@ -4908,8 +4915,13 @@
       '7. เมื่อขายได้แล้ว ใส่จำนวนเงินที่ขาย ระบบจะหารให้พร้อมบอกยอดเงินที่ได้รับในประวัติของแต่ละคนในปาร์ตี้ที่ได้รับส่วนแบ่ง',
       '8. ระบบเสียงเตือนจะดังก่อนบอสเกิด 3 นาที (ปิดได้)',
       '9. กดเคลียร์เวลา เลิกจับเวลาบอสตัวนั้น',
-      {sub:true, text:'เพิ่มเติม I'},
-      {warn:true, text:'1. สำหรับแพ็กเกจฟรี เมื่อถูกเพิ่มเข้าปาร์ตี้ จะดูข้อมูลได้อย่างเดียว!'}
+      {sub:true, text:'เพิ่มเติม 1'},
+      '1. กด MVP แล้วปุ่มจะล็อก 3 วินาที กันกดรัวซ้ำ',
+      '2. บอสตัวเดียวกันที่กด MVP ห่างกันไม่เกิน 1 นาที นับเป็นการฆ่ารอบเดียว ประวัติไม่ขึ้นซ้ำ',
+      '3. คนที่กด MVP คนแรกกดซ้ำได้ เวลาเกิดจะเริ่มนับใหม่ ส่วนคนอื่นในปาร์ตี้กดซ้ำ เวลาเกิดยังคงเป็นของคนแรก',
+      '4. ลืมเลือกไอเทม ให้เลือกไอเทมแล้วกด MVP อีกครั้งภายใน 1 นาที ไอเทมจะเพิ่มเข้ารายการเดิม (ทุกคนในปาร์ตี้ที่กด MVP ได้ ทำได้เหมือนกัน)',
+      {sub:true, text:'เพิ่มเติม 2'},
+      {warn:true, text:'สำหรับแพ็กเกจฟรี เมื่อถูกเพิ่มเข้าปาร์ตี้ จะดูข้อมูลได้อย่างเดียว!'}
     ]}
   };
   function openHowto(key){
@@ -8486,43 +8498,58 @@
       var items = (App.pendingItems[bossId] || []).slice();
       if(boss.custom){
         if(customBusy) return;
-        var customFailed = false;
+        var customFailed = false, customKillId = null;
         lockKill(bossId);
         customTask(function(){
           return CustomAPI.record(customRef(bossId), activeOwnerId(), TIMERS_SERVER, App.session.id,
             new Date(deathTs).toISOString(), items, JSON.stringify([rawTimeInput, items.slice().sort()]), App.profile && App.profile.display_name)
-            .catch(function(err){ customFailed = true; throw err; });
+            .then(function(id){ customKillId = id; return id; }, function(err){ customFailed = true; throw err; });
         }, function(){ delete App.pendingItems[bossId]; fired.warn[bossId]=false; fired.threeMin[bossId]=false; })
-          .then(function(){ unlockKill(bossId, customFailed); }, function(){ unlockKill(bossId, true); });
+          .then(function(){
+            unlockKill(bossId, customFailed);
+            // รวมเข้ารายการเดิม (ห่างไม่เกิน 60 วิ): ของคนอื่น = คงเวลาคนแรก · ของตัวเอง = ฐานข้อมูลนับเวลาใหม่ให้
+            var rec = customKillId ? App.kills.filter(function(k){ return k.id === customKillId; })[0] : null;
+            if(rec) killMergedToast(boss, rec, deathTs, items);
+          }, function(){ unlockKill(bossId, true); });
         return;
       }
       lockKill(bossId);
-      supa.rpc('record_kill', { p_boss_id: String(boss.id), p_boss_name: boss.name, p_killed_at: new Date(deathTs).toISOString(), p_items: items }).then(function(res){
-        if(res.error){ unlockKill(bossId, true); console.error('record_kill', res.error); toast('บันทึกประวัติการฆ่าไม่สำเร็จ: '+res.error.message); return; }
-        unlockKill(bossId, false);
-        bossNotifyChanged();
-        loadKills().then(function(){
-          // ฐานข้อมูลรวมการฆ่าที่ห่างกันไม่เกิน 60 วิเป็นรอบเดียว → ได้รายการของคนอื่นกลับมา = มีคนบันทึกไปก่อนแล้ว
-          var rec = App.kills.filter(function(k){ return k.id === res.data; })[0];
-          if(rec && rec.killedById && rec.killedById !== App.session.id){
-            toast('มีคนในปาร์ตี้บันทึกการฆ่า '+boss.name+' นี้ไปแล้ว'+(items.length ? ' — เพิ่มไอเทมที่เลือกเข้ารายการเดิมแล้ว' : ''));
-          }
-          renderStats(); renderRoster();
-        });
-      }, function(err){ unlockKill(bossId, true); console.error('record_kill', err); toast('บันทึกประวัติการฆ่าไม่สำเร็จ'); });
-
       var startedByName = App.profile ? App.profile.display_name : null;
       // ชดเชยเวลา UI เล็กน้อยทุกครั้งที่กด "MVP ตายแล้ว" ให้รอบใหม่เร็วขึ้น 3 วินาที
       // โดยคง timestamp เวลาตายจริงและข้อมูลประวัติเดิมไว้
       var targetTime = deathTs + boss.minutes*60000 - 3000;
+      // จอเริ่มนับใหม่ทันที แต่ "เวลาร่วมของปาร์ตี้" บันทึกหลังรู้ผลจากฐานข้อมูล: ถ้ารวมเข้ารายการของคนอื่น
+      // (มีคนกดไปก่อนภายใน 60 วิ) คงเวลาของคนแรก — คนที่กดคนแรกกดซ้ำได้ และเวลานับใหม่ตามที่กด
       App.active[bossId] = { targetTime: targetTime, startedBy: startedByName };
       delete App.pendingItems[bossId];
       fired.warn[bossId] = false; fired.threeMin[bossId] = false;
       renderRoster(); renderStats();
       toast('บันทึกการฆ่า '+boss.name+' แล้ว — เริ่มจับเวลารอบใหม่');
-      supaSetBossTime(bossId, targetTime, startedByName).then(function(res){
-        if(res.error) console.error('supaSetBossTime', res.error);
-      });
+      var writeTimer = function(){
+        return supaSetBossTime(bossId, targetTime, startedByName).then(function(r){ if(r && r.error) console.error('supaSetBossTime', r.error); });
+      };
+      var refreshAfterKill = function(){
+        return Promise.all([ loadUserBosses(), loadKills() ]).then(function(){ renderStats(); renderRoster(); });
+      };
+      supa.rpc('record_kill', { p_boss_id: String(boss.id), p_boss_name: boss.name, p_killed_at: new Date(deathTs).toISOString(), p_items: items }).then(function(res){
+        if(res.error){
+          unlockKill(bossId, true); console.error('record_kill', res.error); toast('บันทึกประวัติการฆ่าไม่สำเร็จ: '+res.error.message);
+          writeTimer(); // เหมือนเดิม: ประวัติบันทึกไม่ได้ แต่ตัวจับเวลายังเดินต่อ
+          return;
+        }
+        return supa.from('kills').select('killed_at, killed_by').eq('id', res.data).maybeSingle().then(function(kr){
+          var row = (kr && !kr.error) ? kr.data : null;
+          // อ่านรายการไม่ได้ → ทำแบบเดิม (ถือเป็นรายการใหม่ บันทึกเวลาตามที่กด)
+          var merged = !!row && Date.parse(row.killed_at) !== deathTs;
+          var mine = !row || row.killed_by === App.session.id;
+          unlockKill(bossId, false);
+          if(merged) killMergedToast(boss, { killedById: row.killed_by, ts: Date.parse(row.killed_at) }, deathTs, items);
+          return (merged && !mine ? Promise.resolve() : writeTimer()).then(function(){
+            bossNotifyChanged();
+            return refreshAfterKill();
+          });
+        });
+      }, function(err){ unlockKill(bossId, true); console.error('record_kill', err); toast('บันทึกประวัติการฆ่าไม่สำเร็จ'); writeTimer(); });
     } else if(action==='clear-time'){
       // ล้างเวลาที่จับอยู่ทั้งหมด กลับไปเป็น "ยังไม่ได้ฆ่า" — ไม่ใช่แค่เอาส่วนที่ปรับ
       // เวลาออก แต่เลิกจับเวลารอบนี้ทั้งรอบ (เผื่อกดผิดหรืออยากเริ่มนับใหม่)

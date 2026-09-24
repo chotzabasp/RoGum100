@@ -12,7 +12,7 @@
     'https://jnwckkcjurchnppekhpc.supabase.co',
     'sb_publishable_Z_xnoeSTMY2t-VqaDfPmKg_FfOCjTOf'
   );
-  var CustomAPI = (await import('./custom-boss-api.js')).createCustomBossAPI(supa);
+  var CustomAPI = (await import('./custom-boss-api.js?v=20260924a')).createCustomBossAPI(supa);
 
   // ---------- บันทึกการใช้งานเว็บ (ส่งเข้า log_events → แดชบอร์ดแอดมิน admin.html) ----------
   // เก็บแค่: เข้าเว็บ, เปิดหน้าไหน/อยู่นานเท่าไหร่, ขั้นตอนการซื้อแพ็กเกจ, สมัครสมาชิก
@@ -1201,11 +1201,24 @@
     catch(error){toast(error.message||'บันทึกไม่สำเร็จ');}
     finally{customBusy=false;}
   }
+  // ลบรูปที่บอสไม่ได้ใช้แล้วออกจากถัง — เช็คกับข้อมูลล่าสุดในฐานข้อมูลก่อนเสมอ (รูปที่บอสยังใช้อยู่จะไม่ถูกลบ)
+  // ลบไม่สำเร็จไม่เป็นไร แค่รูปค้างในถัง ผู้ใช้ไม่เห็น error
+  function customCleanupImages(bossId,candidates){
+    candidates=(candidates||[]).filter(Boolean);
+    if(!CustomAPI||!bossId||!candidates.length)return;
+    CustomAPI.definition(bossId).then(function(def){
+      var keep=[def.image_path,def.map_image_path];
+      var drop=candidates.filter(function(p){return keep.indexOf(p)===-1;});
+      if(drop.length)return CustomAPI.removeImages(drop);
+    }).catch(function(err){console.warn('custom boss image cleanup',err);});
+  }
   function customNode(tag,text){var node=document.createElement(tag);if(text!=null)node.textContent=text;return node;}
   function openCustomBossModal(boss){
     if(!CustomAPI || !App.session || App.isGuest){toast('กรุณาเข้าสู่ระบบ');return;}
     if(activeOwnerId()!==App.session.id){toast('เจ้าของปาร์ตี้เท่านั้นที่เพิ่มหรือแก้ไขบอสได้');return;}
     var record=boss?boss.record:null,uploads={},saving=false;
+    // รูปเดิมของบอส + รูปที่อัปโหลดในหน้าต่างนี้ — ตอนปิดหน้าต่าง ตัวไหนบอสไม่ได้ใช้แล้วจะถูกลบออกจากถัง
+    var imageCandidates=record?[record.image_path,record.map_image_path]:[];
     var dialog=customNode('dialog'),form=customNode('form');dialog.className='custom-boss-dialog';
     var title=customNode('h3',boss?'แก้ไขบอส':'เพิ่มบอส');form.append(title);
     function field(label,type,value){var wrap=customNode('label',label),input=customNode('input');input.type=type;input.value=value||'';wrap.append(input);form.append(wrap);return input;}
@@ -1229,7 +1242,7 @@
     var cancel=customNode('button','ยกเลิก'),submit=customNode('button',boss?'บันทึก':'เพิ่มบอส');cancel.type='button';submit.type='submit';cancel.className='btn btn-ghost';submit.className='btn btn-primary';
     cancel.onclick=function(){if(!saving)dialog.close();};footer.append(cancel,submit);form.append(footer);dialog.append(form);document.body.append(dialog);
     dialog.addEventListener('cancel',function(e){if(saving)e.preventDefault();});
-    dialog.addEventListener('close',function(){dialog.remove();customReload();},{once:true});
+    dialog.addEventListener('close',function(){dialog.remove();customReload();customCleanupImages(record&&record.id,imageCandidates);},{once:true});
     form.onsubmit=async function(e){
       e.preventDefault();if(saving||customBusy)return;
       var fields={name:name.value.trim(),respawn_minutes:Number(minutes.value),map_location:map.value.trim()||null,
@@ -1246,7 +1259,7 @@
         if(!record.updated_at)record=await CustomAPI.definition(record.id);
         for(var pair of [[bossImage,'image_path'],[mapImage,'map_image_path']]){
           var file=pair[0].files[0],key=pair[1];
-          if(file&&(!uploads[key]||uploads[key].file!==file))uploads[key]={file:file,path:await CustomAPI.upload(activeOwnerId(),record.id,file)};
+          if(file&&(!uploads[key]||uploads[key].file!==file)){uploads[key]={file:file,path:await CustomAPI.upload(activeOwnerId(),record.id,file)};imageCandidates.push(uploads[key].path);}
           fields[key]=uploads[key]?uploads[key].path:record[key]||null;
         }
         await CustomAPI.update(record,fields);await customReload();bossNotifyChanged();dialog.close();toast('บันทึก Custom Boss แล้ว');
@@ -8108,7 +8121,11 @@
     if(action==='custom-edit'){ openCustomBossModal(boss); return; }
     if(action==='custom-archive'){
       showConfirm('Archive '+escapeHtml(boss.name)+'? ประวัติเดิมยังคงอยู่', function(){
-        customTask(function(){ return CustomAPI.rpc('archive_custom_boss', {p_boss_id:boss.rawId}); });
+        var archivedImages=boss.record?[boss.record.image_path,boss.record.map_image_path]:[];
+        customTask(function(){ return CustomAPI.rpc('archive_custom_boss', {p_boss_id:boss.rawId}).then(function(){
+          // บอสถูกลบออกแล้ว ไม่มีหน้าไหนแสดงรูปนี้อีก — ลบรูปออกจากถัง (ลบไม่สำเร็จไม่กระทบการลบบอส)
+          CustomAPI.removeImages(archivedImages).catch(function(err){console.warn('custom boss image cleanup',err);});
+        }); });
       }); return;
     }
     if(action==='remove'){

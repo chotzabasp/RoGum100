@@ -77,6 +77,12 @@ async function upload(owner, bossId, file) {
   await result(bucket().upload(path, file, { contentType: file.type, upsert: false }));
   return path;
 }
+// ลบรูปที่ไม่ใช้แล้วออกจากถัง (เจ้าของลบได้เฉพาะโฟลเดอร์ตัวเอง — policy custom_boss_images_delete_own)
+async function removeImages(paths) {
+  const list = [...new Set((paths || []).filter(Boolean))];
+  if (!list.length) return;
+  await result(bucket().remove(list));
+}
 async function imageUrl(path) {
   if (!path) return null;
   return (await result(bucket().createSignedUrl(path, 60))).signedUrl;
@@ -85,5 +91,5 @@ async function pageState(owner) {
   return JSON.stringify(await Promise.all([rpc('boss_page_state', { p_host: owner }), rpc('custom_boss_page_state', { p_host: owner })]));
 }
 
-return { client, result, rpc, context, load, definition, update, setTime, marker, add, remove, record, validateImage, upload, imageUrl, pageState };
+return { client, result, rpc, context, load, definition, update, setTime, marker, add, remove, record, validateImage, upload, removeImages, imageUrl, pageState };
 }

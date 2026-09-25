@@ -302,7 +302,7 @@
               </div>
               <div class="farm-series-filter" id="mrSeriesFilter">
                 <div class="farm-series-chips" id="mrSeriesChips"></div>
-                <button type="button" class="farm-series-dropdown-btn" id="mrSeriesDropdownBtn">▾</button>
+                <button type="button" class="farm-series-dropdown-btn" id="mrSeriesDropdownBtn" aria-label="เพิ่มเส้นในกราฟ">▾</button>
                 <div class="farm-series-dropdown" id="mrSeriesDropdown" hidden></div>
               </div>
             </div>
@@ -332,7 +332,7 @@
         <div class="topbar-right">
           <div class="hf-group">
             <label>เซิร์ฟเวอร์</label>
-            <select id="farmServerSelect"></select>
+            <select id="farmServerSelect" aria-label="เซิร์ฟเวอร์"></select>
           </div>
         </div>
       </div>
@@ -378,7 +378,7 @@
               </div>
               <div class="farm-series-filter" id="farmSeriesFilter">
                 <div class="farm-series-chips" id="farmSeriesChips"></div>
-                <button type="button" class="farm-series-dropdown-btn" id="farmSeriesDropdownBtn">▾</button>
+                <button type="button" class="farm-series-dropdown-btn" id="farmSeriesDropdownBtn" aria-label="เพิ่มเส้นในกราฟ">▾</button>
                 <div class="farm-series-dropdown" id="farmSeriesDropdown" hidden></div>
               </div>
             </div>
@@ -422,7 +422,7 @@
             <div class="farm-log-fields">
               <div class="farm-log-field farm-log-field-count">
                 <label>จำนวนกั้ม</label>
-                <input type="number" id="farmCountInput" class="mono" value="1" min="1">
+                <input type="number" id="farmCountInput" class="mono" value="1" min="1" aria-label="จำนวนกั้ม">
               </div>
               <div class="farm-log-field farm-log-field-earned">
                 <div class="farm-log-field-label">ยอดที่ฟามได้รวม <button type="button" class="farm-oc-toggle" id="farmOcToggle">OC 24%</button></div>
@@ -592,7 +592,7 @@
         <div class="panel panel-side items-card-c">
           <div class="panel-head">
             <h2><img class="inventory-heading-icon" src="assets/treasure.png" alt="" aria-hidden="true">รายการรอลงคลัง</h2>
-            <select class="chart-tf-select" id="itemsServerSelect"></select>
+            <select class="chart-tf-select" id="itemsServerSelect" aria-label="เซิร์ฟเวอร์ของคลังไอเทม"></select>
           </div>
           <div class="farm-log-divider"></div>
           <div id="itemsPendingList"></div>
@@ -1115,4 +1115,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260925o"></script>
+<script src="assets/app.js?v=20260925p"></script>

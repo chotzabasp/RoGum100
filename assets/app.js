@@ -3110,7 +3110,7 @@
       var color = FARM_SERIES_COLOR[s];
       return '<span class="farm-series-chip" style="background:color-mix(in srgb, '+color+' 20%, transparent)">'+
         '<span class="cl-dot" style="background:'+color+'"></span>'+FARM_SERIES_LABEL[s]+
-        '<button type="button" class="farm-series-chip-x" data-farm-legend-remove="'+s+'">✕</button></span>';
+        '<button type="button" class="farm-series-chip-x" data-farm-legend-remove="'+s+'" aria-label="ซ่อนเส้น '+FARM_SERIES_LABEL[s]+'">✕</button></span>';
     }).join('');
     var dropdownBtn = document.getElementById('farmSeriesDropdownBtn');
     dropdownBtn.hidden = !hidden.length;
@@ -3670,7 +3670,7 @@
       var color = MR_CHART_SERIES_COLOR[s];
       return '<span class="farm-series-chip" style="background:color-mix(in srgb, '+color+' 20%, transparent)">'+
         '<span class="cl-dot" style="background:'+color+'"></span>'+MR_CHART_SERIES_LABEL[s]+
-        '<button type="button" class="farm-series-chip-x" data-mr-legend-remove="'+s+'">✕</button></span>';
+        '<button type="button" class="farm-series-chip-x" data-mr-legend-remove="'+s+'" aria-label="ซ่อนเส้น '+MR_CHART_SERIES_LABEL[s]+'">✕</button></span>';
     }).join('');
     var dropdownBtn = document.getElementById('mrSeriesDropdownBtn');
     dropdownBtn.hidden = !hidden.length;

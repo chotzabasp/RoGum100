@@ -343,7 +343,8 @@
       tickerServers:'mvpwatch_tickerservers_'+email, tickerSelectedServers:'mvpwatch_tickerselectedservers_'+email,
       lastRateUpdateTs:'mvpwatch_lastrateupdatets_'+email,
       retiredServerVisible:'mvpwatch_retiredserversvisible_'+email,
-      recentNewTx:'mvpwatch_recentnewtx_'+email, recentNewGroup:'mvpwatch_recentnewgroup_'+email
+      recentNewTx:'mvpwatch_recentnewtx_'+email, recentNewGroup:'mvpwatch_recentnewgroup_'+email,
+      soldNewSeen:'mvpwatch_soldnewseen_'+email
     };
   };
 
@@ -363,6 +364,7 @@
     // ป้าย "New" ต้องอยู่ข้ามการรีเฟรชหน้า จนกว่าจะถูกกดเปิดดูจริง — เก็บใน localStorage แยกต่อบัญชี
     recentNewTxIds = store(keys.recentNewTx, {});
     recentNewGroupIds = store(keys.recentNewGroup, {});
+    soldNewSeen = store(keys.soldNewSeen, {});
     function read(name, fallback){
       if(cloudValues && Object.prototype.hasOwnProperty.call(cloudValues, name)){
         var v = cloudValues[name];
@@ -4346,6 +4348,9 @@
   // เก็บลง localStorage ทั้งคู่ ให้อยู่ข้ามการรีเฟรชหน้า จนกว่าจะกดเปิดดูจริงตามลำดับชั้น
   var recentNewGroupIds = {};
   var recentNewTxIds = {};
+  // Acknowledging the sold-out header must not mark its child cards/days as read.
+  var soldNewSeen = {};
+  function saveSoldNewSeen(){ if(App.keys) persist(App.keys.soldNewSeen, soldNewSeen); }
   function saveRecentNewGroupIds(){ if(App.keys) persist(App.keys.recentNewGroup, recentNewGroupIds); }
   function saveRecentNewTxIds(){ if(App.keys) persist(App.keys.recentNewTx, recentNewTxIds); }
   // ดัชนี id ของ tx ที่อยู่ในแต่ละกลุ่มวันที่ — สร้างใหม่ทุกครั้งที่ render เพื่อรู้ว่า
@@ -4633,14 +4638,20 @@
       ? '<span class="mr-it-cell profit none"><i>กำไร</i><b>—</b><small>ยังไม่ได้ขาย</small></span>'
       : '<span class="mr-it-cell profit"><i>กำไร</i><b class="'+(g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</b>'+
         '<small class="mr-profit-sale-note">ขายไป '+fmtNum(g.sellQty)+' '+unit+'</small></span>';
-    return '<div class="mr-it-row mr-ic history-alt-'+(displayIndex%2===0?'odd':'even')+(open?' open':'')+'" data-key="'+encodeURIComponent(g.key)+'">'+
+    var category = g.category==='zeny' ? 'zeny' : (g.category==='item' ? 'item' : 'other');
+    var imagePath = historyGroupImagePath(g);
+    var nameHtml = itemImageNameHtml(category==='zeny'?'':imagePath, itemNameWithSlots(g.name, g.slots), g.name);
+    if(imagePath && category!=='zeny') nameHtml = nameHtml.replace(ITEM_IMAGE_ICON, ITEM_IMAGE_ICON+'<img class="mr-history-thumb" data-thumb-path="'+escapeHtml(imagePath)+'" alt="" loading="lazy">');
+    return '<div class="mr-it-row mr-ic mr-history-'+category+' history-alt-'+(displayIndex%2===0?'odd':'even')+(open?' open':'')+'" data-key="'+encodeURIComponent(g.key)+'">'+
       '<button type="button" class="mr-ic-head" aria-expanded="'+(open?'true':'false')+'" title="กดเพื่อดูรายการซื้อ-ขายของไอเทมนี้">'+
         (groupHasNew ? '<span class="mr-ic-new-badge">New</span>' : '')+
         '<span class="mr-ic-chev">▸</span>'+
         '<span class="mr-it-namewrap">'+
-          '<span class="mr-it-name">'+itemImageNameHtml(historyGroupImagePath(g), itemNameWithSlots(g.name, g.slots), g.name)+'</span>'+
-          '<span class="mr-it-tags">'+historyCategoryTag(g.category)+(showServer?historyServerTag(g.serverId):'')+'</span>'+
+          '<span class="mr-it-name">'+(!imagePath || category==='zeny' ? historyCategoryIcon(category) : '')+nameHtml+'</span>'+
+          '<span class="mr-it-tags"'+(category==='item'?' hidden':'')+'>'+(category==='zeny'?'<span class="chip">M</span>':category==='item'?'':historyCategoryTag(g.category))+'</span>'+
+          (showServer?'<span class="mr-history-server"><span>เซิร์ฟเวอร์</span>'+historyServerTag(g.serverId)+'</span>':'')+
         '</span>'+
+        (category!=='zeny' ? '<span class="mr-compact-metrics"><span class="mr-compact-remaining"><span>คงเหลือ</span> <b>'+fmtNum(left)+' '+unit+'</b></span><span class="mr-compact-profit"><span>กำไร</span> <b class="'+(g.sellQty<=0?'':g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.sellQty<=0?'—':(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ')+'</b></span>'+(over>0?'<span class="mr-compact-warning">ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit+'</span>':'')+'</span>' : '')+
       '</button>'+
       '<span class="mr-it-cell buy"><i>ซื้อมา</i><b>'+fmtNum(g.buyQty)+' '+unit+'</b><small>'+buyDisplay(g.buyBaht)+' บ</small>'+buyAvgLine+'</span>'+
       '<span class="mr-it-cell sell"><i>ขายไป</i><b>'+fmtNum(g.sellQty)+' '+unit+'</b><small>'+fmtNum(g.sellBaht)+' บ</small>'+avgLine(g.sellBaht, g.sellQty, unit)+'</span>'+
@@ -4650,7 +4661,50 @@
     '</div>';
   }
 
+  // Presentation only: keep cards as direct children for existing event/CSS hooks.
+  function historyCategoryIcon(category){
+    var shape = category==='zeny'
+      ? '<circle cx="12" cy="12" r="8"/><path d="M9 8h6l-6 8h6"/>'
+      : category==='item' ? '<path d="m12 3 8 5v8l-8 5-8-5V8l8-5Zm-8 5 8 5 8-5M12 13v8"/>'
+      : '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>';
+    return '<span class="mr-history-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">'+shape+'</svg></span>';
+  }
+
+  // UI-only pagination. Filter the full history first; never paginate accounting inputs.
+  var historyPaging = { filters:null, pages:{}, sizes:{} };
+  function resetHistoryPagingForFilters(){
+    var filters = JSON.stringify([App.keys && App.keys.merchantLog, historyState.serverId, historyState.category, historyState.range, historyState.search]);
+    if(historyPaging.filters!==filters){ historyPaging.filters=filters; historyPaging.pages={}; }
+  }
+  function historyPageWindow(rows, key){
+    var size = historyPaging.sizes[key] || 10;
+    var pages = Math.max(1, Math.ceil(rows.length/size));
+    var page = Math.max(1, Math.min(historyPaging.pages[key] || 1, pages));
+    historyPaging.pages[key]=page;
+    return { size:size, page:page, pages:pages, start:(page-1)*size, rows:rows.slice((page-1)*size,page*size) };
+  }
+  function historyPagerHtml(window, total, key, label){
+    return '<div class="mr-history-pager" data-pager="'+key+'" role="group" aria-label="แบ่งหน้า '+label+'">'+
+      '<span class="mr-page-status" aria-live="polite">'+(window.start+1)+'–'+Math.min(window.start+window.size,total)+' จาก '+total+' รายการ</span>'+
+      '<label>ต่อหน้า <select data-history-size="'+key+'" aria-label="จำนวนรายการต่อหน้า '+label+'">'+[10,20,50].map(function(size){ return '<option'+(size===window.size?' selected':'')+'>'+size+'</option>'; }).join('')+'</select></label>'+
+      '<span class="mr-page-actions"><button type="button" data-history-page="'+key+'" data-page="'+(window.page-1)+'"'+(window.page===1?' disabled':'')+'>ก่อนหน้า</button><span>'+window.page+' / '+window.pages+'</span><button type="button" data-history-page="'+key+'" data-page="'+(window.page+1)+'"'+(window.page===window.pages?' disabled':'')+'>ถัดไป</button></span></div>';
+  }
+  function historyCategoryRowsHtml(groups, showServer, scope){
+    return ['zeny','item','other'].map(function(category){
+      var rows = groups.filter(function(g){ return (g.category||'zeny')===category; });
+      if(!rows.length) return '';
+      var label = category==='zeny' ? 'Zeny' : (category==='item' ? 'ไอเทม' : 'อื่น ๆ');
+      var key = (scope || 'active')+'-'+category;
+      var window = category==='zeny' ? null : historyPageWindow(rows,key);
+      return '<h3 class="mr-history-section mr-history-'+category+'" data-history-section="'+key+'" tabindex="-1">'+historyCategoryIcon(category)+
+        '<span>'+label+'</span><span class="mr-history-count">'+rows.length+' รายการ</span></h3>'+
+        (window?window.rows:rows).map(function(g, idx){ return historyItemRowHtml(g, showServer, idx); }).join('')+
+        (window ? historyPagerHtml(window,rows.length,key,label) : '');
+    }).join('');
+  }
+
   function renderHistoryItemView(list){
+    resetHistoryPagingForFilters();
     var groups = computeHistoryItemGroups();
     if(!groups.length){ list.innerHTML = historyEmptyHtml(); return; }
     var showServer = historyState.serverId==='all';
@@ -4660,21 +4714,22 @@
     var active = groups.filter(function(g){ return !isSoldOut(g); });
     var soldOut = groups.filter(isSoldOut);
     var html = '<div class="mr-it">'+
-      active.map(function(g, idx){ return historyItemRowHtml(g, showServer, idx); }).join('');
+      historyCategoryRowsHtml(active, showServer);
     if(soldOut.length){
       var soldOpen = historyState.soldOutOpen==null ? !active.length : historyState.soldOutOpen;
       var soldProfit = soldOut.reduce(function(s,g){ return s+g.profit; }, 0);
-      var soldHasNew = soldOut.some(function(g){ return recentNewGroupIds[g.key]; });
+      var soldHasNew = soldOut.some(function(g){ return recentNewGroupIds[g.key] && !soldNewSeen[g.key]; });
       html += '<div class="mr-it-group-wrap">'+
         '<button type="button" class="mr-it-group'+(soldOpen?' open':'')+'" id="mrItSoldToggle" aria-expanded="'+(soldOpen?'true':'false')+'">'+
           (soldHasNew ? '<span class="mr-ic-new-badge">New</span>' : '')+
           '<span class="mr-ic-chev">▸</span>ขายหมดแล้ว '+soldOut.length+' รายการ'+
           '<span class="mr-it-group-profit '+(soldProfit>=0?'profit-pos':'profit-neg')+'">กำไรรวม '+(soldProfit>=0?'+':'')+fmtNum(soldProfit)+' บ</span>'+
         '</button>'+
-        '<div class="mr-it" id="mrItSoldList"'+(soldOpen?'':' hidden')+'>'+soldOut.map(function(g, idx){ return historyItemRowHtml(g, showServer, active.length+idx); }).join('')+'</div>'+
+        '<div class="mr-it" id="mrItSoldList"'+(soldOpen?'':' hidden')+'>'+historyCategoryRowsHtml(soldOut, showServer, 'sold')+'</div>'+
       '</div>';
     }
     list.innerHTML = html+'</div>';
+    hydrateItemThumbs(list);
   }
 
   function renderMerchantHistory(){
@@ -4896,15 +4951,15 @@
       '2. ซื้อ หรือ ขาย',
       '3. เลือกเซิร์ฟเวอร์ที่ทำรายการ (กรณีพ่อค้าแม่ค้าที่เปิดร้าน 2 เซิร์ฟเวอร์ขึ้นไป) รายการจะถูกจัดแบ่งไว้ตามเซิร์ฟเวอร์ที่เลือกไม่รวมกัน',
       '4. ใส่จำนวน M และราคา (แนบรูปไว้ดูรายการในประวัติได้) กดยืนยัน จะแสดงยอดพร้อมรูปในประวัติ',
-      {sub:true, text:'เพิ่มเติม I'},
+      {sub:true, text:'คลังไอเทมและ Slot'},
       '1. สำหรับรายการซื้อไอเทม จะถูกส่งไปในคลังไอเทมเพื่อจัดหมวดหมู่',
       '2. + เพิ่ม Slot (ใส่ข้อมูลไอเทมที่มีออฟหรือการ์ดอื่นๆ ได้)',
-      {sub:true, text:'เพิ่มเติม II'},
+      {sub:true, text:'ซื้อ–ขายด้วย Zeny'},
       '1. ขายหรือซื้อไอเทมเป็นแบบ "Zeny" ต้องใส่เรท M วันนั้น ระบบจะคำนวณยอดเป็น "บาท" ให้เลย',
-      {sub:true, text:'เพิ่มเติม III'},
+      {sub:true, text:'ขายไอเทมจากคลัง'},
       '1. การ "ขายไอเทม" สามารถเลือกในรายการคลังไอเทมได้เลย เพื่อช่วยในการจัดการสต๊อกแบบเป็นระบบ',
       '2. ขายไอเทมที่ไม่มีของในคลังก็ได้ พิมพ์ชื่อไอเทมแล้วกดขายได้เลย จะถูกคำนวณและบันทึกไปไว้ในประวัติ',
-      {sub:true, text:'เพิ่มเติม IV'},
+      {sub:true, text:'ดูประวัติแบบละเอียด'},
       '1. ถ้าจะดูประวัติรายการแบบละเอียด กดปุ่มซ่อนตรงชื่อรายการ ตรงกรอบประวัติ'
     ]},
     items: { title:'คลังไอเทม', lines:[
@@ -4941,21 +4996,41 @@
       {warn:true, text:'สำหรับแพ็กเกจฟรี เมื่อถูกเพิ่มเข้าปาร์ตี้ จะดูข้อมูลได้อย่างเดียว!'}
     ]}
   };
+  var howtoReturnFocus = null;
   function openHowto(key){
     var d = HOWTO_CONTENT[key];
     if(!d) return;
-    document.getElementById('howtoTitle').textContent = d.title;
+    howtoReturnFocus = document.activeElement;
+    document.getElementById('howtoTitle').textContent = 'วิธีใช้ · '+d.title;
     document.getElementById('howtoBody').innerHTML = d.lines.map(function(l){
-      if(typeof l === 'object' && l && l.sub) return '<div class="howto-sub">'+escapeHtml(l.text)+'</div>';
+      if(typeof l === 'object' && l && l.sub) return '<h4 class="howto-sub">'+escapeHtml(l.text)+'</h4>';
       if(typeof l === 'object' && l && l.warn) return '<div class="howto-warn">'+escapeHtml(l.text)+'</div>';
-      return '<div>'+escapeHtml(l)+'</div>';
+      var step = String(l).match(/^(\d+)\.\s*(.*)$/);
+      return step ? '<div class="howto-step"><span class="howto-step-num">'+step[1]+'</span><span>'+escapeHtml(step[2])+'</span></div>' : '<div>'+escapeHtml(l)+'</div>';
     }).join('');
     document.getElementById('howtoOverlay').hidden = false;
+    document.getElementById('howtoBody').scrollTop=0;
+    document.getElementById('howtoCloseBtn').focus();
   }
-  function closeHowto(){ document.getElementById('howtoOverlay').hidden = true; }
+  function closeHowto(){
+    document.getElementById('howtoOverlay').hidden = true;
+    if(howtoReturnFocus && howtoReturnFocus.isConnected) howtoReturnFocus.focus();
+  }
+  document.getElementById('howtoOverlay').addEventListener('keydown',function(e){
+    if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); closeHowto(); }
+    if(e.key==='Tab'){
+      e.preventDefault();
+      var close=document.getElementById('howtoCloseBtn'), body=document.getElementById('howtoBody');
+      (document.activeElement===close ? body : close).focus();
+    }
+  });
   document.getElementById('howtoCloseBtn').addEventListener('click', closeHowto);
   document.querySelector('#howtoOverlay .confirm-backdrop').addEventListener('click', closeHowto);
   document.querySelectorAll('.dashboard-howto-label').forEach(function(el){
+    el.setAttribute('role','button');
+    el.setAttribute('tabindex','0');
+    el.setAttribute('aria-haspopup','dialog');
+    el.addEventListener('keydown',function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openHowto(el.dataset.howto); } });
     el.addEventListener('click', function(){ openHowto(el.dataset.howto); });
   });
 
@@ -5696,8 +5771,10 @@
     lines.forEach(function(l){
       var histKey = newEntry.serverId+'|'+newEntry.category+'|'+l.name+'|'+JSON.stringify(l.slots||[]);
       recentNewGroupIds[histKey] = true;
+      delete soldNewSeen[histKey];
     });
     saveRecentNewGroupIds();
+    saveSoldNewSeen();
     recentNewTxIds[newEntry.id] = true;
     saveRecentNewTxIds();
     renderMerchantHistory();
@@ -5770,6 +5847,16 @@
   });
 
   document.getElementById('mrHistoryList').addEventListener('click', function(e){
+    var pageButton = e.target.closest('[data-history-page]');
+    if(pageButton){
+      if(pageButton.disabled) return;
+      var pageKey = pageButton.dataset.historyPage;
+      historyPaging.pages[pageKey] = Number(pageButton.dataset.page);
+      renderMerchantHistory();
+      var heading = document.querySelector('[data-history-section="'+pageKey+'"]');
+      if(heading){ heading.focus({preventScroll:true}); heading.scrollIntoView({block:'nearest'}); }
+      return;
+    }
     var delBtn = e.target.closest('[data-del]');
     if(delBtn){
       var id = delBtn.dataset.del;
@@ -5847,7 +5934,7 @@
 
   // Expand/collapse an item card, or reveal more rows in the ตามวัน view. The delete
   // button is handled by the listener above, so it's skipped here.
-  // ป้าย "New" ไล่ระดับ: เปิดการ์ดไอเทม/กองขายหมดแล้ว = เคลียร์เฉพาะป้ายชั้นบน (recentNewGroupIds)
+  // ป้าย "New" ไล่ระดับ: เปิดการ์ดไอเทม = เคลียร์เฉพาะป้ายการ์ด; กองขายหมดแล้วจำการอ่านแยกจากลูก
   // เปิดกลุ่มวันที่ดูรายการจริง = เคลียร์เฉพาะป้ายชั้นล่าง (recentNewTxIds) ของวันนั้น — คนละชั้น คนละเงื่อนไขหาย
   function clearNewGroupIdsFor(keys){
     var changed = false;
@@ -5890,12 +5977,27 @@
       return;
     }
     if(e.target.closest('#mrItSoldToggle')){
-      // ป้าย New บนปุ่มนี้คำนวณสดจาก recentNewGroupIds ของไอเทมข้างในเสมอ (ดู soldHasNew ตอน render)
-      // ไม่ใช่ธงแยกของตัวเอง — กดเปิดแค่เผยรายการ ไม่เคลียร์อะไร ต้องกดเปิดทีละการ์ดไอเทมข้างในเองถึงจะหาย
       historyState.soldOutOpen = document.getElementById('mrItSoldList').hidden;
+      if(historyState.soldOutOpen){
+        computeHistoryItemGroups().forEach(function(g){
+          if(g.sellQty>0 && g.remaining<=0 && recentNewGroupIds[g.key]) soldNewSeen[g.key] = true;
+        });
+        saveSoldNewSeen();
+      }
       renderMerchantHistory();
       return;
     }
+  });
+
+  document.getElementById('mrHistoryList').addEventListener('change', function(e){
+    var select = e.target.closest('[data-history-size]');
+    if(!select || [10,20,50].indexOf(Number(select.value))<0) return;
+    var key = select.dataset.historySize;
+    historyPaging.sizes[key]=Number(select.value);
+    historyPaging.pages[key]=1;
+    renderMerchantHistory();
+    var replacement=document.querySelector('[data-history-size="'+key+'"]');
+    if(replacement) replacement.focus({preventScroll:true});
   });
 
   function onHistoryServerFilterChange(e){
@@ -6663,11 +6765,16 @@
       var ownedHtml = ownedUntil ? '<div class="pricing-owned-note">✓ ใช้งานอยู่'+(ownedUntil===Infinity ? ' (ไม่จำกัดเวลา)' : ' ถึง '+fmtDate(ownedUntil))+'</div>' : '';
       return '<div class="pricing-card'+(p.best?' pricing-card-best':'')+'" data-plan-key="'+p.key+'">'+
         (p.badge ? '<span class="pricing-badge-best'+(p.best?'':' pricing-badge-secondary')+'">'+escapeHtml(p.badge)+'</span>' : '')+
-        (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '<div class="pricing-promo-heading">' : '')+
-        '<div class="pricing-card-name">'+p.name+'</div>'+
-        taglineHtml+
-        (p.key==='bundle' || p.key==='timers' || p.key==='all' ? '</div>' : '')+
-        '<div class="pricing-bundle-price">'+priceHtml+'</div>'+
+        '<div class="pricing-promo-heading">'+
+        '<div class="pricing-card-name">'+p.name.replace(/—\s*|\s*—/g, '').trim()+'</div>'+taglineHtml+'</div>'+
+        '<div class="pricing-media-row"><div class="pricing-bundle-price">'+priceHtml+'</div>'+
+        (p.key==='all' ? '<div class="pricing-artwork pricing-artwork-bundle"><img src="assets/pricing-all-crown-aura.webp" width="186" height="300" alt="" aria-hidden="true"></div>' : '')+
+        (p.key==='bundle' ? '<div class="pricing-artwork pricing-artwork-bundle"><img src="assets/pricing-bundle-crown.webp" width="145" height="360" alt="" aria-hidden="true"></div>' : '')+
+        (p.key==='timers' ? '<div class="pricing-artwork"><picture><source media="(prefers-reduced-motion: reduce)" srcset="assets/pricing-morocc-large-still.webp"><img src="assets/pricing-morocc-large.webp" width="223" height="223" alt="" aria-hidden="true"></picture></div>' : '')+
+        (p.key==='accountItems' ? '<div class="pricing-artwork pricing-artwork-merchant"><img src="assets/pricing-merchant-cart-static.webp" width="243" height="260" alt="" aria-hidden="true"></div>' : '')+
+        (p.key==='farm' ? '<div class="pricing-artwork pricing-artwork-knight pricing-artwork-archer"><img src="assets/pricing-farm-mounted-knight.webp" width="211" height="300" alt="" aria-hidden="true"></div>' : '')+
+        (p.key==='free' ? '<div class="pricing-artwork pricing-artwork-novice"><img src="assets/pricing-free-trimmed.webp" width="120" height="300" alt="" aria-hidden="true"></div>' : '')+
+        '</div>'+
         pricingModulesHtml(p)+
         // รายละเอียดซ่อนไว้ก่อนทุกใบ กดปุ่มเดียวกางพร้อมกันทุกใบ (การ์ดแถวเดียวกันสูงเท่ากันเสมอ)
         (features
@@ -7194,7 +7301,7 @@
     '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]', '[data-history-more]',
     // บัญชีนักลงทุน: กราฟ/ตัวกรอง/ค้นหา/กางการ์ดประวัติ (ไม่รวมฟอร์มรับ-ขาย, ลงประกาศ, แก้/ลบรายการ)
     '#mrChartCategoryToggle', '#mrChartServerSelect', '#mrChartTimeframeSelect', '#mrSeriesDropdownBtn', '#mrSeriesDropdown', '#mrSeriesChips', '#mrChartLegend',
-    '#historyCategoryToggle', '#historyServerFilter', '#mrHistorySearch', '#mrHistoryRange', '#mrItSoldToggle', '.mr-ic-head', '.mr-ic-day-head', '.mr-rate-hover', '.mr-edited-hover',
+    '#historyCategoryToggle', '#historyServerFilter', '#mrHistorySearch', '#mrHistoryRange', '#mrItSoldToggle', '.mr-ic-head', '.mr-ic-day-head', '.mr-rate-hover', '.mr-edited-hover', '.mr-history-pager',
     '#tickerServerChips', '#rateChips',
     // รูปไอเทม: กดไอคอนดูรูปในประวัติ/คลังได้ (แนบ/เปลี่ยน/เอารูปออกในฟอร์ม = ทำรายการ → กัน)
     '.item-img-ico', '#itemImageLightbox',

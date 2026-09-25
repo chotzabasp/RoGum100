@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260925i">
+<link rel="stylesheet" href="assets/app.css?v=20260926-polish40">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -165,7 +165,7 @@
         <div class="panel panel-side panel-merchant-entry" id="mrEntryPanel">
           <div class="panel-head">
             <div class="ticker-head-title">
-              <h2><img class="dashboard-book-icon" src="assets/Bible.png" width="28" height="28" alt="" aria-hidden="true">รายการซื้อ-ขาย</h2>
+              <h2><img class="dashboard-book-icon" src="assets/merchant-baphomet.webp" width="36" height="44" alt="" aria-hidden="true">รายการซื้อ-ขาย</h2>
               <p class="mr-entry-intro">เลือกซื้อหรือขาย แล้วกรอกข้อมูลรายการ</p>
             </div>
           <div class="field">
@@ -237,7 +237,7 @@
         <div class="home-left">
           <div class="panel">
             <div class="panel-head">
-              <h2><img class="dashboard-book-icon" src="assets/Bible.png" width="28" height="28" alt="" aria-hidden="true">ประวัติซื้อ–ขาย <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
+              <h2><img class="dashboard-book-icon" src="assets/merchant-baphomet.webp" width="36" height="44" alt="" aria-hidden="true">ประวัติซื้อ–ขาย <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
             </div>
 
           <div class="dashboard-filters">
@@ -272,7 +272,7 @@
           <div class="panel panel-hero">
             <div class="panel-head">
               <div class="ticker-head-title">
-                <h2><img class="dashboard-book-icon" src="assets/Bible.png" width="28" height="28" alt="" aria-hidden="true">กราฟเงินสุทธิ (ขาย − ซื้อ) <span class="mr-chart-server-tags" id="mrChartServerTag"></span></h2>
+                <h2><img class="dashboard-book-icon" src="assets/merchant-baphomet.webp" width="36" height="44" alt="" aria-hidden="true">กราฟเงินสุทธิ (ขาย − ซื้อ) <span class="mr-chart-server-tags" id="mrChartServerTag"></span></h2>
               </div>
               <div class="chart-controls">
                 <select class="chart-tf-select" aria-label="เซิร์ฟเวอร์ของกราฟ" id="mrChartServerSelect"></select>
@@ -397,7 +397,7 @@
           <div class="panel-head">
             <h2><img class="farm-heading-icon" src="assets/warehouse/bubble-gum.png" alt="" aria-hidden="true"><span>ต้นทุนต่อกั้ม</span></h2>
             <div class="farm-exrate-row">
-              <span>อัตราแลกเปลี่ยน 1 M =</span>
+              <label for="farmExRateInput">อัตราแลกเปลี่ยน 1 M =</label>
               <input type="text" inputmode="numeric" id="farmExRateInput" class="mono" placeholder="เช่น 1,000">
               <span>บาท</span>
             </div>
@@ -405,10 +405,11 @@
           <p class="farm-retired-note" id="farmRetiredNote" hidden>เซิร์ฟเวอร์นี้ถูกพักเพราะไม่ได้เลือกไว้ใน "ตั้งค่า" แล้ว — ดูกราฟและประวัติย้อนหลังได้</p>
           <div class="farm-log-divider"></div>
           <div class="farm-map-row">
-            <span>Map</span>
+            <label for="farmMapInput">แผนที่ฟาร์ม</label>
             <input type="text" id="farmMapInput" maxlength="120" placeholder="เช่น มิด4, ย่อน5, ดันOGH">
           </div>
           <p class="farm-exrate-error" id="farmExRateError" hidden>กรุณาใส่อัตราแลกเปลี่ยนก่อนบันทึก</p>
+          <h3 class="farm-section-title">รายการต้นทุน</h3>
           <div class="farm-cost-items" id="farmCostItems"></div>
           <button class="btn btn-ghost btn-block" id="farmAddCostRowBtn" type="button">+ เพิ่มรายการต้นทุน</button>
           <div class="mr-total">
@@ -416,7 +417,7 @@
             <span class="mr-total-value mono" id="farmCostTotal">0</span>
           </div>
           <div class="farm-log-form">
-            <label class="farm-rare-heading">ไอเทมหายาก (ใส่รายการไว้) ขายแล้วค่อยแก้ไขใส่ราคาทีหลังได้</label>
+            <div class="farm-rare-heading"><h3 class="farm-section-title">ไอเทมหายาก</h3><p>ใส่รายการไว้ก่อน ขายแล้วค่อยแก้ไขราคาภายหลังได้</p></div>
             <div class="farm-rare-items" id="farmRareItems"></div>
             <button class="btn btn-ghost btn-block" id="farmAddRareItemBtn" type="button">+ เพิ่มรายการไอเทมหายาก</button>
             <div class="farm-log-divider"></div>
@@ -456,7 +457,7 @@
       <div class="panel-head">
         <h2><span>ปาร์ตี้</span><img class="party-heading-icon" src="assets/party.png" alt="" aria-hidden="true"></h2>
         <div class="party-panel-controls">
-          <span class="party-panel-summary" id="partyPanelSummary">กำลังโหลด...</span>
+          <span class="party-member-identity"><img class="party-members-art" src="assets/party-boss.webp" width="72" height="47" alt="" aria-hidden="true"><span class="party-panel-summary" id="partyPanelSummary">กำลังโหลด...</span></span>
           <button type="button" class="btn btn-ghost btn-sm" id="partyPanelToggle">จัดการปาร์ตี้</button>
         </div>
       </div>
@@ -640,17 +641,20 @@
       <div class="panel settings-card settings-package">
         <div class="panel-head">
           <h2>แพ็กเกจของฉัน</h2>
-          <div class="promo-code-row">
-            <input type="text" id="stPromoCodeInput" maxlength="40" autocomplete="off" placeholder="กรอกรหัสโปรโมชั่น (Promo Code)">
-            <button type="button" class="btn btn-gradient btn-sm" id="stPromoCodeBtn">ใช้โค้ด</button>
+          <div class="promo-code-field">
+            <label for="stPromoCodeInput">โค้ดโปรโมชัน</label>
+            <div class="promo-code-row">
+              <input type="text" id="stPromoCodeInput" maxlength="40" autocomplete="off" placeholder="กรอกรหัสโค้ด" aria-describedby="stPromoCodeError" spellcheck="false">
+              <button type="button" class="btn btn-gradient btn-sm" id="stPromoCodeBtn">ใช้โค้ด</button>
+            </div>
           </div>
         </div>
-        <p class="auth-error" id="stPromoCodeError"></p>
+        <p class="auth-error" id="stPromoCodeError" aria-live="polite"></p>
         <div id="stPackageList" class="settings-package-list"></div>
         <p id="stPackageAccessNote" class="settings-note" hidden></p>
       </div>
       <div class="settings-grid">
-        <div class="panel settings-card">
+        <div class="panel settings-card settings-profile">
           <div class="panel-head"><h2>ข้อมูลบัญชี</h2></div>
           <div class="settings-kv">
             <div><span class="lbl">Username</span><b id="stUsername">-</b></div>
@@ -697,7 +701,7 @@
       </div>
       <h3 class="settings-group-label">ประวัติ</h3>
       <div class="settings-grid">
-        <div class="panel settings-card settings-wide">
+        <div class="panel settings-card settings-wide settings-history">
           <div class="panel-head"><h2 id="stHistoryTitle">ประวัติการเติมแต้ม</h2></div>
           <div class="h-tabs">
             <button class="active" data-sthtab="topup" id="sthtabTopup">เติมแต้ม</button>
@@ -738,7 +742,7 @@
           <p class="sub">ดูรายการเติมเงินของสมาชิกทุกสถานะ ยืนยันรับเงินเมื่อตรวจยอดโอนเข้าจริง ปิดรายการที่ไม่ได้จ่าย หรือเติมแต้มให้สมาชิกโดยตรง</p>
         </div>
         <!-- แดชบอร์ดสรุปภาพรวมแยกไฟล์ (admin.html) ผู้ใช้ทั่วไปจะได้ไม่ต้องโหลดโค้ด/กราฟของแอดมิน — ใช้ล็อกอินเดียวกัน -->
-        <a class="btn btn-gradient btn-sm" href="admin.html" target="_blank" rel="noopener">เปิดแดชบอร์ดภาพรวม ↗</a>
+        <a class="btn btn-gradient btn-sm" href="admin.html?v=20260926-dashboard-polish1" target="_blank" rel="noopener">เปิดแดชบอร์ดภาพรวม ↗</a>
       </div>
       <div class="h-tabs admin-tabs" id="adminTabs">
         <button type="button" class="active" data-admin-tab="qr">รายการเติมเงิน</button>
@@ -749,16 +753,23 @@
         <button type="button" data-admin-tab="slip" hidden>สลิป (ระบบเก่า) <span id="adminSlipCount"></span></button>
       </div>
       <div id="adminQrPanel">
+        <div class="admin-filter-card">
         <div class="admin-qr-tools">
+          <label class="admin-search-field" for="adminQrSearch"><span>ค้นหารายการ</span>
           <input id="adminQrSearch" type="text" maxlength="60" autocomplete="off" placeholder="ค้นหาชื่อสมาชิก หรือรหัสอ้างอิง">
+          </label>
+          <label class="admin-range-field" for="adminQrRange"><span>ช่วงเวลา</span>
           <select id="adminQrRange" aria-label="ช่วงเวลา">
             <option value="all">ทุกช่วงเวลา</option>
             <option value="today">วันนี้</option>
             <option value="7">7 วันล่าสุด</option>
             <option value="30">30 วันล่าสุด</option>
           </select>
+          </label>
         </div>
-        <div class="admin-qr-filter" id="adminQrFilter"></div>
+        <div class="admin-filter-label" id="adminStatusLabel">สถานะรายการ</div>
+        <div class="admin-qr-filter" id="adminQrFilter" role="group" aria-labelledby="adminStatusLabel"></div>
+        </div>
         <div class="admin-qr-summary" id="adminQrSummary"></div>
         <div id="adminQrList" class="admin-topup-list"></div>
         <div class="admin-qr-more" id="adminQrMoreWrap" hidden><button type="button" class="btn btn-ghost" id="adminQrMore">ดูเพิ่ม</button></div>
@@ -960,10 +971,10 @@
 
 <div id="howtoOverlay" hidden>
   <div class="confirm-backdrop"></div>
-  <div class="howto-box">
+  <div class="howto-box" role="dialog" aria-modal="true" aria-labelledby="howtoTitle">
     <button type="button" class="howto-close" id="howtoCloseBtn" aria-label="ปิด">✕</button>
     <h3 class="howto-title" id="howtoTitle"></h3>
-    <div class="howto-body" id="howtoBody"></div>
+    <div class="howto-body" id="howtoBody" tabindex="0" role="region" aria-label="เนื้อหาวิธีใช้"></div>
   </div>
 </div>
 
@@ -1117,4 +1128,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260925t"></script>
+<script src="assets/app.js?v=20260926-ro-pager"></script>

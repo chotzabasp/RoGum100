@@ -26,7 +26,7 @@
   --border-soft:#26324a;
   --text:#f2f5fa;
   --text-dim:#adb9cd;
-  --text-mute:#7f8ca3;
+  --text-mute:#9baac1;
   --accent:#79a7ff;
   --warn:#e0ab3c;
   --danger:#ef5a56;
@@ -55,16 +55,16 @@ button{font-family:inherit}
 .topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:.8rem 1.5rem;background:rgba(16,21,33,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border-soft)}
 .brand{display:flex;align-items:center;gap:.65rem;min-width:0}
 .brand img{width:34px;height:34px;border-radius:9px}
-.brand-eyebrow{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.14em;color:var(--text-mute);text-transform:uppercase}
+.brand-eyebrow{font-size:.72rem;letter-spacing:.04em;color:var(--text-mute)}
 .brand h1{font-size:1.05rem}
 .topbar-spacer{flex:1}
 .seg{display:inline-flex;padding:3px;border:1px solid var(--border);border-radius:10px;background:var(--surface-3)}
-.seg button{border:0;background:transparent;color:var(--text-dim);font-size:.8rem;font-weight:700;padding:.38rem .8rem;border-radius:7px;cursor:pointer}
+.seg button{border:0;background:transparent;color:var(--text-dim);font-size:.85rem;font-weight:700;min-height:44px;padding:.45rem .85rem;border-radius:7px;cursor:pointer}
 .seg button.active{background:var(--surface-2);color:var(--text);box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
-.btn{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:.8rem;font-weight:700;padding:.45rem .85rem;border-radius:10px;cursor:pointer;text-decoration:none;transition:background-color 150ms ease,border-color 150ms ease}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:.85rem;font-weight:700;min-height:44px;padding:.45rem .85rem;border-radius:10px;cursor:pointer;text-decoration:none;transition:background-color 150ms ease,border-color 150ms ease}
 .btn:hover{background:#28364d;border-color:#46577a}
 .btn[disabled]{opacity:.6;cursor:wait}
-.updated{font-size:.72rem;color:var(--text-mute)}
+.updated{font-size:.78rem;color:var(--text-mute)}
 
 main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;flex-direction:column;gap:1.1rem}
 
@@ -76,9 +76,9 @@ main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;fle
 /* ---------- การ์ดพื้นฐาน ---------- */
 .card{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);padding:1.1rem 1.2rem;min-width:0}
 .card-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.35rem .75rem;margin-bottom:.85rem}
-.card-title{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:.5rem}
+.card-title{font-family:var(--font-ui);font-size:.94rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem}
 .card-title::before{content:"";width:3px;height:14px;border-radius:2px;background:var(--accent)}
-.card-note{font-size:.72rem;color:var(--text-mute)}
+.card-note{font-size:.8rem;color:var(--text-mute);line-height:1.65}
 .pill{display:inline-flex;align-items:center;gap:.3rem;font-size:.7rem;font-weight:800;padding:.18rem .55rem;border-radius:999px;white-space:nowrap}
 .pill-warn{background:rgba(224,171,60,.14);color:var(--warn);border:1px solid rgba(224,171,60,.35)}
 .pill-danger{background:rgba(239,90,86,.14);color:#ff8a86;border:1px solid rgba(239,90,86,.35)}
@@ -88,14 +88,14 @@ main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;fle
 
 /* ---------- A. ตัวเลขหลัก ---------- */
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
-.kpi{position:relative;overflow:hidden}
+.kpi{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:1rem}
 .kpi-top{display:flex;align-items:flex-start;gap:.8rem}
 .kpi-icon{flex:none;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:rgba(121,167,255,.12);color:var(--accent);border:1px solid rgba(121,167,255,.25)}
 .kpi-icon svg{width:20px;height:20px}
-.kpi-label{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim)}
+.kpi-label{font-family:var(--font-ui);font-size:.85rem;font-weight:600;color:var(--text-dim);margin-bottom:.35rem}
 .kpi-value{font-family:var(--font-mono);font-size:2.2rem;font-weight:700;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .kpi-value small{font-size:.9rem;color:var(--text-dim);font-weight:500;margin-left:.2rem}
-.kpi-foot{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.8rem;font-size:.74rem;color:var(--text-mute)}
+.kpi-foot{display:flex;align-items:center;gap:.4rem .5rem;flex-wrap:wrap;margin-top:auto;font-size:.78rem;color:var(--text-mute);line-height:1.65}
 .delta{display:inline-flex;align-items:center;gap:.2rem;font-family:var(--font-mono);font-size:.72rem;font-weight:700;padding:.15rem .45rem;border-radius:6px}
 .delta.up{color:#6fdc9c;background:rgba(63,189,117,.13)}
 .delta.down{color:#ff8a86;background:rgba(239,90,86,.13)}
@@ -106,16 +106,28 @@ main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;fle
 
 /* ---------- B. สถานะแพ็กเกจ (แถวการ์ดเล็ก) ---------- */
 .plans{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.8rem}
-.plan{background:var(--surface-3);border:1px solid var(--border-soft);border-radius:12px;padding:.8rem .9rem;display:flex;flex-direction:column;gap:.35rem}
-.plan-head{display:flex;align-items:center;justify-content:space-between;gap:.4rem}
+.plan{background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px;padding:.75rem;display:flex;flex-direction:column;gap:.4rem;min-width:0}
+.plan-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem}
 .plan-name{font-weight:800;font-size:.86rem;display:flex;align-items:center;gap:.45rem}
-.plan-name::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot,var(--accent));box-shadow:0 0 8px var(--dot,var(--accent))}
-.plan-count{font-family:var(--font-mono);font-size:1.7rem;font-weight:700;line-height:1.1}
+.plan-name::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--dot,var(--accent))}
+.plan-count{font-family:var(--font-mono);font-size:1.45rem;font-weight:700;line-height:1.2;white-space:nowrap}
 .plan-count small{font-size:.72rem;color:var(--text-dim);font-weight:500;margin-left:.25rem}
-.plan-bar{height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden}
+.plan-bar{height:3px;border-radius:2px;background:var(--surface-2);overflow:hidden}
 .plan-bar span{display:block;height:100%;background:var(--dot,var(--accent));border-radius:2px}
-.plan-meta{display:grid;grid-template-columns:1fr 1fr;gap:.2rem .6rem;font-size:.68rem;color:var(--text-mute)}
-.plan-meta b{display:block;font-family:var(--font-mono);font-size:.82rem;color:var(--text);font-weight:600}
+.plan-meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.25rem .6rem;font-size:.75rem;color:var(--text-mute)}
+.plan-meta b{display:inline;font-family:var(--font-mono);font-size:.78rem;color:var(--text);font-weight:600;margin-left:.25rem}
+.plan>.pill{align-self:flex-start;background:transparent;border:0;padding:0;font-size:.75rem;font-weight:500;white-space:normal}
+.plans-periods{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem .75rem}
+.period-tag{display:inline-flex;align-items:center;min-height:28px;padding:.15rem .55rem;border:1px solid var(--border);border-radius:6px;font-size:.78rem;color:var(--text-dim);background:var(--surface-3)}
+.plans-definition{margin:.65rem 0 0;font-size:.76rem;color:var(--text-mute)}
+.error-summary{display:flex;align-items:center;gap:.75rem 1rem;padding:.7rem 1rem;background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px}
+.error-summary-icon{width:20px;height:20px;color:var(--text-dim);flex:none}
+.error-summary-copy{flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:.25rem .7rem}
+.error-summary-copy strong{font-size:.85rem;font-weight:600}
+.error-summary-copy span{font-size:.78rem;color:var(--text-mute)}
+.error-summary .pill{font-size:.8rem}
+.error-summary-link{display:inline-flex;align-items:center;min-height:44px;font-size:.82rem;font-weight:600;text-underline-offset:3px}
+#dashboardErrors{scroll-margin-top:7rem}
 
 /* ---------- เลย์เอาต์หลัก ---------- */
 .grid-main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:1.1rem;align-items:start}
@@ -129,7 +141,7 @@ main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;fle
 .chart-hero span{font-size:.74rem;color:var(--text-mute)}
 .chart-box{position:relative;height:260px}
 .chart-box.sm{height:200px}
-.legend{display:flex;flex-wrap:wrap;gap:.35rem .9rem;margin-top:.6rem;font-size:.74rem;color:var(--text-dim)}
+.legend{display:flex;flex-wrap:wrap;gap:.35rem .9rem;margin-top:.6rem;font-size:.8rem;color:var(--text-dim)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:.35rem;vertical-align:-1px}
 
 /* รายการด้านขวา */
@@ -139,7 +151,7 @@ main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;fle
 .row-stripe{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--stripe,var(--accent))}
 .row-main{flex:1;min-width:0}
 .row-title{font-size:.84rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row-sub{font-size:.72rem;color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-sub{font-size:.78rem;color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row-side{flex:none;text-align:right;font-size:.72rem;color:var(--text-mute);font-family:var(--font-mono)}
 .row-side b{display:block;color:var(--text);font-size:.82rem}
 .queue-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem}
@@ -152,8 +164,8 @@ main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;fle
 /* ตาราง */
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.8rem}
-th{text-align:left;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-mute);font-weight:600;padding:0 .5rem .5rem;border-bottom:1px solid var(--border-soft);white-space:nowrap}
-td{padding:.55rem .5rem;border-bottom:1px solid var(--border-soft);vertical-align:middle}
+th{text-align:left;font-family:var(--font-ui);font-size:.78rem;color:var(--text-dim);font-weight:600;padding:0 .5rem .65rem;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:.65rem .5rem;border-bottom:1px solid var(--border-soft);vertical-align:middle}
 tr:last-child td{border-bottom:0}
 td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
 .user-cell b{display:block;font-weight:700}
@@ -171,18 +183,18 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 .stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
 .stat{background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px;padding:.65rem .75rem}
 .stat b{display:block;font-family:var(--font-mono);font-size:1.35rem;line-height:1.2}
-.stat span{font-size:.7rem;color:var(--text-mute)}
+.stat span{font-size:.8rem;color:var(--text-dim);display:block;margin-top:.35rem;line-height:1.6}
 .stat-grid-4{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:1rem}
 .stat.hot{border-color:rgba(227,185,94,.45)}
 .stat.hot b{color:var(--gold)}
 .feature-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.7rem}
-.traffic-stats .stat small{display:block;font-size:.68rem;color:var(--text-mute);margin-top:.15rem}
+.traffic-stats .stat small{display:block;font-size:.76rem;color:var(--text-mute);margin-top:.2rem;line-height:1.6}
 
 /* เส้นทางการซื้อ: ขั้นละแถว ความกว้างแท่ง = สัดส่วนเทียบขั้นแรก */
 .funnel{display:flex;flex-direction:column;gap:.55rem}
 .funnel-step{display:grid;grid-template-columns:minmax(0,11rem) minmax(0,1fr) auto;gap:.7rem;align-items:center;font-size:.8rem}
 .funnel-label{color:var(--text-dim)}
-.funnel-label small{display:block;font-size:.68rem;color:var(--text-mute)}
+.funnel-label small{display:block;font-size:.76rem;color:var(--text-mute)}
 .funnel-track{height:22px;border-radius:6px;background:var(--surface-2);overflow:hidden}
 .funnel-track span{display:block;height:100%;border-radius:6px;background:var(--bar,var(--c1))}
 .funnel-val{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;min-width:6.5rem}
@@ -216,6 +228,12 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   .feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .kpi-value{font-size:1.9rem}
   .queue-grid{grid-template-columns:minmax(0,1fr)}
+  .card{padding:1rem}
+  .plan{padding:.7rem .8rem}
+  .error-summary{flex-wrap:wrap;gap:.4rem .65rem}
+  .error-summary-copy{flex-basis:calc(100% - 32px)}
+  .error-summary-link{margin-left:auto}
+  .plans-periods{align-items:flex-start}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -281,13 +299,21 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     </div>
   </section>
 
+  <aside class="error-summary" id="errorSummary" aria-label="สรุปข้อผิดพลาด" hidden>
+    <svg class="error-summary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 9v5M12 18h.01"/></svg>
+    <div class="error-summary-copy"><strong>ข้อผิดพลาดที่ผู้ใช้พบ</strong><span id="errorSummaryPeriod"></span></div>
+    <span class="pill pill-mute" id="errorSummaryCount">—</span>
+    <a class="error-summary-link" href="#dashboardErrors">ดูรายละเอียด ↓</a>
+  </aside>
+
   <!-- B. สถานะแพ็กเกจ -->
   <section class="card" aria-label="แพ็กเกจที่ใช้งานอยู่">
     <div class="card-head">
-      <div class="card-title">แพ็กเกจที่ใช้งานอยู่ · ยอดขายในช่วงที่เลือก</div>
-      <span class="card-note" id="plansNote"></span>
+      <div class="card-title">ภาพรวมแพ็กเกจ</div>
+      <div class="plans-periods"><span class="period-tag">ผู้ใช้งาน · ตอนนี้</span><span class="card-note period-tag" id="plansNote"></span></div>
     </div>
     <div class="plans" id="plans"></div>
+    <p class="plans-definition">4 in 1 นับจากคนที่มีทั้งแพ็กรวมและจับเวลาบอส · ยอดขายและแต้มอ้างอิงช่วงเวลาที่เลือก</p>
   </section>
 
   <!-- กลุ่ม 2: การเข้าชมเว็บ (จากตาราง app_events — มีข้อมูลตั้งแต่วันที่ติดตั้ง) -->
@@ -339,8 +365,8 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         </table>
       </div>
     </section>
-    <section class="card">
-      <div class="card-head"><div class="card-title">Error ที่ผู้ใช้เจอ</div><span class="pill pill-mute" id="errorsTotal">0 ครั้ง</span></div>
+    <section class="card" id="dashboardErrors" tabindex="-1">
+      <div class="card-head"><div class="card-title">ข้อผิดพลาดที่ผู้ใช้พบ</div><span class="pill pill-mute" id="errorsTotal">0 ครั้ง</span></div>
       <div class="table-wrap">
         <table class="errors-table">
           <thead><tr><th>ประเภท</th><th>ข้อความ</th><th class="num">ครั้ง</th><th class="num">คน</th><th>หน้า</th><th class="num">ล่าสุด</th></tr></thead>
@@ -532,13 +558,13 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       var n = Number(active[k] || 0), s = sales[k] || { count:0, points:0 };
       return '<div class="plan" style="--dot:' + PLAN_COLOR[k] + '">' +
         '<div class="plan-head"><span class="plan-name">' + PLAN_LABEL[k] + '</span>' +
-          (n ? '<span class="pill pill-ok">ใช้งาน</span>' : '<span class="pill pill-mute">ว่าง</span>') + '</div>' +
-        '<div class="plan-count">' + fmt(n) + '<small>คน</small></div>' +
+          '<div class="plan-count">' + fmt(n) + '<small>คน</small></div></div>' +
+        (n ? '<span class="pill pill-ok">ใช้งานอยู่ตอนนี้</span>' : '<span class="pill pill-mute">ยังไม่มีผู้ใช้งาน</span>') +
         '<div class="plan-bar"><span style="width:' + (n / max * 100) + '%"></span></div>' +
         '<div class="plan-meta"><div>ขายได้<b>' + fmt(s.count) + ' ครั้ง</b></div><div>แต้มที่ได้<b>' + fmt(s.points) + '</b></div></div>' +
       '</div>';
     }).join('');
-    $('plansNote').textContent = 'ยอดขาย ' + state.days + ' วันล่าสุด · 4 in 1 นับจากคนที่มีทั้งแพ็กรวมและจับเวลาบอส';
+    $('plansNote').textContent = 'ยอดขาย · ' + state.days + ' วันล่าสุด';
   }
 
   // ---------- D. กราฟ ----------
@@ -549,8 +575,8 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       interaction:{ mode:'index', intersect:false },
       plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:'#0c111c', borderColor:'#334158', borderWidth:1, titleColor:'#f2f5fa', bodyColor:'#adb9cd', padding:10, boxPadding:4 } },
       scales:{
-        x:{ grid:{ display:false }, ticks:{ color:tick, maxRotation:0, autoSkipPadding:14, font:{ family:'JetBrains Mono', size:10 } }, border:{ color:grid } },
-        y:{ beginAtZero:true, grid:{ color:grid }, ticks:{ color:tick, precision:0, font:{ family:'JetBrains Mono', size:10 } }, border:{ display:false } }
+        x:{ grid:{ display:false }, ticks:{ color:tick, maxRotation:0, autoSkipPadding:14, font:{ family:'Inter', size:12 } }, border:{ color:grid } },
+        y:{ beginAtZero:true, grid:{ color:grid }, ticks:{ color:tick, precision:0, font:{ family:'Inter', size:12 } }, border:{ display:false } }
       }
     };
   }
@@ -695,6 +721,9 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     var errs = t.errors || [];
     $('errorsTotal').textContent = fmt(t.errors_total) + ' ครั้ง';
     $('errorsTotal').className = 'pill ' + (Number(t.errors_total) > 0 ? 'pill-warn' : 'pill-ok');
+    $('errorSummaryCount').textContent = $('errorsTotal').textContent;
+    $('errorSummaryCount').className = $('errorsTotal').className;
+    $('errorSummaryPeriod').textContent = 'ในช่วง ' + state.days + ' วันล่าสุด';
     $('errorsTable').innerHTML = errs.length ? errs.map(function(x){
       var k = ERROR_KIND[x.kind] || [x.kind, 'pill-mute'];
       var pages = String(x.pages || '').split(', ').map(function(p){ return PAGE_LABEL[p] || p; }).join(', ');
@@ -706,6 +735,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 
   function renderTraffic(t, err){
     var detail = $('trafficDetail');
+    $('errorSummary').hidden = !!(err || !t);
     $('trafficDetail2').hidden = !!(err || !t);
     if(!(err || !t)) renderDevicesErrors(t);
     if(err || !t){

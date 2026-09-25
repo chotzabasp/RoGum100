@@ -2686,7 +2686,7 @@
   // ---------- merchant รับ/ขาย bar chart (real data from App.merchantLog) ----------
   // Hand-rolled inline SVG — no charting library, so nothing depends on a CDN script executing.
   var MR_CHART_SERIES_KEYS = ['sell','buy','profit'];
-  var MR_CHART_SERIES_LABEL = { sell:'ขาย', buy:'ซื้อ', profit:'กำไรสุทธิ' };
+  var MR_CHART_SERIES_LABEL = { sell:'ขาย', buy:'ซื้อ', profit:'เงินสุทธิ' };
   var MR_CHART_SERIES_COLOR = { sell:'#3fbd75', buy:'#ef5a56', profit:'#5b8ef4' };
   var MR_LOSS_COLOR = '#ef5a56';
   var hiddenMrChartSeries = { sell:false, buy:false, profit:false };
@@ -3485,19 +3485,24 @@
     requestAnimationFrame(function(){ window.scrollTo(x, y); });
   }
 
+  // คืนต้นทุน/เรท/ชื่อแผนที่ "ปัจจุบัน" ที่ถูกแทนด้วยค่าของรายการเก่าตอนกดแก้ไข
+  // (ใช้ทั้งตอนยกเลิกและตอนบันทึกการแก้ไข — รายการที่แก้เก็บค่าของตัวเองไว้แล้ว)
+  function restoreFarmEditCostBackup(){
+    if(!farmEditCostBackup) return;
+    App.farmCostItems[farmEditCostBackup.serverId] = farmEditCostBackup.rows;
+    App.farmExchangeRates[farmEditCostBackup.serverId] = farmEditCostBackup.exchangeRate;
+    App.farmMapNames[farmEditCostBackup.serverId] = farmEditCostBackup.mapName;
+    saveFarmCostItems();
+    saveFarmExchangeRates();
+    saveFarmMapNames();
+    renderFarmCostItems();
+    renderFarmExchangeRate();
+    renderFarmMapName();
+  }
+
   function cancelFarmEdit(){
     var scrollX = window.scrollX, scrollY = window.scrollY;
-    if(farmEditCostBackup){
-      App.farmCostItems[farmEditCostBackup.serverId] = farmEditCostBackup.rows;
-      App.farmExchangeRates[farmEditCostBackup.serverId] = farmEditCostBackup.exchangeRate;
-      App.farmMapNames[farmEditCostBackup.serverId] = farmEditCostBackup.mapName;
-      saveFarmCostItems();
-      saveFarmExchangeRates();
-      saveFarmMapNames();
-      renderFarmCostItems();
-      renderFarmExchangeRate();
-      renderFarmMapName();
-    }
+    restoreFarmEditCostBackup();
     resetFarmEditState();
     renderFarmHistory();
     renderFarmChart();
@@ -4677,7 +4682,7 @@
     return '<div class="mr-summary-row">'+
       '<div class="mr-summary-item"><span class="mr-summary-label">ขายทั้งหมด</span><span class="mr-summary-value sell">'+fmtNum(sellTotal)+' '+unit+'</span></div>'+
       '<div class="mr-summary-item"><span class="mr-summary-label">ซื้อทั้งหมด</span><span class="mr-summary-value buy">'+(buyTotal ? '-'+fmtNum(Math.abs(buyTotal)) : fmtNum(0))+' '+unit+'</span></div>'+
-      '<div class="mr-summary-item"><span class="mr-summary-label">กำไรสุทธิ</span><span class="mr-summary-value '+(profit>=0?'profit-pos':'profit-neg')+'">'+(profit>=0?'+':'')+fmtNum(profit)+' '+unit+'</span></div>'+
+      '<div class="mr-summary-item"><span class="mr-summary-label">เงินสุทธิ (ขาย − ซื้อ)</span><span class="mr-summary-value '+(profit>=0?'profit-pos':'profit-neg')+'">'+(profit>=0?'+':'')+fmtNum(profit)+' '+unit+'</span></div>'+
     '</div>';
   }
 
@@ -5683,7 +5688,7 @@
     renderMerchantSummary();
     renderMrChart();
     updateItemsRailBadge();
-    var isWarehouseBuy = App.merchantType==='buy' && (App.merchantCategory==='zeny' || App.merchantCategory==='item');
+    var isWarehouseBuy = App.merchantType==='buy' && App.merchantCategory==='item'; // M ไม่เข้าคลังไอเทม
     toast(isWarehouseBuy ? 'รายการซื้อถูกส่งไปคลังไอเทมแล้ว' : 'บันทึก '+lines.length+' รายการแล้ว');
     // Preserve user-selected history expansion and scroll position after saving.
     // Clear the entered rows after a successful save — keep the current
@@ -8270,6 +8275,7 @@
           entry.mapName = App.farmMapNames[App.farmServerId] || '';
         }
         saveFarmLog();
+        restoreFarmEditCostBackup();
         resetFarmEditState();
         renderFarmHistory();
         renderFarmChart();

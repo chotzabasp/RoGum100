@@ -7444,6 +7444,11 @@
   var TOPUP_MIN_AMOUNT = 20;
   var topupQrPollTimer = null;
   var topupQrClockTimer = null;
+  // QR หมดเวลาแล้วยังเช็คผลต่ออีก 2 นาที: จ่ายช่วงวินาทีท้ายๆ ข้อความยืนยันจาก TMWEASY อาจมาช้ากว่านาฬิกา
+  var TOPUP_QR_GRACE_MS = 120000;
+  var TOPUP_QR_GRACE_MSG = 'QR หมดเวลาแล้ว — ถ้าเพิ่งโอนไป ระบบกำลังตรวจสอบ รอสักครู่ (ไม่ต้องโอนซ้ำ)';
+  var topupQrGraceTimer = null;
+  var topupQrInGrace = false;
   var topupQrTransactionId = null;
   var topupQrExpiresAt = 0;
   // เติมสำเร็จแล้ว: ซ่อน "ยกเลิก" และเปลี่ยนปุ่มหลักเป็น "เสร็จสิ้น" (กดแล้วปิดหน้าต่าง) กันผู้ใช้เข้าใจว่ายังรอจ่ายอยู่
@@ -7456,8 +7461,8 @@
   }
   document.getElementById('topupCustomAmount').min = String(TOPUP_MIN_AMOUNT);
   function stopTopupQrWatch(){
-    clearInterval(topupQrPollTimer); clearInterval(topupQrClockTimer);
-    topupQrPollTimer = null; topupQrClockTimer = null;
+    clearInterval(topupQrPollTimer); clearInterval(topupQrClockTimer); clearTimeout(topupQrGraceTimer);
+    topupQrPollTimer = null; topupQrClockTimer = null; topupQrGraceTimer = null; topupQrInGrace = false;
   }
   // ปิดรูป QR เมื่อใช้ต่อไม่ได้แล้ว (หมดอายุ / ไม่สำเร็จ / จ่ายแล้ว) กันลูกค้าสแกน QR เก่าจ่ายซ้ำ
   // ซึ่งเงินอาจเข้าแต่ระบบไม่เติมแต้มให้ — label = ข้อความที่แสดงแทนรูป, '' = แสดงรูปตามปกติ
@@ -7516,10 +7521,19 @@
     var totalSeconds = Math.ceil(remaining/1000);
     document.getElementById('topupQrExpiry').textContent = pad2(Math.floor(totalSeconds/60))+':'+pad2(totalSeconds%60);
     if(remaining<=0){
-      stopTopupQrWatch();
+      clearInterval(topupQrClockTimer); topupQrClockTimer = null;
       setTopupQrCover('QR หมดอายุ');
-      setTopupPaymentStatus('expired','QR หมดอายุ กรุณาสร้างใหม่');
       var button=document.getElementById('topupCreateQrBtn'); button.disabled=false; button.textContent='สร้าง QR ใหม่';
+      if(topupQrPollTimer && !topupQrInGrace){
+        topupQrInGrace = true;
+        setTopupPaymentStatus('pending', TOPUP_QR_GRACE_MSG);
+        topupQrGraceTimer = setTimeout(function(){
+          stopTopupQrWatch();
+          setTopupPaymentStatus('expired','QR หมดอายุ กรุณาสร้างใหม่');
+        }, TOPUP_QR_GRACE_MS);
+      } else if(!topupQrPollTimer){
+        setTopupPaymentStatus('expired','QR หมดอายุ กรุณาสร้างใหม่');
+      }
     }
   }
   function handleTopupTransaction(row){
@@ -7549,7 +7563,7 @@
       setTopupPaymentStatus('expired','QR หมดอายุ กรุณาสร้างใหม่');
       var expiredButton=document.getElementById('topupCreateQrBtn'); expiredButton.disabled=false; expiredButton.textContent='สร้าง QR ใหม่';
     } else {
-      setTopupPaymentStatus('pending','กำลังรอการชำระเงิน...');
+      setTopupPaymentStatus('pending', topupQrInGrace ? TOPUP_QR_GRACE_MSG : 'กำลังรอการชำระเงิน...');
     }
   }
   function pollTopupTransaction(){

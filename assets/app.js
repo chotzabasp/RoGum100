@@ -6387,6 +6387,15 @@
     var left = rail.scrollLeft + (br.left - rr.left) - (rr.width - br.width) / 2;
     rail.scrollLeft = Math.max(0, left); // เลื่อนทันที (smooth บางเบราว์เซอร์ไม่ขยับเมื่อมีการวาดหน้าใหม่พร้อมกัน)
   }
+  // ย่อ/ขยายหน้าต่าง หรือหมุนมือถือ: เมนูเพิ่งกลายเป็นแถบแนวนอน → เลื่อนปุ่มหน้าปัจจุบันมาให้เห็น (หน่วงไว้ไม่ให้ทำถี่ระหว่างลาก)
+  var railResizeTimer = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(railResizeTimer);
+    railResizeTimer = setTimeout(function(){
+      var active = document.querySelector('.rail-btn.active[data-page]');
+      if(active) scrollRailToActive(active.dataset.page);
+    }, 150);
+  });
   function switchPage(page){
     if((!App.session || !App.session.id) && GUEST_PAGES.indexOf(page)===-1) page = 'home';
     Track.page(page);
@@ -8355,6 +8364,9 @@
   // history row being edited while an edit is in progress cancels it.
   document.addEventListener('click', function(e){
     if(!editingFarmId) return;
+    // กดช่องยอดที่ฟามได้ → หน้าต่างเตือน OC เด้งขึ้นตอนกดเมาส์ลง แล้วคลิกไปจบบนหน้าต่างนั้น เบราว์เซอร์จึงนับว่าคลิกที่ body
+    // (นอกฟอร์ม) — ห้ามถือเป็นการคลิกออกนอกฟอร์ม ไม่งั้นการแก้ไขถูกยกเลิกเองทุกครั้งที่กดช่องยอด
+    if(!document.getElementById('farmOcHintOverlay').hidden) return;
     if(e.target.closest('[data-farm-edit]')) return;
     if(e.target.closest('[data-farm-del]')) return;
     if(e.target.closest('.panel-farm-cost')) return;

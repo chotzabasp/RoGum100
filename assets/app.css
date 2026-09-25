@@ -2555,3 +2555,6 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-farm #farmHistoryList .mr-empty:has(.dashboard-empty-title){margin:.5rem 0;padding:1.5rem 1rem;border:1px dashed var(--border);border-radius:var(--radius-m);background:var(--surface-2);font-size:.86rem;line-height:1.8}
 #view-farm .dashboard-empty-title{display:block;font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:.4rem}
 #view-farm .dashboard-empty-detail{display:block;font-weight:400;font-size:.83rem;line-height:1.8;color:var(--text-dim)}
+/* เสียงแจ้งเตือนยังถูกเบราว์เซอร์กันอยู่ (ยังไม่ได้แตะหน้าเว็บ) */
+.boss-sound-lock-hint{margin:.6rem 0 0;padding:.5rem .8rem;border:1px dashed color-mix(in srgb, var(--warn) 55%, transparent);border-radius:var(--radius-m);background:color-mix(in srgb, var(--warn) 10%, transparent);color:var(--warn);font-size:.82rem;line-height:1.6}
+.boss-sound-lock-hint[hidden]{display:none}

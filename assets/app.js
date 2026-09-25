@@ -1824,13 +1824,25 @@
       if(actx.state==='suspended') actx.resume().catch(function(){});
     }catch(e){}
   }
-  document.addEventListener('pointerdown', unlockAudio, {once:true,passive:true});
-  document.addEventListener('keydown', unlockAudio, {once:true});
+  function unlockAudioOnGesture(){ if(!audioReady()) unlockAudio(); }
+  ['pointerdown','touchend','click','keydown'].forEach(function(ev){ document.addEventListener(ev, unlockAudioOnGesture, {passive:true}); });
+  // คืน true = จัดการแล้ว (ดังแล้ว หรือผู้ใช้ปิดเสียงเอง) · false = เบราว์เซอร์ยังไม่ให้เล่นเสียง (ยังไม่ได้แตะหน้าเว็บ)
+  // → ผู้เรียกเก็บการเตือนไว้ก่อน แตะหน้าเว็บเมื่อไรก็ดังในวินาทีถัดไป (ถ้าบอสยังไม่เกิด)
   function beep(){
     try{
-      if(!bossSoundAudible()) return;
+      if(!bossSoundAudible()) return true;
+      if(!audioReady()){ unlockAudio(); return false; }
       playBellSound(3);
     }catch(e){}
+    return true;
+  }
+  function audioReady(){ return !!actx && actx.state === 'running'; }
+  // ป้าย "แตะหน้าเว็บเพื่อเปิดเสียง" ในหน้าจับเวลาบอส: เปิดเสียงไว้ แต่เบราว์เซอร์ยังไม่ให้เล่น
+  function updateSoundLockHint(){
+    var el = document.getElementById('bossSoundLockHint');
+    if(!el) return;
+    var show = !!(App.session && App.session.id) && bossSoundAudible() && !audioReady();
+    if(el.hidden === show) el.hidden = !show;
   }
   function playBellSound(seconds){
     try{
@@ -1976,9 +1988,9 @@
         setTimeout(function(){ card.classList.remove('shake'); }, 550);
       }
       // แจ้งเสียงหนึ่งครั้งเมื่อเข้าสู่ช่วง 3 นาทีก่อนบอสเกิด โดยไม่เปลี่ยนสี warning ของ UI
+      // ยังไม่ได้แตะหน้าเว็บ (เบราว์เซอร์กันเสียง) = ยังไม่นับว่าเตือนแล้ว — ดังทันทีที่แตะ ถ้าบอสยังไม่เกิด
       if(remaining>0 && remaining<=180000 && !fired.threeMin[bossId]){
-        fired.threeMin[bossId] = true;
-        beep();
+        if(beep()) fired.threeMin[bossId] = true;
       }
       if(st==='normal'){ fired.warn[bossId]=false; fired.threeMin[bossId]=false; }
     });
@@ -8802,7 +8814,7 @@
     var session = res.data && res.data.session;
     if(session) enterApp(session.user); else enterGuestPreview();
   });
-  setInterval(function(){ tickTimers(); updateClock(); tickTickerCountdowns(); }, 1000);
+  setInterval(function(){ tickTimers(); updateSoundLockHint(); updateClock(); tickTickerCountdowns(); }, 1000);
   // กระดานประกาศเป็นของร่วม — เช็คทุก 60 วิ เพื่อให้เห็นประกาศที่คนอื่นเพิ่งลง (โหลดจริงเฉพาะตอนมีอะไรเปลี่ยน)
   // ข้ามตอนซ่อนแท็บ และตอนอยู่หน้าอื่นที่ไม่มีกระดาน — กลับมาหน้าบัญชีนักลงทุนเมื่อไหร่เช็คให้ทันที
   setInterval(function(){

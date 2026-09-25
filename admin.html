@@ -503,8 +503,16 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     $('kActive').textContent = fmt(k.active_7d);
     delta($('kActiveDelta'), k.active_7d, k.active_prev_7d);
     $('kRevenue').innerHTML = fmt(k.revenue_month) + '<small>บาท</small>';
-    delta($('kRevenueDelta'), k.revenue_month, k.revenue_prev_month);
-    $('kRevenueText').textContent = 'เทียบเดือนก่อน' + (k.admin_grant_month ? ' · แอดมินเติมให้ ' + fmt(k.admin_grant_month) + ' แต้ม (ไม่รวม)' : '');
+    // เทียบช่วงเดียวกันของเดือนก่อน (วันที่ 1 ถึงวันเดียวกัน) — ฟังก์ชันรุ่นเก่ายังไม่มีค่านี้ ใช้ทั้งเดือนก่อนแทน
+    var same = k.revenue_prev_month_same != null;
+    delta($('kRevenueDelta'), k.revenue_month, same ? k.revenue_prev_month_same : k.revenue_prev_month);
+    var cmp = 'เทียบเดือนก่อน';
+    if(same && k.prev_month_same_end){
+      var endDay = new Date(Date.parse(k.prev_month_same_end) - 1);
+      cmp = 'เทียบ 1–' + endDay.toLocaleDateString('th-TH', { day:'numeric', month:'short', timeZone:'Asia/Bangkok' }) +
+        ' ได้ ' + fmt(k.revenue_prev_month_same) + ' · ทั้งเดือน ' + fmt(k.revenue_prev_month);
+    }
+    $('kRevenueText').textContent = cmp + (k.admin_grant_month ? ' · แอดมินเติมให้ ' + fmt(k.admin_grant_month) + ' แต้ม (ไม่รวม)' : '');
     $('kPaid').textContent = fmt(k.paid_users);
     var rate = k.members ? (k.paid_users / k.members * 100) : 0;
     $('kPaidRate').textContent = rate.toFixed(1) + '%';
@@ -597,7 +605,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     var items = [
       [q.qr_attention, 'QR รอตรวจ / ยอดไม่ตรง', Number(q.qr_attention) > 0],
       [q.slip_pending, 'สลิปรออนุมัติ (ระบบเก่า)', Number(q.slip_pending) > 0],
-      [q.qr_pending, 'QR ที่สร้างแล้วยังไม่จ่าย', false]
+      [q.qr_pending, 'QR ที่สร้างแล้วยังไม่จ่าย (24 ชม.ล่าสุด)', false]
     ];
     $('queue').innerHTML = items.map(function(i){
       return '<div class="queue-item' + (i[2] ? ' alert' : '') + '"><b>' + fmt(i[0]) + '</b><span>' + i[1] + '</span></div>';

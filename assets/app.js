@@ -7167,6 +7167,8 @@
   var RO_ALLOW = [
     '#expiryOverlay', '#expiryBanner', '#serverPickOverlay', '#topupOverlay', '#confirmOverlay', '#farmOcHintOverlay', '#farmRateRequiredOverlay', '#mrRateRequiredOverlay', '#forgotPasswordOverlay', '#recoveryPasswordOverlay',
     '.rail', '.util-bar', '#view-pricing', '#view-settings', '#view-admin',
+    // ดูอย่างเดียว: วิธีใช้ทุกหน้า + ปุ่มลัดไปหน้าอื่นบนหน้าบัญชีนักลงทุน
+    '[data-howto]', '#howtoOverlay', '[data-dashboard-page]',
     // ประวัติการล่า: เปลี่ยนแท็บ/ตัวกรอง/ปิดได้ แต่ลบ/หาร/ขาย/เก็บไว้ไม่ได้
     '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]', '[data-history-more]',
     // บัญชีนักลงทุน: กราฟ/ตัวกรอง/ค้นหา/กางการ์ดประวัติ (ไม่รวมฟอร์มรับ-ขาย, ลงประกาศ, แก้/ลบรายการ)
@@ -7177,7 +7179,7 @@
     '.item-img-ico', '#itemImageLightbox',
     // ยอดนักฟาม: เปลี่ยนเซิร์ฟเวอร์/หน่วย/ช่วงเวลา/กราฟ/หน้าประวัติ (ไม่รวมฟอร์มบันทึก, ต้นทุน, เรท, แก้/ลบ)
     '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
-    '#farmHistoryRange', '#farmHistoryPagination', '.farm-cost-hover', '.farm-profit-hover', '.farm-income-hover',
+    '#farmHistoryRange', '#farmHistoryPagination', '[data-farm-day-toggle]', '.farm-cost-hover', '.farm-profit-hover', '.farm-income-hover',
     // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหาได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
     '#partyPanelToggle', '[data-open-history]', '#searchInput', '#bossSoundControl',
     // คลังไอเทม: ดูตามระดับ/เปลี่ยนเซิร์ฟเวอร์
@@ -7219,10 +7221,10 @@
 
   // ---------- โหมดผู้เยี่ยมชม (ยังไม่ล็อกอิน): ดูได้เฉพาะที่ระบุไว้ ที่เหลือกดแล้วเด้ง popup login ทันที ----------
   // GUEST_ALLOW = ตัวฟอร์มล็อกอิน/สมัคร · GUEST_VIEW_ALLOW = ที่ผู้เยี่ยมชมกดดูได้: เมนูซ้ายทุกหน้า (ยกเว้นตั้งค่า),
-  // สลับรายเดือน/รายปี + ดูรายละเอียดแพ็กในหน้าเติมแพ็กเกจ, ช่องค้นหาบอส · ปุ่มซื้อแพ็กเกจ/บันทึก/เพิ่มบอส/ตัวกรอง ยังเด้งล็อกอิน
+  // สลับรายเดือน/รายปี + ดูรายละเอียดแพ็กในหน้าเติมแพ็กเกจ, ช่องค้นหาบอส, วิธีใช้ · ปุ่มซื้อแพ็กเกจ/บันทึก/เพิ่มบอส/ตัวกรอง ยังเด้งล็อกอิน
   // (เพิ่มรายการที่ให้ผู้เยี่ยมชมกดได้ ต้องเพิ่มที่นี่เท่านั้น — ค่าเริ่มต้นคือกันทั้งหมด)
   var GUEST_ALLOW = '#authModal, #forgotPasswordOverlay, #recoveryPasswordOverlay, #guestLoginBtn, #guestRegisterBtn';
-  var GUEST_VIEW_ALLOW = '.rail-btn:not([data-page="settings"]), #pricingCycleToggle, .pricing-details-toggle, #searchInput, .rail-logo-fb';
+  var GUEST_VIEW_ALLOW = '.rail-btn:not([data-page="settings"]), #pricingCycleToggle, .pricing-details-toggle, #searchInput, .rail-logo-fb, [data-howto], #howtoOverlay';
   function guestBlock(e){
     if(!App.isGuest || e.target.closest(GUEST_ALLOW) || e.target.closest(GUEST_VIEW_ALLOW)) return;
     // ผู้เยี่ยมชมกดซื้อแพ็กเกจ (ถูกพาไปล็อกอิน) — นับเป็นขั้น "กดซื้อ" ในเส้นทางการซื้อด้วย

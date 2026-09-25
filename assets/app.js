@@ -5245,6 +5245,9 @@
     document.body.classList.add('ro-mode');
     document.getElementById('appScreen').hidden = false;
     renderAll();
+    document.getElementById('farmChartGuest').hidden = false;
+    document.getElementById('farmHistoryList').innerHTML = '<p class="mr-empty"><span class="dashboard-empty-title">ประวัติการฟามของคุณอยู่ที่นี่</span>'+
+      '<span class="dashboard-empty-detail">เข้าสู่ระบบด้วยปุ่มด้านบนเพื่อดูข้อมูลของคุณ หรือสมัครสมาชิกหากยังไม่มีบัญชี</span></p>';
     renderRoster();
     var hashPage = pageFromHash();
     var page = (NAV_PAGES.indexOf(hashPage) !== -1 && hashPage !== 'admin') ? hashPage : 'home';
@@ -5255,6 +5258,7 @@
 
   function enterApp(user){
     App.isGuest = false;
+    document.getElementById('farmChartGuest').hidden = true;
     document.body.classList.remove('ro-mode');
     App.session = { id:user.id, email:user.email };
     App.keys = DataKeys(user.email);
@@ -6361,6 +6365,16 @@
   var farmTfPage = null, farmTfUser = null;
   // หน้าที่ผู้เยี่ยมชม (ยังไม่ล็อกอิน) เดินดูได้ — ตั้งค่า/แอดมินต้องล็อกอิน (ถูกพากลับหน้าแรก)
   var GUEST_PAGES = ['home','farm','timers','items','pricing'];
+  // มือถือ: เมนูด้านบนเป็นแถบเลื่อนแนวนอน — เลื่อนปุ่มของหน้าที่เปิดอยู่มาไว้กลางจอ ไม่ให้ถูกตัดหรือหลุดจอ
+  // (จอคอมเมนูเป็นแนวตั้ง ไม่มีส่วนล้นแนวนอน = ไม่ทำอะไร)
+  function scrollRailToActive(page){
+    var btn = document.querySelector('.rail-btn[data-page="'+page+'"]');
+    var rail = btn && btn.closest('.rail');
+    if(!rail || rail.scrollWidth <= rail.clientWidth + 1) return;
+    var rr = rail.getBoundingClientRect(), br = btn.getBoundingClientRect();
+    var left = rail.scrollLeft + (br.left - rr.left) - (rr.width - br.width) / 2;
+    rail.scrollLeft = Math.max(0, left); // เลื่อนทันที (smooth บางเบราว์เซอร์ไม่ขยับเมื่อมีการวาดหน้าใหม่พร้อมกัน)
+  }
   function switchPage(page){
     if((!App.session || !App.session.id) && GUEST_PAGES.indexOf(page)===-1) page = 'home';
     Track.page(page);
@@ -6407,6 +6421,7 @@
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);
     });
+    scrollRailToActive(page);
     if(location.hash.slice(1) !== page) history.pushState({ page:page }, '', '#'+page);
   }
   // ปุ่ม back/forward ของเบราว์เซอร์: เปลี่ยนหน้าในแอพตาม hash ที่ browser พาไป (ไม่ push ซ้ำ เพราะ hash ตรงกันแล้ว)

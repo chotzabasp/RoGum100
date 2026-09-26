@@ -5176,10 +5176,11 @@
   function setUsernameHint(text, cls){
     var h = document.getElementById('rg-username-hint');
     h.textContent = text; h.className = 'field-hint'+(cls ? ' '+cls : '');
+    h.hidden = !text; // ไม่มีข้อความตั้งต้นแล้ว — กล่องนี้ใช้โชว์ผลตรวจ Username ตอนพิมพ์เท่านั้น ว่างก็ซ่อน
   }
   function checkUsername(u){
     var seq = ++usernameCheckSeq;
-    if(!u){ usernameOk = null; setUsernameHint('ใช้ล็อกอินได้ และเปลี่ยนภายหลังไม่ได้'); return Promise.resolve(null); }
+    if(!u){ usernameOk = null; setUsernameHint(''); return Promise.resolve(null); }
     if(!USERNAME_RE.test(u)){ usernameOk = false; setUsernameHint('ใช้ได้เฉพาะ a-z 0-9 _ . ยาว 3-20 ตัว', 'bad'); return Promise.resolve(false); }
     setUsernameHint('กำลังตรวจสอบ...');
     return supa.rpc('username_available', { u:u }).then(function(res){

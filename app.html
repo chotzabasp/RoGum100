@@ -45,9 +45,9 @@
       <p class="auth-switch"><button type="button" id="forgotPasswordLink">ลืมรหัสผ่าน?</button></p>
     </div>
     <div id="registerFields" hidden>
-      <div class="field"><label for="rg-server">เซิร์ฟเวอร์ที่เล่น</label><select id="rg-server"><option value="">— เลือกเซิร์ฟเวอร์ —</option></select><div class="field-hint">เลือกเซิร์ฟเวอร์ใหม่ได้ที่ ตั้งค่า</div></div>
-      <div class="field"><label for="rg-name">ชื่อที่ใช้แสดง</label><input id="rg-name" type="text" placeholder="เช่น กั้ม100" maxlength="15"></div>
-      <div class="field"><label for="rg-username">Username</label><input id="rg-username" type="text" placeholder="a-z 0-9 _ . ยาว 3-20 ตัว" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20"><div class="field-hint" id="rg-username-hint">ใช้ล็อกอินได้ และเปลี่ยนภายหลังไม่ได้</div></div>
+      <div class="field"><label for="rg-server">เซิร์ฟเวอร์ที่เล่น (แก้ไขได้ภายหลัง "ตั้งค่า")</label><select id="rg-server"><option value="">— เลือกเซิร์ฟเวอร์ —</option></select></div>
+      <div class="field"><label for="rg-name">ชื่อที่ใช้แสดง</label><input id="rg-name" type="text" placeholder="เช่น เฮงเฮงเฮง" maxlength="15"></div>
+      <div class="field"><label for="rg-username">Username</label><input id="rg-username" type="text" placeholder="a-z 0-9 _ . ยาว 3-20 ตัว" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20"><div class="field-hint" id="rg-username-hint" hidden></div></div>
       <div class="field"><label for="rg-email">อีเมล</label><input id="rg-email" type="email" placeholder="guild@example.com" autocomplete="email"></div>
       <div class="field"><label for="rg-pass">รหัสผ่าน</label><input id="rg-pass" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password"></div>
       <div class="field"><label for="rg-pass2">ยืนยันรหัสผ่าน</label><input id="rg-pass2" type="password" placeholder="พิมพ์รหัสผ่านอีกครั้ง" autocomplete="new-password"></div>
@@ -1196,4 +1196,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260927-farm-spelling"></script>
+<script src="assets/app.js?v=20260927-register-form"></script>

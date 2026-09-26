@@ -6324,9 +6324,54 @@
     // ตรงนี้บอกว่าอยู่เซิร์ฟไหน (เซิร์ฟที่ไม่มีของรอ แสดงแค่ชื่อ) · รายชื่อสร้างใหม่ทุกครั้ง เซิร์ฟที่เพิ่มทีหลังก็ได้ด้วย
     sel.innerHTML = ids.map(function(id){
       var waiting = itemsPendingList(id).length;
-      return '<option value="'+id+'">'+serverLabel(id)+(waiting>0 ? ' ('+fmtNum(waiting)+')' : '')+'</option>';
+      return '<option value="'+escapeHtml(id)+'" data-name="'+escapeHtml(serverLabel(id))+'" data-waiting="'+waiting+'">'+
+        escapeHtml(serverLabel(id))+(waiting>0 ? ' ('+fmtNum(waiting)+')' : '')+'</option>';
     }).join('');
     sel.value = App.itemsServerId;
+    renderItemsServerPicker();
+  }
+  // ---------- dropdown เซิร์ฟเวอร์หน้าคลังไอเทม (ทำเองแทน <select> เพื่อให้เลข "(5)" เป็นตัวแดงได้) ----------
+  // <select id="itemsServerSelect"> ตัวเดิมยังเป็นตัวเก็บค่าจริง (ซ่อนไว้) — ปุ่ม/รายการนี้แค่แสดงผล พอเลือกก็ตั้งค่า
+  // ให้ select แล้วยิง change ให้ตัวจัดการเดิมทำงานเหมือนเลือกจาก dropdown ปกติ (บัญชีหมดอายุก็ยังเปลี่ยนเซิร์ฟได้)
+  function itemsServerOptionHtml(name, waiting){
+    return '<span class="items-sv-name">'+escapeHtml(name)+'</span>'+
+      (waiting>0 ? '<span class="items-sv-count">('+fmtNum(waiting)+')</span>' : '');
+  }
+  function renderItemsServerPicker(){
+    var sel = document.getElementById('itemsServerSelect');
+    var btn = document.getElementById('itemsServerBtn');
+    var list = document.getElementById('itemsServerList');
+    if(!sel || !btn || !list) return;
+    var opts = Array.prototype.map.call(sel.options, function(o){
+      return { value:o.value, name:o.dataset.name || o.textContent, waiting:Number(o.dataset.waiting)||0 };
+    });
+    var cur = opts.filter(function(o){ return o.value===sel.value; })[0];
+    document.getElementById('itemsServerBtnLabel').innerHTML = cur ? itemsServerOptionHtml(cur.name, cur.waiting) : '—';
+    btn.disabled = !opts.length;
+    list.innerHTML = opts.map(function(o){
+      var on = cur && o.value===cur.value;
+      return '<li role="option" class="items-sv-option'+(on?' selected':'')+'" aria-selected="'+(on?'true':'false')+'" tabindex="-1" data-value="'+escapeHtml(o.value)+'">'+
+        itemsServerOptionHtml(o.name, o.waiting)+'</li>';
+    }).join('');
+    if(!opts.length) setItemsServerPickerOpen(false);
+  }
+  function setItemsServerPickerOpen(open, focusSelected){
+    var btn = document.getElementById('itemsServerBtn'), list = document.getElementById('itemsServerList');
+    if(!btn || !list) return;
+    list.hidden = !open;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(open && focusSelected){
+      var target = list.querySelector('.items-sv-option.selected') || list.querySelector('.items-sv-option');
+      if(target) target.focus();
+    }
+  }
+  function pickItemsServer(value){
+    var sel = document.getElementById('itemsServerSelect');
+    setItemsServerPickerOpen(false);
+    document.getElementById('itemsServerBtn').focus();
+    if(!sel || sel.value === value) return;
+    sel.value = value;
+    sel.dispatchEvent(new Event('change', { bubbles:true }));
   }
 
   function renderItemsPendingList(){
@@ -6488,6 +6533,43 @@
     saveItemsServer();
     App.itemsSelectedTier = null;
     renderItemsPage();
+  });
+  // ปุ่ม/รายการเซิร์ฟเวอร์ (renderItemsServerPicker): เมาส์ + คีย์บอร์ด ลูกศร / Home / End / Enter / Space / Esc / Tab
+  document.getElementById('itemsServerBtn').addEventListener('click', function(){
+    setItemsServerPickerOpen(document.getElementById('itemsServerList').hidden, true);
+  });
+  document.getElementById('itemsServerBtn').addEventListener('keydown', function(e){
+    if(['ArrowDown','ArrowUp','Enter',' '].indexOf(e.key) === -1) return;
+    e.preventDefault();
+    setItemsServerPickerOpen(true, true);
+  });
+  document.getElementById('itemsServerList').addEventListener('click', function(e){
+    var li = e.target.closest('.items-sv-option');
+    if(li) pickItemsServer(li.dataset.value);
+  });
+  document.getElementById('itemsServerList').addEventListener('keydown', function(e){
+    var items = Array.prototype.slice.call(this.querySelectorAll('.items-sv-option'));
+    var idx = items.indexOf(document.activeElement);
+    if(e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End'){
+      e.preventDefault();
+      var next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length-1
+        : Math.max(0, Math.min(items.length-1, idx + (e.key === 'ArrowDown' ? 1 : -1)));
+      if(items[next]) items[next].focus();
+    } else if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      if(items[idx]) pickItemsServer(items[idx].dataset.value);
+    } else if(e.key === 'Escape'){
+      e.preventDefault();
+      setItemsServerPickerOpen(false);
+      document.getElementById('itemsServerBtn').focus();
+    } else if(e.key === 'Tab'){
+      setItemsServerPickerOpen(false);
+    }
+  });
+  // กดนอกกรอบ = ปิดรายการ
+  document.addEventListener('pointerdown', function(e){
+    var list = document.getElementById('itemsServerList');
+    if(list && !list.hidden && !e.target.closest('#itemsServerPicker')) setItemsServerPickerOpen(false);
   });
 
   document.querySelectorAll('[data-view-tier]').forEach(function(btn){
@@ -7536,7 +7618,7 @@
     // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหาได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
     '#partyPanelToggle', '[data-open-history]', '#searchInput', '#bossSoundControl', '#discordAlertToggle',
     // คลังไอเทม: ดูตามระดับ/เปลี่ยนเซิร์ฟเวอร์
-    '[data-view-tier]', '#itemsServerSelect'
+    '[data-view-tier]', '#itemsServerSelect', '#itemsServerPicker'
   ].join(',');
   function roAllowed(target){
     if(!target || !target.closest) return true;

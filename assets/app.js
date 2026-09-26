@@ -9115,7 +9115,23 @@
   });
   supa.auth.getSession().then(function(res){
     var session = res.data && res.data.session;
-    if(session) enterApp(session.user); else enterGuestPreview();
+    // Landing links choose the existing form; consume the intent once, preserving other URL state.
+    var entryUrl = new URL(window.location.href);
+    var authMode = entryUrl.searchParams.get('auth');
+    var hasAuthIntent = authMode === 'login' || authMode === 'register';
+    if(hasAuthIntent){
+      entryUrl.searchParams.delete('auth');
+      history.replaceState(history.state, '', entryUrl.pathname + entryUrl.search + entryUrl.hash);
+    }
+    if(session){
+      enterApp(session.user);
+    } else {
+      enterGuestPreview();
+      if(hasAuthIntent){
+        openAuthModal(authMode === 'register');
+        document.getElementById(authMode === 'register' ? 'rg-server' : 'li-email').focus();
+      }
+    }
   });
   setInterval(function(){ tickTimers(); updateSoundLockHint(); updateClock(); tickTickerCountdowns(); }, 1000);
   // กระดานประกาศเป็นของร่วม — เช็คทุก 60 วิ เพื่อให้เห็นประกาศที่คนอื่นเพิ่งลง (โหลดจริงเฉพาะตอนมีอะไรเปลี่ยน)

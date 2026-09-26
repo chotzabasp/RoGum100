@@ -7277,7 +7277,7 @@
     var on = !!ps.enabled && !ps.error;
     el.className = 'settings-discord-host' + (on ? ' on' : '');
     el.textContent = ps.error ? 'ดูสถานะแจ้งเตือนของหัวปาร์ตี้ไม่ได้ในตอนนี้'
-      : on ? 'หัวปาร์ตี้เปิดแจ้งเตือน Discord ไว้แล้ว ✓ ('+(ps.lead_minutes===0 ? 'แจ้งตอนบอสเกิด' : 'แจ้งก่อนบอสเกิด '+ps.lead_minutes+' นาที')+')'
+      : on ? 'หัวปาร์ตี้เปิดแจ้งเตือน Discord ไว้แล้ว ✓ ('+(ps.lead_minutes===0 ? 'แจ้งตอนบอสเกิด' : 'แจ้งก่อนบอสเกิด '+ps.lead_minutes+' นาที')+')'+' เข้าร่วม Discord กับหัวปาร์ตี้เพื่อรับการแจ้งเตือนแบบกลุ่ม'
       : 'หัวปาร์ตี้ยังไม่ได้เปิดแจ้งเตือน Discord';
     document.getElementById('discordAlertDot').hidden = !on;
   }

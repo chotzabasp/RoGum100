@@ -3284,8 +3284,13 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 #view-home #mrHistoryList .mr-history-section .mr-history-icon{width:24px;height:24px;background:none;margin:0}
 #view-home #mrHistoryList .mr-history-other .mr-history-icon{color:#c7b9ed;background:rgba(154,126,204,.12)}
 #view-home #mrHistoryList .mr-history-zeny .mr-history-icon{color:#a5caff;background:#29466b}
-#view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-zeny{background:#233c52;border-color:#4c6a85;border-top:3px solid #82b5f4}
-#view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-zeny:hover{background:#2a455d}
+/* Zeny = กลุ่มสีน้ำเงิน · ไอเทม = กลุ่มสีม่วงอ่อน — ให้แยกสองหมวดออกจากกันได้ทันที */
+#view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-zeny{background:#182d47;border-color:#2f5378;border-top:3px solid #6fa8ee}
+#view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-zeny:hover{background:#1d3552;border-color:#3f6894;border-top-color:#6fa8ee}
+#view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-zeny.open{border-color:#4a78ad;border-top-color:#6fa8ee}
+#view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-item{background:#252136;border-color:#3d3656}
+#view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-item:hover{background:#2b263f;border-color:#524a73}
+#view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-item.open{border-color:#6a5f92}
 #view-home #mrHistoryList .mr-history-zeny>.mr-it-cell.left b{font-size:1.4rem;line-height:1.1}
 #view-home #mrHistoryList .mr-it-row.mr-ic:is(.mr-history-item,.mr-history-other){padding:.7rem .85rem;gap:.6rem .8rem;margin-top:.4rem}
 #view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-other{border-left:3px solid #8c7aaa}

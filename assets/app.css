@@ -1058,6 +1058,216 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .item-ic-lg{width:22px;height:22px;vertical-align:-5px}
 .h-actions{display:flex;justify-content:flex-end;margin:-.3rem 0 .6rem}
 
+/* ---------- ประวัติการล่า: minimal, scoped to this drawer ---------- */
+#historyOverlay{
+  --history-bg:#192233;
+  --history-soft:#202c40;
+  --history-line:#303e53;
+  --history-muted:#b4c0d2;
+  --history-selected:#2b3d58;
+  --history-success:#8dd9b0;
+}
+#historyOverlay .slideover-backdrop{background:rgba(8,13,22,.62)}
+#historyOverlay .slideover{
+  width:min(540px,100vw);background:var(--history-bg);
+  border-color:var(--history-line);box-shadow:-16px 0 48px rgba(0,0,0,.24);
+}
+#historyOverlay .slideover-head{
+  flex:none;min-height:76px;padding:16px 24px;
+  border-color:var(--history-line);gap:16px;
+}
+#historyOverlay .slideover-head h2{font-size:1.15rem;font-weight:700}
+#historyOverlay .slideover-head .icon-btn{
+  width:44px;height:44px;border-radius:10px;color:var(--history-muted);
+}
+#historyOverlay .slideover-body{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:start;
+  gap:16px 8px;min-height:0;padding:20px 24px 32px;
+  overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--history-line) transparent;
+}
+#historyOverlay .h-tabs{
+  grid-column:1/-1;gap:4px;margin:0;padding:4px;
+  background:#111b2b;border-radius:12px;
+}
+#historyOverlay .h-tabs button{
+  min-width:0;min-height:44px;padding:8px;border:0;border-radius:8px;
+  background:transparent;color:var(--history-muted);font-size:.875rem;
+}
+#historyOverlay .h-tabs button.active{
+  background:var(--history-selected);color:#e0ebff;
+  box-shadow:inset 0 -2px 0 var(--accent);
+}
+#historyOverlay .h-filter{
+  gap:8px;min-height:40px;margin:0;font-size:.8rem;color:var(--history-muted);cursor:pointer;
+}
+#historyOverlay .h-filter input{width:17px;height:17px;margin:0;accent-color:var(--accent);flex:none}
+#historyOverlay .h-filter:has(input:disabled){cursor:not-allowed}
+#historyOverlay .h-actions{align-items:center;margin:0}
+#historyOverlay .h-actions:has(>button[hidden]){display:none}
+#historyOverlay #historyDeleteAll{
+  min-height:40px;padding:8px 0 8px 8px;border:0;background:transparent;
+  color:#d9a4a5;font-size:.75rem;font-weight:500;white-space:normal;
+}
+#historyOverlay #historyList{grid-column:1/-1;min-width:0}
+#historyOverlay .loot-summary{
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 20px;
+  background:transparent;border:0;border-radius:0;
+}
+#historyOverlay .loot-summary>div{
+  --summary-accent:#a8cfff;
+  --summary-value:#d4e6ff;
+  --summary-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8cfff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cellipse cx='9' cy='5' rx='6' ry='3'/%3E%3Cpath d='M3 5v5c0 1.7 2.7 3 6 3s6-1.3 6-3V5M3 10v5c0 1.7 2.7 3 6 3M18 9c1.8.5 3 1.4 3 2.5 0 1.7-2.7 3-6 3M9 13v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-6.5'/%3E%3C/svg%3E");
+  position:relative;min-width:0;min-height:0;
+  flex-direction:column;align-items:flex-start;justify-content:flex-start;
+  gap:6px;padding:12px;border:1px solid color-mix(in srgb,var(--summary-accent) 24%,#26354b);
+  border-left:2px solid var(--summary-accent);border-radius:10px;
+  background:radial-gradient(ellipse at top right,color-mix(in srgb,var(--summary-accent) 9%,transparent),transparent 72%),#1d2a3d;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 5px 14px rgba(5,12,23,.12);
+}
+#historyOverlay .loot-summary>div:first-child{
+  --summary-accent:#f0cb8b;
+  --summary-value:#ffe4b3;
+  --summary-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f0cb8b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 3 9 5-9 13L3 8l9-5ZM3 8h18M8 8l4 13 4-13M8 8l4-5 4 5'/%3E%3C/svg%3E");
+}
+#historyOverlay .loot-summary>div:last-child{
+  --summary-accent:#97e4c3;
+  --summary-value:#c1f2dc;
+  --summary-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2397e4c3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='7' r='3'/%3E%3Cpath d='M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6M18 13a6 6 0 0 1 3 5v3'/%3E%3C/svg%3E");
+}
+/* Icons sit above the labels so all three compact cards keep their text width. */
+#historyOverlay .loot-summary>div::before{
+  content:"";width:20px;height:20px;flex:none;
+  background:var(--summary-icon) center/contain no-repeat;opacity:.8;pointer-events:none;
+}
+#historyOverlay .loot-summary .lbl{
+  max-width:100%;font-size:.75rem;line-height:1.6;color:#c2cedf;
+}
+#historyOverlay .loot-summary b{
+  max-width:100%;margin:0;text-align:left;color:var(--summary-value);
+  font-size:1rem;font-weight:600;line-height:1.5;font-variant-numeric:tabular-nums;
+  letter-spacing:-.015em;text-wrap:pretty;
+}
+#historyOverlay .loot-filter{gap:8px;margin:0 0 4px}
+#historyOverlay .loot-filter button{
+  min-height:40px;max-width:100%;padding:8px 12px;border:1px solid transparent;
+  border-radius:8px;background:transparent;color:var(--history-muted);
+  font-size:.8rem;line-height:1.5;overflow-wrap:anywhere;
+}
+#historyOverlay .loot-filter button.active{
+  background:var(--history-selected);border-color:var(--history-selected);color:#dce9ff;font-weight:600;
+}
+#historyOverlay .log-row{align-items:flex-start;gap:12px;padding:22px 0;border-color:var(--history-line)}
+#historyOverlay .log-avatar{
+  width:64px;height:72px;border:0;border-radius:0;background:transparent;
+  box-shadow:none;overflow:visible;
+}
+#historyOverlay .log-body{overflow-wrap:anywhere}
+#historyOverlay .log-row .boss{font-size:1rem;line-height:1.5;font-weight:600}
+#historyOverlay .log-row .when,#historyOverlay .hist-by{
+  font-size:.75rem;line-height:1.7;color:var(--history-muted);overflow-wrap:anywhere;
+}
+#historyOverlay .hist-head{align-items:flex-start;gap:12px}
+#historyOverlay .hist-by{margin:4px 0 8px}
+#historyOverlay .chip-row{gap:6px}
+#historyOverlay .chip{max-width:100%;padding:4px 8px;border:0;border-radius:6px;font-size:.75rem}
+/* Keep the existing DOM and button ancestors; only the avatar is positioned. */
+#historyOverlay .loot-row{position:relative;display:block}
+#historyOverlay .loot-row>.log-avatar{position:absolute;top:22px;left:0}
+#historyOverlay .loot-head{min-height:40px;margin-left:80px;align-items:flex-start;gap:12px}
+#historyOverlay .loot-head .boss{min-width:0;margin:2px 0 0}
+#historyOverlay .loot-head-r{gap:8px;max-width:100%;flex-wrap:wrap;justify-content:flex-end}
+#historyOverlay .loot-row .when{margin:4px 0 20px 80px}
+#historyOverlay .membership-pill{padding:4px 8px;font-size:.6875rem;line-height:1.5;white-space:nowrap}
+#historyOverlay .membership-pill.ok{background:#243c36;color:var(--history-success)}
+#historyOverlay .membership-pill.soon{background:#3b3325;color:#e8c17d}
+#historyOverlay .membership-pill.neutral{background:var(--history-soft);color:var(--history-muted)}
+#historyOverlay .hist-del{
+  width:32px;height:32px;border-color:transparent;border-radius:8px;color:var(--history-muted);
+}
+#historyOverlay .loot-act{
+  height:32px;padding:0 10px;border-color:var(--history-line);border-radius:8px;
+  background:transparent;font-size:.75rem;color:var(--history-muted);
+}
+#historyOverlay .loot-line{gap:8px;margin-top:12px;font-size:.875rem}
+#historyOverlay .loot-lbl{min-width:32px;font-size:.75rem;color:var(--history-muted)}
+#historyOverlay .share-chip{
+  min-height:36px;max-width:100%;padding:6px 10px;border-color:var(--history-line);
+  border-radius:8px;background:transparent;font-size:.75rem;line-height:1.5;
+  color:var(--history-muted);overflow-wrap:anywhere;
+}
+#historyOverlay .share-chip.on{background:var(--history-selected);border-color:#5578a9;color:#dce9ff}
+#historyOverlay .loot-each{font-size:.75rem;line-height:1.6;color:var(--history-muted);overflow-wrap:anywhere}
+#historyOverlay .loot-line>b{font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#historyOverlay .loot-line:has(>.sold-amount){
+  display:grid;grid-template-columns:auto minmax(0,180px) 76px auto;
+  align-items:center;justify-content:start;gap:8px;
+}
+#historyOverlay .loot-line:has(>.sold-amount)>.loot-lbl{grid-column:1;white-space:nowrap}
+#historyOverlay .sold-amount,#historyOverlay .sold-currency{
+  width:100%;min-width:0;min-height:40px;padding:8px 10px;
+  border-color:var(--history-line);border-radius:8px;background:#131e2f;
+  font-family:inherit;font-size:.875rem;line-height:1.5;
+}
+#historyOverlay .sold-amount::placeholder{color:var(--history-muted);opacity:1}
+#historyOverlay .loot-line .btn{min-height:44px;padding:10px 14px;font-size:.8rem;border-radius:8px}
+#historyOverlay .loot-line:has(>.sold-amount)>.btn{min-height:40px;padding:8px 12px}
+#historyOverlay [data-sold-save]{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+#historyOverlay [data-sold-clear]{grid-column:1/-1;justify-self:end}
+#historyOverlay .loot-line:has(>b){
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:2px 8px;
+  padding:8px 12px;border:1px solid color-mix(in srgb,#a8cfff 24%,#26354b);
+  border-left:2px solid #a8cfff;border-radius:10px;
+  background:radial-gradient(ellipse at top right,rgba(168,207,255,.07),transparent 72%),#1d2a3d;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+#historyOverlay .loot-line:has(>b)>.loot-lbl{grid-column:1;grid-row:1}
+#historyOverlay .loot-line:has(>b)>b{
+  grid-column:2;grid-row:1;min-width:0;color:#d4e6ff;font-size:.9375rem;line-height:1.5;
+}
+#historyOverlay .loot-line:has(>b)>.loot-each{grid-column:1/3;grid-row:2}
+#historyOverlay [data-sold-edit]{
+  grid-column:3;grid-row:1/3;align-self:center;
+  border-color:#405775;background:rgba(168,207,255,.035);color:#d4e6ff;
+}
+#historyOverlay .history-more{
+  flex-wrap:wrap;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid var(--history-line);
+  border-radius:0;color:var(--history-muted);font-size:.75rem;
+}
+#historyOverlay .history-more .btn{min-height:44px}
+#historyOverlay .empty-note{padding:44px 16px;margin:0;color:var(--history-muted);font-size:.875rem;text-align:center}
+#historyOverlay :is(button,input,select):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(hover:hover){
+  #historyOverlay .h-tabs button:not(.active):hover,#historyOverlay .loot-filter button:not(.active):hover,
+  #historyOverlay .share-chip:not(:disabled):hover,#historyOverlay .loot-act:hover{
+    background:var(--history-soft);color:var(--text);
+  }
+  #historyOverlay .hist-del:hover,#historyOverlay #historyDeleteAll:hover{background:#382b36;color:#ffb4b0}
+}
+@media(max-width:540px){
+  #historyOverlay .slideover{width:100%;border-left:0}
+  #historyOverlay .slideover-head{min-height:72px;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))}
+  #historyOverlay .slideover-body{padding:16px 16px max(24px,env(safe-area-inset-bottom));gap:12px 8px}
+  #historyOverlay .h-filter,#historyOverlay #historyDeleteAll{min-height:44px}
+  #historyOverlay .loot-summary{gap:6px;margin-bottom:16px}
+  #historyOverlay .loot-summary>div{gap:6px;padding:10px 8px}
+  #historyOverlay .loot-summary>div::before{width:18px;height:18px}
+  #historyOverlay .loot-summary b{font-size:.78125rem;letter-spacing:-.02em}
+  #historyOverlay .loot-filter:has([data-loot-filter]){display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+  #historyOverlay .loot-filter button{min-height:44px;padding:8px 6px;font-size:.75rem}
+  #historyOverlay .loot-head{flex-direction:column;gap:6px}
+  #historyOverlay .loot-head-r{width:100%;justify-content:flex-start}
+  #historyOverlay .loot-head-r .hist-del{margin-left:auto}
+  #historyOverlay .hist-del{width:40px;height:40px}
+  #historyOverlay .loot-act{height:40px;padding:0 12px}
+  #historyOverlay .share-chip{min-height:40px}
+  #historyOverlay .sold-amount,#historyOverlay .sold-currency{min-height:44px;font-size:1rem;padding:8px}
+  #historyOverlay .loot-line:has(>.sold-amount){grid-template-columns:auto minmax(0,1fr) 76px 68px;gap:6px}
+  #historyOverlay .loot-line:has(>.sold-amount)>.btn{min-height:44px;padding:8px 10px}
+  #historyOverlay .loot-line .btn{padding:10px}
+}
+/* Display rules above must never reveal controls or a closed drawer. */
+#historyOverlay[hidden],#historyOverlay [hidden]{display:none!important}
+
 .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);background:var(--text);color:var(--bg);padding:.7rem 1.1rem;border-radius:999px;font-size:.85rem;text-align:center;max-width:min(90vw,360px);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 /* A small pill anchored right above the specific field it's warning about (e.g. the

@@ -6320,8 +6320,11 @@
       App.itemsServerId = ids.indexOf(App.currentServerId)!==-1 ? App.currentServerId : (ids[0] || null);
       saveItemsServer();
     }
+    // จำนวน "รอลงคลัง" ต่อท้ายชื่อเซิร์ฟ เช่น Sv.Meta (5) — เลขที่เมนูคลังไอเทมเป็นยอดรวมทุกเซิร์ฟ
+    // ตรงนี้บอกว่าอยู่เซิร์ฟไหน (เซิร์ฟที่ไม่มีของรอ แสดงแค่ชื่อ) · รายชื่อสร้างใหม่ทุกครั้ง เซิร์ฟที่เพิ่มทีหลังก็ได้ด้วย
     sel.innerHTML = ids.map(function(id){
-      return '<option value="'+id+'">'+serverLabel(id)+'</option>';
+      var waiting = itemsPendingList(id).length;
+      return '<option value="'+id+'">'+serverLabel(id)+(waiting>0 ? ' ('+fmtNum(waiting)+')' : '')+'</option>';
     }).join('');
     sel.value = App.itemsServerId;
   }

@@ -1203,7 +1203,10 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 #view-settings #stPromoCodeError{margin:8px 0 0;overflow-wrap:anywhere}
 @media(max-width:640px){#view-settings .promo-code-field{width:100%}}
 @media(prefers-reduced-motion:reduce){#view-settings .promo-code-row{transition:none}}
-.admin-grant-card input{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);color:var(--text);padding:.6rem .75rem;font-size:.9rem}
+.admin-grant-card input,.admin-grant-card select{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);color:var(--text);padding:.6rem .75rem;font-size:.9rem}
+/* โค้ดโปรโมชัน: เลือกของรางวัล (แต้ม / แพ็กเกจแต่ละแบบ) */
+.admin-promo-reward{display:flex;flex-direction:column;gap:.35rem;font-size:.82rem;color:var(--text-dim)}
+.admin-promo-reward select{width:100%;min-height:44px;cursor:pointer}
 #adminGrantFound{display:flex;flex-direction:column;gap:.6rem}
 #adminGrantFound[hidden]{display:none}
 .admin-grant-mode{margin:0}

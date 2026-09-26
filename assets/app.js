@@ -7119,6 +7119,10 @@
         }
       });
   }
+  // โค้ดโปรโมชันแบบแจกแพ็กเกจ: plan_key ว่าง = โค้ดรุ่นแรกที่แจกได้แค่ 4 in 1
+  function promoPlanName(key){
+    return ({ all:'4 in 1', bundle:'3 in 1', timers:'จับเวลาบอส', accountItems:'2 in 1', farm:'1 in 1' })[key || 'all'] || '4 in 1';
+  }
   function loadPromoHistory(){
     var root = document.getElementById('stPromoHistList'), sum = document.getElementById('stPromoHistSummary'), moreWrap = document.getElementById('stPromoHistMoreWrap');
     root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = ''; moreWrap.hidden = true;
@@ -7131,7 +7135,7 @@
       var shown = stHistExpanded.promo ? rows : rows.slice(0, HIST_PAGE);
       root.innerHTML = shown.map(function(r){
         var amtHtml = r.reward_type==='plan_days'
-          ? '<b class="settings-row-amt" style="color:#f3d48e">4 in 1 +'+fmtNum(r.plan_days)+' วัน</b>'
+          ? '<b class="settings-row-amt" style="color:#f3d48e">'+promoPlanName(r.plan_key)+' +'+fmtNum(r.plan_days)+' วัน</b>'
           : '<b class="settings-row-amt" style="color:var(--success)">+'+fmtNum(r.points)+' แต้ม</b>';
         return '<div class="settings-row"><div class="settings-row-main">'+
           '<div class="settings-row-title">'+escapeHtml(r.code)+'</div>'+
@@ -7208,7 +7212,7 @@
       var data = res.data || {};
       refreshProfile().then(function(){
         if(data.reward_type === 'plan_days'){
-          toast('ใช้โค้ดสำเร็จ ได้รับแพ็กเกจ 4 in 1 เพิ่ม '+fmtNum(data.plan_days)+' วัน');
+          toast('ใช้โค้ดสำเร็จ ได้รับแพ็กเกจ '+promoPlanName(data.plan_key)+' เพิ่ม '+fmtNum(data.plan_days)+' วัน');
         } else {
           toast('ใช้โค้ดสำเร็จ ได้รับ '+fmtNum(data.points)+' แต้ม');
         }
@@ -7812,7 +7816,7 @@
   function openAdminPage(){
     if(adminPanel){ adminPanel.openAdminPage(); return; }
     if(!adminPanelLoading){
-      adminPanelLoading = import('./admin-panel.js?v=20260924c').then(function(mod){
+      adminPanelLoading = import('./admin-panel.js?v=20260926-promo-plans').then(function(mod){
         adminPanel = mod.initAdminPanel({
           supa:supa, escapeHtml:escapeHtml, fmtNum:fmtNum, fmtDate:fmtDate, fmtDateTime:fmtDateTime,
           toast:toast, showConfirm:showConfirm, loadServers:loadServers,

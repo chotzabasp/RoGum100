@@ -361,19 +361,17 @@ export function initAdminPanel(ctx){
   // เขียนตาราง promo_codes ตรงๆ ผ่าน RLS "admin เขียนได้เต็มที่" เหมือน servers — ฝั่งผู้ใช้แลกโค้ดผ่าน
   // RPC redeem_promo_code เท่านั้น (ดู migration 20260922001400_promo_codes.sql)
   var adminPromoCodes = [];
-  var adminPromoType = 'points';
-  document.getElementById('adminPromoTypeMode').addEventListener('click', function(e){
-    var btn = e.target.closest('[data-promo-type]');
-    if(!btn) return;
-    adminPromoType = btn.dataset.promoType;
-    document.querySelectorAll('#adminPromoTypeMode button').forEach(function(b){ b.classList.toggle('active', b===btn); });
-    document.getElementById('adminPromoPoints').hidden = adminPromoType!=='points';
-    document.getElementById('adminPromoPlanDays').hidden = adminPromoType!=='plan_days';
+  // ของรางวัล: 'points' = แจกแต้ม · ที่เหลือ = แจกแพ็กเกจเป็นจำนวนวัน (plan_key ในตาราง promo_codes)
+  var ADMIN_PROMO_PLAN_NAMES = { all:'4 in 1', bundle:'3 in 1', timers:'จับเวลาบอส', accountItems:'2 in 1', farm:'1 in 1' };
+  document.getElementById('adminPromoReward').addEventListener('change', function(e){
+    var isPoints = e.target.value === 'points';
+    document.getElementById('adminPromoPoints').hidden = !isPoints;
+    document.getElementById('adminPromoPlanDays').hidden = isPoints;
   });
   function adminPromoRowHtml(p){
     var expText = p.expires_at ? fmtDate(new Date(p.expires_at).getTime()) : 'ไม่หมดอายุ';
     var full = p.used_count >= p.max_uses;
-    var rewardText = p.reward_type==='plan_days' ? ('แพ็กเกจ 4 in 1 '+fmtNum(p.plan_days)+' วัน/คน') : ('+'+fmtNum(p.points)+' แต้ม/คน');
+    var rewardText = p.reward_type==='plan_days' ? ('แพ็กเกจ '+(ADMIN_PROMO_PLAN_NAMES[p.plan_key||'all']||'4 in 1')+' '+fmtNum(p.plan_days)+' วัน/คน') : ('+'+fmtNum(p.points)+' แต้ม/คน');
     return '<div class="admin-topup-row" data-promo-code="'+escapeHtml(p.code)+'">'+
       '<div style="flex:1;min-width:160px">'+
         '<b>'+escapeHtml(p.code)+'</b>'+
@@ -411,15 +409,21 @@ export function initAdminPanel(ctx){
     var note = document.getElementById('adminPromoNote').value.trim();
     if(!code){ errEl.textContent = 'กรอกรหัสโค้ด'; return; }
     if(!maxUses || maxUses<=0){ errEl.textContent = 'กรอกจำนวนคนใช้ได้ให้ถูกต้อง'; return; }
-    var payload = { code:code, max_uses:maxUses, expires_at: expDate ? new Date(expDate+'T23:59:59').toISOString() : null, note:note||null, reward_type:adminPromoType };
-    if(adminPromoType === 'plan_days'){
+    var reward = document.getElementById('adminPromoReward').value;
+    var payload = { code:code, max_uses:maxUses, expires_at: expDate ? new Date(expDate+'T23:59:59').toISOString() : null, note:note||null };
+    if(reward !== 'points'){
+      if(!ADMIN_PROMO_PLAN_NAMES[reward]){ errEl.textContent = 'เลือกของรางวัลให้ถูกต้อง'; return; }
       var days = parseInt(document.getElementById('adminPromoPlanDays').value.replace(/,/g,''), 10);
       if(!days || days<=0){ errEl.textContent = 'กรอกจำนวนวันให้ถูกต้อง'; return; }
+      payload.reward_type = 'plan_days';
+      payload.plan_key = reward;
       payload.plan_days = days;
       payload.points = null;
     } else {
       var points = parseInt(document.getElementById('adminPromoPoints').value.replace(/,/g,''), 10);
       if(!points || points<=0){ errEl.textContent = 'กรอกจำนวนแต้มให้ถูกต้อง'; return; }
+      payload.reward_type = 'points';
+      payload.plan_key = null;
       payload.points = points;
       payload.plan_days = null;
     }

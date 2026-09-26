@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260926-polish40">
+<link rel="stylesheet" href="assets/app.css?v=20260926-promo-plans">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -822,10 +822,16 @@
         <div class="admin-grant-card">
           <h3>สร้างโค้ดโปรโมชันใหม่</h3>
           <p class="sub">1 โค้ด ใช้ได้ตามจำนวนคนที่กำหนด (คนละบัญชีใช้ได้แค่ครั้งเดียว) เหมาะกับโปรเร่งด่วนหรือแจกในกิจกรรม — ไม่ใช่การสร้างหลายรหัสไม่ซ้ำกันพร้อมกัน</p>
-          <div class="h-tabs admin-grant-mode" id="adminPromoTypeMode">
-            <button type="button" class="active" data-promo-type="points">แจกแต้ม</button>
-            <button type="button" data-promo-type="plan_days">แจกแพ็กเกจ 4 in 1 (กำหนดวัน)</button>
-          </div>
+          <label class="admin-promo-reward" for="adminPromoReward"><span>ของรางวัล</span>
+            <select id="adminPromoReward">
+              <option value="points">แจกแต้ม</option>
+              <option value="all">แพ็กเกจ 4 in 1 (ครบทุกระบบ)</option>
+              <option value="bundle">แพ็กเกจ 3 in 1 (บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาม)</option>
+              <option value="timers">แพ็กเกจจับเวลาบอส</option>
+              <option value="accountItems">แพ็กเกจ 2 in 1 (บัญชีนักลงทุน/คลังไอเทม)</option>
+              <option value="farm">แพ็กเกจ 1 in 1 (ยอดนักฟาม)</option>
+            </select>
+          </label>
           <div class="admin-grant-row">
             <input id="adminPromoCode" type="text" maxlength="40" autocomplete="off" placeholder="รหัสโค้ด (เช่น SONGKRAN2026)">
             <input id="adminPromoPoints" type="text" inputmode="numeric" autocomplete="off" placeholder="แต้มที่ได้ต่อคน">
@@ -1128,4 +1134,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260926-m-remaining"></script>
+<script src="assets/app.js?v=20260926-promo-plans"></script>

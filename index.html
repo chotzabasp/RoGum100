@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260926-discord4">
+<link rel="stylesheet" href="assets/app.css?v=20260926-discord5">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -518,6 +518,7 @@
         <div class="boss-sound-popover" id="bossSoundPopover" role="dialog" aria-label="การตั้งค่าเสียงแจ้งเตือน" hidden>
           <div class="boss-sound-popover-head">เสียงแจ้งเตือน (ก่อน 3 นาที)</div>
           <div class="boss-sound-popover-note">(ต้องเปิดเว็บค้างไว้เท่านั้น!)</div>
+          <div class="boss-sound-popover-tip">กดปิดเสียง ถ้าใช้งานแจ้งเตือน Discord</div>
           <label class="boss-sound-enable-row"><span>เปิดเสียง</span><input type="checkbox" id="bossSoundEnable" role="switch"></label>
           <label class="boss-sound-volume-row"><span class="boss-sound-volume-head"><span>ระดับเสียง</span><output id="bossSoundVolumeOutput">80%</output></span><input type="range" id="bossSoundVolume" min="0" max="100" step="1" value="80" aria-label="ระดับเสียงแจ้งเตือน"></label>
           <button type="button" class="boss-sound-preview" id="bossSoundBellPreview">ลองฟังเสียงกระดิ่ง</button>

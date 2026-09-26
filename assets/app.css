@@ -3472,3 +3472,5 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 .settings-discord-host{margin:0;padding:.55rem .75rem;border-radius:8px;font-size:.84rem;font-weight:700;border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim)}
 .settings-discord-host.on{color:#8dd9c4;border-color:color-mix(in srgb, #8dd9c4 45%, var(--border));background:color-mix(in srgb, #8dd9c4 10%, transparent)}
 .settings-discord-host[hidden]{display:none}
+#view-timers .boss-sound-popover-note:has(+ .boss-sound-popover-tip){margin-bottom:.1rem}
+#view-timers .boss-sound-popover-tip{font-size:.72rem;color:#a9b8d6;margin-bottom:.7rem}

@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260926-history-cards2">
+<link rel="stylesheet" href="assets/app.css?v=20260926-ledger-book">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -149,7 +149,7 @@
       <div class="home-grid">
         <div class="dashboard-overview">
           <div class="dashboard-overview-head">
-            <div><h2>สรุปซื้อ–ขาย <span class="dashboard-howto-label" data-howto="home">วิธีใช้</span></h2><p class="dashboard-help">อ้างอิงเซิร์ฟเวอร์ ช่วงเวลา และคำค้นในตัวกรองประวัติด้านล่าง</p></div>
+            <div class="page-title-art"><img class="page-title-img" src="assets/merchant-baphomet.webp" width="36" height="44" alt="" aria-hidden="true"><h2>สรุปซื้อ–ขาย <span class="dashboard-howto-label" data-howto="home">วิธีใช้</span></h2><p class="dashboard-help">อ้างอิงเซิร์ฟเวอร์ ช่วงเวลา และคำค้นในตัวกรองประวัติด้านล่าง</p></div>
             <details class="dashboard-quicklinks" hidden><summary>ทางลัด</summary>
         <nav class="dashboard-shortcuts" aria-label="ทางลัดจากแดชบอร์ด">
           <button type="button" class="btn btn-primary dashboard-shortcut" data-dashboard-section="mrEntryPanel">ไปฟอร์มซื้อ–ขาย</button>
@@ -165,7 +165,7 @@
         <div class="panel panel-side panel-merchant-entry" id="mrEntryPanel">
           <div class="panel-head">
             <div class="ticker-head-title">
-              <h2><img class="dashboard-book-icon" src="assets/merchant-baphomet.webp" width="36" height="44" alt="" aria-hidden="true">รายการซื้อ-ขาย</h2>
+              <h2><img class="dashboard-book-icon" src="assets/ledger-book.png" width="128" height="128" alt="" aria-hidden="true">รายการซื้อ-ขาย</h2>
               <p class="mr-entry-intro">เลือกซื้อหรือขาย แล้วกรอกข้อมูลรายการ</p>
             </div>
           <div class="field">
@@ -237,7 +237,7 @@
         <div class="home-left">
           <div class="panel">
             <div class="panel-head">
-              <h2><img class="dashboard-book-icon" src="assets/merchant-baphomet.webp" width="36" height="44" alt="" aria-hidden="true">ประวัติซื้อ–ขาย <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
+              <h2><img class="dashboard-book-icon" src="assets/ledger-book.png" width="128" height="128" alt="" aria-hidden="true">ประวัติซื้อ–ขาย <span class="mr-chart-server-tags" id="mrHistoryServerTag"></span></h2>
             </div>
 
           <div class="dashboard-filters">
@@ -272,7 +272,7 @@
           <div class="panel panel-hero">
             <div class="panel-head">
               <div class="ticker-head-title">
-                <h2><img class="dashboard-book-icon" src="assets/merchant-baphomet.webp" width="36" height="44" alt="" aria-hidden="true">กราฟเงินสุทธิ (ขาย − ซื้อ) <span class="mr-chart-server-tags" id="mrChartServerTag"></span></h2>
+                <h2><img class="dashboard-book-icon" src="assets/ledger-book.png" width="128" height="128" alt="" aria-hidden="true">กราฟเงินสุทธิ (ขาย − ซื้อ) <span class="mr-chart-server-tags" id="mrChartServerTag"></span></h2>
               </div>
               <div class="chart-controls">
                 <select class="chart-tf-select" aria-label="เซิร์ฟเวอร์ของกราฟ" id="mrChartServerSelect"></select>
@@ -326,7 +326,8 @@
     <section id="view-farm" hidden>
       <div class="page-scroll">
       <div class="topbar">
-        <div>
+        <div class="page-title-art">
+          <img class="page-title-img" src="assets/pricing-farm-mounted-knight.webp" width="211" height="300" alt="" aria-hidden="true">
           <h1>ยอดนักฟาม <span class="dashboard-howto-label" data-howto="farm">วิธีใช้</span></h1>
           <p class="sub">สรุปรายได้จากการฟาม เทียบต้นทุนต่อกั้ม (1 กั้ม = 30 นาที)</p>
         </div>
@@ -446,7 +447,8 @@
     <!-- ===================== TIMERS VIEW ===================== -->
     <section id="view-timers" hidden>
     <div class="topbar">
-      <div>
+      <div class="page-title-art">
+        <picture class="page-title-img"><source media="(prefers-reduced-motion: reduce)" srcset="assets/pricing-morocc-large-still.webp"><img src="assets/pricing-morocc-large.webp" width="223" height="223" alt="" aria-hidden="true"></picture>
         <h1>จับเวลาบอส <span class="dashboard-howto-label" data-howto="timers">วิธีใช้</span></h1>
         <p class="sub">ความเคลื่อนไหวและรอบเกิดใหม่ของ MVP ในปาร์ตี้คุณ</p>
       </div>
@@ -592,7 +594,8 @@
     <!-- ===================== ITEMS (คลังไอเทม) VIEW ===================== -->
     <section id="view-items" hidden>
       <div class="topbar">
-        <div>
+        <div class="page-title-art">
+          <img class="page-title-img" src="assets/pricing-merchant-cart-static.webp" width="243" height="260" alt="" aria-hidden="true">
           <h1>คลังไอเทม <span class="dashboard-howto-label" data-howto="items">วิธีใช้</span></h1>
         </div>
       </div>

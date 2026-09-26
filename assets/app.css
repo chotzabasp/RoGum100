@@ -164,6 +164,16 @@ svg.icon{width:18px;height:18px;display:block}
 .topbar h1{font-size:1.4rem;margin:0 0 .2rem}
 .topbar .sub{color:var(--text-dim);font-size:.86rem;margin:0}
 .topbar-right{display:flex;align-items:center;gap:.9rem}
+/* รูปตัวละครหน้าหัวข้อ (จับเวลาบอส / ยอดนักฟาม / คลังไอเทม / สรุปซื้อ–ขาย) — รูปอยู่ซ้าย กินความสูงชื่อหน้า+คำอธิบาย */
+.page-title-art{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:.85rem;align-items:center}
+.page-title-art>.page-title-img{grid-row:1 / span 2;display:block;width:auto;height:60px;align-self:center;pointer-events:none}
+.page-title-art>picture.page-title-img>img{display:block;width:auto;height:60px}
+.page-title-art>:is(h1,h2,.sub,.dashboard-help){grid-column:2}
+.page-title-art>:is(h1,h2):last-child{grid-row:1 / span 2}
+@media(max-width:560px){
+  .page-title-art{column-gap:.6rem}
+  .page-title-art>.page-title-img,.page-title-art>picture.page-title-img>img{height:48px}
+}
 .clock{text-align:right}
 .clock .time{font-size:1rem}
 .clock .date{font-size:.72rem;color:var(--text-dim)}

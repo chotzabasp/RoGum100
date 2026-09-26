@@ -6250,8 +6250,16 @@
   function itemsServerIds(){
     var ids = myServerIds().slice();
     historyServerIds().forEach(function(id){ if(ids.indexOf(id)===-1) ids.push(id); });
-    Object.keys(App.itemWarehouseStock||{}).forEach(function(id){ if(ids.indexOf(id)===-1) ids.push(id); });
+    // เซิร์ฟพักที่มีแค่คลังเปล่าค้างอยู่ไม่ต้องโชว์ (กฎเดียวกับ dropdown ประวัติ — ติ๊กเปิดได้ที่หน้าตั้งค่า)
+    // แต่ถ้ายังมีของอยู่ในคลังต้องโชว์เสมอ ไม่งั้นของค้างมองไม่เห็นและเอาออกไม่ได้
+    Object.keys(App.itemWarehouseStock||{}).forEach(function(id){
+      if(ids.indexOf(id)===-1 && (isHistoryServerShown(id) || warehouseHasItems(id))) ids.push(id);
+    });
     return ids;
+  }
+  function warehouseHasItems(serverId){
+    var tiers = (App.itemWarehouseStock||{})[serverId] || {};
+    return Object.keys(tiers).some(function(t){ return Array.isArray(tiers[t]) && tiers[t].length > 0; });
   }
   function populateItemsServerSelect(){
     var sel = document.getElementById('itemsServerSelect');

@@ -165,7 +165,7 @@ svg.icon{width:18px;height:18px;display:block}
 .topbar h1{font-size:1.4rem;margin:0 0 .2rem}
 .topbar .sub{color:var(--text-dim);font-size:.86rem;margin:0}
 .topbar-right{display:flex;align-items:center;gap:.9rem}
-/* รูปตัวละครหน้าหัวข้อ (จับเวลาบอส / ยอดนักฟาม / คลังไอเทม / สรุปซื้อ–ขาย) — รูปอยู่ซ้าย กินความสูงชื่อหน้า+คำอธิบาย */
+/* รูปตัวละครหน้าหัวข้อ (จับเวลาบอส / ยอดนักฟาร์ม / คลังไอเทม / สรุปซื้อ–ขาย) — รูปอยู่ซ้าย กินความสูงชื่อหน้า+คำอธิบาย */
 .page-title-art{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:.85rem;align-items:center}
 .page-title-art>.page-title-img{grid-row:1 / span 2;display:block;width:auto;height:60px;align-self:center;pointer-events:none}
 .page-title-art>picture.page-title-img>img{display:block;width:auto;height:60px}
@@ -2830,7 +2830,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-farm .farm-history-meta{display:flex;align-items:center;gap:.35rem .45rem;flex-wrap:wrap;min-width:0}
 #view-farm .farm-history-time{font-size:.82rem;font-weight:700;color:#e7edf8;font-variant-numeric:tabular-nums}
 /* ป้าย "ล่าสุด" ของกั้มที่เพิ่งบันทึก — พื้นแดงเข้ม ตัวขาว (คอนทราสต์ ~4.7:1) · ระยะห่างใช้ gap ของแถวแทน margin
-   ป้าย New สีเขียวในประวัติซื้อ–ขายไม่เปลี่ยน (ใช้คลาส mr-tx-new-badge ร่วม แต่ทับเฉพาะในหน้าฟาม) */
+   ป้าย New สีเขียวในประวัติซื้อ–ขายไม่เปลี่ยน (ใช้คลาส mr-tx-new-badge ร่วม แต่ทับเฉพาะในหน้าฟาร์ม) */
 #view-farm .farm-history-meta>.farm-history-new-badge{margin-left:0;background:#d9342f;color:#fff;font-size:.68rem;letter-spacing:0;line-height:1.45;padding:.05rem .45rem}
 #view-farm .farm-history-chip{display:inline-flex;align-items:center;min-height:24px;padding:.12rem .45rem;border:1px solid rgba(143,165,208,.32);border-radius:999px;background:rgba(102,129,185,.1);font-size:.7rem;font-weight:700;line-height:1.25;white-space:nowrap}
 #view-farm .farm-history-count{color:#ddcaff;border-color:rgba(201,168,240,.38);background:rgba(201,168,240,.1)}
@@ -2895,7 +2895,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 .farm-oc-toggle::after{inset:-7px -4px}
 .points-topup-btn::after{inset:-11px}
 .bc-close::after{inset:-10px -6px}
-/* 4) หน้ายอดนักฟามตอนยังไม่ล็อกอิน: ใช้หน้าตาเดียวกับข้อความว่างของหน้าบัญชีนักลงทุน */
+/* 4) หน้ายอดนักฟาร์มตอนยังไม่ล็อกอิน: ใช้หน้าตาเดียวกับข้อความว่างของหน้าบัญชีนักลงทุน */
 #view-farm .dashboard-chart-empty{position:absolute;inset:15% 8% 18%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;text-align:center;pointer-events:none;background:var(--surface);padding:1rem;font-size:.83rem;line-height:1.75;color:var(--text-dim)}
 #view-farm .dashboard-chart-empty[hidden]{display:none}
 #view-farm .dashboard-chart-empty strong{color:var(--text);font-size:.95rem}
@@ -3577,7 +3577,7 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
   #view-home #mrHistoryList :is(.mr-ic-head,.mr-ic-day-head,.mr-it-group)>.mr-ic-new-badge,
   #view-home #mrHistoryList .mr-tx-new-badge{animation:none;opacity:1}
 }
-/* ป้าย "ล่าสุด" (เดิม New) ทุกจุดในประวัติซื้อ–ขาย — พื้นแดงเข้ม ตัวขาว แบบเดียวกับป้ายในยอดนักฟาม
+/* ป้าย "ล่าสุด" (เดิม New) ทุกจุดในประวัติซื้อ–ขาย — พื้นแดงเข้ม ตัวขาว แบบเดียวกับป้ายในยอดนักฟาร์ม
    (ทับสีเขียวโปร่งด้านบน · ตำแหน่ง/ขนาดกรอบของแต่ละจุดยังใช้ของเดิม) */
 #view-home #mrHistoryList :is(.mr-ic-head,.mr-ic-day-head,.mr-it-group,.mr-it-namewrap)>.mr-ic-new-badge,
 #view-home #mrHistoryList .mr-tx-new-badge{

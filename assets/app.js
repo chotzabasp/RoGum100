@@ -192,7 +192,7 @@
   }
   // ---------- "เซิร์ฟเวอร์ที่เล่น" (profiles.servers) เป็นตัวกรองกลางของทุก dropdown เลือกเซิร์ฟ ----------
   // ยกเว้นที่เกี่ยวกับประวัติ ซึ่งต้องโชว์เซิร์ฟที่เคยมีข้อมูลบันทึกไว้ต่อไป แม้จะพักอยู่
-  // (ดู historyServerIds สำหรับประวัติซื้อ-ขาย, farmServerIds สำหรับหน้าฟาม, populateItemsServerSelect สำหรับคลังไอเทม)
+  // (ดู historyServerIds สำหรับประวัติซื้อ-ขาย, farmServerIds สำหรับหน้าฟาร์ม, populateItemsServerSelect สำหรับคลังไอเทม)
   function myServerIds(){
     var picked = (App.profile && App.profile.servers) || [];
     var live = SERVER_RATES.filter(function(s){ return picked.indexOf(s.id)!==-1; }).map(function(s){ return s.id; });
@@ -275,7 +275,7 @@
   }
   // เรียกหลังล็อกอิน และหลังกด "บันทึกเซิร์ฟเวอร์" ในหน้าตั้งค่า —
   // ตัดเซิร์ฟที่ไม่ได้เล่นแล้วออกจากการ์ดราคา/ชิปประกาศ/กล่องซื้อ-ขาย ให้ตรงกับที่เลือกไว้
-  // (ประวัติ คลังไอเทม และหน้าฟาม ไม่โดนตัด — จัดการแยกด้วย *ServerIds() ของตัวเอง)
+  // (ประวัติ คลังไอเทม และหน้าฟาร์ม ไม่โดนตัด — จัดการแยกด้วย *ServerIds() ของตัวเอง)
   // addNew = true เฉพาะตอนกดบันทึกในหน้าตั้งค่า: เซิร์ฟที่เพิ่งเพิ่มเข้ามาจะได้การ์ดราคา
   // และชิปกรองประกาศให้เลยโดยไม่ต้องไปกดเพิ่มเองอีกรอบ ส่วนตอนล็อกอินจะแค่ "ตัดออก"
   // ไม่ใช่ "เติมกลับ" ไม่งั้นการ์ดที่ผู้ใช้ตั้งใจลบทิ้งจะโผล่กลับมาทุกครั้งที่เข้าเว็บ
@@ -456,7 +456,7 @@
     App.rateAnnouncements = [];
   }
   // ---------- ซิงก์ข้อมูลขึ้นคลาวด์ (Supabase) ----------
-  // เดิม ประวัติซื้อ-ขาย / ยอดนักฟาม / คลังไอเทม / การตั้งค่า อยู่ใน localStorage อย่างเดียว → เปิดคนละเครื่อง
+  // เดิม ประวัติซื้อ-ขาย / ยอดนักฟาร์ม / คลังไอเทม / การตั้งค่า อยู่ใน localStorage อย่างเดียว → เปิดคนละเครื่อง
   // ไม่เห็น ล้างเบราว์เซอร์แล้วหายถาวร ตอนนี้คลาวด์เป็นตัวจริง ส่วน localStorage เหลือเป็นแคชในเครื่อง
   //   ประวัติ (ยาวขึ้นเรื่อยๆ) → ตาราง merchant_entries / farm_entries แถวละรายการ ส่งเฉพาะที่เปลี่ยน
   //   คลัง + การตั้งค่า (ก้อนเล็ก) → ตาราง user_app_data แถวละหัวข้อ
@@ -674,7 +674,7 @@
         r.n = true;
         var what = set === 'merchant'
           ? 'ซื้อ–ขาย: ' + ((e.lines || []).map(function(l){ return l.name; }).filter(Boolean).join(', ') || '-')
-          : 'ยอดฟาม' + (e.mapName ? ': ' + e.mapName : '');
+          : 'ยอดฟาร์ม' + (e.mapName ? ': ' + e.mapName : '');
         items.push('<li>' + escapeHtml(what) + ' (' + fmtDateTime(e.ts) + ')<br><small>' + escapeHtml(r.m) + '</small></li>');
       });
     });
@@ -2791,7 +2791,7 @@
     return step * mag;
   }
 
-  // ---------- ยอดนักฟาม (farm yield tracker) ----------
+  // ---------- ยอดนักฟาร์ม (farm yield tracker) ----------
   var FARM_SERIES_COLOR = { earned:'#f2c94c', cost:'#ef5a56', profit:'#3fbd75', avgPerSession:'#c9a8f0' };
   var FARM_SERIES_LABEL = { earned:'ยอดรวม', cost:'ทุน', profit:'กำไร', avgPerSession:'เฉลี่ย/กั้ม' };
   var FARM_SERIES_KEYS = ['earned','cost','profit','avgPerSession'];
@@ -2802,7 +2802,7 @@
   function farmUnitSuffix(){
     return farmChartUnit==='baht' ? ' บ' : ' z';
   }
-  // TF ชุดเดียวใช้ร่วมกันทุกที่: กราฟกำไร 2 หน้า + ประวัติซื้อ-ขาย + ประวัติการฟาม
+  // TF ชุดเดียวใช้ร่วมกันทุกที่: กราฟกำไร 2 หน้า + ประวัติซื้อ-ขาย + ประวัติการฟาร์ม
   // unit/count = ความละเอียดของแท่งกราฟ, days/months/years = ช่วงย้อนหลังของ "ประวัติ"
   var CHART_TIMEFRAME_CONFIG = {
     'today': { unit:'day', count:1, label:'วันนี้', days:1 },
@@ -2918,8 +2918,8 @@
     return farmCostRows(serverId).map(function(r){ return { id:r.id, name:r.name, price:r.price, qty:r.qty, currency:r.currency||'zeny' }; });
   }
 
-  // หน้าฟามใช้ dropdown ตัวเดียวคุมทั้ง "ช่องกรอกต้นทุน" และ "กราฟ/ประวัติการฟาม"
-  // เลยต้องโชว์เซิร์ฟที่เคยมีข้อมูลฟามไว้ด้วย ไม่งั้นเลิกเล่นเซิร์ฟไหนแล้วประวัติเซิร์ฟนั้นจะเข้าไม่ถึงเลย
+  // หน้าฟาร์มใช้ dropdown ตัวเดียวคุมทั้ง "ช่องกรอกต้นทุน" และ "กราฟ/ประวัติการฟาร์ม"
+  // เลยต้องโชว์เซิร์ฟที่เคยมีข้อมูลฟาร์มไว้ด้วย ไม่งั้นเลิกเล่นเซิร์ฟไหนแล้วประวัติเซิร์ฟนั้นจะเข้าไม่ถึงเลย
   // เซิร์ฟที่พักอยู่จะดูย้อนหลังได้อย่างเดียว กรอกใหม่ไม่ได้ (ดู renderFarmRetiredState)
   // ไม่กรองเซิร์ฟพักที่ซ่อนไว้ — ใช้สำหรับหน้าตั้งค่า (เหมือน rawHistoryServerIds)
   function rawFarmServerIds(){
@@ -3116,7 +3116,7 @@
       parts.push('<text x="'+(xSlot(i)+slotW/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#8b8d98">'+buckets[i].label+'</text>');
     }
     if(!App.farmLog.some(function(e){ return e.serverId===App.farmServerId; })){
-      parts.push('<text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" font-size="11" fill="#8b8d98">ยังไม่มีข้อมูลการฟาม — บันทึกกั้มแรกทางด้านขวา</text>');
+      parts.push('<text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" font-size="11" fill="#8b8d98">ยังไม่มีข้อมูลการฟาร์ม — บันทึกกั้มแรกทางด้านขวา</text>');
     } else {
       var groupPad = n<=1 ? 0.32 : 0.16;
       var groupW = slotW*(1-groupPad*2);
@@ -3293,7 +3293,7 @@
     renderFreeQuotaNotes();
     var list = document.getElementById('farmHistoryList');
     var pag = document.getElementById('farmHistoryPagination');
-    // ประวัติการฟามใช้ TF ชุดเดียวกับกราฟ ไม่ต้องเลือกวันที่เริ่ม-สิ้นสุดเองแล้ว
+    // ประวัติการฟาร์มใช้ TF ชุดเดียวกับกราฟ ไม่ต้องเลือกวันที่เริ่ม-สิ้นสุดเองแล้ว
     var startTs = capStartTsForPlan(tfRangeStartTs(farmHistoryRange), hasFarmPlan());
     var entries = App.farmLog.filter(function(e){
       return e.serverId===App.farmServerId && (startTs===null || e.ts>=startTs);
@@ -3323,7 +3323,7 @@
     }
 
     if(!entries.length){
-      list.innerHTML = '<p class="mr-empty">ไม่มีประวัติการฟามในช่วงที่เลือกสำหรับเซิร์ฟเวอร์นี้</p>';
+      list.innerHTML = '<p class="mr-empty">ไม่มีประวัติการฟาร์มในช่วงที่เลือกสำหรับเซิร์ฟเวอร์นี้</p>';
       pag.innerHTML = '';
       return;
     }
@@ -3454,7 +3454,7 @@
       var hasRate = entry.exchangeRate>0;
       var earnedBase = entry.earnedBase!=null ? entry.earnedBase : entry.earned;
       function bahtSuffix(z){ return hasRate ? ' (= '+fmtNum(farmZenyToBaht(z, entry.exchangeRate))+' บ)' : ''; }
-      var rows = '<div class="ct-row"><span class="ct-key">ฟามได้ (พื้นฐาน)</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z'+bahtSuffix(earnedBase)+'</span></div>';
+      var rows = '<div class="ct-row"><span class="ct-key">ฟาร์มได้ (พื้นฐาน)</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z'+bahtSuffix(earnedBase)+'</span></div>';
       (entry.rareItems||[]).filter(function(r){ return r.name && r.price; }).forEach(function(r){
         var rareTotal = r.price*r.qty;
         var isRareBaht = (r.currency||'zeny')==='baht';
@@ -3488,7 +3488,7 @@
       var hasRate = entry.exchangeRate>0;
       var earnedBase = entry.earnedBase!=null ? entry.earnedBase : entry.earned;
       function bahtSuffix(z){ return hasRate ? ' (= '+fmtNum(farmZenyToBaht(z, entry.exchangeRate))+' บ)' : ''; }
-      var rows = '<div class="ct-row"><span class="ct-key">ฟามได้ (พื้นฐาน)</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z'+bahtSuffix(earnedBase)+'</span></div>';
+      var rows = '<div class="ct-row"><span class="ct-key">ฟาร์มได้ (พื้นฐาน)</span><span class="ct-val" style="color:var(--success)">+'+fmtNum(earnedBase)+' z'+bahtSuffix(earnedBase)+'</span></div>';
       (entry.rareItems||[]).filter(function(r){ return r.name && r.price; }).forEach(function(r){
         var rareTotal = r.price*r.qty;
         var isRareBaht = (r.currency||'zeny')==='baht';
@@ -5008,13 +5008,13 @@
       '2. ลากรายการสินค้าลงกล่องตามความต้องการ จัดหมวดหมู่',
       '3. เมื่อรายการนั้นถูกขายไป (เลือกจากคลัง) ระบบจะลบรายการในคลังออกอัตโนมัติ แล้วแสดงในประวัติหน้าซื้อ-ขาย'
     ]},
-    farm: { title:'ยอดนักฟาม', lines:[
+    farm: { title:'ยอดนักฟาร์ม', lines:[
       '1. ใส่ราคา M วันนั้น เพื่อคำนวณรายการที่เป็น Zeny เป็นบาทได้ถูกต้อง',
-      '2. ใส่ Map ฟาม',
+      '2. ใส่ Map ฟาร์ม',
       '3. ใส่รายการต้นทุน ได้ทั้งหน่วยบาท, Zeny รวมกันได้เลย (กด + เพิ่มรายการได้ถ้าใช้หลายอย่าง)',
       '4. ไอเทมหายาก เช่น การ์ด เอลู โอริ อื่นๆ ใส่ชื่อรายการไว้ก่อน พอขายได้ ไปกดแก้ไขที่ประวัติ ระบบจะคำนวณเพิ่มยอดให้',
       '5. ไอเทมหายาก กด + เพิ่มรายการได้ กรณีมีหลายชิ้น',
-      '6. การใส่จำนวนกั้ม เอาที่ผู้เล่นสะดวก จะฟาม 1 กั้มแล้วบันทึก หรือ 10 กั้มแล้วบันทึกทีเดียวก็ได้ ระบบจะเฉลี่ยยอดเงินต่อกั้มออกมา',
+      '6. การใส่จำนวนกั้ม เอาที่ผู้เล่นสะดวก จะฟาร์ม 1 กั้มแล้วบันทึก หรือ 10 กั้มแล้วบันทึกทีเดียวก็ได้ ระบบจะเฉลี่ยยอดเงินต่อกั้มออกมา',
       '7. ถ้ายอดเงิน OC มาแล้ว ให้ใส่ยอดแล้วบันทึก',
       '8. ถ้ายอดเงิน "ยังไม่ได้ OC" ให้ใส่ยอดเงิน แล้วจึงกด OC 24% บันทึก'
     ]},
@@ -5374,7 +5374,7 @@
     document.getElementById('appScreen').hidden = false;
     renderAll();
     document.getElementById('farmChartGuest').hidden = false;
-    document.getElementById('farmHistoryList').innerHTML = '<p class="mr-empty"><span class="dashboard-empty-title">ประวัติการฟามของคุณอยู่ที่นี่</span>'+
+    document.getElementById('farmHistoryList').innerHTML = '<p class="mr-empty"><span class="dashboard-empty-title">ประวัติการฟาร์มของคุณอยู่ที่นี่</span>'+
       '<span class="dashboard-empty-detail">เข้าสู่ระบบด้วยปุ่มด้านบนเพื่อดูข้อมูลของคุณ หรือสมัครสมาชิกหากยังไม่มีบัญชี</span></p>';
     renderRoster();
     var hashPage = pageFromHash();
@@ -6095,7 +6095,7 @@
   var FREE_WAREHOUSE_TIER = 'S';       // คลังเดียวที่บัญชีฟรีใช้ได้ (ที่เหลือล็อกหมด)
   var FREE_WAREHOUSE_MAX_ITEMS = 3;    // จำกัดจำนวนรายการ (นับรวมรายการชื่อซ้ำด้วย ไม่ใช่นับจำนวนชิ้น)
 
-  // ---------- กติกาบัญชีฟรี: บัญชีนักลงทุน / ยอดนักฟาม ----------
+  // ---------- กติกาบัญชีฟรี: บัญชีนักลงทุน / ยอดนักฟาร์ม ----------
   // (ปลดล็อกด้วยแพ็กที่มีระบบนั้น — hasTradePlan / hasFarmPlan · บัญชีเก่าไม่จำกัดกับแอดมินไม่โดน)
   // "ต่อวัน" = นับรายการที่บันทึกตั้งแต่เที่ยงคืนวันนี้ ทุกเซิร์ฟเวอร์รวมกัน · 1 ครั้งที่กดบันทึก = 1 รายการ
   // แก้ไขรายการเดิมไม่นับเพิ่ม · ข้อมูลส่วนนี้เก็บเป็นก้อนเดียวในบัญชี จึงกันที่หน้าเว็บเท่านั้น (แบบเดียวกับคลังไอเทม)
@@ -6725,9 +6725,9 @@
         'จำกัดประวัติย้อนหลัง 1 วัน',
         {divider:'คลังไอเทม'},
         'ได้คลัง 1 กล่อง จำกัด 3 รายการ',
-        {divider:'ยอดนักฟาม'},
+        {divider:'ยอดนักฟาร์ม'},
         'บันทึกต้นทุน กำไร ได้ทั้งแบบ Zeny และบาท ไม่ต้องแยกบันทึก จำกัด 3 ครั้งต่อวัน',
-        'กราฟสรุปยอดฟามแบบละเอียดใน 1 วัน',
+        'กราฟสรุปยอดฟาร์มแบบละเอียดใน 1 วัน',
         'ประวัติย้อนหลัง 1 วัน',
         {divider:'จับเวลาบอส'},
         'เพิ่มบอสได้ 1 ตัว',
@@ -6740,14 +6740,14 @@
         'ปักหมุดจุดบอสตายบนแผนที่'
       ] },
     // New monthly-only packages are supported by Production buy_plan.
-    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาม</span>', monthly:99, promoMonthly:99, badge:'สายฟาร์ม',
+    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาร์ม</span>', monthly:99, promoMonthly:99, badge:'สายฟาร์ม',
       modules:['farm'],
-      tagline:'สายฟามห้ามพลาด', features:[
-        'บันทึกยอดฟาม ต้นทุน กำไร ในแต่ละรอบ',
+      tagline:'สายฟาร์มห้ามพลาด', features:[
+        'บันทึกยอดฟาร์ม ต้นทุน กำไร ในแต่ละรอบ',
         'บันทึกได้ทั้งแบบ Zeny และบาท ไม่ต้องแยกบันทึก ไม่จำกัด',
         'บันทึกรายการต้นทุนไม่จำกัด',
         'บันทึกรายการไอเทมแรร์ไม่จำกัด',
-        'กราฟสรุปยอดฟามแบบละเอียด รายวัน / รายสัปดาห์ / รายเดือน',
+        'กราฟสรุปยอดฟาร์มแบบละเอียด รายวัน / รายสัปดาห์ / รายเดือน',
         'ระบบคำนวณยอดแบบละเอียดต่อกั้ม',
         'ระบบคำนวณยอดไอเทมแรร์เมื่อขายได้ทีหลัง',
         'ประวัติย้อนหลังไม่จำกัด',
@@ -6769,11 +6769,11 @@
         'แบ่งคลังแยกได้ไม่จำกัดจำนวนเซิร์ฟเวอร์โดยไม่ซ้ำคลังกัน',
         {divider:'หมวดอื่นๆ ใช้สิทธิ์แบบแพ็กฟรีทั้งหมด'}
       ] },
-    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาม</span>', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'ยอดนิยม',
+    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'ยอดนิยม',
       // แพ็กรวม: บอกว่าได้ระบบไหนบ้างด้วยแถวระบบ (modules) แทนรายการฟีเจอร์ยาว — ระบบที่ไม่ได้แสดงเป็นสีเทา
       modules:['investor','items','farm'],
       // รายละเอียด (ส่วนที่กดดูได้) = รวมรายการของแพ็กย่อยที่อยู่ในแพ็กนี้ แบ่งหัวข้อตามระบบ
-      detailFrom:[['ยอดนักฟาม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems']] },
+      detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems']] },
     { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'สายล่าบอส',
       modules:['timers'],
       tagline:'ระบบล่าบอสครบในทีเดียว',
@@ -6790,17 +6790,17 @@
         'ติดตามส่วนแบ่งของปาร์ตี้',
         'ปักหมุดจุดบอสตายบนแผนที่'
       ] },
-    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาม/จับเวลาบอส</span>', monthly:349, yearly:3490, promoMonthly:175, promoYearly:1750, best:true, badge:'แนะนำ · คุ้มที่สุด',
+    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม/จับเวลาบอส</span>', monthly:349, yearly:3490, promoMonthly:175, promoYearly:1750, best:true, badge:'แนะนำ · คุ้มที่สุด',
       modules:['investor','items','farm','timers'],
-      detailFrom:[['ยอดนักฟาม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems'],['จับเวลาบอส','timers']] }
+      detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems'],['จับเวลาบอส','timers']] }
   ];
-  // แถวระบบในการ์ดแพ็กรวม — ไอคอนชุดเดียวกับเมนูด้านซ้าย (ยอดนักฟาม = ธนู, จับเวลาบอส = นาฬิกา)
+  // แถวระบบในการ์ดแพ็กรวม — ไอคอนชุดเดียวกับเมนูด้านซ้าย (ยอดนักฟาร์ม = ธนู, จับเวลาบอส = นาฬิกา)
   var PRICING_MODULES = [
     { key:'investor', name:'บัญชีนักลงทุน',
       icon:'<rect x="2" y="4" width="17" height="13" rx="2"/><path d="M7 6v10"/><path d="M9 8.3c-.5-.7-1.6-1-2.5-.7-1.3.4-1.7 1.8-.6 2.5.6.4 1.6.5 2.4.7 1.3.4 1.7 1.8.4 2.5-.9.5-2 .3-2.6-.4"/><path d="M12 7.5h5"/><path d="M12 10.5h3"/><path d="M14 21h3l6-6a2 2 0 00-3-3l-6 6z"/><path d="M18.5 13.5l3 3"/>' },
     { key:'items', name:'คลังไอเทม',
       icon:'<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/>' },
-    { key:'farm', name:'ยอดนักฟาม',
+    { key:'farm', name:'ยอดนักฟาร์ม',
       icon:'<path d="M17 3h4v4m0-4L6 18m-3 0h3v3m10.5-1c1.576-1.576 2.5-4.095 2.5-6.5C19 8.69 15.31 5 10.5 5C8.085 5 5.578 5.913 4 7.5z"/>' },
     { key:'timers', name:'จับเวลาบอส',
       icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>' }
@@ -7027,7 +7027,7 @@
       if(bundle) rows.push({name:'3 in 1',expiry:bundle});
       if(timers) rows.push({name:'จับเวลาบอส',expiry:timers});
     }
-    [['farm','1 in 1 — ยอดนักฟาม'],['accountItems','2 in 1 — บัญชีนักลงทุน + คลังไอเทม']].forEach(function(pair){
+    [['farm','1 in 1 — ยอดนักฟาร์ม'],['accountItems','2 in 1 — บัญชีนักลงทุน + คลังไอเทม']].forEach(function(pair){
       var end=expiry(scoped[pair[0]]);
       if(end>bundle) rows.push({name:pair[1],expiry:end});
     });
@@ -7081,7 +7081,7 @@
   }
   // ---------- เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ: ติ๊กเปิดกลับให้โผล่ใน dropdown ประวัติ/กราฟ ----------
   // (ค่าเริ่มต้นซ่อนหมด — ดู isHistoryServerShown, visibleRetiredServerIds) รวมทั้งเซิร์ฟที่เคยมีประวัติ
-  // ซื้อ-ขาย และเคยมีประวัติฟาม เข้าด้วยกัน เพราะติ๊กตัวเดียวคุมทั้งสองหน้า
+  // ซื้อ-ขาย และเคยมีประวัติฟาร์ม เข้าด้วยกัน เพราะติ๊กตัวเดียวคุมทั้งสองหน้า
   function retiredServerHistoryCandidates(){
     var ids = [];
     rawHistoryServerIds().concat(rawFarmServerIds()).forEach(function(id){
@@ -7110,7 +7110,7 @@
     setRetiredServerVisible(id, show);
     chip.classList.toggle('on', show);
     chip.textContent = (show ? '✓ ' : '') + chip.textContent.replace(/^✓ /, '');
-    // ไม่ต้องรีเฟรชหน้าอื่นตรงนี้ — หน้าประวัติ/กราฟ/ฟาม อ่านค่านี้ใหม่เองทุกครั้งที่เข้าไปดู (populateHistoryServerFilter ฯลฯ)
+    // ไม่ต้องรีเฟรชหน้าอื่นตรงนี้ — หน้าประวัติ/กราฟ/ฟาร์ม อ่านค่านี้ใหม่เองทุกครั้งที่เข้าไปดู (populateHistoryServerFilter ฯลฯ)
   });
   // ---------- เซิร์ฟเวอร์ที่เล่น: ชิปเลือกได้หลายอัน ใช้ทั้ง popup ตอนสมัคร/ล็อกอินครั้งแรก และหน้าตั้งค่า ----------
   // ปิดให้บริการแล้ว = ไม่โชว์เป็นตัวเลือกใหม่ แต่ถ้าบัญชีนี้มีอยู่แล้วต้องยังเห็น/เอาออกเองได้
@@ -7563,7 +7563,7 @@
 
   // ---------- บัญชีหมดอายุ = โหมดดูอย่างเดียว + แจ้งเตือนก่อนหมดอายุ 3/2/1 วัน ----------
   // แอดมินไม่ติดกติกา · ยังทำได้: เติมแต้ม ซื้อแพ็กเกจ ตั้งค่า ออกจากระบบ และการเปลี่ยนมุมมอง/ตัวกรองทุกอย่าง
-  // การเขียนข้อมูลบอส/ประวัติ/ปาร์ตี้ถูกกันซ้ำที่ฐานข้อมูล (is_active()) ส่วนข้อมูลในเครื่อง (นักลงทุน/ฟาม/คลัง) กันที่นี่
+  // การเขียนข้อมูลบอส/ประวัติ/ปาร์ตี้ถูกกันซ้ำที่ฐานข้อมูล (is_active()) ส่วนข้อมูลในเครื่อง (นักลงทุน/ฟาร์ม/คลัง) กันที่นี่
   // วันหมดอายุบัญชีตั้งเป็นปี 2099 = ไม่จำกัด (คอลัมน์ profiles.expires_at ห้ามเป็นค่าว่าง จึงใช้วันไกลๆ แทน)
   function isNoExpiry(ts){ return !ts || new Date(ts).getFullYear() >= 2090; }
   function accountDaysLeft(){
@@ -7613,7 +7613,7 @@
     '#tickerServerChips', '#rateChips',
     // รูปไอเทม: กดไอคอนดูรูปในประวัติ/คลังได้ (แนบ/เปลี่ยน/เอารูปออกในฟอร์ม = ทำรายการ → กัน)
     '.item-img-ico', '#itemImageLightbox',
-    // ยอดนักฟาม: เปลี่ยนเซิร์ฟเวอร์/หน่วย/ช่วงเวลา/กราฟ/หน้าประวัติ (ไม่รวมฟอร์มบันทึก, ต้นทุน, เรท, แก้/ลบ)
+    // ยอดนักฟาร์ม: เปลี่ยนเซิร์ฟเวอร์/หน่วย/ช่วงเวลา/กราฟ/หน้าประวัติ (ไม่รวมฟอร์มบันทึก, ต้นทุน, เรท, แก้/ลบ)
     '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
     '#farmHistoryRange', '#farmHistoryPagination', '[data-farm-day-toggle]', '.farm-cost-hover', '.farm-profit-hover', '.farm-income-hover',
     // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหาได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
@@ -7740,8 +7740,8 @@
       if(recent(b)) out.push({ key:'bundle', name:'3 in 1', expiry:b });
       if(recent(t)) out.push({ key:'timers', name:'จับเวลาบอส', expiry:t });
     }
-    // ยอดฟาม / 2 in 1 ที่ยังถูก 3 in 1 ครอบอยู่ = ยังใช้ได้ ไม่ต้องแจ้ง
-    if(recent(f) && b <= now) out.push({ key:'farm', name:'1 in 1 — ยอดนักฟาม', expiry:f });
+    // ยอดฟาร์ม / 2 in 1 ที่ยังถูก 3 in 1 ครอบอยู่ = ยังใช้ได้ ไม่ต้องแจ้ง
+    if(recent(f) && b <= now) out.push({ key:'farm', name:'1 in 1 — ยอดนักฟาร์ม', expiry:f });
     if(recent(a) && b <= now) out.push({ key:'accountItems', name:'2 in 1 — บัญชีนักลงทุน + คลังไอเทม', expiry:a });
     return out;
   }
@@ -8474,7 +8474,7 @@
     }
   });
 
-  // ---------- ยอดนักฟาม wiring ----------
+  // ---------- ยอดนักฟาร์ม wiring ----------
   document.getElementById('farmServerSelect').addEventListener('change', function(e){
     App.farmServerId = e.target.value;
     saveFarmServer();
@@ -8703,7 +8703,7 @@
     var earnedInput = document.getElementById('farmEarnedInput');
     var count = parseInt(countInput.value, 10) || 1;
     var val = parseFloat(earnedInput.value.replace(/,/g,''));
-    if(!val || val<=0){ toast('กรอกยอดที่ฟามได้ก่อน'); return; }
+    if(!val || val<=0){ toast('กรอกยอดที่ฟาร์มได้ก่อน'); return; }
     var costBd = farmCostBreakdown(App.farmServerId);
     if(!(costBd.rate>0)){
       var exRateInput = document.getElementById('farmExRateInput');
@@ -8784,7 +8784,7 @@
   // history row being edited while an edit is in progress cancels it.
   document.addEventListener('click', function(e){
     if(!editingFarmId) return;
-    // กดช่องยอดที่ฟามได้ → หน้าต่างเตือน OC เด้งขึ้นตอนกดเมาส์ลง แล้วคลิกไปจบบนหน้าต่างนั้น เบราว์เซอร์จึงนับว่าคลิกที่ body
+    // กดช่องยอดที่ฟาร์มได้ → หน้าต่างเตือน OC เด้งขึ้นตอนกดเมาส์ลง แล้วคลิกไปจบบนหน้าต่างนั้น เบราว์เซอร์จึงนับว่าคลิกที่ body
     // (นอกฟอร์ม) — ห้ามถือเป็นการคลิกออกนอกฟอร์ม ไม่งั้นการแก้ไขถูกยกเลิกเองทุกครั้งที่กดช่องยอด
     if(!document.getElementById('farmOcHintOverlay').hidden) return;
     if(e.target.closest('[data-farm-edit]')) return;

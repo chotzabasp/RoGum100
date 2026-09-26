@@ -393,7 +393,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         <section class="card">
           <div class="card-head"><div class="card-title">การใช้งานฟีเจอร์รายวัน</div></div>
           <div class="chart-box sm"><canvas id="chartFeatures" aria-label="กราฟจำนวนรายการที่บันทึกต่อวันแยกตามฟีเจอร์" role="img"></canvas></div>
-          <div class="legend"><span><i style="background:var(--c1)"></i>ซื้อ–ขาย</span><span><i style="background:var(--c3)"></i>ยอดฟาม</span><span><i style="background:var(--c4)"></i>ฆ่าบอส</span></div>
+          <div class="legend"><span><i style="background:var(--c1)"></i>ซื้อ–ขาย</span><span><i style="background:var(--c3)"></i>ยอดฟาร์ม</span><span><i style="background:var(--c4)"></i>ฆ่าบอส</span></div>
         </section>
         <section class="card">
           <div class="card-head"><div class="card-title">รายได้รายวัน (บาท)</div><span class="card-note" id="periodRevenue"></span></div>
@@ -411,7 +411,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         <div class="stat-grid stat-grid-4" id="upgradeStats"></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>ผู้ใช้</th><th class="num">วันที่ครบลิมิตซื้อ–ขาย</th><th class="num">วันที่ครบลิมิตฟาม</th><th class="num">วันที่เข้าใช้งาน</th></tr></thead>
+            <thead><tr><th>ผู้ใช้</th><th class="num">วันที่ครบลิมิตซื้อ–ขาย</th><th class="num">วันที่ครบลิมิตฟาร์ม</th><th class="num">วันที่เข้าใช้งาน</th></tr></thead>
             <tbody id="candidates"></tbody>
           </table>
         </div>
@@ -601,7 +601,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
                fill:!!fill, cubicInterpolationMode:'monotone', borderWidth:2, pointRadius:0, pointHoverRadius:5, pointHoverBorderWidth:2, pointHoverBackgroundColor:'#101521' };
     };
     drawChart('chartUsers', { type:'line', data:{ labels:labels, datasets:[ line('ผู้ใช้งาน', 'active', c1, true), line('สมัครใหม่', 'signups', c2, true) ] }, options:baseOptions() });
-    drawChart('chartFeatures', { type:'line', data:{ labels:labels, datasets:[ line('ซื้อ–ขาย', 'merchant', c1), line('ยอดฟาม', 'farm', c3), line('ฆ่าบอส', 'kills', c4) ] }, options:baseOptions() });
+    drawChart('chartFeatures', { type:'line', data:{ labels:labels, datasets:[ line('ซื้อ–ขาย', 'merchant', c1), line('ยอดฟาร์ม', 'farm', c3), line('ฆ่าบอส', 'kills', c4) ] }, options:baseOptions() });
     var revOpts = baseOptions();
     revOpts.plugins.tooltip.callbacks = { label:function(ctx){ return ' รายได้ ' + fmt(ctx.parsed.y) + ' บาท'; } };
     drawChart('chartRevenue', { type:'bar', data:{ labels:labels, datasets:[{ label:'รายได้', data:series.map(function(s){ return Number(s.revenue || 0); }),
@@ -613,8 +613,8 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     var stats = [
       [u.trade_limit_users, 'คนที่ครบลิมิตซื้อ–ขาย', true],
       [u.trade_limit_days, 'ครั้ง (วัน) ที่ครบลิมิตซื้อ–ขาย'],
-      [u.farm_limit_users, 'คนที่ครบลิมิตฟาม', true],
-      [u.farm_limit_days, 'ครั้ง (วัน) ที่ครบลิมิตฟาม']
+      [u.farm_limit_users, 'คนที่ครบลิมิตฟาร์ม', true],
+      [u.farm_limit_days, 'ครั้ง (วัน) ที่ครบลิมิตฟาร์ม']
     ];
     $('upgradeStats').innerHTML = stats.map(function(s){
       return '<div class="stat' + (s[2] && Number(s[0]) > 0 ? ' hot' : '') + '"><b>' + fmt(s[0]) + '</b><span>' + s[1] + '</span></div>';
@@ -688,7 +688,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   }
   function renderFeatures(f){
     var items = [
-      [f.merchant_total, 'รายการซื้อ–ขาย'], [f.farm_total, 'รายการยอดฟาม'], [f.kills_total, 'บันทึกฆ่าบอส'],
+      [f.merchant_total, 'รายการซื้อ–ขาย'], [f.farm_total, 'รายการยอดฟาร์ม'], [f.kills_total, 'บันทึกฆ่าบอส'],
       [f.bosses_tracked, 'บอสที่จับเวลาอยู่'], [f.parties_active, 'ปาร์ตี้ที่มีสมาชิก'], [f.custom_bosses, 'บอส Custom'],
       [f.announcements_active, 'ประกาศรับ M ที่ยังไม่หมดอายุ']
     ];
@@ -696,7 +696,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   }
 
   // ---------- กลุ่ม 2: การเข้าชมเว็บ ----------
-  var PAGE_LABEL = { home:'บัญชีนักลงทุน', farm:'ยอดนักฟาม', timers:'จับเวลาบอส', items:'คลังไอเทม', pricing:'เติมแพ็กเกจ', settings:'ตั้งค่า', admin:'แอดมิน' };
+  var PAGE_LABEL = { home:'บัญชีนักลงทุน', farm:'ยอดนักฟาร์ม', timers:'จับเวลาบอส', items:'คลังไอเทม', pricing:'เติมแพ็กเกจ', settings:'ตั้งค่า', admin:'แอดมิน' };
   function fmtDuration(sec){
     sec = Math.round(Number(sec || 0));
     if(sec < 60) return sec + ' วิ';

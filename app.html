@@ -1,7 +1,7 @@
 <html lang="th">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gum100 ทำบัญชีRo, บันทึกยอดฟาม, จับเวลาล่าบอส</title>
+<title>Gum100 ทำบัญชีRo, บันทึกยอดฟาร์ม, จับเวลาล่าบอส</title>
 <!-- คำอธิบาย + การ์ดตัวอย่างตอนแชร์ลิงก์ (Facebook / LINE / Messenger / Discord) — รูปอยู่ที่ og-image.jpg (1200x630)
      ถ้าเปลี่ยนรูปหรือข้อความ แพลตฟอร์มจะจำการ์ดเก่าไว้ ต้องกดล้างแคชในเครื่องมือของแต่ละที่ (เช่น Facebook Sharing Debugger) -->
 <meta name="description" content="จับเวลาบอส บันทึกซื้อ–ขาย คลังไอเทม และยอดฟาร์ม ครบในที่เดียว สำหรับผู้เล่น Ragnarok Online">
@@ -10,7 +10,7 @@
 <meta property="og:site_name" content="Gum100">
 <meta property="og:locale" content="th_TH">
 <meta property="og:url" content="https://gum100.com/app.html">
-<meta property="og:title" content="Gum100 ทำบัญชีRo, บันทึกยอดฟาม, จับเวลาล่าบอส">
+<meta property="og:title" content="Gum100 ทำบัญชีRo, บันทึกยอดฟาร์ม, จับเวลาล่าบอส">
 <meta property="og:description" content="จับเวลาบอส บันทึกซื้อ–ขาย คลังไอเทม และยอดฟาร์ม ครบในที่เดียว">
 <meta property="og:image" content="https://gum100.com/og-image.jpg?v=2">
 <meta property="og:image:type" content="image/jpeg">
@@ -18,7 +18,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Gum100 ครบ จบ ที่เราที่เดียว เครื่องมือช่วยเล่น Ragnarok Online">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Gum100 ทำบัญชีRo, บันทึกยอดฟาม, จับเวลาล่าบอส">
+<meta name="twitter:title" content="Gum100 ทำบัญชีRo, บันทึกยอดฟาร์ม, จับเวลาล่าบอส">
 <meta name="twitter:description" content="จับเวลาบอส บันทึกซื้อ–ขาย คลังไอเทม และยอดฟาร์ม ครบในที่เดียว">
 <meta name="twitter:image" content="https://gum100.com/og-image.jpg?v=2">
 <link rel="icon" type="image/png" href="logo-gum100.png?v=2">
@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260927-history-server-inline2">
+<link rel="stylesheet" href="assets/app.css?v=20260927-farm-spelling">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -75,7 +75,7 @@
     </div>
     <button class="rail-btn active" data-page="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="17" height="13" rx="2"/><path d="M7 6v10"/><path d="M9 8.3c-.5-.7-1.6-1-2.5-.7-1.3.4-1.7 1.8-.6 2.5.6.4 1.6.5 2.4.7 1.3.4 1.7 1.8.4 2.5-.9.5-2 .3-2.6-.4"/><path d="M12 7.5h5"/><path d="M12 10.5h3"/><path d="M14 21h3l6-6a2 2 0 00-3-3l-6 6z"/><path d="M18.5 13.5l3 3"/></svg><span class="tip">บัญชีนักลงทุน</span></button>
     <button class="rail-btn" data-page="items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="tip">คลังไอเทม</span><span class="rail-badge" id="railItemsBadge" hidden>0</span></button>
-    <button class="rail-btn" data-page="farm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3h4v4m0-4L6 18m-3 0h3v3m10.5-1c1.576-1.576 2.5-4.095 2.5-6.5C19 8.69 15.31 5 10.5 5C8.085 5 5.578 5.913 4 7.5z"/></svg><span class="tip">ยอดนักฟาม</span></button>
+    <button class="rail-btn" data-page="farm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3h4v4m0-4L6 18m-3 0h3v3m10.5-1c1.576-1.576 2.5-4.095 2.5-6.5C19 8.69 15.31 5 10.5 5C8.085 5 5.578 5.913 4 7.5z"/></svg><span class="tip">ยอดนักฟาร์ม</span></button>
     <button class="rail-btn" data-page="timers"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="tip">จับเวลาบอส</span></button>
     <button class="rail-btn" data-page="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="tip">เติมแพ็กเกจ</span></button>
     <button class="rail-btn" data-page="admin" id="railAdminBtn" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg><span class="tip">แอดมิน</span><span class="rail-badge" id="railAdminBadge" hidden>0</span></button>
@@ -154,7 +154,7 @@
         <nav class="dashboard-shortcuts" aria-label="ทางลัดจากแดชบอร์ด">
           <button type="button" class="btn btn-primary dashboard-shortcut" data-dashboard-section="mrEntryPanel">ไปฟอร์มซื้อ–ขาย</button>
           <button type="button" class="btn btn-ghost dashboard-shortcut" data-dashboard-page="items">คลังไอเทม</button>
-          <button type="button" class="btn btn-ghost dashboard-shortcut" data-dashboard-page="farm">ยอดนักฟาม</button>
+          <button type="button" class="btn btn-ghost dashboard-shortcut" data-dashboard-page="farm">ยอดนักฟาร์ม</button>
           <button type="button" class="btn btn-ghost dashboard-shortcut" data-dashboard-page="timers">จับเวลาบอส</button>
         </nav>
             </details>
@@ -328,8 +328,8 @@
       <div class="topbar">
         <div class="page-title-art">
           <img class="page-title-img" src="assets/pricing-farm-mounted-knight.webp" width="211" height="300" alt="" aria-hidden="true">
-          <h1>ยอดนักฟาม <span class="dashboard-howto-label" data-howto="farm">วิธีใช้</span></h1>
-          <p class="sub">สรุปรายได้จากการฟาม เทียบต้นทุนต่อกั้ม (1 กั้ม = 30 นาที)</p>
+          <h1>ยอดนักฟาร์ม <span class="dashboard-howto-label" data-howto="farm">วิธีใช้</span></h1>
+          <p class="sub">สรุปรายได้จากการฟาร์ม เทียบต้นทุนต่อกั้ม (1 กั้ม = 30 นาที)</p>
         </div>
         <div class="topbar-right">
           <div class="hf-group">
@@ -342,7 +342,7 @@
         <div class="home-left">
           <div class="panel panel-farm-history">
             <div class="panel-head">
-              <h2><img class="farm-heading-icon" src="assets/warehouse/bubble-gum.png" alt="" aria-hidden="true"><span>ประวัติการฟาม</span> <span class="farm-history-summary" id="farmHistorySummary"></span></h2>
+              <h2><img class="farm-heading-icon" src="assets/warehouse/bubble-gum.png" alt="" aria-hidden="true"><span>ประวัติการฟาร์ม</span> <span class="farm-history-summary" id="farmHistorySummary"></span></h2>
               <select class="chart-tf-select" id="farmHistoryRange">
                 <option value="today" selected>วันนี้</option>
                 <option value="7d">7วัน</option>
@@ -386,8 +386,8 @@
             </div>
             <p class="farm-kpi-sub" id="farmKpiAvgLine"></p>
             <div class="chart-wrap" id="farmChartWrap">
-              <svg id="farmChartSvg" viewBox="0 0 640 220" preserveAspectRatio="none" role="img" aria-label="กราฟยอดฟามรายวัน"></svg>
-              <div class="dashboard-chart-empty" id="farmChartGuest" hidden><strong>เข้าสู่ระบบเพื่อดูกราฟของคุณ</strong><span>กราฟจะแสดงจากยอดฟามที่บันทึกไว้ในบัญชี</span></div>
+              <svg id="farmChartSvg" viewBox="0 0 640 220" preserveAspectRatio="none" role="img" aria-label="กราฟยอดฟาร์มรายวัน"></svg>
+              <div class="dashboard-chart-empty" id="farmChartGuest" hidden><strong>เข้าสู่ระบบเพื่อดูกราฟของคุณ</strong><span>กราฟจะแสดงจากยอดฟาร์มที่บันทึกไว้ในบัญชี</span></div>
               <div class="chart-tooltip" id="farmChartTooltip" hidden></div>
             </div>
             <div class="chart-legend" id="farmChartLegend"></div>
@@ -428,7 +428,7 @@
                 <input type="number" id="farmCountInput" class="mono" value="1" min="1" aria-label="จำนวนกั้ม">
               </div>
               <div class="farm-log-field farm-log-field-earned">
-                <div class="farm-log-field-label">ยอดที่ฟามได้รวม <button type="button" class="farm-oc-toggle" id="farmOcToggle">OC 24%</button></div>
+                <div class="farm-log-field-label">ยอดที่ฟาร์มได้รวม <button type="button" class="farm-oc-toggle" id="farmOcToggle">OC 24%</button></div>
                 <input type="text" inputmode="numeric" id="farmEarnedInput" class="mono" placeholder="เช่น 100,000">
                 <div class="farm-earned-hint" id="farmEarnedHint" hidden></div>
               </div>
@@ -752,7 +752,7 @@
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveServers">บันทึกเซิร์ฟเวอร์</button></div>
         </div>
         <!-- เซิร์ฟพักที่เคยมีประวัติ — ค่าเริ่มต้นซ่อนไว้ทั้งหมด (กันตัวเลือกเซิร์ฟเวอร์ในหน้า "ประวัติซื้อ-ขาย"/
-             "กราฟกำไรสุทธิ"/"ยอดนักฟาม" รกจากเซิร์ฟเก่าที่เลิกเล่นแล้ว) ติ๊กเปิดคืนได้เฉพาะเซิร์ฟที่เคยมีประวัติจริง
+             "กราฟกำไรสุทธิ"/"ยอดนักฟาร์ม" รกจากเซิร์ฟเก่าที่เลิกเล่นแล้ว) ติ๊กเปิดคืนได้เฉพาะเซิร์ฟที่เคยมีประวัติจริง
              เก็บในเครื่อง กดติ๊กแล้วมีผลทันที ไม่ต้องกดบันทึก — การ์ดนี้โชว์ไว้แต่แรกเสมอ ไม่ซ่อนแม้ยังไม่มี
              เซิร์ฟพักที่มีประวัติเลย (โชว์ข้อความว่างแทน) -->
         <div class="panel settings-card settings-servers" id="stRetiredServerCard">
@@ -888,10 +888,10 @@
             <select id="adminPromoReward">
               <option value="points">แจกแต้ม</option>
               <option value="all">แพ็กเกจ 4 in 1 (ครบทุกระบบ)</option>
-              <option value="bundle">แพ็กเกจ 3 in 1 (บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาม)</option>
+              <option value="bundle">แพ็กเกจ 3 in 1 (บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม)</option>
               <option value="timers">แพ็กเกจจับเวลาบอส</option>
               <option value="accountItems">แพ็กเกจ 2 in 1 (บัญชีนักลงทุน/คลังไอเทม)</option>
-              <option value="farm">แพ็กเกจ 1 in 1 (ยอดนักฟาม)</option>
+              <option value="farm">แพ็กเกจ 1 in 1 (ยอดนักฟาร์ม)</option>
             </select>
           </label>
           <div class="admin-grant-row">
@@ -1196,4 +1196,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260927-pricing-sound"></script>
+<script src="assets/app.js?v=20260927-farm-spelling"></script>

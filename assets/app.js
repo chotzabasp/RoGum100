@@ -3266,6 +3266,9 @@
   var farmHistoryRange = 'today';
   // กดซ่อนการ์ดวันไหน = เหลือแสดงแค่ใบล่าสุดของวันนั้น (rows[0] เพราะ sort ใหม่สุดก่อนไว้แล้ว)
   var farmHistoryDayCollapsed = {};
+  // รายการที่เพิ่งกดบันทึกล่าสุด — ติดป้าย "ล่าสุด" (แดง) จนกว่าจะบันทึกรายการถัดไป (ป้ายย้ายไปใบใหม่) หรือรีเฟรชหน้า
+  // เก็บในหน่วยความจำอย่างเดียว ไม่บันทึกลงเครื่อง/คลาวด์ · การแก้ไขรายการเดิม (✎) ไม่ติดป้าย
+  var farmNewEntryId = null;
   function resetFarmTimeframes(){
     farmHistoryRange = 'today';
     farmTimeframe = 'today';
@@ -3348,7 +3351,7 @@
           : '<span class="farm-rare-tag pending">🎁 '+escapeHtml(r.name)+qtySuffix+' (รอขาย)</span>';
       }).join('');
       return '<div class="mr-entry farm-history-entry farm-history-alt-'+(displayIndex%2===0?'odd':'even')+(e.id===editingFarmId?' editing':'')+'" data-farm-entry-id="'+e.id+'">'+
-        '<div class="farm-history-entry-head"><div class="farm-history-meta"><span class="farm-history-time">'+fmtTimeShort(e.ts)+'</span><span class="farm-history-chip farm-history-count">'+count+' กั้ม</span>'+mapChip+'</div>'+
+        '<div class="farm-history-entry-head"><div class="farm-history-meta"><span class="farm-history-time">'+fmtTimeShort(e.ts)+'</span>'+(e.id===farmNewEntryId ? '<span class="mr-tx-new-badge farm-history-new-badge">ล่าสุด</span>' : '')+'<span class="farm-history-chip farm-history-count">'+count+' กั้ม</span>'+mapChip+'</div>'+
           '<span class="mr-entry-actions farm-history-actions">'+
             '<button type="button" class="mr-edit" data-farm-edit="'+e.id+'" title="แก้ไข">✎</button>'+
             '<button type="button" class="mr-del" data-farm-del="'+e.id+'" title="ลบ">🗑</button>'+
@@ -4588,8 +4591,8 @@
     var edited = (e.editHistory && e.editHistory.length) ? ' mr-edited-hover' : '';
     var serverTag = opts.showServer ? ' '+historyServerTag(e.serverId) : '';
     var imgPath = lineImagePath(l);
-    // รายการที่เพิ่งบันทึกใหม่ ขึ้นป้าย "New" — หายทันทีที่กดเปิดดูอะไรก็ตามในประวัติ (ไม่ใช่ตั้งเวลา)
-    var newBadge = recentNewTxIds[e.id] ? '<span class="mr-tx-new-badge">New</span>' : '';
+    // ป้าย "ล่าสุด" ที่แถว: ผู้เรียก (historyTxGroupedByDayHtml) ชี้ให้เฉพาะรายการใหม่ล่าสุดของวันนั้นแถวเดียว
+    var newBadge = opts.latest ? '<span class="mr-tx-new-badge">ล่าสุด</span>' : '';
     var main = opts.showName
       ? itemImageNameHtml(imgPath, itemNameWithSlots(l.name||'', l.slots), l.name)+(showZenyTag?zenyNameTag():'')+serverTag
       : itemImageNameHtml(imgPath, '', l.name)+'<span class="'+edited.trim()+'">'+(opts.timeOnly?fmtTimeShort(e.ts):fmtDateTime(e.ts))+newBadge+'</span>'+serverTag;
@@ -4631,16 +4634,24 @@
       if(d.sell) tot.push('<span class="sell">ขาย '+fmtNum(d.sell)+' บ</span>');
       if(d.buy) tot.push('<span class="buy">ซื้อ '+fmtNum(d.buy)+' บ</span>');
       var dayHasNew = d.rows.some(function(t){ return recentNewTxIds[t.entry.id]; });
+      // ป้ายต่อเป็นทอด การ์ด → กลุ่มวันที่ → แถวรายการล่าสุดข้างใน: แถวที่ได้ป้ายคือรายการใหม่ที่เวลาล่าสุดของวันนั้น
+      // (ยังไม่เปิดดู หรือเพิ่งเปิดกลุ่มวันนี้ดูในรอบนี้ — historySeenNewTxIds) ใช้เหมือนกันทุกหมวด Zeny / ไอเทม / อื่นๆ
+      var seenNew = (typeof historySeenNewTxIds !== 'undefined' && historySeenNewTxIds) || {};
+      var latestNewId = null, latestNewTs = -Infinity;
+      d.rows.forEach(function(t){
+        var id = t.entry.id;
+        if((recentNewTxIds[id] || seenNew[id]) && t.entry.ts > latestNewTs){ latestNewTs = t.entry.ts; latestNewId = id; }
+      });
       return '<div class="mr-ic-day'+(open?' open':'')+'" data-day-key="'+encodeURIComponent(dayGroupKey)+'">'+
         '<button type="button" class="mr-ic-day-head" aria-expanded="'+(open?'true':'false')+'">'+
-          (dayHasNew ? '<span class="mr-ic-new-badge">New</span>' : '')+
+          (dayHasNew ? '<span class="mr-ic-new-badge">ล่าสุด</span>' : '')+
           '<span class="mr-ic-chev">▸</span>'+
           '<span>'+historyDayLabel(d.ts)+'</span>'+
           '<span class="mr-ic-day-count">'+d.rows.length+' รายการ</span>'+
           '<span class="mr-ic-day-tot">'+tot.join(' · ')+'</span>'+
         '</button>'+
         '<div class="mr-tx-list"'+(open?'':' hidden')+'>'+
-          d.rows.map(function(t){ return historyTxRowHtml(t, { showName:false, showTime:false, showServer:false, timeOnly:true }); }).join('')+
+          d.rows.map(function(t){ return historyTxRowHtml(t, { showName:false, showTime:false, showServer:false, timeOnly:true, latest:t.entry.id===latestNewId }); }).join('')+
         '</div>'+
       '</div>';
     }).join('');
@@ -4673,11 +4684,12 @@
     if(imagePath && category!=='zeny') nameHtml = nameHtml.replace(ITEM_IMAGE_ICON, ITEM_IMAGE_ICON+'<img class="mr-history-thumb" data-thumb-path="'+escapeHtml(imagePath)+'" alt="" loading="lazy">');
     return '<div class="mr-it-row mr-ic mr-history-'+category+' history-alt-'+(displayIndex%2===0?'odd':'even')+(open?' open':'')+'" data-key="'+encodeURIComponent(g.key)+'">'+
       '<button type="button" class="mr-ic-head" aria-expanded="'+(open?'true':'false')+'" title="กดเพื่อดูรายการซื้อ-ขายของไอเทมนี้">'+
-        (groupHasNew ? '<span class="mr-ic-new-badge">New</span>' : '')+
         '<span class="mr-ic-chev">▸</span>'+
         '<span class="mr-it-namewrap">'+
           '<span class="mr-it-name">'+(!imagePath || category==='zeny' ? historyCategoryIcon(category) : '')+nameHtml+'</span>'+
           '<span class="mr-it-tags"'+(category==='item'?' hidden':'')+'>'+(category==='zeny'?'<span class="chip">M</span>':category==='item'?'':historyCategoryTag(g.category))+'</span>'+
+          // ป้าย "ล่าสุด" อยู่ต่อท้ายชื่อในบรรทัดเดียวกัน (ชื่อ → ป้ายหมวด เช่น M → ล่าสุด) ก่อนชื่อเซิร์ฟเวอร์
+          (groupHasNew ? '<span class="mr-ic-new-badge">ล่าสุด</span>' : '')+
           (showServer?'<span class="mr-history-server"><span>เซิร์ฟเวอร์</span>'+historyServerTag(g.serverId)+'</span>':'')+
         '</span>'+
         (category!=='zeny' ? '<span class="mr-compact-metrics"><span class="mr-compact-remaining"><span>คงเหลือ</span> <b>'+fmtNum(left)+' '+unit+'</b></span><span class="mr-compact-profit"><span>กำไร</span> <b class="'+(g.sellQty<=0?'':g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.sellQty<=0?'—':(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ')+'</b></span>'+(over>0?'<span class="mr-compact-warning">ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit+'</span>':'')+'</span>' : '')+
@@ -4750,7 +4762,7 @@
       var soldHasNew = soldOut.some(function(g){ return recentNewGroupIds[g.key] && !soldNewSeen[g.key]; });
       html += '<div class="mr-it-group-wrap">'+
         '<button type="button" class="mr-it-group'+(soldOpen?' open':'')+'" id="mrItSoldToggle" aria-expanded="'+(soldOpen?'true':'false')+'">'+
-          (soldHasNew ? '<span class="mr-ic-new-badge">New</span>' : '')+
+          (soldHasNew ? '<span class="mr-ic-new-badge">ล่าสุด</span>' : '')+
           '<span class="mr-ic-chev">▸</span>ขายหมดแล้ว '+soldOut.length+' รายการ'+
           '<span class="mr-it-group-profit '+(soldProfit>=0?'profit-pos':'profit-neg')+'">กำไรรวม '+(soldProfit>=0?'+':'')+fmtNum(soldProfit)+' บ</span>'+
         '</button>'+
@@ -5977,6 +5989,9 @@
     if(changed) saveRecentNewTxIds();
     return changed;
   }
+  // รายการที่ยัง "ใหม่" ตอนกดเปิดกลุ่มวันที่ — ป้ายหัวกลุ่มหายตามเดิม แต่แถวรายการล่าสุดข้างในยังโชว์ "ล่าสุด"
+  // ให้เห็นว่าอันไหน (เดิมหายพร้อมกันตอนเปิดเลยไม่เคยเห็น) · เก็บในหน่วยความจำ หายเมื่อกดปิดกลุ่มวันนั้นหรือรีเฟรชหน้า
+  var historySeenNewTxIds = {};
   document.getElementById('mrHistoryList').addEventListener('click', function(e){
     if(e.target.closest('[data-del]')) return;
     if(e.target.closest('.item-img-ico')) return; // กดไอคอนรูป = เปิดรูป ไม่ใช่กาง/หุบการ์ด
@@ -6002,7 +6017,15 @@
       dayEl.classList.toggle('open', dayOpen);
       dayEl.querySelector('.mr-tx-list').hidden = !dayOpen;
       dayHead.setAttribute('aria-expanded', dayOpen ? 'true' : 'false');
-      if(dayOpen && clearNewTxIdsFor(historyDayTxIds[dayKey])) renderMerchantHistory();
+      var dayIds = historyDayTxIds[dayKey] || [];
+      if(dayOpen){
+        dayIds.forEach(function(id){ if(recentNewTxIds[id]) historySeenNewTxIds[id] = true; });
+        if(clearNewTxIdsFor(dayIds)) renderMerchantHistory();
+      } else {
+        var hadSeen = false;
+        dayIds.forEach(function(id){ if(historySeenNewTxIds[id]){ delete historySeenNewTxIds[id]; hadSeen = true; } });
+        if(hadSeen) renderMerchantHistory();  // ล้างป้ายแถวที่ค้างใน DOM ไม่ให้โผล่อีกตอนเปิดกลุ่มนี้ครั้งหน้า
+      }
       return;
     }
     if(e.target.closest('#mrItSoldToggle')){
@@ -8640,8 +8663,13 @@
         preserveFarmViewport(scrollX, scrollY);
         toast('แก้ไขรายการแล้ว');
       } else {
-        App.farmLog.push({ id:uid(), ts:Date.now(), serverId:App.farmServerId, count:count, cost:cost, earnedBase:val, ocApplied:farmOcActive, rareItems: rareItemsSnapshot, earned:totalEarned, profit:totalEarned-cost, costItems: farmSnapshotCostRows(App.farmServerId), exchangeRate: farmExchangeRate(App.farmServerId) || null, mapName: App.farmMapNames[App.farmServerId] || '' });
+        var newFarmEntry = { id:uid(), ts:Date.now(), serverId:App.farmServerId, count:count, cost:cost, earnedBase:val, ocApplied:farmOcActive, rareItems: rareItemsSnapshot, earned:totalEarned, profit:totalEarned-cost, costItems: farmSnapshotCostRows(App.farmServerId), exchangeRate: farmExchangeRate(App.farmServerId) || null, mapName: App.farmMapNames[App.farmServerId] || '' };
+        App.farmLog.push(newFarmEntry);
         saveFarmLog();
+        // บันทึกกั้มใหม่: เปิดการ์ดของวันนั้นให้เห็นทุกรายการ + ติดป้าย "ล่าสุด" ที่ใบใหม่ + กลับหน้าแรกของประวัติ
+        farmNewEntryId = newFarmEntry.id;
+        farmHistoryDayCollapsed[mrDateStr(new Date(newFarmEntry.ts))] = false;
+        farmHistoryPage = 0;
         farmOcHintAcknowledged = false;
         earnedInput.value = '';
         countInput.value = '1';

@@ -74,7 +74,7 @@ has(unsold, '<span class="mr-it-cell profit none"><i>กำไร</i><b>—</b><
 const oversold = row({ key: 'oversold', remaining: -2, profit: -10 });
 has(compact(oversold), '<span>คงเหลือ</span> <b>0 ชิ้น</b>', 'Negative inventory display stays clamped to zero');
 has(compact(oversold), 'mr-compact-warning">ขายเกินที่ซื้อ 2 ชิ้น');
-has(oversold, 'mr-ic-new-badge">New');
+has(oversold, 'mr-ic-new-badge">ล่าสุด');
 
 ctx.historyState.expanded[item.key] = true;
 const expanded = row();

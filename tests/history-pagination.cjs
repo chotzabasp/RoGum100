@@ -40,6 +40,6 @@ Object.assign(ctx,{historyState:{expanded:{}},fmtNum:String,historyGroupImagePat
 vm.runInContext(source.slice(source.indexOf('  function historyItemRowHtml('),source.indexOf('  // Presentation only: keep cards')),ctx);
 const warningRow=ctx.historyItemRowHtml({key:'warn',category:'item',name:'sample',remaining:-2,buyQty:1,buyBaht:10,sellQty:3,sellBaht:20,profit:-10,leftCost:0},false,0);
 assert.ok(warningRow.includes('mr-compact-warning">ขายเกินที่ซื้อ 2 ชิ้น'));
-assert.ok(warningRow.includes('mr-ic-new-badge">New'));
+assert.ok(warningRow.includes('mr-ic-new-badge">ล่าสุด'));
 assert.ok(warningRow.includes('profit-neg">-10 บ'));
 console.log('PASS: 10/20 paging, last page, independent sold pages, deletion clamp, filters/account reset, Zeny and full archive totals');

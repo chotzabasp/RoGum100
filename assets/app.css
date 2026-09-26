@@ -2811,6 +2811,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-farm .farm-history-entry-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:.65rem}
 #view-farm .farm-history-meta{display:flex;align-items:center;gap:.35rem .45rem;flex-wrap:wrap;min-width:0}
 #view-farm .farm-history-time{font-size:.82rem;font-weight:700;color:#e7edf8;font-variant-numeric:tabular-nums}
+/* ป้าย "ล่าสุด" ของกั้มที่เพิ่งบันทึก — พื้นแดงเข้ม ตัวขาว (คอนทราสต์ ~4.7:1) · ระยะห่างใช้ gap ของแถวแทน margin
+   ป้าย New สีเขียวในประวัติซื้อ–ขายไม่เปลี่ยน (ใช้คลาส mr-tx-new-badge ร่วม แต่ทับเฉพาะในหน้าฟาม) */
+#view-farm .farm-history-meta>.farm-history-new-badge{margin-left:0;background:#d9342f;color:#fff;font-size:.68rem;letter-spacing:0;line-height:1.45;padding:.05rem .45rem}
 #view-farm .farm-history-chip{display:inline-flex;align-items:center;min-height:24px;padding:.12rem .45rem;border:1px solid rgba(143,165,208,.32);border-radius:999px;background:rgba(102,129,185,.1);font-size:.7rem;font-weight:700;line-height:1.25;white-space:nowrap}
 #view-farm .farm-history-count{color:#ddcaff;border-color:rgba(201,168,240,.38);background:rgba(201,168,240,.1)}
 #view-farm .farm-history-map{max-width:100%;overflow:hidden;text-overflow:ellipsis;color:#b9d8ff}
@@ -3543,6 +3546,23 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 #view-home #mrHistoryList .mr-tx-new-badge{animation:history-new-pulse 1.8s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){
   #view-home #mrHistoryList :is(.mr-ic-head,.mr-ic-day-head,.mr-it-group)>.mr-ic-new-badge,
+  #view-home #mrHistoryList .mr-tx-new-badge{animation:none;opacity:1}
+}
+/* ป้าย "ล่าสุด" (เดิม New) ทุกจุดในประวัติซื้อ–ขาย — พื้นแดงเข้ม ตัวขาว แบบเดียวกับป้ายในยอดนักฟาม
+   (ทับสีเขียวโปร่งด้านบน · ตำแหน่ง/ขนาดกรอบของแต่ละจุดยังใช้ของเดิม) */
+#view-home #mrHistoryList :is(.mr-ic-head,.mr-ic-day-head,.mr-it-group,.mr-it-namewrap)>.mr-ic-new-badge,
+#view-home #mrHistoryList .mr-tx-new-badge{
+  background:#d9342f;border-color:#d9342f;color:#fff;
+  font-size:.68rem;font-weight:700;letter-spacing:0;line-height:1.45;
+  box-shadow:none;animation:mr-new-pulse 1.6s ease-in-out infinite;
+}
+/* ป้ายของการ์ดไอเทม/Zeny อยู่ในแถวชื่อ ต่อจากป้ายหมวด (เช่น Zeny (หน่วย:M) · M · ล่าสุด) ไม่ลอยมุมขวาแล้ว */
+#view-home #mrHistoryList .mr-it-namewrap>.mr-ic-new-badge{
+  position:static;flex:none;align-self:center;z-index:auto;
+  padding:.05rem .45rem;border:1px solid #d9342f;border-radius:5px;
+}
+@media(prefers-reduced-motion:reduce){
+  #view-home #mrHistoryList :is(.mr-ic-head,.mr-ic-day-head,.mr-it-group,.mr-it-namewrap)>.mr-ic-new-badge,
   #view-home #mrHistoryList .mr-tx-new-badge{animation:none;opacity:1}
 }
 

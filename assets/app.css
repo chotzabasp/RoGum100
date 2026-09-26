@@ -125,9 +125,10 @@ svg.icon{width:18px;height:18px;display:block}
   padding:1rem .65rem;gap:.15rem;
 }
 .rail-brand{display:flex;align-items:center;justify-content:center;padding:.1rem .3rem .85rem;margin-bottom:.4rem;border-bottom:1px solid var(--border)}
-.rail-logo-fb{display:flex;align-items:center;justify-content:center;width:39px;height:39px;border-radius:50%;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.45);transition:transform .16s ease,box-shadow .16s ease}
-.rail-logo-fb img{width:100%;height:100%;object-fit:cover;display:block}
-.rail-logo-fb:hover{transform:scale(1.06);box-shadow:0 4px 14px rgba(0,0,0,.55)}
+/* ลิงก์เพจ Facebook บนเมนูซ้าย: ปุ่มแคปซูลไอคอน f + ข้อความ (แบบเดียวกับ "พูดคุยกับ Gum100" ท้ายหน้าแรก) */
+.rail-logo-fb{display:inline-flex;align-items:center;gap:.5rem;min-height:36px;padding:.4rem .85rem;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.04);color:var(--text);font-size:.8rem;font-weight:600;line-height:1.2;white-space:nowrap;text-decoration:none;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+.rail-logo-fb svg{width:15px;height:15px;flex:none;fill:currentColor}
+.rail-logo-fb:hover{background:rgba(121,167,255,.14);border-color:var(--accent);transform:translateY(-1px)}
 .rail-btn{
   width:100%;min-height:40px;border-radius:var(--radius-s);
   display:flex;align-items:center;gap:.65rem;justify-content:flex-start;
@@ -1485,7 +1486,8 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   .rail{flex-direction:row;align-items:center;justify-content:flex-start;border-right:none;border-bottom:1px solid var(--border);padding:.6rem;overflow-x:auto;scrollbar-width:none}
   .rail::-webkit-scrollbar{display:none}
   .rail-brand{padding:0;margin:0 .55rem 0 .15rem;border-bottom:none;flex:none}
-  .rail-logo-fb{width:25px;height:25px}
+  .rail-logo-fb{min-height:32px;padding:.3rem .65rem;font-size:.72rem;gap:.4rem}
+  .rail-logo-fb svg{width:13px;height:13px}
   .rail-btn{width:42px;min-width:42px;justify-content:center;padding:.5rem}
   .rail-btn .tip{display:none}
   .stats-row{grid-template-columns:repeat(2,1fr)}
@@ -1627,7 +1629,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media (max-width:760px){
   .rail{padding:.5rem;gap:.35rem;align-items:stretch;scrollbar-width:thin}
   .rail-brand{padding:0;margin:0 .35rem;align-self:center}
-  .rail-logo-fb{width:28px;height:28px}
+  .rail-logo-fb{min-height:34px;padding:.35rem .7rem;font-size:.74rem}
   .rail-btn{flex:0 0 auto;flex-direction:column;gap:.2rem;width:auto;min-width:80px;min-height:60px;padding:.5rem .65rem}
   .rail-btn .tip{display:block;font-size:.72rem;line-height:1.5;white-space:nowrap}
   .rail-btn.active{box-shadow:inset 0 -3px var(--accent)}

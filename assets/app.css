@@ -3431,3 +3431,44 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 @media(prefers-reduced-motion:reduce){
   .rail-btn,.seg-btn,.icon-btn{transition:none}
 }
+
+/* ---------- หน้าจับเวลาบอส: ปุ่ม + การ์ดแจ้งเตือนบอสเข้า Discord ---------- */
+#view-timers .boss-discord-toggle{position:relative;display:inline-flex;align-items:center;gap:.4rem;flex:none;height:38px;padding:0 .8rem;border:1px solid rgba(118,132,245,.55);border-radius:9px;background:linear-gradient(135deg,rgba(47,52,110,.96),rgba(27,31,72,.96));color:#c7cdff;font-size:.82rem;font-weight:700;cursor:pointer;box-shadow:inset 0 1px 0 rgba(199,205,255,.1),0 4px 13px rgba(5,13,31,.2);transition:background .18s ease,color .18s ease}
+#view-timers .boss-discord-toggle svg{width:16px;height:16px}
+#view-timers .boss-discord-toggle:hover,#view-timers .boss-discord-toggle:focus-visible,#view-timers .boss-discord-toggle.active{background:linear-gradient(135deg,rgba(68,75,160,.98),rgba(40,46,110,.98));color:#fff;outline:none}
+#view-timers .boss-discord-toggle:focus-visible{box-shadow:0 0 0 3px rgba(118,132,245,.45)}
+#view-timers .boss-discord-dot{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:#57d6a4;box-shadow:0 0 0 2px #1d2150}
+.settings-discord{display:flex;flex-direction:column;gap:12px;padding:1rem 1.1rem;margin:0 0 1.1rem;border-radius:12px}
+.settings-discord[hidden]{display:none}
+.settings-discord .panel-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin:0}
+.settings-discord .panel-head h2{margin:0;font-size:1rem}
+.settings-discord .settings-note{margin:0;font-size:.78rem;line-height:1.65;color:var(--text-dim)}
+.settings-discord-status{font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;border:1px solid var(--border);color:var(--text-dim);background:var(--surface-2)}
+.settings-discord-status:empty{display:none}
+.settings-discord-status.on{color:#8dd9c4;border-color:color-mix(in srgb, #8dd9c4 45%, transparent);background:color-mix(in srgb, #8dd9c4 12%, transparent)}
+.settings-discord-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 14px;align-items:end}
+.settings-discord-form .field{margin:0;gap:6px}
+.settings-discord-form .settings-discord-url{grid-column:1/-1}
+.settings-discord-form input:disabled,.settings-discord-form select:disabled{opacity:.55;cursor:not-allowed}
+.settings-discord-toggle{display:flex;align-items:center;gap:.5rem;min-height:44px;font-size:.88rem;cursor:pointer}
+.settings-discord-toggle input{width:18px;height:18px;accent-color:var(--accent)}
+.settings-discord #stDiscordError:empty{display:none}
+.settings-discord #stDiscordError{margin:0;overflow-wrap:anywhere}
+.settings-discord-actions{gap:8px;flex-wrap:wrap}
+.settings-discord-actions .btn{min-height:40px;padding:.5rem .9rem}
+.settings-discord-locked{padding:.55rem .75rem;border:1px solid color-mix(in srgb, #f5bd62 40%, var(--border));border-radius:8px;background:color-mix(in srgb, #f5bd62 10%, transparent)}
+.settings-discord-help{font-size:.8rem;color:var(--text-dim);border-top:1px solid var(--border);padding-top:10px}
+.settings-discord-help summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--text)}
+.settings-discord-help ol{margin:.4rem 0 .5rem 1.2rem;padding:0;display:flex;flex-direction:column;gap:.3rem;line-height:1.6}
+.settings-discord-help p{margin:0;line-height:1.6}
+.settings-discord-url .field-hint{overflow-wrap:anywhere}
+@media(max-width:760px){
+  .settings-discord-form{grid-template-columns:1fr}
+  .settings-discord-actions .btn{flex:1 1 auto}
+}
+#stDiscordWebhook.is-saved{color:#8dd9c4;border-color:color-mix(in srgb, #8dd9c4 45%, var(--border));cursor:pointer}
+#view-timers .boss-sound-popover-head:has(+ .boss-sound-popover-note){margin-bottom:.15rem}
+#view-timers .boss-sound-popover-note{font-size:.74rem;font-weight:700;color:#f5bd62;margin-bottom:.7rem}
+.settings-discord-host{margin:0;padding:.55rem .75rem;border-radius:8px;font-size:.84rem;font-weight:700;border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim)}
+.settings-discord-host.on{color:#8dd9c4;border-color:color-mix(in srgb, #8dd9c4 45%, var(--border));background:color-mix(in srgb, #8dd9c4 10%, transparent)}
+.settings-discord-host[hidden]{display:none}

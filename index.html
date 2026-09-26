@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260926-promo-plans">
+<link rel="stylesheet" href="assets/app.css?v=20260926-discord4">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -517,13 +517,71 @@
         <button type="button" class="boss-sound-menu-toggle" id="bossSoundMenuToggle" aria-label="ตั้งค่าเสียงแจ้งเตือน" aria-expanded="false" aria-controls="bossSoundPopover" title="ตั้งค่าเสียง">⌄</button>
         <div class="boss-sound-popover" id="bossSoundPopover" role="dialog" aria-label="การตั้งค่าเสียงแจ้งเตือน" hidden>
           <div class="boss-sound-popover-head">เสียงแจ้งเตือน (ก่อน 3 นาที)</div>
+          <div class="boss-sound-popover-note">(ต้องเปิดเว็บค้างไว้เท่านั้น!)</div>
           <label class="boss-sound-enable-row"><span>เปิดเสียง</span><input type="checkbox" id="bossSoundEnable" role="switch"></label>
           <label class="boss-sound-volume-row"><span class="boss-sound-volume-head"><span>ระดับเสียง</span><output id="bossSoundVolumeOutput">80%</output></span><input type="range" id="bossSoundVolume" min="0" max="100" step="1" value="80" aria-label="ระดับเสียงแจ้งเตือน"></label>
           <button type="button" class="boss-sound-preview" id="bossSoundBellPreview">ลองฟังเสียงกระดิ่ง</button>
         </div>
       </div>
+      <button type="button" class="boss-discord-toggle" id="discordAlertToggle" aria-expanded="false" aria-controls="stDiscordCard" title="แจ้งเตือนบอสเข้า Discord">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span>Discord</span><span class="boss-discord-dot" id="discordAlertDot" hidden></span>
+      </button>
     </div>
     <p class="boss-sound-lock-hint" id="bossSoundLockHint" role="status" hidden>🔇 แตะที่ใดก็ได้บนหน้าเว็บ 1 ครั้ง เพื่อเปิดเสียงแจ้งเตือน</p>
+
+    <!-- แจ้งเตือนบอสเข้า Discord: เซิร์ฟเวอร์ส่งเอง (pg_cron ทุก 1 นาที) แม้ไม่ได้เปิดเว็บ — เปิด/ปิดด้วยปุ่ม Discord บนแถบเครื่องมือ
+         ลิงก์ Webhook ไม่ถูกส่งกลับมาเต็มๆ (โชว์แบบซ่อนรหัส) -->
+    <div class="panel settings-card settings-discord" id="stDiscordCard" hidden>
+      <div class="panel-head"><h2>แจ้งเตือนบอสเข้า Discord</h2><span class="settings-discord-status" id="stDiscordStatus"></span></div>
+      <p class="settings-discord-host" id="stDiscordHostStatus" role="status" hidden></p>
+      <p class="settings-note">ส่งข้อความเข้าห้อง Discord ก่อนบอสในรายการของคุณเกิด ทำงานแม้ไม่ได้เปิดเว็บ — หัวปาร์ตี้ตั้งครั้งเดียว ทุกคนในห้องเห็นหมด (สมาชิกปาร์ตี้ไม่ต้องตั้ง) ส่วนคนล่าเดี่ยวแนะนำให้ใช้ห้องหรือเซิร์ฟเวอร์ Discord ส่วนตัว</p>
+      <p class="settings-note settings-discord-locked" id="stDiscordPartyNote" hidden>ตอนนี้คุณดูรายการบอสของหัวปาร์ตี้อยู่ — การตั้งค่านี้ใช้กับรายการบอสของบัญชีคุณเอง ถ้าจะให้แจ้งเตือนบอสของปาร์ตี้ ให้หัวปาร์ตี้เป็นคนตั้ง</p>
+      <p class="settings-note settings-discord-locked" id="stDiscordLocked" hidden>ใช้ได้กับแพ็กเกจจับเวลาบอส หรือ 4 in 1 — <a href="#pricing">ดูแพ็กเกจ</a></p>
+      <div class="settings-discord-form" id="stDiscordForm">
+        <div class="field settings-discord-url"><label for="stDiscordWebhook">ลิงก์ Webhook ของห้อง Discord</label>
+          <input id="stDiscordWebhook" type="text" inputmode="url" autocomplete="off" spellcheck="false" maxlength="300" placeholder="https://discord.com/api/webhooks/..." aria-describedby="stDiscordCurrent">
+          <div class="field-hint" id="stDiscordCurrent" hidden></div>
+        </div>
+        <div class="field"><label for="stDiscordLead">เวลาแจ้งเตือน</label>
+          <select id="stDiscordLead">
+            <option value="0">ตอนบอสเกิด (0 นาที)</option>
+            <option value="1">1 นาที</option>
+            <option value="3" selected>3 นาที</option>
+            <option value="5">5 นาที</option>
+            <option value="10">10 นาที</option>
+          </select>
+        </div>
+        <div class="field"><label for="stDiscordMention">แท็กในข้อความ</label>
+          <select id="stDiscordMention">
+            <option value="none">ไม่แท็ก</option>
+            <option value="here">@here (ทุกคนที่ออนไลน์ในห้อง)</option>
+            <option value="user">แท็กคน (ใส่ Discord ID)</option>
+            <option value="role">แท็กยศ (ใส่ Role ID)</option>
+          </select>
+        </div>
+        <div class="field" id="stDiscordMentionIdField" hidden><label for="stDiscordMentionId">Discord ID ที่จะแท็ก</label>
+          <input id="stDiscordMentionId" type="text" inputmode="numeric" autocomplete="off" maxlength="25" placeholder="ตัวเลข 17–20 หลัก">
+        </div>
+        <label class="settings-discord-toggle"><input type="checkbox" id="stDiscordEnabled" checked> เปิดการแจ้งเตือน</label>
+      </div>
+      <p class="auth-error" id="stDiscordError" aria-live="polite"></p>
+      <div class="settings-actions settings-discord-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="stDiscordDelete" hidden>ลบการตั้งค่า</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="stDiscordTest" hidden>ส่งข้อความทดสอบ</button>
+        <button type="button" class="btn btn-primary btn-sm" id="stDiscordSave">บันทึก</button>
+      </div>
+      <details class="settings-discord-help">
+        <summary>วิธีเอาลิงก์ Webhook จาก Discord</summary>
+        <ol>
+          <li>คลิกขวาที่ห้องข้อความที่จะให้แจ้งเตือน → <b>Edit Channel</b> (ต้องมีสิทธิ์จัดการห้อง)</li>
+          <li>เลือก <b>Integrations</b> → <b>Webhooks</b> → <b>New Webhook</b></li>
+          <li>กด <b>Copy Webhook URL</b> แล้ววางในช่องด้านบน กดบันทึก แล้วกด "ส่งข้อความทดสอบ"</li>
+          <li>แท็กคนหรือยศ: เปิด <b>Developer Mode</b> (User Settings → Advanced) แล้วคลิกขวาที่ชื่อคน/ยศ → <b>Copy ID</b></li>
+        </ol>
+        <p>ลิงก์ Webhook ใครได้ไปจะส่งข้อความเข้าห้องนั้นได้ อย่าแชร์ต่อ ถ้าหลุดให้ลบ Webhook ใน Discord แล้วสร้างใหม่</p>
+      </details>
+    </div>
 
     <div class="roster" id="roster"></div>
     </div>
@@ -1134,4 +1192,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260926-accounting-hash"></script>
+<script src="assets/app.js?v=20260926-discord4"></script>

@@ -6544,7 +6544,7 @@
       if(page==='pricing') renderPricingPage();
       if(page==='admin') openAdminPage();
       if(page==='settings') renderSettingsPage();
-      if(page==='timers') renderPartyPanel();
+      if(page==='timers'){ renderPartyPanel(); loadDiscordAlert(); }
     } else if(page==='pricing') renderPricingPage();
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);
@@ -7229,6 +7229,154 @@
       });
     });
   });
+  // ---------- แจ้งเตือนบอสเข้า Discord (ตั้งค่า) ----------
+  // เซิร์ฟเวอร์เป็นคนส่ง (pg_cron ทุก 1 นาที ดู migration 20260926000300_discord_boss_alerts.sql) — หน้านี้แค่ตั้งค่า
+  // ลิงก์ Webhook ส่งไปเก็บครั้งเดียว ไม่ถูกส่งกลับมาเต็มๆ: ช่องว่าง = ใช้ลิงก์เดิม
+  var DISCORD_WEBHOOK_RE = /^https:\/\/((ptb|canary)\.)?discord(app)?\.com\/api\/webhooks\/[0-9]{15,25}\/[A-Za-z0-9_-]{20,200}$/;
+  var discordBusy = false;
+  function renderDiscordAlert(d){
+    d = d || {};
+    var configured = !!d.configured, hasPlan = !!d.has_plan;
+    var st = document.getElementById('stDiscordStatus');
+    var viewingParty = !!(App.session && App.viewingHostId && App.viewingHostId !== App.session.id);
+    st.textContent = (viewingParty ? 'ของฉัน: ' : '') + (configured ? (d.enabled ? 'เปิดอยู่' : 'ปิดอยู่') : 'ยังไม่ได้ตั้ง');
+    st.className = 'settings-discord-status' + (configured && d.enabled ? ' on' : '');
+    document.getElementById('stDiscordLocked').hidden = hasPlan;
+    document.querySelectorAll('#stDiscordForm input, #stDiscordForm select').forEach(function(el){ el.disabled = !hasPlan; });
+    // ตั้งไว้แล้ว = โชว์ลิงก์แบบซ่อนรหัสค้างในช่อง (คลิกช่องเพื่อวางลิงก์ใหม่ · ปล่อยว่างแล้วคลิกออก = กลับเป็นลิงก์เดิม)
+    var url = document.getElementById('stDiscordWebhook');
+    url.dataset.saved = configured ? '✓ '+(d.webhook_hint || 'บันทึกลิงก์แล้ว') : '';
+    url.value = url.dataset.saved;
+    url.classList.toggle('is-saved', configured);
+    url.placeholder = configured ? 'วางลิงก์ใหม่ หรือคลิกออกเพื่อใช้ลิงก์เดิม' : 'https://discord.com/api/webhooks/...';
+    var cur = document.getElementById('stDiscordCurrent');
+    cur.hidden = !configured;
+    cur.textContent = configured ? 'บันทึกลิงก์แล้ว (ซ่อนรหัสไว้เพื่อความปลอดภัย) — คลิกที่ช่องถ้าจะเปลี่ยนลิงก์' : '';
+    document.getElementById('stDiscordLead').value = String(d.lead_minutes == null ? 3 : d.lead_minutes); // 0 = ตอนบอสเกิด
+    document.getElementById('stDiscordMention').value = d.mention || 'none';
+    document.getElementById('stDiscordMentionId').value = d.mention_id || '';
+    document.getElementById('stDiscordEnabled').checked = configured ? !!d.enabled : true;
+    syncDiscordMentionField();
+    document.getElementById('stDiscordSave').disabled = !hasPlan;
+    document.getElementById('stDiscordTest').hidden = !configured;
+    document.getElementById('stDiscordDelete').hidden = !configured;
+    document.getElementById('discordAlertDot').hidden = !(configured && d.enabled);
+    document.getElementById('stDiscordPartyNote').hidden = !(App.session && activeOwnerId() !== App.session.id);
+  }
+  function syncDiscordMentionField(){
+    var m = document.getElementById('stDiscordMention').value;
+    var field = document.getElementById('stDiscordMentionIdField');
+    field.hidden = m!=='user' && m!=='role';
+    field.querySelector('label').textContent = m==='role' ? 'Role ID ของยศที่จะแท็ก' : 'Discord ID ของคนที่จะแท็ก';
+  }
+  // สมาชิกที่ดูรายการบอสของหัวปาร์ตี้: จุดบนปุ่ม + บรรทัดในการ์ด = สถานะของหัวปาร์ตี้ (ฟอร์มยังเป็นของตัวเอง ไว้ใช้ตอนล่าเดี่ยว)
+  function renderPartyDiscordStatus(ps){
+    var el = document.getElementById('stDiscordHostStatus');
+    if(!ps){ el.hidden = true; return; }
+    el.hidden = false;
+    var on = !!ps.enabled && !ps.error;
+    el.className = 'settings-discord-host' + (on ? ' on' : '');
+    el.textContent = ps.error ? 'ดูสถานะแจ้งเตือนของหัวปาร์ตี้ไม่ได้ในตอนนี้'
+      : on ? 'หัวปาร์ตี้เปิดแจ้งเตือน Discord ไว้แล้ว ✓ ('+(ps.lead_minutes===0 ? 'แจ้งตอนบอสเกิด' : 'แจ้งก่อนบอสเกิด '+ps.lead_minutes+' นาที')+')'
+      : 'หัวปาร์ตี้ยังไม่ได้เปิดแจ้งเตือน Discord';
+    document.getElementById('discordAlertDot').hidden = !on;
+  }
+  function loadDiscordAlert(){
+    var errEl = document.getElementById('stDiscordError');
+    errEl.textContent = '';
+    if(!App.session || !App.session.id) return;
+    var host = (App.viewingHostId && App.viewingHostId !== App.session.id) ? App.viewingHostId : null;
+    Promise.all([
+      supa.rpc('get_my_discord_alert'),
+      host ? supa.rpc('party_discord_alert_status', { p_host: host }) : Promise.resolve(null)
+    ]).then(function(r){
+      var res = r[0], ps = r[1];
+      if(res.error){ errEl.textContent = 'โหลดการตั้งค่าไม่สำเร็จ: '+res.error.message; return; }
+      renderDiscordAlert(res.data);
+      renderPartyDiscordStatus(host ? (ps && !ps.error ? ps.data : { error:true }) : null);
+    });
+  }
+  document.getElementById('stDiscordMention').addEventListener('change', syncDiscordMentionField);
+  document.getElementById('stDiscordWebhook').addEventListener('focus', function(){
+    if(this.dataset.saved && this.value === this.dataset.saved){ this.value = ''; this.classList.remove('is-saved'); }
+  });
+  document.getElementById('stDiscordWebhook').addEventListener('blur', function(){
+    if(this.dataset.saved && !this.value.trim()){ this.value = this.dataset.saved; this.classList.add('is-saved'); }
+  });
+  document.getElementById('discordAlertToggle').addEventListener('click', function(){
+    var card = document.getElementById('stDiscordCard');
+    card.hidden = !card.hidden;
+    this.setAttribute('aria-expanded', card.hidden ? 'false' : 'true');
+    this.classList.toggle('active', !card.hidden);
+    if(!card.hidden) loadDiscordAlert();
+  });
+  document.getElementById('stDiscordSave').addEventListener('click', function(){
+    if(discordBusy) return;
+    var errEl = document.getElementById('stDiscordError');
+    errEl.textContent = '';
+    var urlInput = document.getElementById('stDiscordWebhook');
+    var url = urlInput.value.trim();
+    if(urlInput.dataset.saved && url === urlInput.dataset.saved) url = ''; // ไม่ได้แตะช่อง = ใช้ลิงก์เดิม
+    var mention = document.getElementById('stDiscordMention').value;
+    var mentionId = document.getElementById('stDiscordMentionId').value.replace(/[^0-9]/g, '');
+    if(url && !DISCORD_WEBHOOK_RE.test(url)){ errEl.textContent = 'ลิงก์ Webhook ไม่ถูกต้อง — ต้องขึ้นต้นด้วย https://discord.com/api/webhooks/'; return; }
+    if((mention==='user' || mention==='role') && (mentionId.length<15 || mentionId.length>25)){ errEl.textContent = 'กรอก Discord ID ของคนหรือยศที่จะแท็ก (ตัวเลข 17–20 หลัก)'; return; }
+    discordBusy = true;
+    supa.rpc('save_my_discord_alert', {
+      p_webhook_url: url || null,
+      p_enabled: document.getElementById('stDiscordEnabled').checked,
+      p_lead_minutes: Number(document.getElementById('stDiscordLead').value),
+      p_mention: mention,
+      p_mention_id: (mention==='user' || mention==='role') ? mentionId : null
+    }).then(function(res){
+      discordBusy = false;
+      if(res.error){ errEl.textContent = res.error.message; return; }
+      renderDiscordAlert(res.data);
+      toast(url ? 'บันทึกแล้ว — กด "ส่งข้อความทดสอบ" เพื่อเช็คว่าเข้าห้อง Discord' : 'บันทึกการแจ้งเตือน Discord แล้ว');
+    });
+  });
+  document.getElementById('stDiscordTest').addEventListener('click', function(){
+    if(discordBusy) return;
+    var errEl = document.getElementById('stDiscordError');
+    errEl.textContent = '';
+    discordBusy = true;
+    supa.rpc('test_my_discord_alert').then(function(res){
+      if(res.error){ discordBusy = false; errEl.textContent = res.error.message; return; }
+      toast('กำลังส่งข้อความทดสอบ...');
+      var tries = 0;
+      (function check(){
+        setTimeout(function(){
+          supa.rpc('check_my_discord_test').then(function(r){
+            var s = (r.data || {}).status;
+            if(!r.error && s==='pending' && ++tries<4) return check();
+            discordBusy = false;
+            if(r.error){ errEl.textContent = 'ตรวจผลการส่งไม่สำเร็จ: '+r.error.message; return; }
+            if(s==='ok'){ toast('ส่งถึง Discord แล้ว — ดูในห้องได้เลย'); return; }
+            if(s==='failed'){
+              var code = (r.data || {}).code;
+              errEl.textContent = (code===401 || code===404)
+                ? 'Discord ไม่รับข้อความ — ลิงก์ Webhook ถูกลบหรือไม่ถูกต้อง ลองสร้างใหม่แล้วบันทึกอีกครั้ง'
+                : 'ส่งไม่สำเร็จ'+(code ? ' (Discord ตอบกลับ '+code+')' : ' (เชื่อมต่อไม่ได้)')+' ลองใหม่อีกครั้ง';
+              return;
+            }
+            toast('ยังไม่ได้ผลการส่ง — ลองดูในห้อง Discord');
+          });
+        }, 1500);
+      })();
+    });
+  });
+  document.getElementById('stDiscordDelete').addEventListener('click', function(){
+    if(discordBusy) return;
+    showConfirm('ลบการตั้งค่าแจ้งเตือน Discord?<br>จะไม่มีข้อความเตือนบอสส่งเข้าห้องนั้นอีก (Webhook ใน Discord ยังอยู่ ลบเองได้ที่ Edit Channel → Integrations)', function(){
+      discordBusy = true;
+      supa.rpc('delete_my_discord_alert').then(function(res){
+        discordBusy = false;
+        if(res.error){ document.getElementById('stDiscordError').textContent = res.error.message; return; }
+        toast('ลบการตั้งค่าแจ้งเตือน Discord แล้ว');
+        loadDiscordAlert();
+      });
+    });
+  });
   document.getElementById('stSavePass').addEventListener('click', function(){
     if(settingsBusy) return;
     var oldP = document.getElementById('stPassOld').value, newP = document.getElementById('stPassNew').value, newP2 = document.getElementById('stPassNew2').value;
@@ -7323,7 +7471,7 @@
     '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
     '#farmHistoryRange', '#farmHistoryPagination', '[data-farm-day-toggle]', '.farm-cost-hover', '.farm-profit-hover', '.farm-income-hover',
     // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหาได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
-    '#partyPanelToggle', '[data-open-history]', '#searchInput', '#bossSoundControl',
+    '#partyPanelToggle', '[data-open-history]', '#searchInput', '#bossSoundControl', '#discordAlertToggle',
     // คลังไอเทม: ดูตามระดับ/เปลี่ยนเซิร์ฟเวอร์
     '[data-view-tier]', '#itemsServerSelect'
   ].join(',');
@@ -7935,7 +8083,7 @@
           resolvePartyContext().then(function(){
             // ออกจากปาร์ตี้แล้ว = กลับมาดูข้อมูลของตัวเอง
             return Promise.all([ loadUserBosses(), loadKills() ]);
-          }).then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
+          }).then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); loadDiscordAlert(); });
         });
       });
     }
@@ -8540,7 +8688,7 @@
   var searchResults = document.getElementById('searchResults');
   if(CustomAPI){
     var customAddButton=customNode('button','+ เพิ่มบอส');customAddButton.type='button';customAddButton.className='btn btn-primary';customAddButton.id='addCustomBoss';
-    customAddButton.onclick=function(){openCustomBossModal(null);};searchInput.closest('.toolbar').append(customAddButton);
+    customAddButton.onclick=function(){openCustomBossModal(null);};searchInput.closest('.search-wrap').after(customAddButton);
 
   }
 

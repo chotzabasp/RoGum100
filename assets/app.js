@@ -5893,7 +5893,6 @@
             if(l.warehouseSale) restoreWarehouseStock(entry.serverId, l.warehouseSale);
           });
           saveItemWarehouseStock();
-          renderItemRows();
         }
         if(warehousedLines.length){
           var w1 = warehouseStockFor(entry.serverId);
@@ -5904,12 +5903,13 @@
           saveItemWarehouseStock();
           saveItemLineClaimedQty();
           renderItemsPage();
-          renderItemRows();
         }
         // ลบเฉพาะรูปที่แนบกับรายการนี้เอง (รูปที่ยืมมาจากตอนซื้อเป็นของรายการซื้อ ไม่แตะ)
         if(entry) removeItemImages((entry.lines||[]).map(function(l){ return l.image; }));
         App.merchantLog = App.merchantLog.filter(function(e){ return e.id!==id; });
         saveMerchantLog();
+        // วาดฟอร์มใหม่หลังลบออกจากประวัติแล้ว: "คงเหลือตอนนี้" ของ M คิดจากประวัติ ส่วน "คงเหลือในคลัง" คิดจากคลังที่เพิ่งคืน/ดึงออก
+        renderItemRows();
         renderMerchantHistory();
         renderMerchantSummary();
         renderMrChart();

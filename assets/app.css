@@ -166,9 +166,10 @@ svg.icon{width:18px;height:18px;display:block}
 .topbar .sub{color:var(--text-dim);font-size:.86rem;margin:0}
 .topbar-right{display:flex;align-items:center;gap:.9rem}
 /* รูปตัวละครหน้าหัวข้อ (จับเวลาบอส / ยอดนักฟาร์ม / คลังไอเทม / สรุปซื้อ–ขาย) — รูปอยู่ซ้าย กินความสูงชื่อหน้า+คำอธิบาย */
+:root{--page-title-art-h:60px} /* ความสูงรูปหน้าหัวข้อ — การ์ดรายการซื้อ–ขาย (#mrEntryPanel) ใช้ค่านี้จัดแนวด้วย */
 .page-title-art{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:.85rem;align-items:center}
-.page-title-art>.page-title-img{grid-row:1 / span 2;display:block;width:auto;height:60px;align-self:center;pointer-events:none}
-.page-title-art>picture.page-title-img>img{display:block;width:auto;height:60px}
+.page-title-art>.page-title-img{grid-row:1 / span 2;display:block;width:auto;height:var(--page-title-art-h);align-self:center;pointer-events:none}
+.page-title-art>picture.page-title-img>img{display:block;width:auto;height:var(--page-title-art-h)}
 .page-title-art>:is(h1,h2,.sub,.dashboard-help){grid-column:2}
 .page-title-art>:is(h1,h2):last-child{grid-row:1 / span 2}
 @media(max-width:560px){
@@ -1829,6 +1830,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home .dashboard-overview{grid-column:1;grid-row:1;min-width:0;padding:0;border:0;background:none;margin-bottom:0}
 #view-home .dashboard-overview-head{align-items:center;margin-bottom:.6rem;gap:.5rem}
 #view-home .dashboard-overview-head h2{font-size:1.5rem}
+/* บรรทัดสองใต้ "สรุปซื้อ–ขาย" — หน้าตาเดียวกับคำอธิบายใต้ชื่อหน้าอื่น (.topbar .sub) */
+#view-home .dashboard-overview-head .page-title-art>.sub{margin:0;color:var(--text-dim);font-size:.86rem;line-height:1.75}
 #view-home #mrSummary{margin:0}
 #view-home .mr-summary-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem}
 #view-home .mr-summary-item,#view-home .mr-summary-item:last-child{grid-column:auto;flex-direction:column;align-items:flex-start;gap:.2rem;padding:.65rem .85rem;border-top-width:2px}
@@ -1839,8 +1842,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home .dashboard-shortcuts{position:absolute;right:0;top:100%;z-index:20;display:grid;grid-template-columns:1fr;min-width:180px;margin:.4rem 0 0;padding:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-s);box-shadow:0 8px 24px #0004}
 #view-home .home-grid{grid-template-columns:minmax(0,1.25fr) minmax(340px,1fr);grid-template-rows:auto 1fr;gap:1rem;align-items:start}
 #view-home .home-left{grid-column:1;grid-row:2;gap:1rem}
-/* Match the summary heading line (.95rem × 1.5) plus its .6rem bottom gap. */
-#view-home #mrEntryPanel{grid-column:2;grid-row:1 / span 2;margin-top:2.025rem}
+/* เริ่มการ์ดให้ตรงแนวการ์ดสรุปฝั่งซ้าย = ความสูงหัวข้อ "สรุปซื้อ–ขาย" (สูงเท่ารูปหน้าหัวข้อ) + ช่องว่าง .6rem ใต้หัวข้อ
+   (เดิม 2.025rem ตอนหัวข้อยังไม่มีรูป) */
+#view-home #mrEntryPanel{grid-column:2;grid-row:1 / span 2;margin-top:calc(var(--page-title-art-h) + .6rem)}
 #view-home .home-grid .panel{padding:1rem;gap:.75rem}
 #view-home .home-grid .panel-head h2{font-size:1rem}
 #view-home .dashboard-filters{padding-top:0;border:0;display:flex;flex-wrap:wrap;align-items:end;gap:.6rem}

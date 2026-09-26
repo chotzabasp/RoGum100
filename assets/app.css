@@ -3345,6 +3345,17 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 #view-home #mrHistoryList .mr-history-server{display:flex;align-items:baseline;flex-wrap:wrap;flex-basis:100%;gap:.25rem .5rem;padding-left:2.5rem;box-sizing:border-box;min-width:0;font-size:.75rem;line-height:1.6;color:var(--history-muted);font-weight:400}
 #view-home #mrHistoryList .mr-history-server .mr-cat-tag{padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#c4d7f3;font:inherit;font-weight:500;white-space:normal;overflow-wrap:anywhere}
 #view-home #mrHistoryList .mr-history-zeny .mr-history-server{flex-basis:auto;padding-left:0}
+/* การ์ดไอเทม / อื่นๆ: "เซิร์ฟเวอร์ Sv.xxx" อยู่บรรทัดเดียวกับชื่อ ต่อจากป้าย "ล่าสุด" (แบบเดียวกับการ์ด Zeny)
+   ชื่อยาวจนไม่พอที่ค่อยตัดขึ้นบรรทัดใหม่เอง · ทับกฎเว้นซ้าย 2.25–2.5rem เดิมที่เคยจัดให้อยู่ใต้ชื่อ */
+#view-home #mrHistoryList .mr-it-row:is(.mr-history-item,.mr-history-other) .mr-it-namewrap>.mr-history-server{flex-basis:auto;padding-left:0}
+/* ชื่อที่มีรายละเอียดสล็อต (": | C.เรดิก | ...") เดิมกินเต็มความกว้าง เซิร์ฟเวอร์เลยตกบรรทัด — คลี่กล่องชื่อออก
+   (display:contents) แล้วเรียงใหม่: บรรทัดแรก ไอคอน · ชื่อ · ป้ายหมวด · ล่าสุด · เซิร์ฟเวอร์ / บรรทัดสอง สล็อต (ตรงใต้ชื่อ)
+   DOM/คลาสเดิมไม่เปลี่ยน — เปลี่ยนแค่การจัดวาง */
+#view-home #mrHistoryList .mr-it-row:is(.mr-history-item,.mr-history-other) .mr-it-namewrap:has(.mr-item-slots-inline) :is(.mr-it-name,.item-img-hover,.mr-item-name-slots){display:contents}
+#view-home #mrHistoryList .mr-it-row:is(.mr-history-item,.mr-history-other) .mr-it-namewrap:has(.mr-item-slots-inline)>.mr-it-tags{order:2}
+#view-home #mrHistoryList .mr-it-row:is(.mr-history-item,.mr-history-other) .mr-it-namewrap:has(.mr-item-slots-inline)>.mr-ic-new-badge{order:3}
+#view-home #mrHistoryList .mr-it-row:is(.mr-history-item,.mr-history-other) .mr-it-namewrap:has(.mr-item-slots-inline)>.mr-history-server{order:4}
+#view-home #mrHistoryList .mr-it-row:is(.mr-history-item,.mr-history-other) .mr-it-namewrap:has(.mr-item-slots-inline) .mr-item-slots-inline{order:5;flex-basis:100%;margin-top:0;padding-left:calc(28px + .55rem);box-sizing:border-box}
 
 /* Compact inventory summaries and independent category pagination. */
 #view-home #mrHistoryList .mr-compact-metrics{display:none}

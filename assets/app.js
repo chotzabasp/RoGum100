@@ -6468,9 +6468,14 @@
   var NAV_PAGES = ['home','farm','timers','items','pricing','admin','settings'];
   // อ่านชื่อหน้าจาก URL hash เอาไว้ทำ deep-link/ปุ่ม back-forward — กันไว้ไม่ยุ่งกับ hash ที่จริงๆ
   // เป็น token ของ Supabase (ลิงก์ยืนยันอีเมล/ลืมรหัสผ่าน ก็ใช้ # ต่อท้ายเหมือนกัน)
+  // ชื่อหน้าใน URL ที่ไม่ตรงกับชื่อภายใน: หน้าบัญชีนักลงทุน (ภายในยังชื่อ 'home' — view-home/CSS/สถิติใช้ชื่อนี้)
+  // แสดงเป็น #accounting · ลิงก์เก่า #home ยังเปิดได้ และถูกเปลี่ยนเป็น #accounting ให้เอง
+  var PAGE_HASH_NAMES = { home:'accounting' };
+  function hashForPage(page){ return PAGE_HASH_NAMES[page] || page; }
   function pageFromHash(){
     var h = location.hash.replace(/^#/, '');
     if(!h || /access_token|refresh_token|type=recovery|type=signup|error=/.test(h)) return '';
+    for(var p in PAGE_HASH_NAMES){ if(PAGE_HASH_NAMES[p] === h.toLowerCase()) return p; }
     return h;
   }
   // เข้าหน้าแรก: ย้าย util-bar (นาฬิกา/แต้ม/เมนูผู้ใช้) เข้าไปในกรอบ banner ให้เป็นพื้นหลังเดียวกับแถบต้อนรับ
@@ -6545,7 +6550,12 @@
       b.classList.toggle('active', b.dataset.page===page);
     });
     scrollRailToActive(page);
-    if(location.hash.slice(1) !== page) history.pushState({ page:page }, '', '#'+page);
+    var wantHash = hashForPage(page);
+    if(location.hash.slice(1) !== wantHash){
+      // หน้าเดียวกันแต่ลิงก์สะกดแบบเก่า (#home) = แก้ URL ทับ ไม่เพิ่มประวัติ back ซ้ำ
+      if(pageFromHash() === page) history.replaceState({ page:page }, '', '#'+wantHash);
+      else history.pushState({ page:page }, '', '#'+wantHash);
+    }
   }
   // ปุ่ม back/forward ของเบราว์เซอร์: เปลี่ยนหน้าในแอพตาม hash ที่ browser พาไป (ไม่ push ซ้ำ เพราะ hash ตรงกันแล้ว)
   window.addEventListener('popstate', function(){

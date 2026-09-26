@@ -1425,9 +1425,17 @@
   // คำนวณจากทุกแถว (boss_history_* ใน migration 20260925000500) — เดิมดึงทั้งหมดมานับในเครื่อง พอเกิน
   // 1,000 แถว (ลิมิตของ API) ประวัติเก่าหายและตัวเลขผิด · ถ้าฟังก์ชันยังไม่มีในฐานข้อมูล ถอยไปใช้วิธีเดิม (legacy*)
   var HISTORY_PAGE = 200;
-  App.killsHasMore = false; App.killStats = null; App.killStatsToday = null; App.killsVersion = 0; App.killsScopeKey = null;
+  App.killsHasMore = false; App.killStats = null; App.killStatsRange = null; App.killStatsRangeSince = null; App.killsVersion = 0; App.killsScopeKey = null;
+  // ช่วงเวลาของแผงประวัติการล่า (วันนี้ / 7 วัน / 30 วัน / ทั้งหมด) — นับวันตามเวลาไทยแบบเดียวกับ "วันนี้"
+  // (7 วัน = วันนี้ + ย้อนหลัง 6 วัน) · บัญชีฟรีที่ไม่ได้ดูปาร์ตี้ถูกล็อกไว้ที่วันนี้ใน renderHistory
+  var HUNT_RANGE_DAYS = { today:1, '7d':7, '30d':30 };
+  function huntRangeSinceTs(){
+    var sel = document.getElementById('historyRange');
+    var days = HUNT_RANGE_DAYS[sel ? sel.value : 'all'];
+    return days ? todayStartTs() - (days-1)*86400000 : null;
+  }
   function loadKills(){
-    if(!App.session || !App.session.id){ App.kills = []; App.killsHasMore = false; App.killStats = null; App.killStatsToday = null; return Promise.resolve(); }
+    if(!App.session || !App.session.id){ App.kills = []; App.killsHasMore = false; App.killStats = null; App.killStatsRange = null; App.killStatsRangeSince = null; return Promise.resolve(); }
     return Promise.all([loadKillsForActiveOwner(), loadKillStats(), loadMyLifetimeShare()]).then(function(){ App.killsVersion++; });
   }
   function historyScopeArgs(){ return { p_host: activeOwnerId(), p_include_self: !!App.viewingHostId }; }
@@ -1458,10 +1466,11 @@
       if(activeOwnerId() !== owner) return;
       var rows = (res.data || []).map(mapKillRow);
       var hasMore = rows.length === want;
-      // "เฉพาะวันนี้" ต้องได้ของวันนี้ครบ — หน้าแรกยังไม่ถึงเมื่อวานก็โหลดต่อ (สูงสุด 5 หน้า)
-      var todayStart = todayStartTs(), rounds = 0;
+      // ช่วงเวลาที่เลือกในแผงประวัติ (วันนี้/7/30 วัน) ต้องได้ของครบช่วง — หน้าแรกยังไม่ถึงต้นช่วงก็โหลดต่อ
+      // (สูงสุด 5 หน้า เกินนั้นกด "โหลดเก่ากว่านี้" เอง) · "ทั้งหมด" ไม่ต้องโหลดต่อ
+      var sinceTs = huntRangeSinceTs(), rounds = 0;
       function more(){
-        if(!hasMore || rounds >= 5 || !rows.length || rows[rows.length-1].ts < todayStart) return Promise.resolve();
+        if(sinceTs == null || !hasMore || rounds >= 5 || !rows.length || rows[rows.length-1].ts < sinceTs) return Promise.resolve();
         rounds++;
         return fetchHistoryPage(rows[rows.length-1], HISTORY_PAGE).then(function(r2){
           if(r2.error){ console.error('loadKills more', r2.error); return; }
@@ -1497,23 +1506,41 @@
       sold:{ zeny:Number(d.sold_zeny)||0, baht:Number(d.sold_baht)||0 },
       mineCount:Number(d.mine_count)||0, mine:{ zeny:Number(d.mine_zeny)||0, baht:Number(d.mine_baht)||0 } };
   }
-  // ยอดรวมทั้งหมด (การ์ดสรุป) + ยอดวันนี้ (สรุปแท็บไอเทมตอนติ๊ก "เฉพาะวันนี้") — นับจากทุกแถวในฐานข้อมูล
+  // ยอดรวมทั้งหมด (การ์ดสรุป) + ยอดตามช่วงเวลาที่เลือกในแผงประวัติ — นับจากทุกแถวในฐานข้อมูล
+  // ช่วง "ทั้งหมด" ใช้ยอดรวมตัวเดียวกัน ไม่ต้องถามซ้ำ
   function loadKillStats(){
     var args = historyScopeArgs(), owner = args.p_host;
-    var argsToday = Object.assign({}, args, { p_since: new Date(todayStartTs()).toISOString() });
+    var sinceTs = huntRangeSinceTs();
+    var argsRange = sinceTs == null ? null : Object.assign({}, args, { p_since: new Date(sinceTs).toISOString() });
     return Promise.all([
       withSkewRetry(function(){ return supa.rpc('boss_history_stats', args); }),
-      withSkewRetry(function(){ return supa.rpc('boss_history_stats', argsToday); })
+      argsRange ? withSkewRetry(function(){ return supa.rpc('boss_history_stats', argsRange); }) : Promise.resolve({ data:null })
     ]).then(function(rs){
       if(activeOwnerId() !== owner) return;
       var err = rs[0].error || rs[1].error;
       if(err){
         if(err.code !== 'PGRST202') console.error('boss_history_stats', err);
-        App.killStats = null; App.killStatsToday = null; return;
+        App.killStats = null; App.killStatsRange = null; App.killStatsRangeSince = null; return;
       }
       App.killStats = mapKillStats(rs[0].data);
-      App.killStatsToday = mapKillStats(rs[1].data);
+      App.killStatsRange = argsRange ? mapKillStats(rs[1].data) : null;
+      App.killStatsRangeSince = sinceTs;
     });
+  }
+  // เปลี่ยนช่วงเวลา / เปิดแผงประวัติ: โหลดรอบเก่าเพิ่มจนครอบคลุมต้นช่วง (สูงสุด 5 หน้า) + ยอดสรุปของช่วงนั้น
+  function loadKillsForRange(){
+    var sinceTs = huntRangeSinceTs(), rounds = 0;
+    function step(){
+      var last = App.kills[App.kills.length-1];
+      if(sinceTs == null || !App.killsHasMore || !last || last.ts < sinceTs || rounds >= 5) return Promise.resolve();
+      rounds++;
+      return loadOlderKills().then(step);
+    }
+    return step();
+  }
+  function refreshHuntRange(){
+    if(!App.session || !App.session.id) return Promise.resolve();
+    return Promise.all([loadKillStats(), loadKillsForRange()]).then(loadDepartedSharerNames).then(renderHistory);
   }
   var KILL_SELECT_COLS = 'id, host_id, boss_id, boss_name, killed_at, killed_by, server_id, profiles!killed_by(display_name), kill_items(id, name, shared, shared_with, sold_amount, sold_currency, sold_at, kept_at)';
   function fetchKillsFor(hostId){
@@ -2170,21 +2197,20 @@
     // สมาชิกปาร์ตี้ดูประวัติย้อนหลังได้ไม่จำกัดเสมอ ไม่ว่าตัวเองจะมีแพ็กเกจไหม (สิทธิ์ดูมาจากการเป็น
     // สมาชิกของปาร์ตี้นั้นโดยตรง) — แต่แก้ไข/ลบยังคุมแยกอีกชั้นด้วย isFreePartyMember() ใน lootRowHtml
     var timersAllowed = hasTimersPlan() || !!App.viewingHostId;
-    var todayOnlyBox = document.getElementById('todayOnly');
-    todayOnlyBox.disabled = !timersAllowed;
-    todayOnlyBox.title = timersAllowed ? '' : 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจ "จับเวลาบอส" เพื่อดูย้อนหลังทั้งหมด';
-    var onlyToday = todayOnlyBox.checked || !timersAllowed;
-    // "วันนี้" ตามเวลาไทย — ตรงกับที่ฐานข้อมูลนับให้ (boss_history_stats / by_boss)
-    var todayStart = todayStartTs();
-    var entries = App.kills.filter(function(l){ return !onlyToday || l.ts >= todayStart; })
+    var rangeSel = document.getElementById('historyRange');
+    lockHistoryRangeSelect(rangeSel, timersAllowed);
+    if(!timersAllowed) rangeSel.title = 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจ "จับเวลาบอส" เพื่อดูย้อนหลังทั้งหมด';
+    // ต้นช่วงตามเวลาไทย — ตรงกับที่ฐานข้อมูลนับให้ (boss_history_stats / by_boss) · null = ทั้งหมด
+    var sinceTs = huntRangeSinceTs();
+    var entries = App.kills.filter(function(l){ return sinceTs == null || l.ts >= sinceTs; })
                           .slice().sort(function(a,b){ return b.ts-a.ts; });
     document.getElementById('htabKills').className = App.historyTab==='kills' ? 'active' : '';
     document.getElementById('htabItems').className = App.historyTab==='items' ? 'active' : '';
     document.getElementById('htabBoss').className = App.historyTab==='boss' ? 'active' : '';
     document.getElementById('historyDeleteAll').hidden = !App.kills.length || isFreePartyMember();
-    if(App.historyTab==='items'){ renderLootView(list, entries.filter(function(l){ return l.items.length>0; }), onlyToday); return; }
-    if(App.historyTab==='boss'){ renderBossView(list, entries, onlyToday); return; }
-    if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>' + historyMoreHtml(onlyToday); return; }
+    if(App.historyTab==='items'){ renderLootView(list, entries.filter(function(l){ return l.items.length>0; }), sinceTs); return; }
+    if(App.historyTab==='boss'){ renderBossView(list, entries, sinceTs); return; }
+    if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>' + historyMoreHtml(sinceTs); return; }
     list.innerHTML = entries.map(function(l){
       // รายการของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) หรือ
       // เป็นสมาชิกฟรีของปาร์ตี้ปัจจุบัน (isFreePartyMember) ลบไม่ได้
@@ -2195,11 +2221,13 @@
           delBtn+'</div>'+
         '<div class="boss">'+escapeHtml(l.bossName)+'</div>'+
         '<div class="chip-row">'+(l.items.length ? l.items.map(function(it){ return '<span class="chip">'+itemIconHtml(it.name,'item-ic')+escapeHtml(it.name)+'</span>'; }).join('') : '<span class="chip">ไม่มีไอเทม</span>')+'</div></div></div>';
-    }).join('') + historyMoreHtml(onlyToday);
+    }).join('') + historyMoreHtml(sinceTs);
   }
-  // ท้ายรายการ: ยังมีประวัติเก่ากว่าที่โหลดมา → ปุ่มโหลดเพิ่ม (ช่วง "เฉพาะวันนี้" โหลดของวันนี้ครบแล้วเสมอ)
-  function historyMoreHtml(onlyToday){
-    if(onlyToday || !App.killsHasMore) return '';
+  // ท้ายรายการ: ยังมีประวัติเก่ากว่าที่โหลดมา → ปุ่มโหลดเพิ่ม — ถ้ารอบที่โหลดมาเลยต้นช่วงที่เลือกไปแล้ว
+  // (ได้ของในช่วงครบแล้ว) ไม่ต้องโชว์ปุ่ม
+  function historyMoreHtml(sinceTs){
+    var last = App.kills[App.kills.length-1];
+    if(!App.killsHasMore || (sinceTs != null && last && last.ts < sinceTs)) return '';
     return '<div class="history-more"><span>แสดง '+fmtNum(App.kills.length)+' รอบล่าสุด</span>'+
       '<button type="button" class="btn btn-ghost btn-sm" data-history-more>โหลดเก่ากว่านี้</button></div>';
   }
@@ -2355,18 +2383,19 @@
       '<div><span class="lbl">ส่วนแบ่งของฉัน</span><b>'+lootPairText(s.mine)+'</b></div>'+
     '</div>';
   }
-  function renderLootView(list, entries, onlyToday){
+  function renderLootView(list, entries, sinceTs){
     var allRows = lootRows(entries, false);
     var rows = lootRows(entries, true);
-    // สรุปด้านบนนับจากทุกแถวในฐานข้อมูล (ไม่ใช่แค่ที่โหลดมา) — ถอยไปนับเองถ้ายังไม่มีฟังก์ชันในฐานข้อมูล
-    var totals = onlyToday ? App.killStatsToday : App.killStats;
+    // สรุปด้านบนนับจากทุกแถวในฐานข้อมูล (ไม่ใช่แค่ที่โหลดมา) — ถอยไปนับเองจากที่โหลดมาถ้ายังไม่มีฟังก์ชัน
+    // ในฐานข้อมูล หรือยอดของช่วงที่เพิ่งเลือกยังโหลดไม่เสร็จ
+    var totals = sinceTs == null ? App.killStats : (App.killStatsRangeSince === sinceTs ? App.killStatsRange : null);
     var filterHtml = '<div class="loot-filter">'+
       '<button type="button" class="'+(lootFilter==='all'?'active':'')+'" data-loot-filter="all">ทั้งหมด</button>'+
       '<button type="button" class="'+(lootFilter==='unsold'?'active':'')+'" data-loot-filter="unsold">ยังไม่ขาย</button>'+
       '<button type="button" class="'+(lootFilter==='sold'?'active':'')+'" data-loot-filter="sold">ขายแล้ว</button>'+
       '<button type="button" class="'+(lootFilter==='kept'?'active':'')+'" data-loot-filter="kept">เก็บไว้</button></div>';
     list.innerHTML = (totals ? statsSummaryHtml(totals) : lootSummaryHtml(allRows)) + filterHtml +
-      (rows.length ? rows.map(lootRowHtml).join('') : '<p class="empty-note">ไม่มีไอเทมในช่วงนี้</p>') + historyMoreHtml(onlyToday);
+      (rows.length ? rows.map(lootRowHtml).join('') : '<p class="empty-note">ไม่มีไอเทมในช่วงนี้</p>') + historyMoreHtml(sinceTs);
   }
   function findKillItem(itemId){
     for(var i=0;i<App.kills.length;i++){
@@ -2399,10 +2428,10 @@
   // มุมมอง "ตามบอส": ฐานข้อมูลรวมยอดจากทุกแถว (boss_history_by_boss) — นับครบแม้ยังไม่ได้โหลดประวัติเก่า
   var bossView = { req:0, argsKey:null, version:-1, data:null };
   App.bossGroupsIndex = {}; App.bossKillersIndex = {};
-  function renderBossView(list, entries, onlyToday){
+  function renderBossView(list, entries, sinceTs){
     var todayIso = new Date(todayStartTs()).toISOString();
     var args = historyScopeArgs();
-    args.p_since = onlyToday ? todayIso : null;
+    args.p_since = sinceTs == null ? null : new Date(sinceTs).toISOString();
     args.p_today_start = todayIso;
     args.p_killer = bossKillerFilter === 'all' ? null : bossKillerFilter;
     var argsKey = JSON.stringify(args);
@@ -8927,10 +8956,12 @@
   // ---------- history panel ----------
   function openHistory(mode){
     App.historyTab = mode.indexOf('items') === 0 ? 'items' : 'kills';
-    document.getElementById('todayOnly').checked = mode.indexOf('today') !== -1;
+    // ปุ่ม "ดูทั้งหมด" บนการ์ดสรุปเปิดช่วง "ทั้งหมด" เสมอ (โหมดที่มีคำว่า today เปิดช่วง "วันนี้")
+    document.getElementById('historyRange').value = mode.indexOf('today') !== -1 ? 'today' : 'all';
     document.getElementById('historyOverlay').hidden = false;
     renderHistory();
     loadPartyRoster().then(loadDepartedSharerNames).then(renderHistory);
+    refreshHuntRange();
   }
   document.querySelectorAll('[data-open-history]').forEach(function(btn){
     btn.addEventListener('click', function(){ openHistory(btn.dataset.openHistory); });
@@ -9048,7 +9079,7 @@
     if(!e.target.classList.contains('sold-amount')) return;
     e.target.value = formatDecimalDisplay(cleanDecimalInput(e.target.value));
   });
-  document.getElementById('todayOnly').addEventListener('change', renderHistory);
+  document.getElementById('historyRange').addEventListener('change', function(){ renderHistory(); refreshHuntRange(); });
 
   // ---------- merchant รับ/ขาย chart controls ----------
   document.getElementById('mrChartTimeframeSelect').addEventListener('change', function(e){

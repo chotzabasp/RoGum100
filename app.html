@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260926-rail-fb-link">
+<link rel="stylesheet" href="assets/app.css?v=20260926-hunt-range">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -950,7 +950,7 @@
         <button data-htab="items" id="htabItems">ไอเทม</button>
         <button data-htab="boss" id="htabBoss">ทั้งหมด</button>
       </div>
-      <label class="h-filter"><input type="checkbox" id="todayOnly"> แสดงเฉพาะวันนี้</label>
+      <label class="h-filter"><span>ช่วงเวลา</span><select class="chart-tf-select" id="historyRange" aria-label="ช่วงเวลาของประวัติการล่า"><option value="today">วันนี้</option><option value="7d">7วัน</option><option value="30d">30วัน</option><option value="all" selected>ทั้งหมด</option></select></label>
       <div class="h-actions"><button type="button" class="btn btn-ghost btn-sm" id="historyDeleteAll" hidden>ลบประวัติทั้งหมด</button></div>
       <div id="historyList"></div>
     </div>
@@ -1196,4 +1196,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260926-app-html"></script>
+<script src="assets/app.js?v=20260926-hunt-range"></script>

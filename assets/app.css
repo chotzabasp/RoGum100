@@ -1113,6 +1113,10 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 }
 #historyOverlay .h-filter input{width:17px;height:17px;margin:0;accent-color:var(--accent);flex:none}
 #historyOverlay .h-filter:has(input:disabled){cursor:not-allowed}
+/* ช่วงเวลา (วันนี้ / 7วัน / 30วัน / ทั้งหมด) แทนช่องติ๊ก "แสดงเฉพาะวันนี้" เดิม */
+#historyOverlay .h-filter{display:flex;align-items:center;cursor:default}
+#historyOverlay .h-filter>span{white-space:nowrap}
+#historyOverlay #historyRange{min-height:40px;min-width:110px;padding:8px 10px;border-color:var(--history-line);border-radius:8px;background:#131e2f;color:var(--text);font-family:inherit;font-size:.8125rem}
 #historyOverlay .h-actions{align-items:center;margin:0}
 #historyOverlay .h-actions:has(>button[hidden]){display:none}
 #historyOverlay #historyDeleteAll{

@@ -2,7 +2,7 @@
  โค้ดหน้าแอดมิน (ย้ายออกจาก assets/app.js แบบคำต่อคำ 2026-09-24)
  โหลดเฉพาะตอนแอดมินเปิดหน้าแอดมินครั้งแรก (ดู openAdminPage ใน app.js) — ผู้ใช้ทั่วไปไม่ต้องโหลดไฟล์นี้
  ของที่ใช้จาก app.js ส่งเข้ามาทาง ctx · SERVER_RATES อ่าน/เขียนผ่าน ctx.SERVER_RATES (getter/setter ตัวแปรเดียวกับ app.js)
- แก้ไฟล์นี้แล้วต้องเปลี่ยนเลข ?v= ใน import ของ openAdminPage (app.js) และเลข ?v= ของ app.js ใน index.html ด้วย
+ แก้ไฟล์นี้แล้วต้องเปลี่ยนเลข ?v= ใน import ของ openAdminPage (app.js) และเลข ?v= ของ app.js ใน app.html ด้วย
  ============================================================ */
 export function initAdminPanel(ctx){
   var supa = ctx.supa, escapeHtml = ctx.escapeHtml, fmtNum = ctx.fmtNum, fmtDate = ctx.fmtDate, fmtDateTime = ctx.fmtDateTime,

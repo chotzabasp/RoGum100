@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 
 const root = path.resolve(__dirname, '..');
 const baseline = fs.readFileSync(0, 'utf8');
-const current = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const current = fs.readFileSync(path.join(root, 'app.html'), 'utf8');
 
 if (process.argv.includes('--check-js')) {
   const currentJs = fs.readFileSync(path.join(root, 'assets/app.js'), 'utf8');

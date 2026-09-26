@@ -1,9 +1,9 @@
 /* ============================================================
-   JavaScript ทั้งหมดของ index.html (ย้ายออกมาจากแท็ก <script> เดิมแบบคำต่อคำ 2026-09-24)
-   โหลดแบบ script ธรรมดาต่อจาก supabase-js ที่ท้าย index.html — ลำดับการทำงานเหมือนตอนอยู่ในหน้าเดิมทุกอย่าง
+   JavaScript ทั้งหมดของ app.html (ย้ายออกมาจากแท็ก <script> เดิมแบบคำต่อคำ 2026-09-24)
+   โหลดแบบ script ธรรมดาต่อจาก supabase-js ที่ท้าย app.html — ลำดับการทำงานเหมือนตอนอยู่ในหน้าเดิมทุกอย่าง
    ที่อยู่ไฟล์ใน import() อ้างจากโฟลเดอร์ assets/ นี้ (เช่น ./custom-boss-api.js)
    ส่วนที่อยู่รูป/ลิงก์ในโค้ด (เช่น assets/Poring.gif ใน innerHTML) ยังอ้างจากหน้าเว็บตามเดิม ไม่ต้องแก้
-   แก้ไฟล์นี้แล้วต้องเปลี่ยนเลข ?v= ที่แท็ก <script src> ใน index.html ทุกครั้ง ไม่งั้นผู้ใช้บางคนจะได้ไฟล์เก่าค้างในเครื่อง
+   แก้ไฟล์นี้แล้วต้องเปลี่ยนเลข ?v= ที่แท็ก <script src> ใน app.html ทุกครั้ง ไม่งั้นผู้ใช้บางคนจะได้ไฟล์เก่าค้างในเครื่อง
    ============================================================ */
 (async function(){
   "use strict";
@@ -7977,12 +7977,12 @@
 
   // ---------- แอดมิน: โค้ดอยู่ที่ assets/admin-panel.js (โหลดเฉพาะตอนแอดมินเปิดหน้าแอดมินครั้งแรก) ----------
   // ผู้ใช้ทั่วไปไม่ต้องโหลดโค้ดส่วนนี้ · ของที่หน้าแอดมินใช้จาก app.js ส่งไปทาง ctx
-  // แก้ admin-panel.js แล้วเปลี่ยนเลข v ใน import ข้างล่าง + เลข v ของ app.js ใน index.html
+  // แก้ admin-panel.js แล้วเปลี่ยนเลข v ใน import ข้างล่าง + เลข v ของ app.js ใน app.html
   var adminPanel = null, adminPanelLoading = null;
   function openAdminPage(){
     if(adminPanel){ adminPanel.openAdminPage(); return; }
     if(!adminPanelLoading){
-      adminPanelLoading = import('./admin-panel.js?v=20260926-promo-plans').then(function(mod){
+      adminPanelLoading = import('./admin-panel.js?v=20260926-app-html').then(function(mod){
         adminPanel = mod.initAdminPanel({
           supa:supa, escapeHtml:escapeHtml, fmtNum:fmtNum, fmtDate:fmtDate, fmtDateTime:fmtDateTime,
           toast:toast, showConfirm:showConfirm, loadServers:loadServers,

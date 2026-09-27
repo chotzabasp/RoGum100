@@ -2823,7 +2823,7 @@
     if(!mrChartServerUserChanged || invalid) mrChartServerId = firstMyServerIn(ids);
     sel.innerHTML = ids.map(function(id){
       return '<option value="'+id+'">'+serverLabel(id)+'</option>';
-    }).join('')+'<option value="all">ALL</option>';
+    }).join('')+'<option value="all">ทั้งหมด</option>';
     sel.value = mrChartServerId;
 
     var tag = document.getElementById('mrChartServerTag');
@@ -4444,7 +4444,7 @@
   }
   // ค่าเริ่มต้นของตัวกรองเซิร์ฟเวอร์ (ประวัติ+กราฟ) = เซิร์ฟแรกที่ตั้งค่าไว้ในบัญชี ถ้ามีข้อมูล/เลือกได้จริง
   // ไม่งั้น fallback ไปตัวแรกในลิสต์ที่มีให้เลือก กันกรณีเซิร์ฟแรกของบัญชียังไม่เคยมีประวัติเลย
-  // (userChangedServer กันไว้ไม่ให้ค่าเริ่มต้นทับสิ่งที่ผู้ใช้เลือกเองไปแล้ว เช่นกด "ALL")
+  // (userChangedServer กันไว้ไม่ให้ค่าเริ่มต้นทับสิ่งที่ผู้ใช้เลือกเองไปแล้ว เช่นกด "ทั้งหมด")
   function firstMyServerIn(ids){
     var firstMine = myServerIds()[0];
     return (firstMine && ids.indexOf(firstMine)!==-1) ? firstMine : (ids[0] || null);
@@ -4485,7 +4485,7 @@
       lastHistoryServerIdsKey = key;
       sel.innerHTML = ids.map(function(id){
         return '<option value="'+id+'">'+serverLabel(id)+'</option>';
-      }).join('')+'<option value="all">ALL</option>';
+      }).join('')+'<option value="all">ทั้งหมด</option>';
     }
     sel.value = historyState.serverId;
 

@@ -3637,6 +3637,10 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 #view-pricing #pricingGrid .pricing-original{font-size:.85rem;color:var(--plan-muted);font-weight:400}
 #view-pricing #pricingGrid .pricing-promo-badge{position:static;margin:0;padding:2px 7px;border:0;border-radius:5px;background:#512c38;color:#ffb7bd;font-size:.75rem;font-weight:600;box-shadow:none;transform:none}
 #view-pricing #pricingGrid .pricing-perday{padding:0;border:0;background:none;border-radius:0;font-size:.75rem;line-height:1.6;color:#97dac2;font-weight:500;white-space:normal}
+/* รายปี: ป้ายเขียว "ประหยัด X บาท" คู่กับป้ายแดง "ลด 50%" + บรรทัดเล็กบอกยอดรายเดือน 12 เดือนที่ใช้เทียบ */
+#view-pricing #pricingGrid .pricing-yearly-save{display:flex;flex-direction:column;align-items:flex-start;gap:3px;line-height:1.5}
+#view-pricing #pricingGrid .pricing-yearly-save b{padding:2px 7px;border-radius:5px;background:#203c3c;color:#94dfbd;font-size:.75rem;font-weight:600;white-space:nowrap}
+#view-pricing #pricingGrid .pricing-yearly-save small{font-size:.7rem;color:var(--plan-muted)}
 #view-pricing #pricingGrid .pricing-card-unit{font-size:.8rem;color:var(--plan-muted)}
 #view-pricing #pricingGrid .pricing-modules{margin:2px 0 0;padding:10px 0 0;border-top:1px solid #3a4b65;gap:0}
 #view-pricing #pricingGrid .pricing-module{padding:10px 0;gap:10px;border:0;border-bottom:1px solid #304159;border-radius:0;background:transparent;min-height:52px;box-sizing:border-box}
@@ -3677,6 +3681,8 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
   #view-pricing #pricingGrid .pricing-media-row{min-height:144px;gap:10px}
   #view-pricing #pricingGrid .pricing-media-row .pricing-artwork{height:128px}
 }
+/* รายปีช่วงโปร: ราคาขีดฆ่า + ป้าย "ประหยัด" ทำให้กล่องราคาสูง ~149px — ขยายแถวนี้ทุกใบ (รวมการ์ดฟรี) ให้เท่ากัน แถวระบบด้านล่างจะตรงกัน */
+#view-pricing #pricingGrid:has(.pricing-original):has(.pricing-yearly-save) .pricing-media-row{min-height:150px}
 
 /* Dialog actions stay readable when a message wraps on a narrow screen. */
 .confirm-box{scrollbar-width:thin;scrollbar-color:var(--border) var(--surface)}

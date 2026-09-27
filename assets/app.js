@@ -6713,7 +6713,8 @@
   });
 
   // ---------- เติมแพ็กเกจ ----------
-  // Existing yearly prices are preserved; new packages have approved monthly prices only.
+  // ราคาใช้แสดงผลเท่านั้น — ต้องตรงกับตารางราคาใน buy_plan (ฐานข้อมูล) เสมอ
+  // ทุกแพ็กมีรายปี (= รายเดือน × 10) · ช่วงโปร (ถึง PROMO_END_AT) ลด 50% ปัดเศษลง ทุกแพ็กทั้งรายเดือน/รายปี
   var PRICING_PLANS = [
     { key:'free', name:'<span class="pricing-card-name-main">— ฟรี —</span><span class="pricing-card-name-sub">ทดลองใช้ทุกระบบ</span>', monthly:0, yearly:0, free:true,
       modules:['investor','items','farm','timers'],
@@ -6740,8 +6741,7 @@
         'ติดตามดูรายการส่วนแบ่งได้ในประวัติปาร์ตี้',
         'ปักหมุดจุดบอสตายบนแผนที่'
       ] },
-    // New monthly-only packages are supported by Production buy_plan.
-    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาร์ม</span>', monthly:99, promoMonthly:99, badge:'สายฟาร์ม',
+    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาร์ม</span>', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'สายฟาร์ม',
       modules:['farm'],
       tagline:'สายฟาร์มห้ามพลาด', features:[
         'บันทึกยอดฟาร์ม ต้นทุน กำไร ในแต่ละรอบ',
@@ -6754,7 +6754,7 @@
         'ประวัติย้อนหลังไม่จำกัด',
         {divider:'หมวดอื่นๆ ใช้สิทธิ์แบบแพ็กฟรีทั้งหมด'}
       ] },
-    { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:149, promoMonthly:149, badge:'จัดการซื้อขาย',
+    { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:299, yearly:2990, promoMonthly:149, promoYearly:1490, badge:'จัดการซื้อขาย',
       modules:['investor','items'],
       tagline:'พ่อค้า-แม่ค้าหัวเครดิตและคนทั่วไป', features:[
         'บันทึกรายการซื้อ–ขาย M / ไอเทม / อื่นๆ ไม่จำกัด',
@@ -6770,12 +6770,12 @@
         'แบ่งคลังแยกได้ไม่จำกัดจำนวนเซิร์ฟเวอร์โดยไม่ซ้ำคลังกัน',
         {divider:'หมวดอื่นๆ ใช้สิทธิ์แบบแพ็กฟรีทั้งหมด'}
       ] },
-    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'ยอดนิยม',
+    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:399, yearly:3990, promoMonthly:199, promoYearly:1990, badge:'ยอดนิยม',
       // แพ็กรวม: บอกว่าได้ระบบไหนบ้างด้วยแถวระบบ (modules) แทนรายการฟีเจอร์ยาว — ระบบที่ไม่ได้แสดงเป็นสีเทา
       modules:['investor','items','farm'],
       // รายละเอียด (ส่วนที่กดดูได้) = รวมรายการของแพ็กย่อยที่อยู่ในแพ็กนี้ แบ่งหัวข้อตามระบบ
       detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems']] },
-    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'สายล่าบอส',
+    { key:'timers', name:'จับเวลาบอส', monthly:249, yearly:2490, promoMonthly:124, promoYearly:1240, badge:'สายล่าบอส',
       modules:['timers'],
       tagline:'ระบบล่าบอสครบในทีเดียว',
       features:[
@@ -6791,7 +6791,7 @@
         'ติดตามส่วนแบ่งของปาร์ตี้',
         'ปักหมุดจุดบอสตายบนแผนที่'
       ] },
-    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม/จับเวลาบอส</span>', monthly:349, yearly:3490, promoMonthly:175, promoYearly:1750, best:true, badge:'แนะนำ · คุ้มที่สุด',
+    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม/จับเวลาบอส</span>', monthly:499, yearly:4990, promoMonthly:249, promoYearly:2490, best:true, badge:'แนะนำ · คุ้มที่สุด',
       modules:['investor','items','farm','timers'],
       detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems'],['จับเวลาบอส','timers']] }
   ];
@@ -6906,9 +6906,13 @@
         var original = monthly ? p.monthly : (p.yearly == null ? p.displayYearly : p.yearly);
         var price = isPromoActive() ? (monthly ? p.promoMonthly : (p.yearly == null ? p.displayPromoYearly : p.promoYearly)) : original;
         var perDay = price / (monthly ? 30 : 365);
+        // รายปี: ประหยัดเท่าไหร่ เทียบกับจ่ายรายเดือนราคาปกติครบ 12 เดือน (ช่วงโปรหักจากราคาโปรที่จ่ายจริง)
+        var monthsTotal = p.monthly * 12;
+        var yearlySave = monthly ? 0 : monthsTotal - price;
         priceHtml = (original > price ? '<div class="pricing-card-price"><span class="pricing-original">'+fmtNum(original)+' บ'+unit+'</span><span class="pricing-promo-badge">ลด 50%</span></div>' : '')+
           '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
-          '<div class="pricing-perday">เฉลี่ย ~'+perDay.toFixed(1)+' บ/วัน</div>';
+          '<div class="pricing-perday">เฉลี่ย ~'+perDay.toFixed(1)+' บ/วัน</div>'+
+          (yearlySave > 0 ? '<div class="pricing-yearly-save"><b>ประหยัด '+fmtNum(yearlySave)+' บาท</b><small>(รายเดือน 12 เดือน = '+fmtNum(monthsTotal)+' บ)</small></div>' : '');
         // มีแพ็กนี้อยู่แล้ว = กดซื้อคือต่ออายุ — บอกตรงๆ บนปุ่ม พร้อมราคาแต้ม
         var ctaLabel = (ownedUntil ? 'ต่ออายุ' : 'ซื้อเลย')+' · '+fmtNum(price)+' แต้ม';
         // p.name อาจมี <span> ฝังไว้กันตัดคำกลางคำ (การ์ด 4 in 1) — ตัด tag ออกก่อนใส่ใน attribute

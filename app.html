@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260927-view-only">
+<link rel="stylesheet" href="assets/app.css?v=20260927-auth-email2">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -57,9 +57,11 @@
     <!-- Captcha (Cloudflare Turnstile) — วาดตอนเปิดหน้าต่างนี้ครั้งแรก ถ้ายังไม่ได้ใส่ Site Key จะไม่แสดง -->
     <div class="auth-captcha" id="authCaptcha" hidden></div>
     <p class="auth-error" id="authError"></p>
+    <!-- ล็อกอินแล้วเจอ "ยังไม่ได้ยืนยันอีเมล" → ปุ่มส่งอีเมลยืนยันใหม่ (อีเมลแรกหาย/หมดอายุ สมัครใหม่ก็ไม่ได้เพราะอีเมลซ้ำ) -->
+    <p class="auth-resend" id="authResendWrap" hidden><button type="button" class="auth-resend-btn" id="authResendBtn">ส่งอีเมลยืนยันอีกครั้ง</button></p>
     <button class="btn btn-primary btn-block" id="authSubmit">เข้าสู่ระบบ</button>
     <p class="auth-switch" id="authSwitchText">ยังไม่มีบัญชี? <button id="authToggle">สมัครสมาชิก</button></p>
-    <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่<br>เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ<br>ลืมรหัสผ่าน กดลิงก์ด้านบนเพื่อติดต่อแอดมิน</p>
+    <p class="auth-note">1 บัญชีใช้งานได้ทีละ 1 เครื่อง — ถ้าล็อกอินจากเครื่องใหม่<br>เครื่องเก่าจะถูกออกจากระบบอัตโนมัติ<br>ลืมรหัสผ่าน กดลิงก์ด้านบน รับลิงก์ตั้งรหัสใหม่ทางอีเมล</p>
   </div>
 </div>
 
@@ -1014,14 +1016,22 @@
 <div id="forgotPasswordOverlay" hidden>
   <div class="confirm-backdrop" data-forgot-close></div>
   <div class="confirm-box topup-box">
-    <!-- ไม่ส่งอีเมลรีเซ็ตรหัสผ่านแล้ว (ไม่ได้ตั้ง SMTP ของตัวเอง อีเมลในตัวของ Supabase ส่งไม่ถึงผู้ใช้ทั่วไป)
-         ให้ติดต่อแอดมินที่เพจแทน — แอดมินยืนยันตัวตนก่อน แล้วตั้งรหัสใหม่ให้ด้วย SQL -->
+    <!-- ส่งลิงก์ตั้งรหัสผ่านใหม่ทางอีเมล (Supabase Auth ส่งผ่าน SMTP ของ Resend ในชื่อ no-reply@gum100.com)
+         กดลิงก์แล้วกลับมาที่ app.html → หน้าต่าง "ตั้งรหัสผ่านใหม่" (recoveryPasswordOverlay) เด้งขึ้นเอง
+         จำอีเมลไม่ได้ → ติดต่อแอดมิน (ยืนยันตัวตนด้วย Username + วันเกิด แล้วตั้งรหัสชั่วคราวให้) -->
     <h3 class="post-announce-title">ลืมรหัสผ่าน</h3>
-    <p class="expiry-msg">ติดต่อแอดมินที่เพจ Facebook ของ Gum100 เพื่อตั้งรหัสผ่านใหม่<br>แจ้ง <b>Username</b> ที่ใช้สมัคร และเตรียม<b>วันเกิดที่กรอกไว้ตอนสมัคร</b> เพื่อยืนยันว่าเป็นเจ้าของบัญชี</p>
+    <p class="expiry-msg">กรอกอีเมลที่ใช้สมัคร ระบบจะส่งลิงก์ตั้งรหัสผ่านใหม่ไปให้</p>
+    <div class="post-announce-field">
+      <label for="forgotEmail">อีเมลที่ใช้สมัคร</label>
+      <input type="email" id="forgotEmail" placeholder="you@example.com" autocomplete="email" autocapitalize="none" spellcheck="false">
+    </div>
+    <p class="auth-error" id="forgotError" role="alert"></p>
+    <p class="forgot-sent" id="forgotSent" role="status" hidden></p>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" data-forgot-close>ปิด</button>
-      <a class="btn btn-gradient" href="https://www.facebook.com/rogum100/" target="_blank" rel="noopener noreferrer">ติดต่อแอดมินที่เพจ Facebook</a>
+      <button type="button" class="btn btn-gradient" id="forgotSendBtn">ส่งลิงก์รีเซ็ต</button>
     </div>
+    <p class="forgot-alt">จำอีเมลไม่ได้? <a href="https://www.facebook.com/rogum100/" target="_blank" rel="noopener noreferrer">ติดต่อแอดมินที่เพจ Facebook</a> แจ้ง Username และวันเกิดที่กรอกไว้ตอนสมัคร เพื่อยืนยันว่าเป็นเจ้าของบัญชี</p>
   </div>
 </div>
 
@@ -1230,4 +1240,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260927-view-only"></script>
+<script src="assets/app.js?v=20260927-auth-email3"></script>

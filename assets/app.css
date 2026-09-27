@@ -3751,6 +3751,15 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 /* สมาชิกปาร์ตี้แพ็กฟรี (ดูอย่างเดียว): แผนที่ปักหมุดไม่ได้ · ช่องเวลาตายกดไม่ได้ */
 .bc-map.bc-map-readonly{cursor:default}
 .bc-input:disabled{opacity:.5;cursor:not-allowed}
+/* ส่งอีเมลยืนยันอีกครั้ง (ใต้ข้อความ error ของหน้าล็อกอิน) */
+.auth-resend{margin:-.2rem 0 .7rem;text-align:center}
+.auth-resend-btn{background:none;border:none;padding:.3rem .2rem;color:var(--accent);font-size:.84rem;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.auth-resend-btn:disabled{opacity:.55;cursor:wait}
+/* ลืมรหัสผ่าน: ข้อความหลังส่งลิงก์ + ทางสำรองติดต่อแอดมิน */
+.forgot-sent{margin:-.2rem 0 .9rem;padding:.6rem .75rem;border-radius:10px;background:color-mix(in srgb,var(--success) 12%,transparent);border:1px solid color-mix(in srgb,var(--success) 38%,transparent);color:#94dfbd;font-size:.8rem;line-height:1.6}
+.forgot-sent b{display:block;margin-bottom:.15rem;font-size:.86rem;color:#c9f2de}
+.forgot-alt{margin:.9rem 0 0;font-size:.76rem;line-height:1.6;color:var(--text-dim)}
+.forgot-alt a{color:var(--accent);font-weight:600}
 .party-pill{display:inline-flex;align-items:center;padding:2px 8px;border:1px solid transparent;border-radius:999px;font-size:.72rem;font-weight:600;line-height:1.5}
 .party-pill-paid{background:color-mix(in srgb,var(--warn) 14%,transparent);border-color:color-mix(in srgb,var(--warn) 40%,transparent);color:#f0cf86}
 .party-pill-free{background:color-mix(in srgb,var(--success) 14%,transparent);border-color:color-mix(in srgb,var(--success) 40%,transparent);color:#94dfbd}

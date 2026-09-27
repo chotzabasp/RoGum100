@@ -5133,6 +5133,7 @@
     document.getElementById('authToggle').textContent = isRegister ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
     document.getElementById('authSwitchText').firstChild.textContent = isRegister ? 'มีบัญชีแล้ว? ' : 'ยังไม่มีบัญชี? ';
     document.getElementById('authError').textContent = '';
+    document.getElementById('authResendWrap').hidden = true;
   }
   document.getElementById('authToggle').addEventListener('click', function(){ setAuthMode(!isRegister); });
   // ---------- Captcha (Cloudflare Turnstile) สำหรับล็อกอิน/สมัครสมาชิก ----------
@@ -5271,7 +5272,8 @@
         if(ok === false){ authBusy = false; errEl.textContent = 'Username นี้มีคนใช้แล้ว'; return; }
         if(ok === null){ authBusy = false; errEl.textContent = 'ตรวจสอบ Username ไม่ได้ ลองใหม่อีกครั้ง'; return; }
         // username/วันเกิด ส่งเป็น metadata → trigger handle_new_user คัดลอกลง profiles ให้
-        var signUpOptions = Object.assign({ data:{ display_name:name, username:username, birth_date:birth, servers:[server] } }, captchaOptions());
+        // emailRedirectTo: ลิงก์ยืนยันในอีเมลพากลับมาที่หน้าแอปโดยตรง (เปิด Confirm email ใน Supabase แล้ว)
+        var signUpOptions = Object.assign({ emailRedirectTo: AUTH_REDIRECT_URL, data:{ display_name:name, username:username, birth_date:birth, servers:[server] } }, captchaOptions());
         return supa.auth.signUp({ email:email, password:pass, options:signUpOptions }).then(function(res){
           authBusy = false;
           resetCaptcha();
@@ -5318,12 +5320,20 @@
         }
         throw new Error('อีเมล/Username หรือรหัสผ่านไม่ถูกต้อง');
       });
+      var loginEmail = null;
+      hideResendConfirm();
       emailReady.then(function(lemail){
+        loginEmail = lemail;
         return supa.auth.signInWithPassword({ email:lemail, password:lpass, options:captchaOptions() });
       }).then(function(res){
         authBusy = false;
         resetCaptcha();
-        if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
+        if(res.error){
+          errEl.textContent = mapAuthError(res.error.message);
+          // รหัสถูกแต่ยังไม่ได้ยืนยันอีเมล → ให้ขอส่งอีเมลยืนยันใหม่ได้ (อีเมลนี้ได้มาหลังตรวจรหัสผ่านแล้ว)
+          if(/email not confirmed/i.test(res.error.message) && loginEmail) showResendConfirm(loginEmail);
+          return;
+        }
         // เตะเซสชันอื่นของบัญชีนี้ทิ้ง กันเอารหัสเดียวไปใช้พร้อมกันหลายเครื่อง
         supa.auth.signOut({ scope: 'others' }).then(function(r){ if(r.error) console.error('signOut others', r.error); });
         enterApp(res.data.user);
@@ -5340,15 +5350,62 @@
     supa.auth.signOut();
   });
 
-  // ---------- ลืมรหัสผ่าน: ให้ติดต่อแอดมินที่เพจ Facebook (ไม่ส่งอีเมลรีเซ็ตแล้ว) ----------
-  // ไม่ได้ตั้ง SMTP ของตัวเอง — อีเมลในตัวของ Supabase ส่งไม่ถึงผู้ใช้ทั่วไป กดแล้วรออีเมลที่ไม่มาจะงงกว่า
-  // แอดมินยืนยันตัวตน (username + วันเกิดที่กรอกตอนสมัคร) แล้วตั้งรหัสใหม่ให้ด้วย SQL
-  // (ส่วน "ตั้งรหัสผ่านใหม่หลังกดลิงก์รีเซ็ต" ด้านล่างยังเก็บไว้ เผื่อลิงก์เก่าที่เคยส่งไปแล้ว)
+  // ---------- ลืมรหัสผ่าน: ส่งลิงก์ตั้งรหัสผ่านใหม่ทางอีเมล (SMTP ผ่าน Resend ในชื่อ no-reply@gum100.com) ----------
+  // กดลิงก์ในอีเมล → กลับมาที่ app.html → PASSWORD_RECOVERY → หน้าต่าง "ตั้งรหัสผ่านใหม่" ด้านล่าง
+  // ข้อความหลังส่งเหมือนกันทุกกรณี ไม่บอกว่ามีอีเมลนี้ในระบบไหม (กันคนสุ่มเช็คอีเมลสมาชิก)
+  // จำอีเมลไม่ได้ → ติดต่อแอดมิน (ยืนยันตัวตนด้วย username + วันเกิด แล้วตั้งรหัสชั่วคราวให้จากหน้าแอดมิน)
+  var AUTH_REDIRECT_URL = location.origin + '/app.html'; // ต้องอยู่ใน Redirect URLs ของ Supabase Auth
+  // ---------- ส่งอีเมลยืนยันอีกครั้ง (ล็อกอินแล้วเจอว่ายังไม่ได้ยืนยันอีเมล) ----------
+  var resendConfirmEmail = null, resendBusy = false;
+  function showResendConfirm(email){
+    resendConfirmEmail = email;
+    document.getElementById('authResendBtn').disabled = false;
+    document.getElementById('authResendWrap').hidden = false;
+  }
+  function hideResendConfirm(){
+    resendConfirmEmail = null;
+    document.getElementById('authResendWrap').hidden = true;
+  }
+  document.getElementById('authResendBtn').addEventListener('click', function(){
+    if(resendBusy || !resendConfirmEmail) return;
+    var errEl = document.getElementById('authError'), btn = this;
+    if(captchaNotReady(errEl)) return;
+    resendBusy = true; btn.disabled = true;
+    supa.auth.resend({ type:'signup', email:resendConfirmEmail, options:Object.assign({ emailRedirectTo: AUTH_REDIRECT_URL }, captchaOptions()) }).then(function(res){
+      resendBusy = false;
+      resetCaptcha();
+      if(res.error){ btn.disabled = false; errEl.textContent = mapAuthError(res.error.message); return; }
+      errEl.textContent = 'ส่งอีเมลยืนยันไปที่ '+resendConfirmEmail+' แล้ว กรุณาเช็คกล่องอีเมล (รวมถึง Spam / Junk) แล้วกดลิงก์ยืนยันก่อนเข้าสู่ระบบ';
+      document.getElementById('authResendWrap').hidden = true;
+    });
+  });
   document.getElementById('forgotPasswordLink').addEventListener('click', function(){
+    var typed = document.getElementById('li-email').value.trim();
+    document.getElementById('forgotEmail').value = typed.indexOf('@') !== -1 ? typed : '';
+    document.getElementById('forgotError').textContent = '';
+    document.getElementById('forgotSent').hidden = true;
     document.getElementById('forgotPasswordOverlay').hidden = false;
   });
   document.addEventListener('click', function(e){
     if(e.target.closest('[data-forgot-close]')) document.getElementById('forgotPasswordOverlay').hidden = true;
+  });
+  var forgotBusy = false;
+  document.getElementById('forgotSendBtn').addEventListener('click', function(){
+    if(forgotBusy) return;
+    var errEl = document.getElementById('forgotError'), sentEl = document.getElementById('forgotSent'), btn = this;
+    var email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+    errEl.textContent = ''; sentEl.hidden = true;
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errEl.textContent = 'กรอกอีเมลที่ใช้สมัครให้ถูกต้อง'; return; }
+    if(captchaNotReady(errEl)) return;
+    forgotBusy = true; btn.disabled = true;
+    supa.auth.resetPasswordForEmail(email, Object.assign({ redirectTo: AUTH_REDIRECT_URL }, captchaOptions())).then(function(res){
+      forgotBusy = false; btn.disabled = false;
+      resetCaptcha();
+      if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
+      // ข้อความคงที่ (ไม่มีข้อมูลจากผู้ใช้) — ไม่บอกตรงๆ ว่าอีเมลนี้มีบัญชีไหม
+      sentEl.innerHTML = '<b>ส่งแล้ว เช็คอีเมลได้เลย</b>ถ้าอีเมลนี้สมัคร Gum100 ไว้ จะได้อีเมลจาก Gum100 ที่มีปุ่ม "ตั้งรหัสผ่านใหม่"<br>ไม่เจอในกล่องหลัก ให้ดูในโฟลเดอร์ Spam';
+      sentEl.hidden = false;
+    });
   });
 
   // ---------- ตั้งรหัสผ่านใหม่หลังกดลิงก์รีเซ็ต: ไม่ต้องรู้รหัสเดิม ----------
@@ -6704,7 +6761,7 @@
     if(announcementPanel.parentElement!==announcementTarget){
       announcementTarget.insertBefore(announcementPanel, announcementTarget.firstChild);
     }
-    persist(App.keys.lastPage, page);
+    if(App.keys) persist(App.keys.lastPage, page);
     document.getElementById('view-home').hidden = page !== 'home';
     document.getElementById('view-farm').hidden = page !== 'farm';
     document.getElementById('view-timers').hidden = page !== 'timers';
@@ -6742,7 +6799,9 @@
   }
   // ปุ่ม back/forward ของเบราว์เซอร์: เปลี่ยนหน้าในแอพตาม hash ที่ browser พาไป (ไม่ push ซ้ำ เพราะ hash ตรงกันแล้ว)
   window.addEventListener('popstate', function(){
-    if(document.getElementById('appScreen').hidden) return;
+    // !App.keys = แอปยังโหลดบัญชี/โหมดผู้เยี่ยมชมไม่เสร็จ (เช่น เปิดจากลิงก์ในอีเมลยืนยัน/รีเซ็ตรหัส แล้ว Supabase
+    // ล้างรหัสในลิงก์ทิ้งตอนโหลด ทำให้เกิด popstate ก่อน) — ข้ามไป เดี๋ยวตอนโหลดเสร็จจะเปิดหน้าเอง
+    if(document.getElementById('appScreen').hidden || !App.keys) return;
     var page = pageFromHash();
     var isAdmin = App.profile && App.profile.role === 'admin';
     if(NAV_PAGES.indexOf(page) === -1 || (page==='admin' && !isAdmin)) page = 'home';

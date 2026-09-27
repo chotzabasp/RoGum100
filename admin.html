@@ -681,7 +681,11 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     $('promo').innerHTML = list.length ? list.map(function(p){
       var expired = p.expires_at && new Date(p.expires_at).getTime() < Date.now();
       var full = Number(p.used) >= Number(p.max);
-      var reward = p.reward_type === 'plan_days' ? '4 in 1 ' + fmt(p.plan_days) + ' วัน' : fmt(p.points) + ' แต้ม';
+      // plan_key ว่าง: โค้ดแจกวัน = 4 in 1 (โค้ดรุ่นแรก) · โค้ดส่วนลด = ใช้ได้ทุกแพ็ก
+      var planName = { all:'4 in 1', bundle:'3 in 1', timers:'จับเวลาบอส', accountItems:'2 in 1', farm:'1 in 1' };
+      var reward = p.reward_type === 'discount' ? 'ส่วนลด ' + fmt(p.discount_percent) + '% (' + (p.plan_key ? planName[p.plan_key] || p.plan_key : 'ทุกแพ็ก') + ')'
+        : p.reward_type === 'plan_days' ? (planName[p.plan_key || 'all'] || '4 in 1') + ' ' + fmt(p.plan_days) + ' วัน'
+        : fmt(p.points) + ' แต้ม';
       return '<tr><td><b class="mono">' + esc(p.code) + '</b>' + (expired ? ' <span class="pill pill-mute">หมดอายุ</span>' : full ? ' <span class="pill pill-mute">ครบแล้ว</span>' : '') + '</td>' +
         '<td>' + reward + '</td><td class="num">' + fmt(p.used) + '/' + fmt(p.max) + '</td><td class="num">' + fmt(p.used_period) + '</td></tr>';
     }).join('') : '<tr><td colspan="4" class="empty">ยังไม่มีโค้ดโปรโมชัน</td></tr>';

@@ -1378,7 +1378,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
   #view-admin .admin-qr-filter{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   #view-admin .admin-qr-chip{min-height:44px;padding:8px 6px;overflow-wrap:anywhere}
   #view-admin .admin-grant-row{flex-wrap:wrap}
-  #view-admin .admin-grant-row>input{flex-basis:100%}
+  #view-admin .admin-grant-row>:is(input,select){flex-basis:100%}
 }
 .admin-qr-tools{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.4rem}
 .admin-table-wrap{overflow-x:auto;margin-top:1rem;border:1px solid var(--border);border-radius:var(--radius-m)}
@@ -1407,6 +1407,7 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .admin-grant-card h3{margin:0;font-size:1rem}
 .admin-grant-row{display:flex;gap:.5rem}
 .admin-grant-row input{flex:1;min-width:0}
+.admin-grant-row select{flex:1;min-width:0;min-height:44px;cursor:pointer}
 .admin-server-row{cursor:grab}
 .admin-server-row.dragging{opacity:.4}
 .admin-server-row.drag-over{border-color:var(--accent)}
@@ -3695,6 +3696,31 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 .confirm-actions{flex-wrap:wrap;gap:.65rem}
 .confirm-actions .btn{white-space:normal;line-height:1.6}
 .pricing-card-name-sub{white-space:normal;overflow-wrap:anywhere;line-height:1.6}
+/* กล่องยืนยันซื้อแพ็กเกจ: หัว + ชื่อแพ็กตัวใหญ่ + ระบบที่ได้ + ตาราง รอบ/ราคา/ใช้งานถึง/แต้มคงเหลือ */
+.confirm-message .buy-confirm-title{display:block;font-size:.8rem;font-weight:600;color:var(--text-dim)}
+.confirm-message .buy-confirm-plan{display:block;margin-top:.15rem;font-size:1.35rem;font-weight:800;line-height:1.35;color:var(--text)}
+.confirm-message .buy-confirm-sub{display:block;margin-top:.1rem;font-size:.76rem;line-height:1.55;color:var(--text-dim)}
+.confirm-message .buy-confirm-rows{display:grid;gap:.4rem;margin-top:.85rem;padding-top:.8rem;border-top:1px solid var(--border);text-align:left}
+.confirm-message .buy-confirm-row{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;font-size:.8rem;line-height:1.5}
+.confirm-message .buy-confirm-row>span:first-child{color:var(--text-dim);white-space:nowrap}
+.confirm-message .buy-confirm-row>span:last-child{text-align:right;color:var(--text);font-variant-numeric:tabular-nums;overflow-wrap:normal}
+.confirm-message .buy-confirm-row s{color:var(--text-dim);font-size:.74rem}
+.confirm-message .buy-confirm-off{padding:1px 6px;border-radius:5px;background:#512c38;color:#ffb7bd;font-size:.7rem;font-weight:600;white-space:nowrap}
+.confirm-message .buy-confirm-save{color:var(--success);font-weight:700}
+.confirm-message .buy-confirm-short{color:var(--danger);font-weight:700}
+/* ช่องโค้ดส่วนลดในกล่องยืนยันซื้อ — หน้าตาเดียวกับช่อง "โค้ดโปรโมชัน" หน้าตั้งค่า */
+.confirm-message .buy-confirm-code{display:block;margin-top:.85rem;text-align:left}
+.confirm-message .buy-confirm-code-row{display:flex;align-items:center;gap:6px;padding:4px;background:var(--bg);border:1px solid #50627f;border-radius:10px;transition:border-color 150ms ease,box-shadow 150ms ease}
+.confirm-message .buy-confirm-code-row:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+.confirm-message #buyConfirmCode{flex:1;width:0;min-width:0;height:38px;margin:0;padding:0 8px;border:0;border-radius:7px;background:transparent;color:var(--text);font-family:var(--font-ui);font-size:16px;line-height:1.5;box-shadow:none;outline:none}
+.confirm-message #buyConfirmCode::placeholder{color:var(--text-dim);opacity:1;font-size:.8rem}
+.confirm-message #buyConfirmCodeBtn{flex:none;min-height:38px;padding:8px 14px;border-radius:8px;font-size:.8rem;white-space:nowrap;box-shadow:none}
+.confirm-message #buyConfirmCodeBtn:disabled{opacity:.55;cursor:wait}
+.confirm-message .buy-confirm-code-msg{display:block;margin-top:6px;font-size:.74rem;line-height:1.5;color:var(--text-dim);overflow-wrap:anywhere}
+.confirm-message .buy-confirm-code-msg:empty{display:none}
+.confirm-message .buy-confirm-code-msg.is-error{color:var(--danger)}
+.confirm-message .buy-confirm-code-msg.is-ok{color:var(--success)}
+#confirmOkBtn:disabled{opacity:.5;cursor:not-allowed}
 
 @media(max-width:760px){
   .content{padding-bottom:calc(2rem + env(safe-area-inset-bottom,0px))}

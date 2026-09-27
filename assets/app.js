@@ -6976,16 +6976,12 @@
     if(!selectedPlan || selectedPlan.free || selectedPlan.pending || btn.disabled) return;
     if(selectedPlan.yearly==null && btn.dataset.cycle!=='monthly') return;
     var price = parseInt(btn.dataset.price, 10) || 0;
-    var planName = btn.dataset.planName, planKey = btn.dataset.planKey, cycle = btn.dataset.cycle;
+    var planKey = btn.dataset.planKey, cycle = btn.dataset.cycle;
     var days = cycle === 'yearly' ? 365 : 30;
     var have = App.profile ? (App.profile.points||0) : 0;
     Track.push('buy_click', 'pricing', price, planKey+':'+cycle);
-    if(have < price){
-      Track.push('buy_insufficient', 'pricing', price, planKey+':'+cycle);
-      toast('แต้มไม่พอ ขาดอีก '+fmtNum(price-have)+' แต้ม — เติมแต้มก่อนนะ');
-      openTopup();
-      return;
-    }
+    // แต้มไม่พอก็ยังเปิดกล่องยืนยัน ให้ลองใส่โค้ดส่วนลดได้ก่อน — ปุ่มยืนยันเป็น "เติมแต้ม" จนกว่าแต้มจะพอ
+    if(have < price) Track.push('buy_insufficient', 'pricing', price, planKey+':'+cycle);
     var profile = App.profile || {};
     var scoped = profile.feature_expiries || {};
     var bundleExp = new Date(profile.plan_bundle_expires_at||0).getTime() || 0;
@@ -6999,18 +6995,103 @@
       return d.getTime();
     }
     var newExp = addCycle(curExp);
-    var expiryText = planKey==='all'
-      ? '3 ระบบ: ถึงประมาณ '+fmtDate(addCycle(bundleExp))+'<br>จับเวลาบอส: ถึงประมาณ '+fmtDate(addCycle(timersExp))
-      : 'ใช้งานได้ถึงประมาณ '+fmtDate(newExp);
-    var discounted = (cycle==='yearly'?selectedPlan.yearly:selectedPlan.monthly)>price;
-    showConfirm('ยืนยันสมัคร "'+escapeHtml(planName)+'" ('+(cycle==='yearly' ? 'รายปี +1 ปี' : 'รายเดือน +30 วัน')+') ด้วย '+fmtNum(price)+' แต้ม'+(discounted?' (ราคาโปรลด 50%)':'')+'?<br>'+expiryText, function(){
-      supa.rpc('buy_plan', { p_plan_key: planKey, p_cycle: cycle }).then(function(res){
-        if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
-        Track.push('buy_success', 'pricing', price, planKey+':'+cycle);
-        refreshProfile().then(renderPricingPage);
-        toast('สมัคร '+planName+' สำเร็จ — '+(planKey==='all'?'ใช้งานครบทุกระบบได้ถึง ':'ใช้งานได้ถึง ')+fmtDate(new Date(res.data).getTime()));
+    // กล่องยืนยัน: หัว (สมัคร/ต่ออายุ ตรงกับปุ่มบนการ์ด) + ชื่อแพ็กตัวใหญ่ + ระบบที่ได้ + ตาราง รอบ/ราคา/ใช้งานถึง/แต้มคงเหลือ
+    // ชื่อแพ็กดึงจาก 2 ส่วนในการ์ด (ตัดขีด "— —" ที่ใช้ตกแต่งการ์ดออก) แทนข้อความที่ต่อกันเป็นก้อนเดียว
+    var renewing = !!planActiveUntil(planKey);
+    var nameMain = ((selectedPlan.name.match(/pricing-card-name-main">([^<]*)</) || [])[1] || selectedPlan.name.replace(/<[^>]*>/g, '')).replace(/—/g, '').trim();
+    var nameSub = ((selectedPlan.name.match(/pricing-card-name-sub">([^<]*)</) || [])[1] || '').split('/').join(' / ');
+    var original = cycle==='yearly' ? selectedPlan.yearly : selectedPlan.monthly;
+    // โค้ดส่วนลด (%) ที่ตรวจผ่านแล้ว: {code, percent, price_before, discount, price_after} จาก check_discount_code
+    // ราคาจริงคิดที่ฐานข้อมูล (buy_plan ตรวจโค้ดซ้ำ) — ตรงนี้ใช้แสดงผลเท่านั้น
+    var discount = null;
+    function payNow(){ return discount ? discount.price_after : price; }
+    function rowsHtml(){
+      var pay = payNow();
+      var rows = [
+        ['รอบ', cycle==='yearly' ? 'รายปี (+1 ปี)' : 'รายเดือน (+30 วัน)'],
+        ['ราคา', '<b>'+fmtNum(price)+' แต้ม</b>'+(original > price ? ' <s>'+fmtNum(original)+'</s> <span class="buy-confirm-off">ลด 50%</span>' : '')]
+      ];
+      if(discount) rows.push(
+        ['ส่วนลดโค้ด '+escapeHtml(discount.code)+' ('+discount.percent+'%)', '<span class="buy-confirm-save">−'+fmtNum(discount.discount)+' แต้ม</span>'],
+        ['ราคาหลังใช้โค้ด', '<b>'+fmtNum(pay)+' แต้ม</b>']);
+      // 4 in 1 ต่อจากวันหมดอายุเดิมของแต่ละส่วน — ถ้าได้คนละวันแยกให้เห็นทั้งสองวัน
+      if(planKey==='all' && fmtDate(addCycle(bundleExp)) !== fmtDate(addCycle(timersExp))){
+        rows.push(['ใช้งานถึง (3 in 1)', 'ประมาณ '+fmtDate(addCycle(bundleExp))], ['ใช้งานถึง (จับเวลาบอส)', 'ประมาณ '+fmtDate(addCycle(timersExp))]);
+      } else rows.push(['ใช้งานถึง', 'ประมาณ '+fmtDate(newExp)]);
+      rows.push(have >= pay
+        ? ['แต้มคงเหลือหลังซื้อ', fmtNum(have-pay)+' แต้ม']
+        : ['แต้มไม่พอ', '<span class="buy-confirm-short">ขาดอีก '+fmtNum(pay-have)+' แต้ม</span>']);
+      return rows.map(function(r){ return '<span class="buy-confirm-row"><span>'+r[0]+'</span><span>'+r[1]+'</span></span>'; }).join('');
+    }
+    var confirmHtml = '<span class="buy-confirm-title">'+(renewing ? 'ยืนยันต่ออายุแพ็กเกจ' : 'ยืนยันสมัครแพ็กเกจ')+'</span>'+
+      '<span class="buy-confirm-plan">'+escapeHtml(nameMain)+'</span>'+
+      (nameSub ? '<span class="buy-confirm-sub">'+escapeHtml(nameSub)+'</span>' : '')+
+      '<span class="buy-confirm-rows" id="buyConfirmRows">'+rowsHtml()+'</span>'+
+      '<span class="buy-confirm-code"><span class="buy-confirm-code-row">'+
+        '<input type="text" id="buyConfirmCode" maxlength="40" autocomplete="off" spellcheck="false" placeholder="โค้ดส่วนลด (ถ้ามี)" aria-label="โค้ดส่วนลด" aria-describedby="buyConfirmCodeMsg">'+
+        '<button type="button" class="btn btn-gradient btn-sm" id="buyConfirmCodeBtn">ใช้โค้ด</button>'+
+      '</span><span class="buy-confirm-code-msg" id="buyConfirmCodeMsg" role="status"></span></span>';
+    // ปุ่มยืนยันของกล่องใช้ร่วมทั้งแอป — เปลี่ยนชื่อ/ปิดชั่วคราว แล้วคืนค่าเดิมทุกครั้งที่กล่องปิด
+    var okBtn = document.getElementById('confirmOkBtn');
+    var okText = okBtn.textContent;
+    function restoreOk(){ okBtn.textContent = okText; okBtn.disabled = false; }
+    function setCodeMsg(text, kind){
+      var m = document.getElementById('buyConfirmCodeMsg'); if(!m) return;
+      m.textContent = text;
+      m.className = 'buy-confirm-code-msg'+(kind ? ' is-'+kind : '');
+    }
+    function typedCode(){
+      var input = document.getElementById('buyConfirmCode');
+      return input ? input.value.trim().toUpperCase() : '';
+    }
+    // วาดตารางใหม่ + ปุ่ม: แต้มไม่พอ = "เติมแต้ม" · พิมพ์โค้ดแล้วยังไม่กด "ใช้โค้ด" = ปิดปุ่มไว้ก่อน (กันเข้าใจว่าได้ส่วนลดแล้ว)
+    function refresh(){
+      var rowsEl = document.getElementById('buyConfirmRows'); if(!rowsEl) return;
+      rowsEl.innerHTML = rowsHtml();
+      var typed = typedCode();
+      okBtn.disabled = !!typed && !(discount && discount.code === typed);
+      okBtn.textContent = have >= payNow() ? okText : 'เติมแต้ม';
+    }
+    function applyCode(){
+      var code = typedCode(), codeBtn = document.getElementById('buyConfirmCodeBtn');
+      if(!code){ setCodeMsg('กรอกโค้ดส่วนลดก่อน', 'error'); document.getElementById('buyConfirmCode').focus(); return; }
+      codeBtn.disabled = true;
+      setCodeMsg('กำลังตรวจโค้ด...', '');
+      supa.rpc('check_discount_code', { p_code: code, p_plan_key: planKey, p_cycle: cycle }).then(function(res){
+        if(document.getElementById('buyConfirmCodeBtn') !== codeBtn) return; // กล่องนี้ปิด/เปิดใหม่ไปแล้ว
+        codeBtn.disabled = false;
+        if(typedCode() !== code) return; // พิมพ์โค้ดใหม่ระหว่างรอผล
+        if(res.error){ discount = null; setCodeMsg(res.error.message, 'error'); refresh(); return; }
+        discount = res.data;
+        if(discount.price_before !== price) price = discount.price_before; // ราคาเปลี่ยน (เช่น โปรเพิ่งจบ) ยึดราคาจากฐานข้อมูล
+        setCodeMsg('ใช้โค้ด '+discount.code+' ลด '+discount.percent+'% แล้ว', 'ok');
+        refresh();
       });
+    }
+    showConfirm(confirmHtml, function(){
+      restoreOk();
+      var pay = payNow();
+      if(have < pay){ openTopup(); return; }
+      var args = { p_plan_key: planKey, p_cycle: cycle };
+      if(discount) args.p_code = discount.code;
+      supa.rpc('buy_plan', args).then(function(res){
+        if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
+        Track.push('buy_success', 'pricing', pay, planKey+':'+cycle);
+        refreshProfile().then(renderPricingPage);
+        toast((renewing ? 'ต่ออายุ ' : 'สมัคร ')+nameMain+(discount ? ' (ใช้โค้ด '+discount.code+' ลด '+discount.percent+'%)' : '')+' สำเร็จ — '+(planKey==='all'?'ใช้งานครบทุกระบบได้ถึง ':'ใช้งานได้ถึง ')+fmtDate(new Date(res.data).getTime()));
+      });
+    }, restoreOk);
+    document.getElementById('buyConfirmCodeBtn').addEventListener('click', applyCode);
+    document.getElementById('buyConfirmCode').addEventListener('keydown', function(ev){
+      if(ev.key==='Enter'){ ev.preventDefault(); applyCode(); }
     });
+    document.getElementById('buyConfirmCode').addEventListener('input', function(){
+      var typed = typedCode();
+      if(discount && discount.code !== typed){ discount = null; }
+      if(!discount) setCodeMsg(typed ? 'กด "ใช้โค้ด" เพื่อตรวจโค้ดก่อนยืนยัน' : '', '');
+      refresh();
+    });
+    refresh();
   });
 
   // ---------- หน้า "ตั้งค่า": ข้อมูลบัญชี / เปลี่ยนรหัสผ่าน / ประวัติเติมแต้ม / ประวัติซื้อแพ็กเกจ ----------
@@ -7232,8 +7313,14 @@
   function loadPurchaseHistory(){
     var root = document.getElementById('stPurchaseList'), sum = document.getElementById('stPurchaseSummary'), moreWrap = document.getElementById('stPurchaseMoreWrap');
     root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>'; sum.textContent = ''; moreWrap.hidden = true;
-    supa.from('package_purchases').select('id, plan_name, cycle, points_spent, days_added, expires_after, created_at')
-      .eq('user_id', App.session.id).order('created_at', { ascending:false }).then(function(res){
+    // promo_code / discount_points = โค้ดส่วนลดที่ใช้ตอนซื้อ (ถ้าฐานข้อมูลยังไม่มีคอลัมน์นี้ ถอยไปอ่านแบบเดิม)
+    var purchaseCols = 'id, plan_name, cycle, points_spent, days_added, expires_after, created_at';
+    function fetchPurchases(withCode){
+      return supa.from('package_purchases').select(purchaseCols+(withCode ? ', promo_code, discount_points' : ''))
+        .eq('user_id', App.session.id).order('created_at', { ascending:false });
+    }
+    fetchPurchases(true).then(function(res){ return (res.error && res.error.code==='42703') ? fetchPurchases(false) : res; })
+      .then(function(res){
         if(res.error){ root.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>'; return; }
         var rows = res.data || [];
         if(!rows.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่เคยซื้อแพ็กเกจ</p>'; return; }
@@ -7242,7 +7329,8 @@
         root.innerHTML = shown.map(function(r){
           return '<div class="settings-row"><div class="settings-row-main">'+
             '<div class="settings-row-title">'+r.plan_name+' <span class="membership-pill neutral">'+(r.cycle==='yearly' ? 'รายปี' : 'รายเดือน')+' +'+r.days_added+' วัน</span></div>'+
-            '<div class="settings-row-meta">'+fmtDateTime(new Date(r.created_at).getTime())+' · ใช้งานได้ถึง '+fmtDate(new Date(r.expires_after).getTime())+'</div></div>'+
+            '<div class="settings-row-meta">'+fmtDateTime(new Date(r.created_at).getTime())+' · ใช้งานได้ถึง '+fmtDate(new Date(r.expires_after).getTime())+
+              (r.promo_code ? ' · โค้ดส่วนลด '+escapeHtml(r.promo_code)+(r.discount_points ? ' (−'+fmtNum(r.discount_points)+' แต้ม)' : '') : '')+'</div></div>'+
             '<b class="settings-row-amt">-'+fmtNum(r.points_spent)+' แต้ม</b></div>';
         }).join('');
         if(rows.length > HIST_PAGE){
@@ -7298,8 +7386,11 @@
       sum.textContent = 'ใช้ไปแล้วทั้งหมด '+fmtNum(rows.length)+' โค้ด';
       var shown = stHistExpanded.promo ? rows : rows.slice(0, HIST_PAGE);
       root.innerHTML = shown.map(function(r){
+        // โค้ดส่วนลด: plan_key ว่าง = ใช้ได้ทุกแพ็กเกจ (ใช้ไปแล้วตอนซื้อแพ็กเกจ)
         var amtHtml = r.reward_type==='plan_days'
           ? '<b class="settings-row-amt" style="color:#f3d48e">'+promoPlanName(r.plan_key)+' +'+fmtNum(r.plan_days)+' วัน</b>'
+          : r.reward_type==='discount'
+          ? '<b class="settings-row-amt" style="color:var(--accent)">ส่วนลด '+fmtNum(r.discount_percent)+'%'+(r.plan_key ? ' · '+promoPlanName(r.plan_key) : '')+'</b>'
           : '<b class="settings-row-amt" style="color:var(--success)">+'+fmtNum(r.points)+' แต้ม</b>';
         return '<div class="settings-row"><div class="settings-row-main">'+
           '<div class="settings-row-title">'+escapeHtml(r.code)+'</div>'+
@@ -8128,7 +8219,7 @@
   function openAdminPage(){
     if(adminPanel){ adminPanel.openAdminPage(); return; }
     if(!adminPanelLoading){
-      adminPanelLoading = import('./admin-panel.js?v=20260926-app-html').then(function(mod){
+      adminPanelLoading = import('./admin-panel.js?v=20260927-discount-codes').then(function(mod){
         adminPanel = mod.initAdminPanel({
           supa:supa, escapeHtml:escapeHtml, fmtNum:fmtNum, fmtDate:fmtDate, fmtDateTime:fmtDateTime,
           toast:toast, showConfirm:showConfirm, loadServers:loadServers,

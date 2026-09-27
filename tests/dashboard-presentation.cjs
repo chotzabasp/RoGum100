@@ -361,6 +361,21 @@ checks++;
     assert.equal(blocksChart.config.options.plugins.tooltip.callbacks.label({ dataIndex: 6 }), ' 18.00–21.00 · เฉลี่ย 4.5 คน/วัน');
     assert.ok(b.nodes.usagePeak.innerHTML.includes('<b>18.00–21.00</b>'), 'Peak hero names the 3-hour block');
     assert.equal(blocksChart.config.options.plugins.tooltip.callbacks.label({ dataIndex: 7 }), ' 21.00–24.00 · เฉลี่ย 0 คน/วัน');
+    // จำนวนคนจริง (SQL 20260928000400): แท่ง = คนไม่ซ้ำต่อช่วง · % = ชั่วโมงใช้งาน · หัวการ์ดบอกช่วงคนใช้มากสุด/เงียบสุด
+    b.api.renderUsage({ ...usageData, people_total: 14, blocks: Array.from({ length: 8 }, (_, block) => ({ block, start_hour: block * 3, end_hour: block * 3 + 3,
+      avg_users: 0, total: 0, people: [1, 0, 0, 3, 4, 5, 12, 6][block], user_hours: [1, 0, 0, 4, 6, 8, 21, 10][block] })) });
+    const peopleChart = b.charts.filter(c => c.id === 'chartHours').pop();
+    assert.deepEqual(plain(peopleChart.config.data.datasets[0].data), [1, 0, 0, 3, 4, 5, 12, 6], 'Bars show real people counts');
+    const peopleColors = peopleChart.config.data.datasets[0].backgroundColor;
+    assert.ok(peopleColors.filter(c => c === peopleColors[6]).length === 1, 'Only the busiest block is highlighted');
+    assert.equal(peopleChart.config.options.plugins.tooltip.callbacks.label({ dataIndex: 6 }), ' 18.00–21.00 · 12 คน · 42% ของการใช้งาน');
+    assert.ok(b.nodes.usagePeak.innerHTML.includes('<span>คนใช้มากสุด</span><b>18.00–21.00</b><span>· 12 คน (42%)</span>'), 'Busiest block with people and share');
+    assert.ok(b.nodes.usagePeak.innerHTML.includes('เงียบสุด 03.00–06.00 · 0 คน'), 'Quietest block (first of ties)');
+    assert.equal(b.nodes.usageNote.textContent, 'จำนวนคนที่เข้าใช้ในแต่ละช่วง ตลอด 30 วันที่เลือก (ทั้งหมด 14 คน) · นับเฉพาะที่ล็อกอิน');
+    assert.equal(b.nodes.usageLegend.textContent, 'จำนวนคน');
+    b.api.renderUsage({ ...usageData, people_total: 0, blocks: Array.from({ length: 8 }, (_, block) => ({ block, avg_users: 0, total: 0, people: 0, user_hours: 0 })) });
+    assert.equal(b.nodes.usagePeak.innerHTML, '<span>ยังไม่มีข้อมูล</span>', 'No usage yet');
+    assert.equal(peopleChart.config.options.plugins.tooltip.callbacks.label({ dataIndex: 0 }).includes('NaN'), false);
     for (const text of ['<b>38%</b><span>กลับมาวันถัดไป</span><small>3 จาก 8 คนที่สมัครในช่วงนี้</small>',
       '<b>—</b><span>กลับมาภายใน 7 วัน</span><small>ยังไม่มีคนสมัครครบ 7 วัน</small>', '<b>1<small>ชม.</small> 15<small>นาที/คน/วัน</small></b>']) {
       assert.ok(b.nodes.usageStats.innerHTML.includes(text), `Usage stats show ${text}`);

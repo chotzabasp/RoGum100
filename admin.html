@@ -224,6 +224,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 /* ---------- ช่วงเวลาที่คนใช้งาน + การกลับมาใช้ซ้ำ ---------- */
 .usage-hero{flex-wrap:wrap;gap:.2rem .5rem}
 .usage-hero b{color:var(--c3)}
+.usage-quiet{flex-basis:100%;font-size:.8rem;color:var(--text-dim)}
 .usage-stats{grid-template-columns:minmax(0,1fr)}
 .usage-stats .stat>small{display:block;font-size:.76rem;color:var(--text-mute);margin-top:.2rem;line-height:1.6}
 @media (max-width:900px){ .usage-stats{grid-template-columns:repeat(3,minmax(0,1fr))} }
@@ -443,7 +444,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
           <div class="card-head"><div class="card-title">ช่วงเวลาที่คนใช้งาน</div><span class="card-note" id="usageNote"></span></div>
           <div class="chart-hero usage-hero" id="usagePeak"></div>
           <div class="chart-box"><canvas id="chartHours" aria-label="กราฟจำนวนผู้ใช้งานเฉลี่ยต่อวันแยกตามช่วงเวลา" role="img"></canvas></div>
-          <div class="legend"><span><i style="background:var(--c1)"></i>ผู้ใช้งานเฉลี่ยต่อวัน</span><span><i style="background:var(--c3)"></i>ช่วงพีค</span></div>
+          <div class="legend"><span><i style="background:var(--c1)"></i><span id="usageLegend">ผู้ใช้งานเฉลี่ยต่อวัน</span></span><span><i style="background:var(--c3)"></i>ช่วงพีค</span></div>
         </section>
         <section class="card">
           <div class="card-head"><div class="card-title">การกลับมาใช้ซ้ำ &amp; เวลาใช้งาน</div><span class="card-note">นับการใช้งานเฉพาะที่ล็อกอิน (ไม่นับบัญชีแอดมิน)</span></div>
@@ -980,25 +981,50 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   }
   function renderUsage(u){
     var byBlock = Array.isArray(u.blocks) && u.blocks.length > 0;
+    // จำนวนคนจริง (SQL 20260928000400): แท่ง = คนไม่ซ้ำที่เข้าใช้ช่วงนั้นตลอดช่วงวันที่เลือก · % = สัดส่วนชั่วโมงใช้งาน
+    // ยังไม่มี people (SQL เก่า) = เฉลี่ยคนต่อวันแบบเดิม · ยังไม่มี blocks = รายชั่วโมง 24 แท่ง
+    var byPeople = byBlock && u.blocks[0] && u.blocks[0].people != null;
     var n = byBlock ? 8 : 24, slots = [];
-    for(var h = 0; h < n; h++) slots.push({ avg:0, total:0 });
+    for(var h = 0; h < n; h++) slots.push({ avg:0, total:0, people:0, hours:0 });
     (byBlock ? u.blocks : (u.hours || [])).forEach(function(x){
       var i = Number(byBlock ? x.block : x.hour);
-      if(i >= 0 && i < n) slots[i] = { avg:Number(x.avg_users || 0), total:Number(x.total || 0) };
+      if(i >= 0 && i < n) slots[i] = { avg:Number(x.avg_users || 0), total:Number(x.total || 0),
+                                       people:Number(x.people || 0), hours:Number(x.user_hours || 0) };
     });
     var rangeOf = byBlock ? blockRange : hourRange;
-    // ช่วงพีค = ช่วงที่มีคนใช้มากที่สุด (เท่ากัน = เอาช่วงหลัง)
-    var peak = -1, best = 0;
-    slots.forEach(function(s, i){ if(s.total > 0 && s.total >= best){ best = s.total; peak = i; } });
-    $('usagePeak').innerHTML = peak < 0 ? '<span>ยังไม่มีข้อมูล</span>'
-      : '<span>ช่วงพีค</span><b>' + rangeOf(peak) + '</b><span>· เฉลี่ย ' + fmt1(slots[peak].avg) + ' คน/วัน</span>';
-    $('usageNote').textContent = 'เฉลี่ยต่อวันจาก ' + fmt(u.effective_days) + ' วันที่มีข้อมูลในช่วง ' + fmt(u.days || state.days) + ' วัน · นับเฉพาะที่ล็อกอิน';
+    var sumHours = slots.reduce(function(a, s){ return a + s.hours; }, 0);
+    var share = function(s){ return sumHours ? fmt1(s.hours / sumHours * 100) + '%' : '0%'; };
+    var value = function(s){ return byPeople ? s.people : s.avg; };
+    // ช่วงพีค = ช่วงที่มีคนใช้มากที่สุด (โหมดจำนวนคน: เท่ากัน = ชั่วโมงใช้งานมากกว่า แล้วเอาช่วงหลัง)
+    var peak = -1, quiet = -1;
+    slots.forEach(function(s, i){
+      var key = byPeople ? s.people : s.total, tie = byPeople ? s.hours : 0;
+      if(key > 0 && (peak < 0 || key > (byPeople ? slots[peak].people : slots[peak].total)
+                     || (key === (byPeople ? slots[peak].people : slots[peak].total) && tie >= (byPeople ? slots[peak].hours : 0)))) peak = i;
+      // เงียบสุด = คนน้อยสุด (เท่ากัน = ชั่วโมงใช้งานน้อยกว่า แล้วเอาช่วงแรก)
+      if(quiet < 0 || s.people < slots[quiet].people || (s.people === slots[quiet].people && s.hours < slots[quiet].hours)) quiet = i;
+    });
+    if(byPeople){
+      $('usagePeak').innerHTML = peak < 0 ? '<span>ยังไม่มีข้อมูล</span>'
+        : '<span>คนใช้มากสุด</span><b>' + rangeOf(peak) + '</b><span>· ' + fmt(slots[peak].people) + ' คน (' + share(slots[peak]) + ')</span>' +
+          '<span class="usage-quiet">เงียบสุด ' + rangeOf(quiet) + ' · ' + fmt(slots[quiet].people) + ' คน</span>';
+      $('usageNote').textContent = 'จำนวนคนที่เข้าใช้ในแต่ละช่วง ตลอด ' + fmt(u.days || state.days) + ' วันที่เลือก (ทั้งหมด ' + fmt(u.people_total) + ' คน) · นับเฉพาะที่ล็อกอิน';
+      $('usageLegend').textContent = 'จำนวนคน';
+    } else {
+      $('usagePeak').innerHTML = peak < 0 ? '<span>ยังไม่มีข้อมูล</span>'
+        : '<span>ช่วงพีค</span><b>' + rangeOf(peak) + '</b><span>· เฉลี่ย ' + fmt1(slots[peak].avg) + ' คน/วัน</span>';
+      $('usageNote').textContent = 'เฉลี่ยต่อวันจาก ' + fmt(u.effective_days) + ' วันที่มีข้อมูลในช่วง ' + fmt(u.days || state.days) + ' วัน · นับเฉพาะที่ล็อกอิน';
+      $('usageLegend').textContent = 'ผู้ใช้งานเฉลี่ยต่อวัน';
+    }
     var c1 = css('--c1'), c3 = css('--c3');
     var opts = baseOptions();
+    // 8 ช่วง: ให้ป้ายเวลาขึ้นครบทุกแท่ง (ค่าเริ่มต้นของกราฟจะข้ามป้ายเมื่อจอแคบ) ตัวเล็กลงให้พอดี
+    if(byBlock) opts.scales.x.ticks = Object.assign({}, opts.scales.x.ticks, { autoSkip:false, font:{ family:'Inter', size:10 } });
     opts.plugins.tooltip.callbacks = {
       title:function(){ return ''; },
       label:function(ctx){
         var s = slots[ctx.dataIndex];
+        if(byPeople) return ' ' + rangeOf(ctx.dataIndex) + ' · ' + fmt(s.people) + ' คน · ' + share(s) + ' ของการใช้งาน';
         return ' ' + rangeOf(ctx.dataIndex) + ' · เฉลี่ย ' + fmt1(s.avg) + ' คน/วัน' + (byBlock ? '' : ' (รวม ' + fmt(s.total) + ' ครั้ง)');
       }
     };
@@ -1008,8 +1034,8 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       var r = blockRange(i).split('–');
       return [r[0] + '–', r[1]];
     });
-    drawChart('chartHours', { type:'bar', data:{ labels:labels, datasets:[{ label:'ผู้ใช้งานเฉลี่ย',
-      data:slots.map(function(s){ return s.avg; }),
+    drawChart('chartHours', { type:'bar', data:{ labels:labels, datasets:[{ label:byPeople ? 'จำนวนคน' : 'ผู้ใช้งานเฉลี่ย',
+      data:slots.map(value),
       backgroundColor:slots.map(function(s, i){ return i === peak ? c3 : alpha(c1, .85); }),
       hoverBackgroundColor:slots.map(function(s, i){ return i === peak ? c3 : c1; }),
       borderRadius:{ topLeft:3, topRight:3 }, borderSkipped:'bottom', maxBarThickness:byBlock ? 44 : 18 }] }, options:opts });

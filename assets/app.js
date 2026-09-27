@@ -336,12 +336,12 @@
   var RATE_MAX_DEVIATION = 0.30; // block a posted price more than ±30% away from the current rate (typo guard)
   // ลงประกาศใหม่เสียแต้มตามระยะเวลา (แก้ไขประกาศเดิมยังฟรีเหมือนเดิม — ดู postAnnounceSubmitBtn)
   // ค่า cost ต้องตรงกับที่ฟังก์ชัน post_announcement() ฝั่ง DB คำนวณเป๊ะๆ (เทียบจาก value เป็น ms)
+  // ราคาชุด 27 ก.ย. 2569 (migration 20260927000800_announcement_prices_hours.sql) — 5/15/30 นาทีเลิกใช้แล้ว
   var ANNOUNCE_DURATION_OPTIONS = [
-    { value:300000,   label:'5 นาที',  cost:1 },
-    { value:900000,   label:'15 นาที', cost:2 },
-    { value:1800000,  label:'30 นาที', cost:3 },
-    { value:3600000,  label:'1 ชม.',   cost:5 },
-    { value:10800000, label:'3 ชม.',   cost:10 }
+    { value:3600000,  label:'1 ชม.',  cost:3 },
+    { value:10800000, label:'3 ชม.',  cost:5 },
+    { value:21600000, label:'6 ชม.',  cost:8 },
+    { value:43200000, label:'12 ชม.', cost:12 }
   ];
   var ANNOUNCE_DEFAULT_DURATION = 3600000; // ค่าเริ่มต้นตอนลงประกาศใหม่ = 1 ชม.
   function serverRateById(id){
@@ -2628,45 +2628,35 @@
   }
 
   // Presentation only: scroll the real announcements only when their content overflows.
+  // วนต่อเนื่องเป็นวงกลม: การ์ดยาวเกินแถบ → ต่อท้ายด้วยสำเนาอีกชุด (ให้ตามองอย่างเดียว: aria-hidden, ปุ่ม Tab ข้าม)
+  // แล้วเลื่อนไปทางเดียวตลอด พอเลื่อนครบหนึ่งชุด (tickerLoopPeriod) ก็ถอยกลับเท่าหนึ่งชุดพอดี — ภาพเหมือนเดิมเป๊ะ
+  // เพราะสำเนาหน้าตาเหมือนกัน จึงไม่มีจังหวะดึงกลับไปต้นแถบแบบเดิม
   var tickerTrackElement = document.getElementById('tickerTrack');
   var tickerWrapElement = tickerTrackElement.parentElement;
   var tickerMotionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-  var tickerFrame = 0, tickerLastFrame = 0, tickerMaxScroll = 0, tickerOffset = 0;
-  var tickerPhase = 'forward', tickerPhaseTime = 0, tickerReturnFrom = 0;
+  var tickerFrame = 0, tickerLastFrame = 0, tickerLoopPeriod = 0, tickerOffset = 0;
   var tickerHovered = false, tickerPointerId = null, tickerResumeAt = 0;
+
+  // พับตำแหน่งให้อยู่ในหนึ่งชุด (0 ถึง tickerLoopPeriod) — ลากเข้าไปในชุดสำเนาแล้วปล่อย ก็กลับมาจุดเดียวกันในชุดแรก
+  function wrapTickerOffset(x){
+    if(tickerLoopPeriod<=0) return Math.max(0, x);
+    x = x % tickerLoopPeriod;
+    return x<0 ? x+tickerLoopPeriod : x;
+  }
 
   function animateTickerFrame(now){
     tickerFrame = 0;
-    if(tickerMotionPreference.matches || tickerMaxScroll<=1) return;
+    if(tickerMotionPreference.matches || tickerLoopPeriod<=0) return;
     var elapsed = tickerLastFrame ? Math.min(now - tickerLastFrame, 64) : 0;
     tickerLastFrame = now;
     var active = document.activeElement;
     var keyboardFocus = active && tickerWrapElement.contains(active) && active.matches(':focus-visible');
     if(tickerHovered || tickerPointerId!==null || now<tickerResumeAt || keyboardFocus || document.hidden){
-      tickerOffset = Math.max(0, Math.min(tickerWrapElement.scrollLeft, tickerMaxScroll));
-      tickerPhase = 'forward';
-      tickerPhaseTime = 0;
-    }else if(tickerPhase==='end'){
-      tickerPhaseTime += elapsed;
-      if(tickerPhaseTime>=1200){
-        tickerPhase = 'return';
-        tickerPhaseTime = 0;
-        tickerReturnFrom = tickerOffset;
-      }
-    }else if(tickerPhase==='return'){
-      tickerPhaseTime += elapsed;
-      var progress = Math.min(1, tickerPhaseTime/650);
-      var eased = progress*progress*(3-2*progress);
-      tickerOffset = tickerReturnFrom*(1-eased);
-      tickerWrapElement.scrollLeft = tickerOffset;
-      if(progress===1){ tickerPhase = 'start'; tickerPhaseTime = 0; }
-    }else if(tickerPhase==='start'){
-      tickerPhaseTime += elapsed;
-      if(tickerPhaseTime>=650){ tickerPhase = 'forward'; tickerPhaseTime = 0; }
+      // หยุดรอ (ชี้/แตะ/ลาก/โฟกัส/ซ่อนแท็บ): จำตำแหน่งที่ผู้ใช้เลื่อนไว้ แล้วเลื่อนต่อจากตรงนั้น
+      tickerOffset = tickerWrapElement.scrollLeft;
     }else{
-      tickerOffset = Math.min(tickerMaxScroll, tickerOffset + elapsed * 0.024); // 24px/second
+      tickerOffset = wrapTickerOffset(tickerOffset + elapsed * 0.024); // 24px/second
       tickerWrapElement.scrollLeft = tickerOffset;
-      if(tickerOffset>=tickerMaxScroll){ tickerPhase = 'end'; tickerPhaseTime = 0; }
     }
     tickerFrame = requestAnimationFrame(animateTickerFrame);
   }
@@ -2675,13 +2665,32 @@
     cancelAnimationFrame(tickerFrame);
     tickerFrame = 0;
     tickerLastFrame = 0;
-    tickerPhase = 'forward';
-    tickerPhaseTime = 0;
-    tickerMaxScroll = Math.max(0, tickerWrapElement.scrollWidth-tickerWrapElement.clientWidth);
-    tickerOffset = Math.max(0, Math.min(tickerWrapElement.scrollLeft, tickerMaxScroll));
+    tickerLoopPeriod = 0;
+    // เอาสำเนาชุดเก่าออกก่อน แล้ววัดใหม่ว่าการ์ดจริงยาวเกินแถบไหม
+    tickerTrackElement.querySelectorAll('[data-ticker-clone]').forEach(function(el){ el.remove(); });
+    var originals = tickerTrackElement.querySelectorAll('[data-announce-id]');
+    var overflow = tickerWrapElement.scrollWidth - tickerWrapElement.clientWidth;
+    if(!originals.length || overflow<=1 || tickerMotionPreference.matches || !tickerWrapElement.clientWidth){
+      tickerOffset = Math.max(0, Math.min(tickerWrapElement.scrollLeft, Math.max(0, overflow)));
+      tickerWrapElement.scrollLeft = tickerOffset;
+      return;
+    }
+    var copies = document.createDocumentFragment();
+    originals.forEach(function(el){
+      var copy = el.cloneNode(true);
+      copy.removeAttribute('data-announce-id');
+      copy.setAttribute('data-ticker-clone', '');
+      copy.setAttribute('aria-hidden', 'true');
+      copy.querySelectorAll('a').forEach(function(a){ a.tabIndex = -1; });
+      copies.appendChild(copy);
+    });
+    tickerTrackElement.appendChild(copies);
+    // ระยะหนึ่งชุด = จากการ์ดใบแรกถึงสำเนาใบแรก (รวมช่องว่างระหว่างการ์ด) วัดแบบทศนิยม ภาพไม่กระตุกตอนพับกลับ
+    var firstCopy = tickerTrackElement.querySelector('[data-ticker-clone]');
+    tickerLoopPeriod = firstCopy.getBoundingClientRect().left - originals[0].getBoundingClientRect().left;
+    if(!(tickerLoopPeriod>0)){ tickerLoopPeriod = 0; return; }
+    tickerOffset = wrapTickerOffset(tickerWrapElement.scrollLeft);
     tickerWrapElement.scrollLeft = tickerOffset;
-    if(!tickerTrackElement.querySelector('[data-announce-id]') || tickerMaxScroll<=1 ||
-       tickerMotionPreference.matches || !tickerWrapElement.clientWidth) return;
     tickerFrame = requestAnimationFrame(animateTickerFrame);
   }
 

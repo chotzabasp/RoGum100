@@ -132,7 +132,7 @@ function withoutPresentation(h) {
 // 2026-09-28 live strip ("ตอนนี้", admin_live) + usage cards (admin_usage) are purely additive: their
 // self-contained functions/state, the exact hook lines that call them, and new explanatory comment lines are
 // removed before comparing. Every other line (including every existing comment) must still match the baseline.
-const addedFunctions = ['rpcMissing', 'fmt1', 'hourRange', 'minutesHtml', 'renderLive', 'loadLive', 'fetchUsage', 'showUsage', 'renderUsage'];
+const addedFunctions = ['rpcMissing', 'fmt1', 'hourRange', 'blockRange', 'minutesHtml', 'renderLive', 'loadLive', 'fetchUsage', 'showUsage', 'renderUsage'];
 const addedCode = [
   'var live = { busy:false, off:false, shown:false };',
   'var usage = { seq:0, off:false };',
@@ -161,7 +161,11 @@ assert.equal(comparableSource(modified), comparableSource(reference),
 checks++;
 
 const plain = value => JSON.parse(JSON.stringify(value));
-function snapshot(h, ids = originalIds.filter(id => !['plans', 'plansNote'].includes(id))) {
+// Analytics parts (live strip / usage cards / landing block, added 2026-09-28) are checked by their own assertions
+// below; once they are in the baseline, later intentional edits to them must not fail the unchanged-cards comparison.
+const ANALYTICS_IDS = ['liveStrip', 'liveTiles', 'liveSince', 'liveStatus', 'usageRow', 'usagePeak', 'usageNote', 'usageStats',
+  'chartHours', 'landingBlock', 'landingSince', 'landingStats'];
+function snapshot(h, ids = originalIds.filter(id => !['plans', 'plansNote'].includes(id) && !ANALYTICS_IDS.includes(id))) {
   return Object.fromEntries(ids.map(id => {
     const n = h.nodes[id];
     return [id, { text: n.textContent, html: n.innerHTML, hidden: n.hidden, disabled: n.disabled, classes: n.className }];
@@ -281,7 +285,7 @@ checks++;
       await b.respond('admin_live', { data: {} });
       // Pre-launch zero/empty data: friendly text, never NaN/undefined.
       assert.equal(b.nodes.liveSince.hidden, false, 'Tracking-start note shows before any heartbeat');
-      assert.ok(b.nodes.liveTiles.innerHTML.includes('ยังไม่มีข้อมูล') && !/NaN|undefined/.test(b.nodes.liveTiles.innerHTML), 'Empty live data renders zeros');
+      assert.ok(b.nodes.liveTiles.innerHTML.includes('>0<small>คน</small>') && !/NaN|undefined/.test(b.nodes.liveTiles.innerHTML), 'Empty live data renders zeros');
       await b.respond('admin_usage', { data: { days: 30, effective_days: 1, tracking_since: null, hours: [], avg_minutes_per_day: 0, retention: {} } });
       assert.equal(b.nodes.usagePeak.innerHTML, '<span>ยังไม่มีข้อมูล</span>', 'Empty usage hero');
       assert.ok(b.nodes.usageStats.innerHTML.includes('ยังไม่มีคนสมัครในช่วงนี้') && !/NaN|undefined/.test(b.nodes.usageStats.innerHTML), 'Empty usage stats');
@@ -330,11 +334,12 @@ checks++;
     assert.equal(b.nodes.liveStrip.hidden, false, 'Live strip shows once admin_live answers');
     assert.equal(b.nodes.liveSince.hidden, true, 'Tracking note hidden once tracking has started');
     for (const text of ['ออนไลน์ตอนนี้', '>5<small>คน</small>', 'เปิดดูอยู่ 3 · เปิดทิ้งไว้ 2', 'จับเวลาบอส 4', 'ไม่ทราบหน้า 1',
-      'เมื่อวาน 7', 'จ่ายเงิน 2 · ฟรี 7<', '23:00–00:00', 'ใช้งาน 4 คน', '12.5<small>นาที/คน</small>',
+      'เมื่อวาน 7', 'จ่ายเงิน 2 · ฟรี 7<', '12.5<small>นาที/คน</small>',
       'ใช้งานวันนี้ 2 · ถูกล็อก <span class="pill pill-danger">1</span>', 'หัวปาร์ตี้ที่ถูกล็อก: ', '&lt;i&gt;Host&lt;/i&gt; (2 คน)']) {
       assert.ok(tiles.includes(text), `Live tiles show ${text}`);
     }
     assert.ok(!tiles.includes('สิทธิเดิม'), 'Legacy count only shown when above zero');
+    assert.ok(!tiles.includes('ช่วงพีควันนี้') && (tiles.match(/class="live-tile/g) || []).length === 4, 'Live strip has 4 tiles (no peak tile)');
     assert.ok(!/NaN|undefined|<i>/.test(tiles), 'Live tiles never show NaN/undefined or raw names');
 
     assert.equal(b.nodes.usageRow.hidden, false, 'Usage row shows once admin_usage answers');
@@ -343,9 +348,19 @@ checks++;
     assert.deepEqual(plain(hoursChart.config.data.labels), Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')), 'Hour labels 00-23');
     const colors = hoursChart.config.data.datasets[0].backgroundColor;
     assert.ok(colors[20] !== colors[9] && colors.filter(c => c === colors[20]).length === 1, 'Only the peak hour is highlighted');
-    assert.equal(hoursChart.config.options.plugins.tooltip.callbacks.label({ dataIndex: 20 }), ' 20:00–21:00 · เฉลี่ย 4.5 คน/วัน (รวม 14 ครั้ง)');
-    assert.ok(b.nodes.usagePeak.innerHTML.includes('<b>20:00–21:00</b>') && b.nodes.usagePeak.innerHTML.includes('เฉลี่ย 4.5 คน/วัน'), 'Peak hero line');
+    assert.equal(hoursChart.config.options.plugins.tooltip.callbacks.label({ dataIndex: 20 }), ' 20.00–21.00 · เฉลี่ย 4.5 คน/วัน (รวม 14 ครั้ง)');
+    assert.ok(b.nodes.usagePeak.innerHTML.includes('<b>20.00–21.00</b>') && b.nodes.usagePeak.innerHTML.includes('เฉลี่ย 4.5 คน/วัน'), 'Peak hero line');
     assert.equal(b.nodes.usageNote.textContent, 'เฉลี่ยต่อวันจาก 3 วันที่มีข้อมูลในช่วง 30 วัน · นับเฉพาะที่ล็อกอิน');
+    b.api.renderUsage({ ...usageData, blocks: Array.from({ length: 8 }, (_, block) => ({ block, start_hour: block * 3, end_hour: block * 3 + 3,
+      avg_users: block === 6 ? 4.5 : block === 3 ? 1 : 0, total: block === 6 ? 14 : block === 3 ? 3 : 0 })) });
+    const blocksChart = b.charts.filter(c => c.id === 'chartHours').pop();
+    assert.deepEqual(plain(blocksChart.config.data.labels), Array.from({ length: 8 }, (_, i) =>
+      [String(i * 3).padStart(2, '0') + '.00–', String(i * 3 + 3).padStart(2, '0') + '.00']), 'Block labels 00.00–03.00 … 21.00–24.00');
+    const blockColors = blocksChart.config.data.datasets[0].backgroundColor;
+    assert.ok(blockColors[6] !== blockColors[3] && blockColors.filter(c => c === blockColors[6]).length === 1, 'Only the peak block is highlighted');
+    assert.equal(blocksChart.config.options.plugins.tooltip.callbacks.label({ dataIndex: 6 }), ' 18.00–21.00 · เฉลี่ย 4.5 คน/วัน');
+    assert.ok(b.nodes.usagePeak.innerHTML.includes('<b>18.00–21.00</b>'), 'Peak hero names the 3-hour block');
+    assert.equal(blocksChart.config.options.plugins.tooltip.callbacks.label({ dataIndex: 7 }), ' 21.00–24.00 · เฉลี่ย 0 คน/วัน');
     for (const text of ['<b>38%</b><span>กลับมาวันถัดไป</span><small>3 จาก 8 คนที่สมัครในช่วงนี้</small>',
       '<b>—</b><span>กลับมาภายใน 7 วัน</span><small>ยังไม่มีคนสมัครครบ 7 วัน</small>', '<b>1<small>ชม.</small> 15<small>นาที/คน/วัน</small></b>']) {
       assert.ok(b.nodes.usageStats.innerHTML.includes(text), `Usage stats show ${text}`);

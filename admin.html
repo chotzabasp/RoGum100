@@ -208,7 +208,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 @keyframes live-pulse{0%{box-shadow:0 0 0 0 rgba(63,189,117,.55)}70%,100%{box-shadow:0 0 0 7px rgba(63,189,117,0)}}
 #liveStatus{color:var(--warn)}
 .live-since{margin:-.35rem 0 .75rem}
-.live-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.7rem}
+.live-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem}
 .live-tile{display:flex;flex-direction:column;gap:.15rem;min-width:0;background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px;padding:.7rem .8rem}
 .live-label{font-size:.8rem;font-weight:600;color:var(--text-dim);margin-bottom:.15rem}
 .live-value{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:1.55rem;font-weight:700;line-height:1.2;letter-spacing:-.01em}
@@ -218,9 +218,8 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 .live-sub .pill{padding:.05rem .45rem;vertical-align:1px}
 .live-chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.35rem}
 .live-hosts{font-size:.76rem;color:var(--text-dim);line-height:1.6;margin-top:.3rem}
-@media (max-width:1200px){ .live-grid{grid-template-columns:repeat(3,minmax(0,1fr))} .live-tile.wide{grid-column:span 2} }
-@media (max-width:900px){ .live-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
-@media (max-width:560px){ .live-grid{grid-template-columns:minmax(0,1fr)} .live-tile.wide{grid-column:auto} }
+@media (max-width:1100px){ .live-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:560px){ .live-grid{grid-template-columns:minmax(0,1fr)} }
 
 /* ---------- ช่วงเวลาที่คนใช้งาน + การกลับมาใช้ซ้ำ ---------- */
 .usage-hero{flex-wrap:wrap;gap:.2rem .5rem}
@@ -443,7 +442,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         <section class="card">
           <div class="card-head"><div class="card-title">ช่วงเวลาที่คนใช้งาน</div><span class="card-note" id="usageNote"></span></div>
           <div class="chart-hero usage-hero" id="usagePeak"></div>
-          <div class="chart-box"><canvas id="chartHours" aria-label="กราฟจำนวนผู้ใช้งานเฉลี่ยต่อวันแยกตามชั่วโมง" role="img"></canvas></div>
+          <div class="chart-box"><canvas id="chartHours" aria-label="กราฟจำนวนผู้ใช้งานเฉลี่ยต่อวันแยกตามช่วงเวลา" role="img"></canvas></div>
           <div class="legend"><span><i style="background:var(--c1)"></i>ผู้ใช้งานเฉลี่ยต่อวัน</span><span><i style="background:var(--c3)"></i>ช่วงพีค</span></div>
         </section>
         <section class="card">
@@ -893,9 +892,14 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     var v = Number(n);
     return (isFinite(v) ? v : 0).toLocaleString('th-TH', { maximumFractionDigits:1 });
   }
+  // เวลาแบบจุดคั่น (ผู้ใช้ขอ 28 ก.ย. 2569): ชั่วโมงเดียว 23.00–00.00 · ช่วง 3 ชั่วโมง 21.00–24.00
   function hourRange(h){
     var two = function(n){ return (n < 10 ? '0' : '') + n; };
-    return two(h) + ':00–' + two((h + 1) % 24) + ':00';
+    return two(h) + '.00–' + two((h + 1) % 24) + '.00';
+  }
+  function blockRange(b){
+    var two = function(n){ return (n < 10 ? '0' : '') + n; };
+    return two(b * 3) + '.00–' + two(b * 3 + 3) + '.00';
   }
   // นาที → "12.5 นาที/คน" หรือ "1 ชม. 5 นาที/คน" (ตัวเลขใหญ่ หน่วยเล็ก)
   function minutesHtml(min, unit){
@@ -917,7 +921,6 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       return '<span class="pill pill-mute">' + esc(name) + ' ' + fmt(p.count) + '</span>';
     }).join('');
     var legacy = Number(l.today_legacy || 0);
-    var hasPeak = l.peak_hour != null && l.peak_hour !== '';
     var pa = l.parties || {}, locked = Number(pa.locked || 0);
     var hosts = (pa.locked_hosts || []).slice(0, 5);
     var more = Math.max(0, locked - hosts.length);
@@ -927,15 +930,13 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         pages ? '<div class="live-chips">' + pages + '</div>' : ''),
       tile('ใช้งานวันนี้', big(l.today_users, 'คน'), ['เมื่อวาน ' + fmt(l.yesterday_users),
         'จ่ายเงิน ' + fmt(l.today_paid) + ' · ฟรี ' + fmt(l.today_free) + (legacy > 0 ? ' · สิทธิเดิม ' + fmt(legacy) : '')]),
-      tile('ช่วงพีควันนี้', hasPeak ? '<div class="live-value">' + hourRange(Number(l.peak_hour)) + '</div>' : '<div class="live-value none">ยังไม่มีข้อมูล</div>',
-        hasPeak ? ['ใช้งาน ' + fmt(l.peak_users) + ' คน'] : []),
       tile('เวลาเปิดดูเฉลี่ยวันนี้', '<div class="live-value">' + minutesHtml(l.avg_minutes_today, 'นาที/คน') + '</div>', ['นับเฉพาะตอนเปิดดูอยู่']),
       tile('ปาร์ตี้', big(pa.total, 'ปาร์ตี้'),
         ['ใช้งานวันนี้ ' + fmt(pa.active_today) + ' · ถูกล็อก ' + (locked > 0 ? '<span class="pill pill-danger">' + fmt(locked) + '</span>' : '0')],
         hosts.length ? '<div class="live-hosts">หัวปาร์ตี้ที่ถูกล็อก: ' + hosts.map(function(h){
           var tip = h.expired_at ? 'แพ็กจับเวลาบอสหมดเมื่อ ' + fmtDate(h.expired_at) : 'ไม่มีแพ็กจับเวลาบอส';
           return '<span title="' + esc(tip) + '">' + esc(h.name || '-') + ' (' + fmt(h.members) + ' คน)</span>';
-        }).join(', ') + (more ? ' และอีก ' + fmt(more) + ' ปาร์ตี้' : '') + '</div>' : '', 'wide')
+        }).join(', ') + (more ? ' และอีก ' + fmt(more) + ' ปาร์ตี้' : '') + '</div>' : '')
     ].join('');
   }
   function loadLive(){
@@ -978,17 +979,19 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     });
   }
   function renderUsage(u){
-    var slots = [];
-    for(var h = 0; h < 24; h++) slots.push({ avg:0, total:0 });
-    (u.hours || []).forEach(function(x){
-      var i = Number(x.hour);
-      if(i >= 0 && i < 24) slots[i] = { avg:Number(x.avg_users || 0), total:Number(x.total || 0) };
+    var byBlock = Array.isArray(u.blocks) && u.blocks.length > 0;
+    var n = byBlock ? 8 : 24, slots = [];
+    for(var h = 0; h < n; h++) slots.push({ avg:0, total:0 });
+    (byBlock ? u.blocks : (u.hours || [])).forEach(function(x){
+      var i = Number(byBlock ? x.block : x.hour);
+      if(i >= 0 && i < n) slots[i] = { avg:Number(x.avg_users || 0), total:Number(x.total || 0) };
     });
-    // ช่วงพีค = ชั่วโมงที่มีคนใช้มากที่สุด (เท่ากัน = เอาชั่วโมงหลัง เหมือนการ์ด "ตอนนี้")
+    var rangeOf = byBlock ? blockRange : hourRange;
+    // ช่วงพีค = ช่วงที่มีคนใช้มากที่สุด (เท่ากัน = เอาช่วงหลัง)
     var peak = -1, best = 0;
     slots.forEach(function(s, i){ if(s.total > 0 && s.total >= best){ best = s.total; peak = i; } });
     $('usagePeak').innerHTML = peak < 0 ? '<span>ยังไม่มีข้อมูล</span>'
-      : '<span>ช่วงพีค</span><b>' + hourRange(peak) + '</b><span>· เฉลี่ย ' + fmt1(slots[peak].avg) + ' คน/วัน</span>';
+      : '<span>ช่วงพีค</span><b>' + rangeOf(peak) + '</b><span>· เฉลี่ย ' + fmt1(slots[peak].avg) + ' คน/วัน</span>';
     $('usageNote').textContent = 'เฉลี่ยต่อวันจาก ' + fmt(u.effective_days) + ' วันที่มีข้อมูลในช่วง ' + fmt(u.days || state.days) + ' วัน · นับเฉพาะที่ล็อกอิน';
     var c1 = css('--c1'), c3 = css('--c3');
     var opts = baseOptions();
@@ -996,14 +999,20 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       title:function(){ return ''; },
       label:function(ctx){
         var s = slots[ctx.dataIndex];
-        return ' ' + hourRange(ctx.dataIndex) + ' · เฉลี่ย ' + fmt1(s.avg) + ' คน/วัน (รวม ' + fmt(s.total) + ' ครั้ง)';
+        return ' ' + rangeOf(ctx.dataIndex) + ' · เฉลี่ย ' + fmt1(s.avg) + ' คน/วัน' + (byBlock ? '' : ' (รวม ' + fmt(s.total) + ' ครั้ง)');
       }
     };
-    drawChart('chartHours', { type:'bar', data:{ labels:slots.map(function(s, i){ return (i < 10 ? '0' : '') + i; }), datasets:[{ label:'ผู้ใช้งานเฉลี่ย',
+    // ช่วง 3 ชั่วโมง: ป้ายแกนเป็น 2 บรรทัด (เริ่ม– / จบ) ไม่ให้ชนกัน
+    var labels = slots.map(function(s, i){
+      if(!byBlock) return (i < 10 ? '0' : '') + i;
+      var r = blockRange(i).split('–');
+      return [r[0] + '–', r[1]];
+    });
+    drawChart('chartHours', { type:'bar', data:{ labels:labels, datasets:[{ label:'ผู้ใช้งานเฉลี่ย',
       data:slots.map(function(s){ return s.avg; }),
       backgroundColor:slots.map(function(s, i){ return i === peak ? c3 : alpha(c1, .85); }),
       hoverBackgroundColor:slots.map(function(s, i){ return i === peak ? c3 : c1; }),
-      borderRadius:{ topLeft:3, topRight:3 }, borderSkipped:'bottom', maxBarThickness:18 }] }, options:opts });
+      borderRadius:{ topLeft:3, topRight:3 }, borderSkipped:'bottom', maxBarThickness:byBlock ? 44 : 18 }] }, options:opts });
 
     var r = u.retention || {};
     var d1e = Number(r.d1_eligible || 0), d1r = Number(r.d1_returned || 0);

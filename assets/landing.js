@@ -133,4 +133,53 @@
       if (next !== undefined) { event.preventDefault(); selectTab(tabs[next], true); }
     });
   });
+
+  // ---------- นับผู้เข้าชมหน้าแรก → log_events (ตัวเดียวกับที่แอปใช้) → แดชบอร์ดแอดมิน ----------
+  // ใช้รหัสสุ่มของเครื่องชุดเดียวกับแอป (localStorage gum100_vid) จึงตามได้ว่าคนที่เข้าหน้าแรกไปเข้าแอป/สมัครต่อไหม
+  // ไม่เก็บข้อมูลส่วนตัว · เข้าหน้าแรก = นับครั้งเดียวต่อการเปิดเว็บ (แท็บ) · กดปุ่มไปแอป = นับว่ากดปุ่มไหน
+  // ค่า URL/คีย์สาธารณะ (publishable) ชุดเดียวกับใน assets/app.js
+  const SUPA_URL = 'https://jnwckkcjurchnppekhpc.supabase.co';
+  const SUPA_KEY = 'sb_publishable_Z_xnoeSTMY2t-VqaDfPmKg_FfOCjTOf';
+  function visitorId() {
+    try {
+      let vid = localStorage.getItem('gum100_vid');
+      if (!vid || !/^[A-Za-z0-9-]{8,40}$/.test(vid)) {
+        vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12));
+        localStorage.setItem('gum100_vid', vid);
+      }
+      return vid;
+    } catch (e) { return null; }
+  }
+  // ประเภทอุปกรณ์แบบเดียวกับแอป: จอสัมผัส + ด้านสั้นของจอ < 600px = มือถือ, จอสัมผัสที่ใหญ่กว่านั้น = แท็บเล็ต
+  function deviceType() {
+    const coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+    const shortSide = Math.min(screen.width || 0, screen.height || 0) || Math.min(window.innerWidth, window.innerHeight);
+    if (coarse && shortSide < 600) return 'mobile';
+    return coarse ? 'tablet' : 'desktop';
+  }
+  function sendEvents(events) {
+    const vid = visitorId();
+    if (!vid) return;
+    try {
+      // keepalive: ส่งให้ถึงแม้กำลังเปลี่ยนไปหน้าแอป
+      fetch(SUPA_URL + '/rest/v1/rpc/log_events', {
+        method: 'POST', keepalive: true,
+        headers: { apikey: SUPA_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_visitor: vid, p_events: events })
+      }).catch(() => {});
+    } catch (e) { /* นับไม่ได้ไม่เป็นไร หน้าเว็บทำงานต่อปกติ */ }
+  }
+  try {
+    if (!sessionStorage.getItem('gum100_landing')) {
+      sessionStorage.setItem('gum100_landing', '1');
+      sendEvents([{ e: 'landing_view', p: 'landing', m: deviceType() }]);
+    }
+  } catch (e) { sendEvents([{ e: 'landing_view', p: 'landing', m: deviceType() }]); }
+  document.addEventListener('click', event => {
+    const link = event.target.closest && event.target.closest('a[href^="app.html"]');
+    if (!link) return;
+    const href = link.getAttribute('href');
+    const kind = /auth=register/.test(href) ? 'signup' : /auth=login/.test(href) ? 'login' : /#pricing/.test(href) ? 'pricing' : 'app';
+    sendEvents([{ e: 'landing_cta', p: 'landing', m: kind }]);
+  });
 })();

@@ -101,8 +101,26 @@
       error('js', ev.message + at);
     });
     window.addEventListener('unhandledrejection', function(ev){ error('promise', errText(ev && ev.reason)); });
-    return { push:push, page:page, flush:flush, error:function(kind, x){ error(kind, errText(x)); } };
+    return { push:push, page:page, flush:flush, error:function(kind, x){ error(kind, errText(x)); },
+             current:function(){ return curPage; }, device:deviceType };
   })();
+
+  // ---------- สัญญาณ "ยังอยู่" (แดชบอร์ดแอดมิน: ออนไลน์ตอนนี้ / ใช้งานวันนี้ / ช่วงเวลาใช้งาน / เวลาใช้งาน) ----------
+  // เฉพาะตอนล็อกอิน · ทุก ~1 นาที ทั้งแท็บที่เปิดดูและแท็บพื้นหลัง (ผู้ใช้ให้นับคนที่เปิดจับเวลาบอสทิ้งไว้ด้วย)
+  // + ส่งทันทีตอนสลับแท็บ ให้สถานะ "เปิดดูอยู่/พื้นหลัง" ตรง · ฐานข้อมูลนับนาทีใช้งานไม่เกิน 1 ครั้ง/นาที (หลายแท็บไม่นับซ้ำ)
+  // ยังไม่ได้รัน SQL (ไม่มี touch_presence) → หยุดส่งจนกว่าจะรีเฟรชหน้า
+  var presenceLastAt = 0, presenceOff = false;
+  function presencePing(force){
+    if(presenceOff || !App.session || !App.session.id || App.isGuest) return;
+    var now = Date.now();
+    if(now - presenceLastAt < (force ? 15000 : 50000)) return;
+    presenceLastAt = now;
+    supa.rpc('touch_presence', { p_page: Track.current(), p_visible: !document.hidden, p_device: Track.device() }).then(function(res){
+      if(res && res.error && /touch_presence|PGRST202/.test((res.error.message||'')+' '+(res.error.code||''))) presenceOff = true;
+    }, function(){});
+  }
+  setInterval(function(){ presencePing(false); }, 60000);
+  document.addEventListener('visibilitychange', function(){ presencePing(true); });
 
   var pad2 = function(n){ return String(n).padStart(2,'0'); };
   var todayKey = function(ts){ return new Date(ts).toDateString(); };
@@ -5726,6 +5744,7 @@
       checkExpiryReminder();
       checkPackageReminder();
       checkHostPlanReminder();
+      presencePing(true); // ล็อกอินเสร็จ = ออนไลน์ทันที ไม่ต้องรอรอบ 1 นาที
       // บัญชีเก่าก่อนมีช่องเซิร์ฟเวอร์ตอนสมัคร (ยังว่าง) → บังคับเลือกครั้งเดียวก่อนใช้งาน (บัญชีใหม่เลือกจากฟอร์มสมัครแล้ว)
       if(!App.profile || !(App.profile.servers||[]).length) openServerPick();
     });

@@ -3896,3 +3896,15 @@ ul.post-announce-note.party-add-rules .party-add-price-free{color:#94dfbd}
 ul.post-announce-note.party-add-rules .party-add-price-paid{color:#f0cf86}
 ul.post-announce-note.party-add-rules .party-add-warn{color:var(--warn)}
 ul.post-announce-note.party-add-rules .party-add-keep{white-space:nowrap} /* วลีสั้นที่ไม่ควรขาดกลางคำ (เช่น "ทุก / อย่าง") — ขึ้นบรรทัดใหม่ทั้งก้อน */
+
+/* การ์ดประวัติซื้อ–ขายกะทัดรัดขึ้น: ลดเฉพาะระยะห่าง — ข้อความ/ขนาดตัวอักษร/สีเท่าเดิม (ผู้ใช้ขอ 28 ก.ย. 2569)
+   การ์ดไอเทมตอนยังไม่กดเปิด (แถวเตี้ย) มีกฎของตัวเองที่เจาะจงกว่า ไม่โดนกฎนี้ */
+#view-home #mrHistoryList .mr-it-row.mr-ic:is(.history-alt-odd,.history-alt-even){padding:.55rem .85rem;row-gap:.45rem}
+#view-home #mrHistoryList .mr-it-row.mr-ic.mr-history-zeny{margin-top:.5rem}
+#view-home #mrHistoryList .mr-ic>.mr-ic-head{padding-bottom:.4rem;min-height:34px}
+#view-home #mrHistoryList .mr-it-cell{gap:.05rem;line-height:1.35}
+#view-home #mrHistoryList .mr-it-cell b{line-height:1.35}
+#view-home #mrHistoryList .mr-it-cell small,
+#view-home #mrHistoryList .mr-it-cell .mr-it-avg,
+#view-home #mrHistoryList .mr-it-cell.profit small,
+#view-home #mrHistoryList .mr-it-cell.profit .mr-profit-sale-note{line-height:1.4}

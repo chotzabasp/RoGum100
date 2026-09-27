@@ -202,6 +202,40 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 .funnel-val span{color:var(--text-mute);font-size:.72rem;margin-left:.35rem}
 @media (max-width:600px){ .funnel-step{grid-template-columns:minmax(0,1fr) auto} .funnel-track{grid-column:1 / -1;grid-row:2} }
 
+/* ---------- ตอนนี้: ตัวเลขสด (อัปเดตทุก 1 นาที) ---------- */
+/* จุดกะพริบหยุดเองเมื่อเครื่องตั้งลดการเคลื่อนไหว (กฎ prefers-reduced-motion ท้ายไฟล์) */
+.live-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--success);animation:live-pulse 2s ease-out infinite}
+@keyframes live-pulse{0%{box-shadow:0 0 0 0 rgba(63,189,117,.55)}70%,100%{box-shadow:0 0 0 7px rgba(63,189,117,0)}}
+#liveStatus{color:var(--warn)}
+.live-since{margin:-.35rem 0 .75rem}
+.live-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.7rem}
+.live-tile{display:flex;flex-direction:column;gap:.15rem;min-width:0;background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px;padding:.7rem .8rem}
+.live-label{font-size:.8rem;font-weight:600;color:var(--text-dim);margin-bottom:.15rem}
+.live-value{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:1.55rem;font-weight:700;line-height:1.2;letter-spacing:-.01em}
+.live-value small,.usage-stats .stat b small{font-family:var(--font-ui);font-size:.76rem;font-weight:500;color:var(--text-dim);margin-left:.25rem;letter-spacing:0}
+.live-value.none{font-family:var(--font-ui);font-size:.95rem;font-weight:600;color:var(--text-mute);letter-spacing:0;padding:.25rem 0}
+.live-sub{font-size:.78rem;color:var(--text-mute);line-height:1.6}
+.live-sub .pill{padding:.05rem .45rem;vertical-align:1px}
+.live-chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.35rem}
+.live-hosts{font-size:.76rem;color:var(--text-dim);line-height:1.6;margin-top:.3rem}
+@media (max-width:1200px){ .live-grid{grid-template-columns:repeat(3,minmax(0,1fr))} .live-tile.wide{grid-column:span 2} }
+@media (max-width:900px){ .live-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:560px){ .live-grid{grid-template-columns:minmax(0,1fr)} .live-tile.wide{grid-column:auto} }
+
+/* ---------- ช่วงเวลาที่คนใช้งาน + การกลับมาใช้ซ้ำ ---------- */
+.usage-hero{flex-wrap:wrap;gap:.2rem .5rem}
+.usage-hero b{color:var(--c3)}
+.usage-stats{grid-template-columns:minmax(0,1fr)}
+.usage-stats .stat>small{display:block;font-size:.76rem;color:var(--text-mute);margin-top:.2rem;line-height:1.6}
+@media (max-width:900px){ .usage-stats{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:600px){ .usage-stats{grid-template-columns:minmax(0,1fr)} }
+
+/* ---------- หน้าแรก (landing) ในการ์ดการเข้าชมเว็บ ---------- */
+.landing-block{margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--border-soft)}
+.landing-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.25rem .75rem;margin-bottom:.6rem}
+.landing-head h3{font-size:.86rem}
+.landing-block .stat-grid-4{margin-bottom:0}
+
 /* อุปกรณ์ (การ์ดแคบ) + error (การ์ดกว้าง) */
 .grid-side{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:1.1rem;align-items:start}
 .device-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface-2);margin-bottom:.9rem;gap:2px}
@@ -267,6 +301,16 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 
 <main id="dash" hidden>
 
+  <!-- ตอนนี้: ตัวเลขสดจาก RPC admin_live (ดึงใหม่ทุก 1 นาที) — ฐานข้อมูลยังไม่มีฟังก์ชันนี้ = ซ่อนทั้งแถบ -->
+  <section class="card" id="liveStrip" aria-label="ตัวเลขตอนนี้" hidden>
+    <div class="card-head">
+      <div class="card-title">ตอนนี้<span class="live-dot" aria-hidden="true"></span></div>
+      <span class="card-note">อัปเดตทุก 1 นาที · ไม่นับบัญชีแอดมิน<span id="liveStatus"></span></span>
+    </div>
+    <p class="card-note live-since" id="liveSince" hidden>เริ่มนับออนไลน์หลังอัปเดตนี้ — ตัวเลขจะเริ่มขึ้นเมื่อมีคนเข้าใช้งาน</p>
+    <div class="live-grid" id="liveTiles"></div>
+  </section>
+
   <!-- A. ตัวเลขหลัก -->
   <section class="kpis" aria-label="ตัวเลขหลัก">
     <div class="card kpi">
@@ -329,6 +373,11 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       </div>
       <div class="chart-box sm"><canvas id="chartVisitors" aria-label="กราฟจำนวนผู้เข้าชมเว็บรายวัน" role="img"></canvas></div>
       <div class="legend"><span><i style="background:var(--c1)"></i>ผู้เข้าชมทั้งหมด</span><span><i style="background:var(--c2)"></i>ล็อกอินแล้ว</span></div>
+      <!-- หน้าแรก (index.html) — ฟังก์ชัน admin_traffic รุ่นเก่ายังไม่มีข้อมูลนี้ = ซ่อนส่วนนี้ -->
+      <div class="landing-block" id="landingBlock" hidden>
+        <div class="landing-head"><h3>หน้าแรก (landing)</h3><span class="card-note" id="landingSince"></span></div>
+        <div class="stat-grid stat-grid-4 traffic-stats" id="landingStats"></div>
+      </div>
     </div>
   </section>
 
@@ -388,6 +437,20 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         <div class="chart-box"><canvas id="chartUsers" aria-label="กราฟผู้ใช้งานและสมัครใหม่รายวัน" role="img"></canvas></div>
         <div class="legend"><span><i style="background:var(--c1)"></i>ผู้ใช้งาน</span><span><i style="background:var(--c2)"></i>สมัครใหม่</span></div>
       </section>
+
+      <!-- ช่วงเวลาที่คนใช้งาน + การกลับมาใช้ซ้ำ (RPC admin_usage) — ยังไม่มีฟังก์ชัน/โหลดไม่ได้ = ซ่อนทั้งแถว -->
+      <div class="grid-2" id="usageRow" hidden>
+        <section class="card">
+          <div class="card-head"><div class="card-title">ช่วงเวลาที่คนใช้งาน</div><span class="card-note" id="usageNote"></span></div>
+          <div class="chart-hero usage-hero" id="usagePeak"></div>
+          <div class="chart-box"><canvas id="chartHours" aria-label="กราฟจำนวนผู้ใช้งานเฉลี่ยต่อวันแยกตามชั่วโมง" role="img"></canvas></div>
+          <div class="legend"><span><i style="background:var(--c1)"></i>ผู้ใช้งานเฉลี่ยต่อวัน</span><span><i style="background:var(--c3)"></i>ช่วงพีค</span></div>
+        </section>
+        <section class="card">
+          <div class="card-head"><div class="card-title">การกลับมาใช้ซ้ำ &amp; เวลาใช้งาน</div><span class="card-note">นับการใช้งานเฉพาะที่ล็อกอิน (ไม่นับบัญชีแอดมิน)</span></div>
+          <div class="stat-grid usage-stats" id="usageStats"></div>
+        </section>
+      </div>
 
       <div class="grid-2">
         <section class="card">
@@ -754,13 +817,34 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     var rate = t.new_guest_visitors ? (t.signups / t.new_guest_visitors * 100) : 0;
     var stats = [
       [fmt(t.visitors_today), 'ผู้เข้าชมวันนี้', 'เมื่อวาน ' + fmt(t.visitors_yesterday) + ' คน'],
-      [fmt(t.visitors_period), 'ผู้เข้าชม ' + state.days + ' วัน', 'ล็อกอินแล้ว ' + fmt(t.members_period) + ' คน'],
+      // ช่องที่ 2 = 7 วันล่าสุดเสมอ (ไม่ตามช่วงที่เลือก) · ฟังก์ชันรุ่นเก่ายังไม่มี visitors_7d ใช้ช่องเดิมตามช่วงที่เลือก
+      t.visitors_7d == null
+        ? [fmt(t.visitors_period), 'ผู้เข้าชม ' + state.days + ' วัน', 'ล็อกอินแล้ว ' + fmt(t.members_period) + ' คน']
+        : [fmt(t.visitors_7d), 'ผู้เข้าชม 7 วัน', 'ล็อกอินแล้ว ' + fmt(t.members_7d) + ' คน'],
       [fmt(t.new_guest_visitors), 'ผู้เข้าชมใหม่ (ยังไม่ล็อกอิน)', 'เข้าเว็บครั้งแรกในช่วงนี้'],
       [rate.toFixed(1) + '%', 'สมัครสมาชิก', fmt(t.signups) + ' คนจากผู้เข้าชมใหม่']
     ];
     $('trafficStats').innerHTML = stats.map(function(s, i){
       return '<div class="stat' + (i === 3 && t.signups > 0 ? ' hot' : '') + '"><b>' + s[0] + '</b><span>' + s[1] + '</span><small>' + s[2] + '</small></div>';
     }).join('');
+
+    // หน้าแรก (landing) ในช่วงที่เลือก — ไม่มีข้อมูลนี้ (SQL รุ่นเก่า) = ซ่อนทั้งส่วน
+    var land = t.landing;
+    $('landingBlock').hidden = !land;
+    if(land){
+      var landSeen = Number(land.visitors_period || 0);
+      var share = function(n){ return (landSeen ? Number(n || 0) / landSeen * 100 : 0).toFixed(1) + '% ของผู้เข้าชมหน้าแรก'; };
+      $('landingSince').textContent = land.since ? 'ช่วง ' + state.days + ' วัน · เริ่มเก็บ ' + fmtDate(land.since) : 'ยังไม่มีข้อมูล — เริ่มนับหลังอัปเดตนี้';
+      var landStats = [
+        [fmt(land.visitors_period), 'ผู้เข้าชมหน้าแรก', 'วันนี้ ' + fmt(land.visitors_today) + ' คน'],
+        [fmt(land.cta_period), 'กดปุ่มในหน้าแรก', 'สมัคร ' + fmt(land.cta_signup) + ' · เข้าสู่ระบบ ' + fmt(land.cta_login)],
+        [fmt(land.to_app), 'ไปต่อที่แอป', share(land.to_app)],
+        [fmt(land.signups), 'สมัครสมาชิก', share(land.signups)]
+      ];
+      $('landingStats').innerHTML = landStats.map(function(s, i){
+        return '<div class="stat' + (i === 3 && Number(land.signups) > 0 ? ' hot' : '') + '"><b>' + s[0] + '</b><span>' + s[1] + '</span><small>' + s[2] + '</small></div>';
+      }).join('');
+    }
 
     var series = t.series || [];
     var c1 = css('--c1'), c2 = css('--c2');
@@ -797,6 +881,144 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     }).join('') : '<tr><td colspan="4" class="empty">ยังไม่มีคนกดซื้อในช่วงนี้</td></tr>';
   }
 
+  // ---------- ตอนนี้ (ตัวเลขสด) + ช่วงเวลาใช้งาน / การกลับมาใช้ซ้ำ ----------
+  // ฐานข้อมูลยังไม่มีฟังก์ชัน admin_live / admin_usage = ซ่อนเฉพาะส่วนใหม่ การ์ดเดิมแสดงตามปกติ
+  var live = { busy:false, off:false, shown:false };
+  var usage = { seq:0, off:false };
+  function rpcMissing(error, name){
+    if(!error) return false;
+    return error.code === 'PGRST202' || String(error.message || error).indexOf(name) !== -1;
+  }
+  function fmt1(n){
+    var v = Number(n);
+    return (isFinite(v) ? v : 0).toLocaleString('th-TH', { maximumFractionDigits:1 });
+  }
+  function hourRange(h){
+    var two = function(n){ return (n < 10 ? '0' : '') + n; };
+    return two(h) + ':00–' + two((h + 1) % 24) + ':00';
+  }
+  // นาที → "12.5 นาที/คน" หรือ "1 ชม. 5 นาที/คน" (ตัวเลขใหญ่ หน่วยเล็ก)
+  function minutesHtml(min, unit){
+    var v = Number(min);
+    v = isFinite(v) ? Math.round(v * 10) / 10 : 0;
+    if(v < 60) return fmt1(v) + '<small>' + unit + '</small>';
+    var m = Math.round(v);
+    return Math.floor(m / 60) + '<small>ชม.</small> ' + (m % 60) + '<small>' + unit + '</small>';
+  }
+  function renderLive(l){
+    var tile = function(label, value, subs, extra, cls){
+      return '<div class="live-tile' + (cls ? ' ' + cls : '') + '"><div class="live-label">' + label + '</div>' + value +
+        subs.map(function(s){ return '<div class="live-sub">' + s + '</div>'; }).join('') + (extra || '') + '</div>';
+    };
+    var big = function(n, unit){ return '<div class="live-value">' + fmt(n) + '<small>' + unit + '</small></div>'; };
+    var now = Number(l.online_now || 0), seen = Number(l.online_visible || 0);
+    var pages = (l.online_pages || []).map(function(p){
+      var name = PAGE_LABEL[p.page] || (!p.page || p.page === '-' ? 'ไม่ทราบหน้า' : p.page);
+      return '<span class="pill pill-mute">' + esc(name) + ' ' + fmt(p.count) + '</span>';
+    }).join('');
+    var legacy = Number(l.today_legacy || 0);
+    var hasPeak = l.peak_hour != null && l.peak_hour !== '';
+    var pa = l.parties || {}, locked = Number(pa.locked || 0);
+    var hosts = (pa.locked_hosts || []).slice(0, 5);
+    var more = Math.max(0, locked - hosts.length);
+    $('liveSince').hidden = !!l.tracking_since;
+    $('liveTiles').innerHTML = [
+      tile('ออนไลน์ตอนนี้', big(now, 'คน'), ['เปิดดูอยู่ ' + fmt(seen) + ' · เปิดทิ้งไว้ ' + fmt(Math.max(0, now - seen))],
+        pages ? '<div class="live-chips">' + pages + '</div>' : ''),
+      tile('ใช้งานวันนี้', big(l.today_users, 'คน'), ['เมื่อวาน ' + fmt(l.yesterday_users),
+        'จ่ายเงิน ' + fmt(l.today_paid) + ' · ฟรี ' + fmt(l.today_free) + (legacy > 0 ? ' · สิทธิเดิม ' + fmt(legacy) : '')]),
+      tile('ช่วงพีควันนี้', hasPeak ? '<div class="live-value">' + hourRange(Number(l.peak_hour)) + '</div>' : '<div class="live-value none">ยังไม่มีข้อมูล</div>',
+        hasPeak ? ['ใช้งาน ' + fmt(l.peak_users) + ' คน'] : []),
+      tile('เวลาเปิดดูเฉลี่ยวันนี้', '<div class="live-value">' + minutesHtml(l.avg_minutes_today, 'นาที/คน') + '</div>', ['นับเฉพาะตอนเปิดดูอยู่']),
+      tile('ปาร์ตี้', big(pa.total, 'ปาร์ตี้'),
+        ['ใช้งานวันนี้ ' + fmt(pa.active_today) + ' · ถูกล็อก ' + (locked > 0 ? '<span class="pill pill-danger">' + fmt(locked) + '</span>' : '0')],
+        hosts.length ? '<div class="live-hosts">หัวปาร์ตี้ที่ถูกล็อก: ' + hosts.map(function(h){
+          var tip = h.expired_at ? 'แพ็กจับเวลาบอสหมดเมื่อ ' + fmtDate(h.expired_at) : 'ไม่มีแพ็กจับเวลาบอส';
+          return '<span title="' + esc(tip) + '">' + esc(h.name || '-') + ' (' + fmt(h.members) + ' คน)</span>';
+        }).join(', ') + (more ? ' และอีก ' + fmt(more) + ' ปาร์ตี้' : '') + '</div>' : '', 'wide')
+    ].join('');
+  }
+  function loadLive(){
+    if(live.busy || live.off) return;
+    live.busy = true;
+    supa.rpc('admin_live', {}).then(function(r){ return r; }, function(e){ return { error:e }; }).then(function(r){
+      live.busy = false;
+      if(r && !r.error && r.data){
+        live.shown = true;
+        $('liveStatus').textContent = '';
+        renderLive(r.data);
+        $('liveStrip').hidden = false;
+        return;
+      }
+      // ยังไม่ได้ติดตั้งฟังก์ชัน: ซ่อนแถบและเลิกดึง (รีเฟรชหน้าหลังรัน SQL แล้วจะกลับมาเอง)
+      if(rpcMissing(r && r.error, 'admin_live')){ live.off = true; $('liveStrip').hidden = true; return; }
+      // พลาดชั่วคราว (เน็ต/เซิร์ฟเวอร์): คงตัวเลขเดิมไว้ แล้วลองใหม่รอบถัดไปเอง
+      if(live.shown) $('liveStatus').textContent = ' · รอบล่าสุดอัปเดตไม่สำเร็จ จะลองใหม่อัตโนมัติ';
+    });
+  }
+  // ดึงคู่กับ admin_dashboard / admin_traffic ตามช่วงที่เลือก — ผลลัพธ์ติดเลขรอบไว้ ผลของรอบเก่าที่มาช้าจะถูกทิ้ง
+  function fetchUsage(){
+    var seq = ++usage.seq;
+    if(usage.off) return null;
+    return supa.rpc('admin_usage', { p_days: state.days }).then(
+      function(r){ return { seq:seq, data:r && r.data, error:r && r.error }; },
+      function(e){ return { seq:seq, error:e || 'error' }; });
+  }
+  function showUsage(job){
+    if(!job) return;
+    job.then(function(r){
+      if(r.seq !== usage.seq) return;
+      if(r.error || !r.data){
+        if(rpcMissing(r.error, 'admin_usage')) usage.off = true;
+        $('usageRow').hidden = true;
+        return;
+      }
+      $('usageRow').hidden = false;
+      renderUsage(r.data);
+    });
+  }
+  function renderUsage(u){
+    var slots = [];
+    for(var h = 0; h < 24; h++) slots.push({ avg:0, total:0 });
+    (u.hours || []).forEach(function(x){
+      var i = Number(x.hour);
+      if(i >= 0 && i < 24) slots[i] = { avg:Number(x.avg_users || 0), total:Number(x.total || 0) };
+    });
+    // ช่วงพีค = ชั่วโมงที่มีคนใช้มากที่สุด (เท่ากัน = เอาชั่วโมงหลัง เหมือนการ์ด "ตอนนี้")
+    var peak = -1, best = 0;
+    slots.forEach(function(s, i){ if(s.total > 0 && s.total >= best){ best = s.total; peak = i; } });
+    $('usagePeak').innerHTML = peak < 0 ? '<span>ยังไม่มีข้อมูล</span>'
+      : '<span>ช่วงพีค</span><b>' + hourRange(peak) + '</b><span>· เฉลี่ย ' + fmt1(slots[peak].avg) + ' คน/วัน</span>';
+    $('usageNote').textContent = 'เฉลี่ยต่อวันจาก ' + fmt(u.effective_days) + ' วันที่มีข้อมูลในช่วง ' + fmt(u.days || state.days) + ' วัน · นับเฉพาะที่ล็อกอิน';
+    var c1 = css('--c1'), c3 = css('--c3');
+    var opts = baseOptions();
+    opts.plugins.tooltip.callbacks = {
+      title:function(){ return ''; },
+      label:function(ctx){
+        var s = slots[ctx.dataIndex];
+        return ' ' + hourRange(ctx.dataIndex) + ' · เฉลี่ย ' + fmt1(s.avg) + ' คน/วัน (รวม ' + fmt(s.total) + ' ครั้ง)';
+      }
+    };
+    drawChart('chartHours', { type:'bar', data:{ labels:slots.map(function(s, i){ return (i < 10 ? '0' : '') + i; }), datasets:[{ label:'ผู้ใช้งานเฉลี่ย',
+      data:slots.map(function(s){ return s.avg; }),
+      backgroundColor:slots.map(function(s, i){ return i === peak ? c3 : alpha(c1, .85); }),
+      hoverBackgroundColor:slots.map(function(s, i){ return i === peak ? c3 : c1; }),
+      borderRadius:{ topLeft:3, topRight:3 }, borderSkipped:'bottom', maxBarThickness:18 }] }, options:opts });
+
+    var r = u.retention || {};
+    var d1e = Number(r.d1_eligible || 0), d1r = Number(r.d1_returned || 0);
+    var d7e = Number(r.d7_eligible || 0), d7r = Number(r.d7_returned || 0);
+    var pct = function(n, d){ return Math.round(n / d * 100) + '%'; };
+    var stats = [
+      [d1e ? pct(d1r, d1e) : '—', 'กลับมาวันถัดไป', d1e ? fmt(d1r) + ' จาก ' + fmt(d1e) + ' คนที่สมัครในช่วงนี้' : 'ยังไม่มีคนสมัครในช่วงนี้'],
+      [d7e ? pct(d7r, d7e) : '—', 'กลับมาภายใน 7 วัน', d7e ? fmt(d7r) + ' จาก ' + fmt(d7e) + ' คนที่สมัครมาครบ 7 วัน' : 'ยังไม่มีคนสมัครครบ 7 วัน'],
+      [minutesHtml(u.avg_minutes_per_day, 'นาที/คน/วัน'), 'เวลาเปิดดูเฉลี่ย', 'นับเฉพาะตอนเปิดดูอยู่ ในวันที่เข้าใช้งาน']
+    ];
+    $('usageStats').innerHTML = stats.map(function(s){
+      return '<div class="stat"><b>' + s[0] + '</b><span>' + s[1] + '</span><small>' + s[2] + '</small></div>';
+    }).join('');
+  }
+
   function render(d){
     state.data = d;
     renderKpis(d.kpi || {});
@@ -824,6 +1046,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     $('refreshBtn').disabled = true;
     // การเข้าชม (กลุ่ม 2) ดึงคู่กันไป ถ้าพัง/ยังไม่ติดตั้ง ให้ขึ้นข้อความเฉพาะการ์ดนั้น ส่วนอื่นยังแสดงตามปกติ
     var trafficJob = supa.rpc('admin_traffic', { p_days: state.days }).then(function(r){ return r; }, function(e){ return { error:e }; });
+    var usageJob = fetchUsage();
     supa.rpc('admin_dashboard', { p_days: state.days }).then(function(res){
       return trafficJob.then(function(tr){ return { res:res, tr:tr }; });
     }).then(function(both){
@@ -842,6 +1065,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       renderTraffic(tr && tr.data, tmsg ? (/admin_traffic|function|does not exist|schema cache/i.test(tmsg)
         ? 'ยังไม่ได้ติดตั้งระบบเก็บการเข้าชม — รันไฟล์ SQL 20260924000400_app_events.sql ใน Supabase ก่อน'
         : 'โหลดข้อมูลการเข้าชมไม่สำเร็จ: ' + tmsg) : '');
+      showUsage(usageJob);
     }, function(err){
       loading = false;
       $('refreshBtn').disabled = false;
@@ -857,13 +1081,17 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     load();
   });
   $('refreshBtn').addEventListener('click', load);
+  $('refreshBtn').addEventListener('click', loadLive);
   // เปิดค้างไว้: ดึงข้อมูลใหม่ทุก 5 นาที เฉพาะตอนแท็บนี้เปิดดูอยู่
   setInterval(function(){ if(!document.hidden && state.data) load(); }, 300000);
+  // แถบ "ตอนนี้" ดึงแยกทุก 1 นาที (เปลี่ยนช่วงวันไม่ต้องดึงใหม่) · ถ้ายังไม่มีฟังก์ชัน loadLive จะหยุดเอง
+  setInterval(function(){ if(!document.hidden && state.data) loadLive(); }, 60000);
 
   supa.auth.getSession().then(function(res){
     var session = res && res.data && res.data.session;
     if(!session){ showState('ยังไม่ได้ล็อกอิน', 'ล็อกอินด้วยบัญชีแอดมินที่หน้าเว็บก่อน แล้วกลับมาเปิดหน้านี้อีกครั้ง', 'ไปหน้าเว็บเพื่อล็อกอิน'); return; }
     load();
+    loadLive();
   });
 })();
 </script>

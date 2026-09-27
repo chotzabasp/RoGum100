@@ -3743,6 +3743,20 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 #view-timers .party-lock .party-lock-choice{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;min-height:56px;padding:10px 14px;line-height:1.35;white-space:normal;text-align:center}
 #view-timers .party-lock-choice b{font-size:.92rem;font-weight:700}
 #view-timers .party-lock-choice small{font-size:.74rem;font-weight:400;line-height:1.45;opacity:.78}
+/* ป้ายสิทธิ์สมาชิกในแผงปาร์ตี้: เข้าแบบไหน (ทอง = จ่าย 50 ถาวร / เขียว = เข้าฟรี) + ใช้งานได้แค่ไหน (ฟ้า = เต็ม / เทา = ดูอย่างเดียว / แดง = ถูกพักสิทธิ์) */
+.party-pills{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:6px}
+/* ป้ายอยู่บรรทัดเดียวกับชื่อ (ที่ไม่พอค่อยขึ้นบรรทัดใหม่เอง) */
+.party-member-row .admin-topup-main{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.party-member-row .party-pills{margin-top:0}
+/* สมาชิกปาร์ตี้แพ็กฟรี (ดูอย่างเดียว): แผนที่ปักหมุดไม่ได้ · ช่องเวลาตายกดไม่ได้ */
+.bc-map.bc-map-readonly{cursor:default}
+.bc-input:disabled{opacity:.5;cursor:not-allowed}
+.party-pill{display:inline-flex;align-items:center;padding:2px 8px;border:1px solid transparent;border-radius:999px;font-size:.72rem;font-weight:600;line-height:1.5}
+.party-pill-paid{background:color-mix(in srgb,var(--warn) 14%,transparent);border-color:color-mix(in srgb,var(--warn) 40%,transparent);color:#f0cf86}
+.party-pill-free{background:color-mix(in srgb,var(--success) 14%,transparent);border-color:color-mix(in srgb,var(--success) 40%,transparent);color:#94dfbd}
+.party-pill-full{background:color-mix(in srgb,var(--accent) 14%,transparent);border-color:color-mix(in srgb,var(--accent) 40%,transparent);color:#b6cefa}
+.party-pill-view{background:rgba(255,255,255,.05);border-color:var(--border);color:var(--text-dim)}
+.party-pill-locked{background:color-mix(in srgb,var(--danger) 14%,transparent);border-color:color-mix(in srgb,var(--danger) 45%,transparent);color:#ffb7bd}
 
 @media(max-width:760px){
   .content{padding-bottom:calc(2rem + env(safe-area-inset-bottom,0px))}

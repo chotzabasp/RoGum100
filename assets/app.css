@@ -3863,3 +3863,9 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 /* หน้าต่างเติมแต้ม: คำว่า "Admin" ในกล่องเตือนสีเหลือง = ลิงก์ไปเพจ Facebook — สีเดียวกับข้อความเตือน ตัวหนา ขีดเส้นใต้ */
 #topupOverlay .topup-notice-link{color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px}
 #topupOverlay .topup-notice-link:hover{color:#ffe2a6}
+/* คลังไอเทม: รูปรถเข็น (หัวข้อ "รายการรอลงคลัง" + "รายการในคลัง" ตอนยังไม่เลือกคลัง) แทนหีบเดิม
+   รูปมีขอบว่าง (รถเข็นกว้าง ~87% ของรูป อยู่ค่อนซ้าย-ล่างเล็กน้อย) — 1.13 เท่า = กว้างเต็มกรอบเท่าหีบเดิม แล้วผู้ใช้ขอใหญ่ขึ้นอีก 30%
+   → 1.47 เท่า (ขยายแค่ภาพ ไม่ขยายช่อง: ข้อความหัวข้อไม่ขยับ, สลับเป็นรูปคลังแล้วไม่กระตุก)
+   เลื่อนซ้าย ~3px ให้ห่างข้อความ (ภาพเกินช่องไปทางซ้ายแทน) + เลื่อนขึ้นให้อยู่กลางแนวตั้ง
+   เลือกคลังแล้วหัวข้อเปลี่ยนเป็นรูปของคลังนั้น (src ไม่ใช่รถเข็น) จึงไม่โดนกฎนี้ */
+#view-items .inventory-heading-icon[src$="inventory-cart.webp"]{transform:translate(-7.5%,-2.7%) scale(1.47)}

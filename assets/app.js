@@ -261,7 +261,7 @@
       : '';
     // หน้าตาเดียวกับกล่องยืนยันซื้อแพ็กเกจ (คลาส buy-confirm-*): หัว + ตาราง จำนวนช่อง/ราคา/แต้มคงเหลือ + หมายเหตุเป็นข้อ
     showConfirm('<span class="buy-confirm-title">ยืนยันเพิ่มช่องเซิร์ฟเวอร์</span>'+
-      '<span class="buy-confirm-plan">+1 ช่อง</span>'+
+      '<span class="buy-confirm-plan">+1 ช่อง (ถาวร)</span>'+
       '<span class="buy-confirm-rows">'+
         '<span class="buy-confirm-row"><span>จำนวนช่อง</span><span>'+quota+' → '+(quota+1)+' ช่อง</span></span>'+
         '<span class="buy-confirm-row"><span>ราคา</span><span><b>'+SERVER_SLOT_COST+' แต้ม</b></span></span>'+
@@ -6575,7 +6575,7 @@
     });
     if(!tier){
       titleText.textContent = 'รายการในคลัง';
-      headingIcon.src = 'assets/treasure.png';
+      headingIcon.src = 'assets/inventory-cart.webp'; // รูปรถเข็น (เดิมหีบ treasure.png) — ตอนยังไม่เลือกคลัง
       list.innerHTML = '<p class="mr-empty">เลือกคลังเพื่อดูไอเทม</p>';
       return;
     }
@@ -8402,7 +8402,8 @@
   // ป้ายสิทธิ์สมาชิกในแผงปาร์ตี้ (ข้อมูลจาก party_roster)
   // ป้ายแรก = เข้าปาร์ตี้แบบไหน · ป้ายสอง = ใช้งานได้แค่ไหน (ตามแพ็กเกจ "จับเวลาบอส" ของคนนั้นเอง)
   function partySeatPillHtml(r){
-    if(r.seat === 'plan') return '<span class="party-pill party-pill-free">'+(r.has_timers ? 'เข้าฟรี · มีแพ็กจับเวลาบอส' : 'เข้าฟรี')+'</span>';
+    // ป้ายเขียว = ได้สิทธิ์เข้าปาร์ตี้เพราะมีแพ็กเกจ (เดิมเขียน "เข้าฟรี" — ผู้ใช้ขอเปลี่ยน 27 ก.ย. 2569)
+    if(r.seat === 'plan') return '<span class="party-pill party-pill-free">'+(r.has_timers ? 'สิทธิ์ · มีแพ็กจับเวลาบอส' : 'สิทธิ์ · แพ็กหมดอายุ')+'</span>';
     return '<span class="party-pill party-pill-paid">จ่าย 50 แต้ม · ถาวร (ห้ามกดออก)</span>';
   }
   function partyRightsPillHtml(r){

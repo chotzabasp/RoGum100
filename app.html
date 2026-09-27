@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260927-cart-icon2">
+<link rel="stylesheet" href="assets/app.css?v=20260927-party-add-copy2">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -590,7 +590,7 @@
       <details class="settings-discord-help">
         <summary>วิธีเอาลิงก์ Webhook จาก Discord</summary>
         <ol>
-          <li>คลิกขวาที่ห้องข้อความที่จะให้แจ้งเตือน → <b>Edit Channel</b> (ต้องมีสิทธิ์จัดการห้อง)</li>
+          <li>คลิกขวาที่ห้องข้อความที่จะให้แจ้งเตือน → <b>Edit Channel</b> (ต้องมีสิทธิจัดการห้อง)</li>
           <li>เลือก <b>Integrations</b> → <b>Webhooks</b> → <b>New Webhook</b></li>
           <li>กด <b>Copy Webhook URL</b> แล้ววางในช่องด้านบน กดบันทึก แล้วกด "ส่งข้อความทดสอบ"</li>
           <li>แท็กคนหรือยศ: เปิด <b>Developer Mode</b> (User Settings → Advanced) แล้วคลิกขวาที่ชื่อคน/ยศ → <b>Copy ID</b></li>
@@ -1238,9 +1238,10 @@
     <!-- ผลตรวจก่อนยืนยัน: ชื่อเพื่อน + ค่าเข้าปาร์ตี้ (ฟรี / 50 แต้ม) จาก party_add_quote -->
     <div class="party-add-quote" id="addPartyMemberQuote" role="status" hidden></div>
     <ul class="post-announce-note party-add-rules">
-      <li>เพื่อนมีแพ็กเกจ <b>"จับเวลาบอส"</b> (รวม 4 in 1): <b>เพิ่มฟรี</b> — ถ้าแพ็กหมดอายุ เพื่อนต้องต่ออายุ หรือจ่าย 50 แต้มเองเพื่ออยู่ต่อ</li>
-      <li>เพื่อนไม่มีแพ็กเกจ: คนกดเพิ่มจ่าย <b>50 แต้ม</b> เพื่อนอยู่ถาวร ใช้แบบแพ็กฟรี (ดูเวลาบอส)</li>
-      <li><b>ห้ามกดออกจากปาร์ตี้</b> ถ้าออกแล้วเพิ่มกลับเข้ามา คิดค่าใหม่ตามกติกานี้</li>
+      <!-- ราคานำหน้าบรรทัด (สีเดียวกับป้ายในแผงปาร์ตี้: ฟรี = เขียว / 50 แต้ม = ทอง) · ข้อความตามที่ผู้ใช้เขียน 27 ก.ย. 2569 -->
+      <li><b class="party-add-price party-add-price-free">ฟรี</b> — เพื่อนมีแพ็กเกจ "จับเวลาบอส" หรือ 4 in 1 <span class="party-add-keep">ใช้ได้เต็มทุกอย่าง</span>จนหมดอายุแพ็กเกจ</li>
+      <li><b class="party-add-price party-add-price-paid">เสีย 50 แต้ม</b> — เพิ่มเพื่อนไม่มีแพ็กเกจ อยู่ในปาร์ตี้ถาวร <span class="party-add-keep">ใช้สิทธิแพ็กฟรี</span> <span class="party-add-keep">ดูเวลาบอสได้อย่างเดียว</span></li>
+      <li class="party-add-warn">⚠ <b>ห้ามกดออกจากปาร์ตี้</b> — ออกแล้วเพิ่มกลับต้องเสียแต้มใหม่</li>
     </ul>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" id="addPartyMemberCancelBtn">ยกเลิก</button>
@@ -1251,4 +1252,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260927-party-pill"></script>
+<script src="assets/app.js?v=20260927-sitthi"></script>

@@ -1407,7 +1407,7 @@
     });
   }
   // เข้าปาร์ตี้ฟรีเพราะมีแพ็กเกจ "จับเวลาบอส" แล้วแพ็กหมดอายุ = หน้าจับเวลาบอสใช้ไม่ได้
-  // (ฐานข้อมูลตัดสิทธิ์ข้อมูลปาร์ตี้จริงด้วย is_party_member_of — ตรงนี้ทำหน้าจอมืด + ให้เลือกทางไปต่อ)
+  // (ฐานข้อมูลตัดสิทธิข้อมูลปาร์ตี้จริงด้วย is_party_member_of — ตรงนี้ทำหน้าจอมืด + ให้เลือกทางไปต่อ)
   function isPartyLocked(){ return !!App.viewingHostId && App.partySeat === 'plan' && !hasTimersPlan(); }
   function renderPartyLock(){
     var lock = document.getElementById('timersPartyLock'); if(!lock) return;
@@ -2217,7 +2217,7 @@
         return refreshProfileLegacy();
       }
       if(res.error && PROFILE_COLS.indexOf('legacy_unlimited')!==-1 && /legacy_unlimited|plan_bundle_expires_at|plan_timers_expires_at/.test(res.error.message||'')){
-        console.warn('คอลัมน์สิทธิ์แพ็กเกจใหม่ยังไม่มีในฐานข้อมูล — ถือว่าไม่จำกัดสิทธิ์ไปก่อน', res.error);
+        console.warn('คอลัมน์สิทธิแพ็กเกจใหม่ยังไม่มีในฐานข้อมูล — ถือว่าไม่จำกัดสิทธิไปก่อน', res.error);
         PROFILE_COLS = PROFILE_COLS.replace(', legacy_unlimited, plan_bundle_expires_at, plan_timers_expires_at', '');
         return refreshProfileLegacy();
       }
@@ -2243,7 +2243,7 @@
   function renderHistory(){
     var list = document.getElementById('historyList');
     var today = todayKey(Date.now());
-    // สมาชิกปาร์ตี้ดูประวัติย้อนหลังได้ไม่จำกัดเสมอ ไม่ว่าตัวเองจะมีแพ็กเกจไหม (สิทธิ์ดูมาจากการเป็น
+    // สมาชิกปาร์ตี้ดูประวัติย้อนหลังได้ไม่จำกัดเสมอ ไม่ว่าตัวเองจะมีแพ็กเกจไหม (สิทธิดูมาจากการเป็น
     // สมาชิกของปาร์ตี้นั้นโดยตรง) — แต่แก้ไข/ลบยังคุมแยกอีกชั้นด้วย isFreePartyMember() ใน lootRowHtml
     var timersAllowed = hasTimersPlan() || !!App.viewingHostId;
     var rangeSel = document.getElementById('historyRange');
@@ -2358,7 +2358,7 @@
   }
   function lootRowHtml(r){
     var k = r.kill, it = r.item;
-    // แก้ไข/ลบ/ติ๊กหารได้เฉพาะรายการที่ยังมีสิทธิ์เขียนจริง (ตรงกับเงื่อนไข RLS ฝั่ง DB: เจ้าของ หรือ
+    // แก้ไข/ลบ/ติ๊กหารได้เฉพาะรายการที่ยังมีสิทธิเขียนจริง (ตรงกับเงื่อนไข RLS ฝั่ง DB: เจ้าของ หรือ
     // สมาชิกปัจจุบันของปาร์ตี้นั้นที่มีแพ็กเกจจับเวลาบอส) — ของตัวเองเขียนได้เสมอ, ของปาร์ตี้ปัจจุบัน
     // เขียนได้ถ้าไม่ใช่ "สมาชิกฟรี" (isFreePartyMember), ของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่
     // แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) ล็อกทั้งแถวเสมอ ดูได้อย่างเดียว
@@ -2372,7 +2372,7 @@
     var unit = currencyLabel(it.soldCurrency);
     // คนที่เคยติ๊กหารไว้แต่ออกจากปาร์ตี้ไปแล้ว (ไม่อยู่ใน roster ปัจจุบัน) ยังต้องค้างชื่อไว้ในประวัติ
     // เหมือนเดิม แค่กดติ๊กออกไม่ได้แล้ว (ดู loadDepartedSharerNames) — ต่างจากคนในปาร์ตี้ตอนนี้ที่ยัง
-    // กดติ๊ก/ปลดได้ปกติ — แถวที่ไม่มีสิทธิ์เขียนเลย (writable=false) ล็อกทุกชื่อหมด ไม่มีใครกดได้
+    // กดติ๊ก/ปลดได้ปกติ — แถวที่ไม่มีสิทธิเขียนเลย (writable=false) ล็อกทุกชื่อหมด ไม่มีใครกดได้
     var rosterIds = {}; roster.forEach(function(p){ rosterIds[p.id] = true; });
     var departed = (it.sharedWith||[]).filter(function(id){ return !rosterIds[id]; }).map(function(id){
       return { id:id, name:id===App.session.id ? ((App.profile && App.profile.display_name) || '-') : (App.departedSharerNames[id] || 'ไม่ทราบชื่อ') };
@@ -2888,7 +2888,7 @@
   }
   // "วันนี้" = เที่ยงคืนตามเวลาไทย (ไม่ขึ้นกับเขตเวลาในเครื่อง) — ตรงกับที่ฐานข้อมูลนับลิมิตบัญชีฟรีรายวัน
   function todayStartTs(){ var off = 7*3600000; return Math.floor((Date.now() + off) / 86400000) * 86400000 - off; }
-  // บัญชีฟรี (ไม่มีสิทธิ์ตามพารามิเตอร์ allowed) ดูประวัติย้อนหลังได้แค่วันนี้ — ไม่ว่าตัวกรอง
+  // บัญชีฟรี (ไม่มีสิทธิตามพารามิเตอร์ allowed) ดูประวัติย้อนหลังได้แค่วันนี้ — ไม่ว่าตัวกรอง
   // ช่วงเวลาที่เลือกไว้จะกว้างแค่ไหนก็ตาม (ข้อมูลจริงยังอยู่ครบ แค่ไม่โชว์เกินวันนี้ให้เห็น)
   function capStartTsForPlan(rawStartTs, allowed){
     if(allowed) return rawStartTs;
@@ -5505,7 +5505,7 @@
   });
 
   // ---------- โหมดผู้เยี่ยมชม: ยังไม่ได้ล็อกอิน แต่เห็นหน้าตาแอพเหมือนจริงได้ (ข้อมูลว่างเปล่าตามจริง
-  // เพราะไม่มีสิทธิ์ดึงข้อมูลของใคร) กดเมนูดูหน้าอื่นได้ แต่ทุกอย่างที่ไม่อยู่ใน GUEST_VIEW_ALLOW โดนกันด้วย guestBlock แล้วเด้ง popup login ----------
+  // เพราะไม่มีสิทธิดึงข้อมูลของใคร) กดเมนูดูหน้าอื่นได้ แต่ทุกอย่างที่ไม่อยู่ใน GUEST_VIEW_ALLOW โดนกันด้วย guestBlock แล้วเด้ง popup login ----------
   function enterGuestPreview(){
     App.session = null;
     App.profile = null;
@@ -6631,7 +6631,7 @@
 
   function handleItemsDrop(warehouse, lineId){
     if(warehouse!==FREE_WAREHOUSE_TIER && !hasTradePlan()){
-      toast('คลัง '+itemTierLabel(warehouse)+' ต้องมีแพ็กเกจที่มีสิทธิ์คลังไอเทม — สมัครเพื่อใช้คลังเพิ่มเติม');
+      toast('คลัง '+itemTierLabel(warehouse)+' ต้องมีแพ็กเกจที่มีสิทธิคลังไอเทม — สมัครเพื่อใช้คลังเพิ่มเติม');
       return;
     }
     var serverId = App.itemsServerId;
@@ -6901,7 +6901,7 @@
         'ระบบคำนวณยอดแบบละเอียดต่อกั้ม',
         'ระบบคำนวณยอดไอเทมแรร์เมื่อขายได้ทีหลัง',
         'ประวัติย้อนหลังไม่จำกัด',
-        {divider:'หมวดอื่นๆ ใช้สิทธิ์แบบแพ็กฟรีทั้งหมด'}
+        {divider:'หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรีทั้งหมด'}
       ] },
     { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:299, yearly:2990, promoMonthly:149, promoYearly:1490, badge:'จัดการซื้อขาย',
       modules:['investor','items'],
@@ -6917,7 +6917,7 @@
         'รองรับการเพิ่มจำนวนเซิร์ฟเวอร์ได้ไม่จำกัด',
         'แบ่งแยกข้อมูลบัญชีตามเซิร์ฟเวอร์ชัดเจน',
         'แบ่งคลังแยกได้ไม่จำกัดจำนวนเซิร์ฟเวอร์โดยไม่ซ้ำคลังกัน',
-        {divider:'หมวดอื่นๆ ใช้สิทธิ์แบบแพ็กฟรีทั้งหมด'}
+        {divider:'หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรีทั้งหมด'}
       ] },
     { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:399, yearly:3990, promoMonthly:199, promoYearly:1990, badge:'ยอดนิยม',
       // แพ็กรวม: บอกว่าได้ระบบไหนบ้างด้วยแถวระบบ (modules) แทนรายการฟีเจอร์ยาว — ระบบที่ไม่ได้แสดงเป็นสีเทา
@@ -6959,11 +6959,11 @@
     if(!p.modules) return '';
     return '<ul class="pricing-modules">'+PRICING_MODULES.map(function(m){
       var on = p.modules.indexOf(m.key) !== -1;
-      // การ์ดฟรี: ได้ทุกระบบแต่จำกัดสิทธิ์ — แถวปกติ ติ๊กสีเหลือง
+      // การ์ดฟรี: ได้ทุกระบบแต่จำกัดสิทธิ — แถวปกติ ติ๊กสีเหลือง
       var limited = on && p.free;
       return '<li class="pricing-module'+(on?'':' pricing-module-off')+(limited?' pricing-module-limited':'')+'">'+
         '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+m.icon+'</svg>'+
-        '<span class="pricing-module-text"><b>'+m.name+'</b><small>'+(limited ? 'จำกัดสิทธิการใช้งาน' : on ? 'ใช้งานแบบไม่จำกัด' : 'ใช้สิทธิ์แบบแพ็กฟรี')+'</small></span>'+
+        '<span class="pricing-module-text"><b>'+m.name+'</b><small>'+(limited ? 'จำกัดสิทธิการใช้งาน' : on ? 'ใช้งานแบบไม่จำกัด' : 'ใช้สิทธิแบบแพ็กฟรี')+'</small></span>'+
         '<span class="pricing-module-mark" aria-label="'+(limited?'ได้แบบจำกัด':on?'ได้':'ไม่ได้')+'">'+(on?'✓':'—')+'</span>'+
       '</li>';
     }).join('')+'</ul>';
@@ -7036,7 +7036,7 @@
       var monthly = pricingCycle==='monthly' || (p.yearly == null && p.displayYearly == null);
       var unit = monthly ? '/ เดือน' : '/ ปี';
       // แพ็กรวม (3 in 1 / 4 in 1) ไม่มีรายการของตัวเอง — ดึงรายการของแพ็กย่อยมารวม ใส่หัวข้อระบบคั่น
-      // (ตัดบรรทัด "หมวดอื่นๆ ใช้สิทธิ์แบบแพ็กฟรี" ของแพ็กย่อยทิ้ง เพราะแพ็กรวมได้ระบบนั้นครบแล้ว)
+      // (ตัดบรรทัด "หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรี" ของแพ็กย่อยทิ้ง เพราะแพ็กรวมได้ระบบนั้นครบแล้ว)
       var featureList = p.detailFrom ? p.detailFrom.reduce(function(out, pair){
         var src = PRICING_PLANS.find(function(x){ return x.key===pair[1]; });
         return out.concat([{divider:pair[0]}], ((src && src.features)||[]).filter(function(f){ return !(f && f.divider); }));
@@ -7294,7 +7294,7 @@
     });
     var note=document.getElementById('stPackageAccessNote');
     note.hidden=!(p.role==='admin'||p.legacy_unlimited);
-    note.textContent=p.role==='admin'?'บัญชีนี้มีสิทธิ์ผู้ดูแลระบบเพิ่มเติมจากแพ็กเกจที่แสดง':'บัญชีนี้มีสิทธิ์เดิมแบบไม่จำกัดเพิ่มเติมจากแพ็กเกจที่แสดง';
+    note.textContent=p.role==='admin'?'บัญชีนี้มีสิทธิผู้ดูแลระบบเพิ่มเติมจากแพ็กเกจที่แสดง':'บัญชีนี้มีสิทธิเดิมแบบไม่จำกัดเพิ่มเติมจากแพ็กเกจที่แสดง';
   }
   setInterval(function(){ if(!document.getElementById('view-settings').hidden) renderSettingsPackages(); },60000);
   function renderSettingsPage(){
@@ -7822,7 +7822,7 @@
     if(!App.profile || App.profile.role === 'admin' || !App.profile.expires_at) return false;
     return new Date(App.profile.expires_at).getTime() <= Date.now();
   }
-  // สิทธิ์แยกตามแพ็กเกจ (คนละเรื่องกับ isExpiredAccount ด้านบน — นั่นคือ "บัญชีหมดอายุ = อ่าน
+  // สิทธิแยกตามแพ็กเกจ (คนละเรื่องกับ isExpiredAccount ด้านบน — นั่นคือ "บัญชีหมดอายุ = อ่าน
   // อย่างเดียวทั้งหมด" ส่วนนี่คือ "บัญชีฟรี (ไม่เคยซื้อแพ็กเกจนี้) = ใช้ได้แต่จำกัดจำนวน/ช่วงเวลา")
   // legacy_unlimited === undefined หมายถึงยังไม่ได้รัน SQL เพิ่มคอลัมน์ — fail open ไม่จำกัดไปก่อน
   function hasBundlePlan(){
@@ -7836,7 +7836,7 @@
     return !!(App.profile.plan_timers_expires_at && new Date(App.profile.plan_timers_expires_at).getTime() > Date.now());
   }
   // สมาชิกปาร์ตี้ (ไม่ใช่หัวปาร์ตี้เอง) ที่บัญชีตัวเองไม่มีแพ็กเกจ "จับเวลาบอส" — เพิ่มบอส/กดตายแล้ว/
-  // แก้ไข-ลบประวัติไม่ได้ (ดูอย่างเดียว) ต่างจากเดิมที่ยึดสิทธิ์ตามแพ็กเกจของหัวปาร์ตี้ล้วนๆ — หัวปาร์ตี้
+  // แก้ไข-ลบประวัติไม่ได้ (ดูอย่างเดียว) ต่างจากเดิมที่ยึดสิทธิตามแพ็กเกจของหัวปาร์ตี้ล้วนๆ — หัวปาร์ตี้
   // เองไม่โดนกฎนี้ ยึดแพ็กเกจของตัวเองตามปกติ (ฝั่งเซิร์ฟเวอร์บังคับจริงด้วย ดู add_boss_capped/record_kill/
   // kill_items_write/kills_party_delete — จุดนี้แค่กันไม่ให้กดง่ายๆ ฝั่งหน้าเว็บ)
   function isFreePartyMember(){ return !!App.viewingHostId && !hasTimersPlan(); }
@@ -7964,7 +7964,7 @@
   // แยกจากวันหมดอายุรวมของบัญชีด้านบน (บัญชีใหม่ตั้งเป็น 2099 จึงไม่เคยเข้าเงื่อนไขนั้น)
   //   ใกล้หมด = แพ็กที่เหลือไม่เกิน 3 วัน · ใช้รายการชุดเดียวกับหน้าตั้งค่า (แพ็กเล็กที่แพ็กใหญ่ครอบยาวกว่าไม่นับ)
   //   หมดแล้ว = แพ็กที่หมดภายใน 30 วันที่ผ่านมาและยังไม่ได้ต่อ · แจ้งครั้งเดียวต่อการหมดอายุแต่ละครั้ง (จำในเครื่อง)
-  // บัญชีรุ่นเดิม (legacy_unlimited) และแอดมินได้สิทธิ์ไม่จำกัดอยู่แล้ว จึงไม่เตือน
+  // บัญชีรุ่นเดิม (legacy_unlimited) และแอดมินได้สิทธิไม่จำกัดอยู่แล้ว จึงไม่เตือน
   var PKG_WARN_DAYS = 3, PKG_EXPIRED_WINDOW = 30*86400000;
   function packageReminderApplies(){
     return !!App.profile && !App.isGuest && App.profile.role !== 'admin' && !App.profile.legacy_unlimited;
@@ -8008,11 +8008,11 @@
     var parts = [];
     if(gone.length){
       parts.push(gone.map(function(g){ return g.name+' หมดอายุเมื่อ '+fmtDate(g.expiry); }).join('\n')+
-        '\nตอนนี้ใช้สิทธิ์แบบฟรี ข้อมูลเดิมของคุณไม่ถูกลบ ต่ออายุเมื่อไหร่ก็กลับมาใช้ได้เต็มที่');
+        '\nตอนนี้ใช้สิทธิแบบฟรี ข้อมูลเดิมของคุณไม่ถูกลบ ต่ออายุเมื่อไหร่ก็กลับมาใช้ได้เต็มที่');
     }
     if(showSoon){
       parts.push(soon.map(function(s){ return s.name+' — เหลืออีก '+s.days+' วัน (หมด '+fmtDate(s.expiry)+')'; }).join('\n')+
-        '\nต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า ถ้าปล่อยให้หมดจะกลับไปใช้สิทธิ์แบบฟรี');
+        '\nต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า ถ้าปล่อยให้หมดจะกลับไปใช้สิทธิแบบฟรี');
     }
     showExpiryPopup(gone.length && showSoon ? 'แจ้งเตือนแพ็กเกจ' : gone.length ? 'แพ็กเกจหมดอายุแล้ว' : 'แพ็กเกจใกล้หมดอายุ', parts.join('\n\n'));
     if(showSoon) persist(App.keys.pkgWarn, soonStamp);
@@ -8053,7 +8053,7 @@
   // เดิมโปรไฟล์โหลดใหม่แค่ตอนล็อกอิน/หลังทำรายการเอง — แอดมินยืนยันรายการเติมเงินที่ค้างตรวจ, เติม/หักแต้ม,
   // ยกเลิกรายการ หน้าจอของผู้ใช้คนนั้นไม่รู้จนกว่าจะรีโหลด (เห็นแต้มเก่า กดซื้อแล้วขึ้นแต้มไม่พอ ฯลฯ)
   // ตอนนี้เช็คใหม่ทุก 60 วิ ระหว่างเปิดแท็บดูอยู่ + ทันทีที่กลับมาที่แท็บ (เว้นอย่างน้อย 15 วิ ยกเว้นสั่ง force)
-  // สร้างโปรไฟล์ใหม่ให้ครบรวมสิทธิ์แพ็กย่อย (1 in 1 / 2 in 1) ก่อน แล้วค่อยสลับเข้า App.profile ทีเดียว —
+  // สร้างโปรไฟล์ใหม่ให้ครบรวมสิทธิแพ็กย่อย (1 in 1 / 2 in 1) ก่อน แล้วค่อยสลับเข้า App.profile ทีเดียว —
   // ไม่ใช้ refreshProfile() ตรงนี้ เพราะตัวนั้นล้าง feature_expiries ก่อนโหลดเสร็จ ช่วงสั้นๆ นั้นคนที่มีแพ็กย่อย
   // จะถูกมองเป็นบัญชีฟรี ถ้ากดบันทึกพอดีจะโดนลิมิตผิดๆ (ของเดิมเกิดแค่ตอนทำรายการเอง ตัวนี้วิ่งทุกนาทีจึงต้องกัน)
   var profileSyncBusy = false, profileSyncAt = 0;
@@ -8076,7 +8076,7 @@
       var data = res.data;
       data.feature_expiries = {};
       return supa.from('package_feature_entitlements').select('feature,expires_at').eq('user_id', uid).then(function(ent){
-        if(ent.error) return null; // สิทธิ์แพ็กย่อยโหลดไม่ได้ = ไม่สลับ (ข้อมูลไม่ครบห้ามใช้) รอบหน้าลองใหม่
+        if(ent.error) return null; // สิทธิแพ็กย่อยโหลดไม่ได้ = ไม่สลับ (ข้อมูลไม่ครบห้ามใช้) รอบหน้าลองใหม่
         (ent.data || []).forEach(function(e){
           if(e.feature==='farm' || e.feature==='accountItems') data.feature_expiries[e.feature] = e.expires_at;
         });
@@ -8095,7 +8095,7 @@
       if(!document.getElementById('view-pricing').hidden) renderPricingPage();
       if(!document.getElementById('view-settings').hidden) renderSettingsPackages();
       if(planChanged){
-        // สิทธิ์แพ็กเปลี่ยน (ซื้อ/หมดอายุ/แอดมินแจกวัน) → วาดส่วนที่ล็อกตามแพ็กของหน้าที่เปิดอยู่ใหม่
+        // สิทธิแพ็กเปลี่ยน (ซื้อ/หมดอายุ/แอดมินแจกวัน) → วาดส่วนที่ล็อกตามแพ็กของหน้าที่เปิดอยู่ใหม่
         if(!document.getElementById('view-home').hidden) renderMerchantHistory();
         if(!document.getElementById('view-farm').hidden) renderFarmHistory();
         if(!document.getElementById('view-items').hidden) renderItemsPage();
@@ -8399,11 +8399,11 @@
       prefix+'สมาชิกในปาร์ตี้ '+partyPanelMemberCount+' คน';
     document.getElementById('partyPanel').classList.toggle('viewing-party', !!App.viewingHostId);
   }
-  // ป้ายสิทธิ์สมาชิกในแผงปาร์ตี้ (ข้อมูลจาก party_roster)
+  // ป้ายสิทธิสมาชิกในแผงปาร์ตี้ (ข้อมูลจาก party_roster)
   // ป้ายแรก = เข้าปาร์ตี้แบบไหน · ป้ายสอง = ใช้งานได้แค่ไหน (ตามแพ็กเกจ "จับเวลาบอส" ของคนนั้นเอง)
   function partySeatPillHtml(r){
-    // ป้ายเขียว = ได้สิทธิ์เข้าปาร์ตี้เพราะมีแพ็กเกจ (เดิมเขียน "เข้าฟรี" — ผู้ใช้ขอเปลี่ยน 27 ก.ย. 2569)
-    if(r.seat === 'plan') return '<span class="party-pill party-pill-free">'+(r.has_timers ? 'สิทธิ์ · มีแพ็กจับเวลาบอส' : 'สิทธิ์ · แพ็กหมดอายุ')+'</span>';
+    // ป้ายเขียว = ได้สิทธิเข้าปาร์ตี้เพราะมีแพ็กเกจ (เดิมเขียน "เข้าฟรี" — ผู้ใช้ขอเปลี่ยน 27 ก.ย. 2569)
+    if(r.seat === 'plan') return '<span class="party-pill party-pill-free">'+(r.has_timers ? 'สิทธิ · มีแพ็กจับเวลาบอส' : 'สิทธิ · แพ็กหมดอายุ')+'</span>';
     return '<span class="party-pill party-pill-paid">จ่าย 50 แต้ม · ถาวร (ห้ามกดออก)</span>';
   }
   function partyRightsPillHtml(r){
@@ -8414,8 +8414,8 @@
       : '<span class="party-pill party-pill-view">แพ็กฟรี · เพิ่มบอสได้ 1 ตัว</span>';
     if(r.has_timers) return '<span class="party-pill party-pill-full">'+label+' · ใช้ได้เต็ม'+
       (r.timers_expires_at ? ' · ถึง '+fmtDate(new Date(r.timers_expires_at).getTime()) : '')+'</span>';
-    // เข้าฟรีแล้วแพ็กหมด = ถูกพักสิทธิ์ (หน้าจับเวลาบอสของคนนั้นล็อกอยู่)
-    if(r.seat === 'plan') return '<span class="party-pill party-pill-locked">แพ็กหมดอายุ — ถูกพักสิทธิ์ (ต่ออายุ หรือจ่าย 50 แต้ม)</span>';
+    // เข้าฟรีแล้วแพ็กหมด = ถูกพักสิทธิ (หน้าจับเวลาบอสของคนนั้นล็อกอยู่)
+    if(r.seat === 'plan') return '<span class="party-pill party-pill-locked">แพ็กหมดอายุ — ถูกพักสิทธิ (ต่ออายุ หรือจ่าย 50 แต้ม)</span>';
     return '<span class="party-pill party-pill-view">แพ็กฟรี · ดูเวลาบอสอย่างเดียว</span>';
   }
   function renderPartyPanel(){
@@ -8431,7 +8431,7 @@
     var contextHostId = App.viewingHostId || App.session.id;
     var contextHostName = App.viewingHostId ? App.viewingHostName : ((App.profile && App.profile.display_name) || '-');
 
-    // withRights = มีข้อมูลสิทธิ์จาก party_roster (ป้ายเข้าแบบไหน + ใช้งานได้แค่ไหน) · ไม่มี = รายชื่ออย่างเดียวแบบเดิม
+    // withRights = มีข้อมูลสิทธิจาก party_roster (ป้ายเข้าแบบไหน + ใช้งานได้แค่ไหน) · ไม่มี = รายชื่ออย่างเดียวแบบเดิม
     function draw(hostInfo, members, withRights){
       partyPanelMemberCount = members.length + 1;
       updatePartyPanelSummary();
@@ -8453,7 +8453,7 @@
       listEl.innerHTML = hostRow + memberRows;
     }
     supa.rpc('party_roster', { p_host: contextHostId }).then(function(res){
-      // ยังไม่ได้รัน SQL ฟังก์ชันป้ายสิทธิ์ → โหลดรายชื่อแบบเดิม (ไม่มีป้าย)
+      // ยังไม่ได้รัน SQL ฟังก์ชันป้ายสิทธิ → โหลดรายชื่อแบบเดิม (ไม่มีป้าย)
       if(res.error && /party_roster|PGRST202/.test((res.error.message||'')+' '+(res.error.code||''))){
         return supa.from('party_members').select('member_id, profiles!member_id(display_name)').eq('host_id', contextHostId).is('removed_at', null).then(function(r2){
           if(r2.error){ listEl.innerHTML = '<p class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(r2.error.message)+'</p>'; return; }
@@ -9441,11 +9441,11 @@
   document.getElementById('htabItems').addEventListener('click', function(){ App.historyTab='items'; renderHistory(); });
   document.getElementById('htabBoss').addEventListener('click', function(){ App.historyTab='boss'; renderHistory(); });
 
-  // query ต้องต่อท้ายด้วย .select('id') เพื่อให้รู้ว่าลบได้จริงกี่แถว — ถ้า 0 แถว (ไม่มีสิทธิ์/รายการหายไปแล้ว) แจ้งว่าไม่สำเร็จ
+  // query ต้องต่อท้ายด้วย .select('id') เพื่อให้รู้ว่าลบได้จริงกี่แถว — ถ้า 0 แถว (ไม่มีสิทธิ/รายการหายไปแล้ว) แจ้งว่าไม่สำเร็จ
   function runHistoryDelete(query, okMsg){
     return query.then(function(res){
       if(res.error){ console.error('history delete', res.error); toast('ลบไม่สำเร็จ: '+res.error.message); return; }
-      if(!(res.data||[]).length){ toast('ลบไม่สำเร็จ: ไม่มีสิทธิ์ลบ หรือรายการถูกลบไปแล้ว'); return loadKills().then(function(){ renderHistory(); renderStats(); renderRoster(); }); }
+      if(!(res.data||[]).length){ toast('ลบไม่สำเร็จ: ไม่มีสิทธิลบ หรือรายการถูกลบไปแล้ว'); return loadKills().then(function(){ renderHistory(); renderStats(); renderRoster(); }); }
       toast(okMsg);
       bossNotifyChanged();
       return loadKills().then(function(){ renderHistory(); renderStats(); renderRoster(); });

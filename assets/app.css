@@ -3869,3 +3869,13 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
    เลื่อนซ้าย ~3px ให้ห่างข้อความ (ภาพเกินช่องไปทางซ้ายแทน) + เลื่อนขึ้นให้อยู่กลางแนวตั้ง
    เลือกคลังแล้วหัวข้อเปลี่ยนเป็นรูปของคลังนั้น (src ไม่ใช่รถเข็น) จึงไม่โดนกฎนี้ */
 #view-items .inventory-heading-icon[src$="inventory-cart.webp"]{transform:translate(-7.5%,-2.7%) scale(1.47)}
+/* หน้าต่างเพิ่มเพื่อนเข้าปาร์ตี้: ไม่ใช้จุด bullet — ราคานำหน้าบรรทัด (ฟรี = เขียว / 50 แต้ม = ทอง ตรงกับป้ายในแผงปาร์ตี้)
+   รายละเอียดเสริมเป็นบรรทัดล่างตัวเล็กสีจาง · ข้อห้ามกดออกเป็นสีเตือน */
+ul.post-announce-note.party-add-rules{list-style:none;padding-left:0;font-size:.76rem;line-height:1.5}
+ul.post-announce-note.party-add-rules li{margin-bottom:.6rem;color:var(--text)}
+ul.post-announce-note.party-add-rules li:last-child{margin-bottom:0}
+ul.post-announce-note.party-add-rules small{display:block;margin-top:.1rem;font-size:.7rem;color:var(--text-dim)}
+ul.post-announce-note.party-add-rules .party-add-price-free{color:#94dfbd}
+ul.post-announce-note.party-add-rules .party-add-price-paid{color:#f0cf86}
+ul.post-announce-note.party-add-rules .party-add-warn{color:var(--warn)}
+ul.post-announce-note.party-add-rules .party-add-keep{white-space:nowrap} /* วลีสั้นที่ไม่ควรขาดกลางคำ (เช่น "ทุก / อย่าง") — ขึ้นบรรทัดใหม่ทั้งก้อน */

@@ -261,7 +261,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 
 <div id="stateBox" class="state">
   <h2 id="stateTitle">กำลังโหลด...</h2>
-  <p id="stateText">กำลังตรวจสอบสิทธิ์และดึงข้อมูลสรุป</p>
+  <p id="stateText">กำลังตรวจสอบสิทธิและดึงข้อมูลสรุป</p>
   <a class="btn" id="stateLink" href="app.html" hidden>ไปหน้าเว็บเพื่อล็อกอิน</a>
 </div>
 
@@ -832,7 +832,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       $('refreshBtn').disabled = false;
       if(res.error){
         var msg = res.error.message || '';
-        if(msg.indexOf('แอดมิน') !== -1) showState('สำหรับแอดมินเท่านั้น', 'บัญชีที่ล็อกอินอยู่ไม่มีสิทธิ์ดูหน้านี้', 'กลับหน้าเว็บ');
+        if(msg.indexOf('แอดมิน') !== -1) showState('สำหรับแอดมินเท่านั้น', 'บัญชีที่ล็อกอินอยู่ไม่มีสิทธิดูหน้านี้', 'กลับหน้าเว็บ');
         else if(/admin_dashboard|function|does not exist|schema cache/i.test(msg)) showState('ยังไม่ได้ติดตั้งฟังก์ชันสรุปข้อมูล', 'ต้องรันไฟล์ SQL 20260924000300_admin_dashboard.sql ใน Supabase ก่อน');
         else showState('โหลดข้อมูลไม่สำเร็จ', msg || 'ลองกดรีเฟรชอีกครั้ง');
         return;

@@ -2753,14 +2753,14 @@
       var sv = serverRateById(a.serverId);
       var parts = [];
       if(a.buy!=null) parts.push('<span class="buy">รับM '+fmtNum(a.buy)+'บ</span>');
-      var countdown = a.expiresAt!=null ? '<span class="ticker-countdown" data-expires-at="'+a.expiresAt+'">'+fmtDuration(a.expiresAt-now)+'</span>' : '';
+      // ไม่โชว์เวลานับถอยหลังบนการ์ดแล้ว (ผู้ใช้ขอ 27 ก.ย. 2569) — ประกาศที่หมดเวลายังหายเองผ่าน tickTickerCountdowns
       // มีลิงก์ Facebook แนบมากับประกาศ (จำสำเนาไว้ตอนลงประกาศ) ให้กดชื่อแล้วไปหน้านั้นได้เลย
       var posterHtml = a.facebookUrl
         ? '<a class="poster" href="'+escapeHtml(/^https?:\/\//i.test(a.facebookUrl) ? a.facebookUrl : 'https://'+a.facebookUrl)+'" target="_blank" rel="noopener noreferrer">('+escapeHtml(a.userName)+')</a>'
         : '<span class="poster">('+escapeHtml(a.userName)+')</span>';
       return '<span class="ticker-item" data-announce-id="'+a.id+'">'+
         '<span class="ticker-item-main">'+(sv?sv.name:a.serverId)+' '+posterHtml+'</span>'+
-        '<span class="ticker-item-sub">'+parts.join(' / ')+countdown+'</span>'+
+        '<span class="ticker-item-sub">'+parts.join(' / ')+'</span>'+
       '</span>';
     }).join('');
 
@@ -2770,18 +2770,20 @@
     rebuildTickerLoop();
   }
 
+  // ทุก 1 วิ: มีประกาศหมดเวลา → วาดแถบใหม่ (renderTicker ตัดอันที่หมดออก) + รายการ "ประกาศของฉัน" ถ้าเปิดอยู่
+  // ไม่มีอันไหนหมด → แค่เดินช่อง "เหลือเวลา" ในหน้าต่างประกาศของฉัน (การ์ดบนแถบไม่มีตัวนับแล้ว)
   function tickTickerCountdowns(){
     var now = Date.now();
-    var spans = document.querySelectorAll('#tickerTrack .ticker-countdown');
-    if(!spans.length) return;
-    var expired = false;
-    spans.forEach(function(el){
-      var exp = parseInt(el.dataset.expiresAt, 10);
-      var remain = exp - now;
-      if(remain <= 0){ expired = true; return; }
-      el.textContent = fmtDuration(remain);
+    var myOpen = !document.getElementById('myAnnouncementsOverlay').hidden;
+    if(App.rateAnnouncements.some(function(a){ return a.expiresAt!=null && a.expiresAt<=now; })){
+      renderTicker();
+      if(myOpen) renderMyAnnouncements();
+      return;
+    }
+    if(!myOpen) return;
+    document.querySelectorAll('#myAnnouncementsList [data-expires-at]').forEach(function(el){
+      el.textContent = 'เหลือเวลา '+fmtDuration(Math.max(0, parseInt(el.dataset.expiresAt, 10) - now));
     });
-    if(expired) renderTicker();
   }
 
   // ---------- merchant รับ/ขาย bar chart (real data from App.merchantLog) ----------
@@ -8786,7 +8788,8 @@
             '<button type="button" class="mr-del" data-my-announce-del="'+a.id+'" title="ยกเลิกประกาศ">🗑</button>'+
           '</span>'+
         '</div>'+
-        '<div class="my-announce-row-sub">เหลือเวลา '+fmtDuration(a.expiresAt-now)+'</div>'+
+        // data-expires-at → tickTickerCountdowns เดินเวลานี้ทุกวินาทีระหว่างเปิดหน้าต่าง
+        (a.expiresAt!=null ? '<div class="my-announce-row-sub" data-expires-at="'+a.expiresAt+'">เหลือเวลา '+fmtDuration(a.expiresAt-now)+'</div>' : '')+
       '</div>';
     }).join('');
   }

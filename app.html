@@ -917,6 +917,7 @@
             <input id="adminPromoMaxUses" type="text" inputmode="numeric" autocomplete="off" placeholder="จำนวนคนใช้ได้ทั้งหมด">
             <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;white-space:nowrap">วันหมดอายุ (ไม่บังคับ)<input id="adminPromoExpires" type="date" autocomplete="off"></label>
           </div>
+          <input id="adminPromoGroup" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="กลุ่มโค้ด / แคมเปญ (ไม่บังคับ) — 1 บัญชีใช้ได้ 1 โค้ดต่อกลุ่ม เช่น STREAMER-OCT">
           <input id="adminPromoNote" type="text" maxlength="200" autocomplete="off" placeholder="หมายเหตุ (ไม่บังคับ เช่น โปรวันสงกรานต์ 2569)">
           <button type="button" class="btn btn-primary" id="adminPromoAddBtn">+ สร้างโค้ด</button>
           <p class="auth-error" id="adminPromoAddError"></p>
@@ -1210,4 +1211,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260927-discount-codes"></script>
+<script src="assets/app.js?v=20260927-promo-groups"></script>

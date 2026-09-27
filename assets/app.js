@@ -8219,7 +8219,7 @@
   function openAdminPage(){
     if(adminPanel){ adminPanel.openAdminPage(); return; }
     if(!adminPanelLoading){
-      adminPanelLoading = import('./admin-panel.js?v=20260927-discount-codes').then(function(mod){
+      adminPanelLoading = import('./admin-panel.js?v=20260927-promo-groups').then(function(mod){
         adminPanel = mod.initAdminPanel({
           supa:supa, escapeHtml:escapeHtml, fmtNum:fmtNum, fmtDate:fmtDate, fmtDateTime:fmtDateTime,
           toast:toast, showConfirm:showConfirm, loadServers:loadServers,

@@ -380,7 +380,7 @@ export function initAdminPanel(ctx){
     return '<div class="admin-topup-row" data-promo-code="'+escapeHtml(p.code)+'">'+
       '<div style="flex:1;min-width:160px">'+
         '<b>'+escapeHtml(p.code)+'</b>'+
-        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">'+rewardText+' · ใช้แล้ว '+fmtNum(p.used_count)+'/'+fmtNum(p.max_uses)+' · หมดอายุ: '+expText+(p.note?' · '+escapeHtml(p.note):'')+'</div>'+
+        '<div class="sub" style="font-size:.78rem;margin-top:.15rem">'+rewardText+' · ใช้แล้ว '+fmtNum(p.used_count)+'/'+fmtNum(p.max_uses)+' · หมดอายุ: '+expText+(p.group_key?' · กลุ่ม '+escapeHtml(p.group_key):'')+(p.note?' · '+escapeHtml(p.note):'')+'</div>'+
         '<div data-promo-redeem-list hidden style="margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--border)"></div>'+
       '</div>'+
       (full ? '<span class="membership-pill neutral">ใช้ครบแล้ว</span>' : '<span class="membership-pill ok">ใช้งานได้</span>')+
@@ -412,10 +412,13 @@ export function initAdminPanel(ctx){
     var maxUses = parseInt(document.getElementById('adminPromoMaxUses').value.replace(/,/g,''), 10);
     var expDate = document.getElementById('adminPromoExpires').value;
     var note = document.getElementById('adminPromoNote').value.trim();
+    // กลุ่มโค้ด (แคมเปญ): โค้ดที่ใส่กลุ่มเดียวกัน 1 บัญชีใช้ได้โค้ดเดียว (ฐานข้อมูลเก็บเป็นตัวพิมพ์ใหญ่)
+    var group = document.getElementById('adminPromoGroup').value.trim().toUpperCase();
     if(!code){ errEl.textContent = 'กรอกรหัสโค้ด'; return; }
     if(!maxUses || maxUses<=0){ errEl.textContent = 'กรอกจำนวนคนใช้ได้ให้ถูกต้อง'; return; }
     var reward = document.getElementById('adminPromoReward').value;
     var payload = { code:code, max_uses:maxUses, expires_at: expDate ? new Date(expDate+'T23:59:59').toISOString() : null, note:note||null };
+    if(group) payload.group_key = group;
     if(reward === 'discount'){
       var pct = parseInt(document.getElementById('adminPromoDiscountPercent').value.replace(/[,%\s]/g,''), 10);
       if(!pct || pct < 1 || pct > 100){ errEl.textContent = 'กรอกเปอร์เซ็นต์ส่วนลด 1–100'; return; }
@@ -452,6 +455,7 @@ export function initAdminPanel(ctx){
       document.getElementById('adminPromoMaxUses').value = '';
       document.getElementById('adminPromoExpires').value = '';
       document.getElementById('adminPromoNote').value = '';
+      document.getElementById('adminPromoGroup').value = '';
       toast('สร้างโค้ดแล้ว');
       loadAdminPromoCodes();
     });

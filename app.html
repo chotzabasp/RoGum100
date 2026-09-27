@@ -1,7 +1,7 @@
 <html lang="th">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gum100 ทำบัญชีRo, บันทึกยอดฟาร์ม, จับเวลาล่าบอส</title>
+<title>Gum100 จดรายได้RO, จับเวลาบอสMVP</title>
 <!-- คำอธิบาย + การ์ดตัวอย่างตอนแชร์ลิงก์ (Facebook / LINE / Messenger / Discord) — รูปอยู่ที่ og-image.jpg (1200x630)
      ถ้าเปลี่ยนรูปหรือข้อความ แพลตฟอร์มจะจำการ์ดเก่าไว้ ต้องกดล้างแคชในเครื่องมือของแต่ละที่ (เช่น Facebook Sharing Debugger) -->
 <meta name="description" content="จับเวลาบอส บันทึกซื้อ–ขาย คลังไอเทม และยอดฟาร์ม ครบในที่เดียว สำหรับผู้เล่น Ragnarok Online">
@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260927-link-notice">
+<link rel="stylesheet" href="assets/app.css?v=20260927-link-copy">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -43,7 +43,7 @@
          (อายุลิงก์ 1 ชม. = Email OTP expiration 3600 วิ ในตั้งค่า Email ของ Supabase — เปลี่ยนที่นั่นแล้วแก้ข้อความนี้ด้วย) -->
     <div class="auth-link-notice" id="authLinkNotice" role="alert" hidden>
       <b>ลิงก์ในอีเมลนี้ใช้ไม่ได้แล้ว</b>
-      ลิงก์หมดอายุ (ใช้ได้ภายใน 1 ชั่วโมง) หรือเคยกดไปแล้ว
+      ลิงก์กดได้ครั้งเดียว ภายใน 1 ชั่วโมง และใช้ได้เฉพาะอีเมลฉบับล่าสุด
       <ul>
         <li>ลิงก์ยืนยันอีเมล: เข้าสู่ระบบได้เลย ถ้ายังไม่ได้ยืนยันจะมีปุ่ม "ส่งอีเมลยืนยันอีกครั้ง" ให้กด</li>
         <li>ลิงก์ตั้งรหัสผ่านใหม่: กด "ลืมรหัสผ่าน?" ด้านล่าง เพื่อขอลิงก์ใหม่</li>
@@ -1037,7 +1037,7 @@
       <input type="email" id="forgotEmail" placeholder="you@example.com" autocomplete="email" autocapitalize="none" spellcheck="false">
     </div>
     <p class="auth-error" id="forgotError" role="alert"></p>
-    <p class="forgot-sent" id="forgotSent" role="status" hidden></p>
+    <div class="forgot-sent" id="forgotSent" role="status" hidden></div>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" data-forgot-close>ปิด</button>
       <button type="button" class="btn btn-gradient" id="forgotSendBtn">ส่งลิงก์รีเซ็ต</button>
@@ -1251,4 +1251,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260927-link-notice"></script>
+<script src="assets/app.js?v=20260927-link-copy"></script>

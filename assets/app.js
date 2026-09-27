@@ -4735,11 +4735,11 @@
       '<button type="button" class="mr-ic-head" aria-expanded="'+(open?'true':'false')+'" title="กดเพื่อดูรายการซื้อ-ขายของไอเทมนี้">'+
         '<span class="mr-ic-chev">▸</span>'+
         '<span class="mr-it-namewrap">'+
-          '<span class="mr-it-name">'+(!imagePath || category==='zeny' ? historyCategoryIcon(category) : '')+nameHtml+'</span>'+
+          '<span class="mr-it-name">'+(!imagePath || category==='zeny' ? historyCategoryIcon(category, true) : '')+nameHtml+'</span>'+
           '<span class="mr-it-tags"'+(category==='item'?' hidden':'')+'>'+(category==='zeny'?'<span class="chip">M</span>':category==='item'?'':historyCategoryTag(g.category))+'</span>'+
           // ป้าย "ล่าสุด" อยู่ต่อท้ายชื่อในบรรทัดเดียวกัน (ชื่อ → ป้ายหมวด เช่น M → ล่าสุด) ก่อนชื่อเซิร์ฟเวอร์
           (groupHasNew ? '<span class="mr-ic-new-badge">ล่าสุด</span>' : '')+
-          (showServer?'<span class="mr-history-server"><span>เซิร์ฟเวอร์</span>'+historyServerTag(g.serverId)+'</span>':'')+
+          (showServer?'<span class="mr-history-server">'+historyServerTag(g.serverId)+'</span>':'')+
         '</span>'+
         (category!=='zeny' ? '<span class="mr-compact-metrics"><span class="mr-compact-remaining"><span>คงเหลือ</span> <b>'+fmtNum(left)+' '+unit+'</b></span><span class="mr-compact-profit"><span>กำไร</span> <b class="'+(g.sellQty<=0?'':g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.sellQty<=0?'—':(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ')+'</b></span>'+(over>0?'<span class="mr-compact-warning">ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit+'</span>':'')+'</span>' : '')+
       '</button>'+
@@ -4752,7 +4752,9 @@
   }
 
   // Presentation only: keep cards as direct children for existing event/CSS hooks.
-  function historyCategoryIcon(category){
+  function historyCategoryIcon(category, onCard){
+    // การ์ด M ใช้รูปเหรียญ (assets/zeny-coin.webp) · หัวหมวด "Zeny" ยังเป็นไอคอน Z แบบเส้นเหมือนเดิม (ผู้ใช้ขอไว้) · ไอเทม/อื่น ๆ ไม่เปลี่ยน
+    if(category==='zeny' && onCard) return '<span class="mr-history-icon mr-history-icon-coin" aria-hidden="true"><img src="assets/zeny-coin.webp" alt="" width="32" height="32" decoding="async"></span>';
     var shape = category==='zeny'
       ? '<circle cx="12" cy="12" r="8"/><path d="M9 8h6l-6 8h6"/>'
       : category==='item' ? '<path d="m12 3 8 5v8l-8 5-8-5V8l8-5Zm-8 5 8 5 8-5M12 13v8"/>'

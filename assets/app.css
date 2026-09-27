@@ -3855,3 +3855,8 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
   #view-home #mrEntryPanel,
   #view-farm .panel-farm-cost{position:sticky;top:min(1rem, calc(100vh - var(--sticky-card-h, 0px) - 1rem))}
 }
+/* ประวัติซื้อ-ขาย: ไอคอนในการ์ด M เป็นรูปเหรียญ (assets/zeny-coin.webp) แทนกรอบสี่เหลี่ยมสีฟ้า + ตัว Z — ขนาดเท่ากรอบเดิม 32px
+   (หัวหมวด "Zeny" ยังเป็นไอคอน Z แบบเส้นเหมือนเดิม — historyCategoryIcon ใน app.js) */
+#view-home #mrHistoryList .mr-history-icon.mr-history-icon-coin{background:none;border-radius:0;overflow:hidden}
+/* รูปมีขอบว่างรอบเหรียญ (เหรียญกว้าง ~73% ของรูป และอยู่สูงกว่ากึ่งกลาง ~1.8%) → ขยาย 1.35 เท่า + เลื่อนลง 2.4% ให้เหรียญเต็มกรอบพอดีกลาง */
+#view-home #mrHistoryList .mr-history-icon-coin img{display:block;width:100%;height:100%;object-fit:contain;transform:translateY(2.4%) scale(1.35)}

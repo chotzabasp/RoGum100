@@ -232,9 +232,9 @@
   }
   // เซิร์ฟที่ "จะโชว์" ใน dropdown ประวัติ/กราฟ = ไม่พัก หรือ พักแต่ติ๊กเปิดไว้
   function isHistoryServerShown(id){ return !isRetiredServer(id) || isRetiredServerVisible(id); }
-  // โควต้าจำนวนเซิร์ฟเวอร์ต่อบัญชี — ฟรี 1 เซิร์ฟ ซื้อเพิ่มครั้งละ 30 แต้ม (สล็อตถาวร)
+  // โควต้าจำนวนเซิร์ฟเวอร์ต่อบัญชี — ฟรี 1 เซิร์ฟ ซื้อเพิ่มครั้งละ 50 แต้ม (สล็อตถาวร · เดิม 30 — เปลี่ยน 27 ก.ย. 2569, migration 20260927001000)
   // ตัวจริงบังคับที่ฝั่งฐานข้อมูล (set_my_servers/buy_server_slot) ตรงนี้แค่ใช้วาดหน้าจอ
-  var SERVER_SLOT_COST = 30;
+  var SERVER_SLOT_COST = 50; // ต้องตรงกับ cost ใน buy_server_slot() ของฐานข้อมูล
   function serverQuota(){
     var q = App.profile && App.profile.server_quota;
     return (typeof q === 'number' && q > 0) ? q : 1;
@@ -2602,7 +2602,7 @@
       '</div>';
     }).join('');
     // ปุ่มนี้ทำ 2 หน้าที่: ถ้ายังมีเซิร์ฟในโควต้าที่ยังไม่ได้วางการ์ด = เพิ่มฟรี
-    // ถ้าใช้โควต้าหมดแล้ว = ซื้อโควต้าเพิ่ม 30 แต้ม (ป้ายราคาจะขึ้นให้เห็นก่อนกด)
+    // ถ้าใช้โควต้าหมดแล้ว = ซื้อโควต้าเพิ่ม SERVER_SLOT_COST แต้ม (ป้ายราคาจะขึ้นให้เห็นก่อนกด)
     var freeSlotLeft = App.rateSlots.length < serverQuota();
     var addBtn = App.rateSlots.length < MAX_RATE_CHIP_SLOTS
       ? '<button type="button" class="stat-chip rate-chip-add" id="addRateChipBtn">'+

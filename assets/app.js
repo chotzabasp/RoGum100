@@ -3145,6 +3145,11 @@
 
   function renderFarmChart(){
     hideFarmChartHover();
+    // บัญชีฟรี (ไม่มีแพ็กยอดนักฟาร์ม) ดูกราฟได้แค่วันนี้ — กติกาเดียวกับประวัติการฟาร์ม (farmRangeAllowed)
+    // ต้องบังคับก่อน farmChartCfg() ด้านล่าง · ตัวเลขสรุป (renderFarmKpi) ถูกเรียกจากในนี้ จึงใช้ช่วงเดียวกัน
+    var farmChartAllowed = !App.profile || hasFarmPlan();
+    if(!farmChartAllowed) farmTimeframe = 'today';
+    lockHistoryRangeSelect(document.getElementById('farmTimeframeSelect'), farmChartAllowed, CHART_RANGE_LOCK_TITLE);
     var serverTagEl = document.getElementById('farmRevenueServerTag');
     var curServer = serverRateById(App.farmServerId);
     serverTagEl.textContent = curServer ? curServer.name : '';
@@ -3695,6 +3700,11 @@
 
   function renderMrChart(){
     hideMrChartHover();
+    // บัญชีฟรี (ไม่มีแพ็กบัญชีนักลงทุน) ดูกราฟได้แค่วันนี้ — กติกาเดียวกับประวัติซื้อ-ขาย (tradeRangeAllowed)
+    // แพ็กหมดระหว่างเปิดช่วงกว้างอยู่ = กลับเป็นวันนี้เอง · ตัวเลขสรุป (renderMrKpi) ถูกเรียกจากในนี้ จึงใช้ช่วงเดียวกัน
+    var mrChartAllowed = !App.profile || hasTradePlan();
+    if(!mrChartAllowed) mrChartTimeframe = 'today';
+    lockHistoryRangeSelect(document.getElementById('mrChartTimeframeSelect'), mrChartAllowed, CHART_RANGE_LOCK_TITLE);
     populateMrChartServerSelect();
     var svg = document.getElementById('mrChartSvg');
     var buckets = mrChartBuckets(mrChartTimeframe, mrChartServerId, 0, mrChartCategoryFilter);
@@ -6294,7 +6304,9 @@
     });
   }
   // ตัวเลือกช่วงเวลาของประวัติ: บัญชีฟรีเลือกได้แค่ "วันนี้" ที่เหลือขึ้น 🔒 กดเลือกไม่ได้
-  function lockHistoryRangeSelect(sel, allowed){
+  // lockedTitle (ไม่บังคับ) = ข้อความตอนชี้เมาส์ตอนล็อก — กราฟใช้ CHART_RANGE_LOCK_TITLE, ไม่ใส่ = ข้อความของประวัติ
+  var CHART_RANGE_LOCK_TITLE = 'บัญชีฟรีดูกราฟได้แค่วันนี้ — สมัครแพ็กเกจเพื่อดูย้อนหลังทั้งหมด';
+  function lockHistoryRangeSelect(sel, allowed, lockedTitle){
     if(!sel) return;
     Array.prototype.forEach.call(sel.options, function(opt){
       if(opt.value === 'today') return;
@@ -6303,7 +6315,7 @@
       opt.textContent = opt.dataset.label + (allowed ? '' : ' 🔒');
     });
     if(!allowed && sel.value !== 'today') sel.value = 'today';
-    sel.title = allowed ? '' : 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจเพื่อดูย้อนหลังทั้งหมด';
+    sel.title = allowed ? '' : (lockedTitle || 'บัญชีฟรีดูประวัติได้แค่วันนี้ — สมัครแพ็กเกจเพื่อดูย้อนหลังทั้งหมด');
   }
   // Warehouse "S" is displayed as "อื่นๆ" (its internal tier code stays 'S' so existing
   // saved warehouse data keeps working without a migration).
@@ -8111,8 +8123,9 @@
       if(!document.getElementById('view-settings').hidden) renderSettingsPackages();
       if(planChanged){
         // สิทธิแพ็กเปลี่ยน (ซื้อ/หมดอายุ/แอดมินแจกวัน) → วาดส่วนที่ล็อกตามแพ็กของหน้าที่เปิดอยู่ใหม่
-        if(!document.getElementById('view-home').hidden) renderMerchantHistory();
-        if(!document.getElementById('view-farm').hidden) renderFarmHistory();
+        // กราฟใช้กติกาเดียวกับประวัติ (บัญชีฟรีดูได้แค่วันนี้) → วาดใหม่ด้วย ไม่งั้นล็อก/ปลดล็อกของกราฟค้างสถานะเก่า
+        if(!document.getElementById('view-home').hidden){ renderMerchantHistory(); renderMrChart(); }
+        if(!document.getElementById('view-farm').hidden){ renderFarmHistory(); renderFarmChart(); }
         if(!document.getElementById('view-items').hidden) renderItemsPage();
         if(!document.getElementById('view-timers').hidden) renderRoster();
       }

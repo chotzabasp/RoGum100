@@ -2268,7 +2268,8 @@
     list.innerHTML = entries.map(function(l){
       // รายการของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) หรือ
       // เป็นสมาชิกฟรีของปาร์ตี้ปัจจุบัน (isFreePartyMember) ลบไม่ได้
-      var writable = l.hostId===App.session.id || (l.hostId===activeOwnerId() && !isFreePartyMember());
+      // สมาชิกแก้/ลบได้เฉพาะรอบที่ตัวเองอยู่ในปาร์ตี้ตอนนั้น (ตรงกับ RLS ใหม่ party_kill_visible) — รอบที่เห็นเพราะมีคนหารให้ = ดูอย่างเดียว
+      var writable = l.hostId===App.session.id || (l.hostId===activeOwnerId() && !isFreePartyMember() && wasInPartyAt(App.session.id, l));
       var delBtn = writable ? '<button type="button" class="hist-del" data-del-kill="'+l.id+'" title="ลบรายการนี้">✕</button>' : '';
       return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+escapeHtml(l.killedBy) : '')+'</div>'+
@@ -2293,15 +2294,38 @@
     var hostId = activeOwnerId();
     return Promise.all([
       supa.from('profiles').select('id, display_name').eq('id', hostId).maybeSingle(),
-      supa.from('party_members').select('member_id, profiles!member_id(display_name)').eq('host_id', hostId).is('removed_at', null)
+      // ดึงทุกแถว (รวมคนที่ออกไปแล้ว) พร้อมเวลาเข้า/ออก — ใช้ดูว่าใครอยู่ในปาร์ตี้ตอนได้ของแต่ละชิ้น (wasInPartyAt)
+      supa.from('party_members').select('member_id, created_at, removed_at, profiles!member_id(display_name)').eq('host_id', hostId).order('created_at', { ascending:true })
     ]).then(function(rs){
       if(rs[0].error) console.error('loadPartyRoster host', rs[0].error);
       if(rs[1].error) console.error('loadPartyRoster members', rs[1].error);
       var host = rs[0].data;
-      App.partyRoster = [{ id:hostId, name:(host && host.display_name) || '-' }].concat((rs[1].data||[]).map(function(m){
+      var rows = rs[1].data || [];
+      var stints = {};
+      rows.forEach(function(m){
+        (stints[m.member_id] = stints[m.member_id] || []).push({ from:Date.parse(m.created_at), to:m.removed_at ? Date.parse(m.removed_at) : null });
+      });
+      App.partyStints = stints;
+      App.partyStintsHost = hostId;
+      App.partyRoster = [{ id:hostId, name:(host && host.display_name) || '-' }].concat(rows.filter(function(m){ return !m.removed_at; }).map(function(m){
         return { id:m.member_id, name:(m.profiles && m.profiles.display_name) || 'ไม่ทราบชื่อ' };
       }));
     });
+  }
+  // ใครหารของชิ้นนี้ได้: หัวปาร์ตี้ (เจ้าของประวัติ) · คนกด MVP รอบนั้น · หรือคนที่อยู่ในปาร์ตี้ตอนบอสตาย
+  // (นับทุกช่วงที่เคยอยู่ — ออกแล้วกลับมาใหม่ก็นับ · เผื่อ 1 นาทีให้เวลาที่พิมพ์เองไม่มีวินาที/นาฬิกาเครื่องเพี้ยน)
+  // ต้องตรงกับ party_member_present_at() + trigger kill_items_shared_with_guard ในฐานข้อมูล (migration 20260927001100)
+  var PARTY_JOIN_GRACE_MS = 60000;
+  function wasInPartyAt(memberId, k){
+    if(memberId === k.hostId || memberId === k.killedById) return true;
+    // ข้อมูลช่วงเวลายังเป็นของปาร์ตี้เดิม / ยังโหลดไม่เสร็จ (เปิดประวัติครั้งแรก, เพิ่งย้ายปาร์ตี้) → ถือว่าไม่อยู่ไว้ก่อน
+    // แถวจะเป็นแบบดูอย่างเดียวชั่วครู่ แล้ววาดใหม่เมื่อ loadPartyRoster เสร็จ (กันกดหารด้วยข้อมูลของปาร์ตี้อื่น)
+    if(App.partyStintsHost !== k.hostId) return false;
+    var st = (App.partyStints || {})[memberId] || [];
+    for(var i=0;i<st.length;i++){
+      if(st[i].from <= k.ts + PARTY_JOIN_GRACE_MS && (st[i].to == null || st[i].to > k.ts)) return true;
+    }
+    return false;
   }
   // คนที่เคยติ๊กหาร (อยู่ใน shared_with ของไอเทมที่เคยขาย) แต่ออกจากปาร์ตี้ไปแล้ว — ไม่อยู่ใน
   // partyRoster ปัจจุบัน จึงต้องดึงชื่อแยกมาเก็บไว้เอง เพื่อโชว์เป็นชิปล็อก (ดู lootRowHtml)
@@ -2367,13 +2391,17 @@
     // สมาชิกปัจจุบันของปาร์ตี้นั้นที่มีแพ็กเกจจับเวลาบอส) — ของตัวเองเขียนได้เสมอ, ของปาร์ตี้ปัจจุบัน
     // เขียนได้ถ้าไม่ใช่ "สมาชิกฟรี" (isFreePartyMember), ของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่
     // แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) ล็อกทั้งแถวเสมอ ดูได้อย่างเดียว
-    var writable = k.hostId===App.session.id || (k.hostId===activeOwnerId() && !isFreePartyMember());
+    // + ต้องอยู่ในปาร์ตี้ตอนได้ของชิ้นนี้ (ตรงกับ RLS ใหม่ party_item_visible) — ของที่เห็นเพราะมีคนหารให้ = ดูอย่างเดียว
+    var writable = k.hostId===App.session.id || (k.hostId===activeOwnerId() && !isFreePartyMember() && wasInPartyAt(App.session.id, k));
     // รายการนี้เป็นประวัติส่วนตัวของตัวเอง (ก่อนเข้าปาร์ตี้ปัจจุบัน) ที่ถูกรวมมาแสดงปนกับของ
     // ปาร์ตี้ (ดู loadKillsForActiveOwner) — ต้องหารกับตัวเองเท่านั้น ไม่ใช่ roster ของปาร์ตี้ที่กำลังดูอยู่
     // เพราะไอเทมนี้ไม่ได้เกี่ยวอะไรกับปาร์ตี้นั้นเลย
     var roster = !writable ? [] : (k.hostId && k.hostId !== activeOwnerId())
       ? [{ id:App.session.id, name:(App.profile && App.profile.display_name) || '-' }]
-      : (App.partyRoster || []);
+      : (App.partyRoster || []).filter(function(p){
+          // หารได้เฉพาะคนที่อยู่ในปาร์ตี้ตอนได้ของชิ้นนี้ — คนที่ติ๊กไว้แล้ว (ข้อมูลเก่า) ยังโชว์ให้กดเอาออกได้
+          return wasInPartyAt(p.id, k) || it.sharedWith.indexOf(p.id) !== -1;
+        });
     var unit = currencyLabel(it.soldCurrency);
     // คนที่เคยติ๊กหารไว้แต่ออกจากปาร์ตี้ไปแล้ว (ไม่อยู่ใน roster ปัจจุบัน) ยังต้องค้างชื่อไว้ในประวัติ
     // เหมือนเดิม แค่กดติ๊กออกไม่ได้แล้ว (ดู loadDepartedSharerNames) — ต่างจากคนในปาร์ตี้ตอนนี้ที่ยัง
@@ -2390,7 +2418,7 @@
         return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'">'+(on?'✓ ':'')+escapeHtml(p.name)+'</button>';
       }).join('')+
       departed.map(function(p){
-        return '<button type="button" class="share-chip on chip-locked" disabled title="'+(writable ? 'ออกจากปาร์ตี้ไปแล้ว — แก้ไขไม่ได้' : 'ปาร์ตี้อื่น — ดูได้อย่างเดียว')+'">✓ '+escapeHtml(p.name)+'</button>';
+        return '<button type="button" class="share-chip on chip-locked" disabled title="'+(writable ? 'ออกจากปาร์ตี้ไปแล้ว — แก้ไขไม่ได้' : (k.hostId===activeOwnerId() ? 'ดูได้อย่างเดียว' : 'ปาร์ตี้อื่น — ดูได้อย่างเดียว'))+'">✓ '+escapeHtml(p.name)+'</button>';
       }).join('')+'</div>' : '';
     var soldHtml;
     if(it.soldAmount!=null && (lootEditing!==it.id || !writable)){
@@ -2458,9 +2486,17 @@
     }
     return null;
   }
+  function findKillByItem(itemId){
+    for(var i=0;i<App.kills.length;i++){
+      if(App.kills[i].items.some(function(x){ return x.id===itemId; })) return App.kills[i];
+    }
+    return null;
+  }
   function updateKillItem(itemId, patch){
-    return supa.from('kill_items').update(patch).eq('id', itemId).then(function(res){
+    // .select('id') = รู้ว่าแก้ได้จริงกี่แถว — 0 แถว = ไม่มีสิทธิแก้รายการนี้ (RLS กรองทิ้งเงียบๆ) ต้องบอกผู้ใช้
+    return supa.from('kill_items').update(patch).eq('id', itemId).select('id').then(function(res){
       if(res.error){ console.error('updateKillItem', res.error); toast('บันทึกไม่สำเร็จ: '+res.error.message); }
+      else if(!(res.data||[]).length){ toast('บันทึกไม่สำเร็จ: ไม่มีสิทธิแก้ไขรายการนี้'); }
       else bossNotifyChanged();
       return loadKills();
     }).then(function(){ renderHistory(); renderStats(); });
@@ -5537,7 +5573,7 @@
     App.isGuest = true;
     // เคลียร์ข้อมูลที่โหลดมาจาก Supabase ตอนล็อกอินจริงรอบก่อน (ถ้ามี) กันไม่ให้เหลือค้างโชว์
     // ผิดๆ ตอนกลับมาเป็นผู้เยี่ยมชม — ต้องว่างเปล่าจริงเหมือนบัญชีใหม่เอี่ยม
-    App.db = []; App.active = {}; App.markers = {}; App.kills = []; App.partyRoster = []; App.departedSharerNames = {};
+    App.db = []; App.active = {}; App.markers = {}; App.kills = []; App.partyRoster = []; App.partyStints = {}; App.partyStintsHost = null; App.departedSharerNames = {};
     App.viewingHostId = null; App.viewingHostName = null; App.partySeat = null;
     renderPartyLock();
     cloudEnd();
@@ -9395,6 +9431,8 @@
       supa.rpc('record_kill', { p_boss_id: String(boss.id), p_boss_name: boss.name, p_killed_at: new Date(deathTs).toISOString(), p_items: items }).then(function(res){
         if(res.error){
           unlockKill(bossId, true); console.error('record_kill', res.error); toast('บันทึกประวัติการฆ่าไม่สำเร็จ: '+res.error.message);
+          // รอบนี้หัวปาร์ตี้บันทึกไว้ก่อนเราเข้าปาร์ตี้ (ฐานข้อมูลไม่ให้รวม) → ไม่เขียนเวลาทับของหัวปาร์ตี้ โหลดเวลาจริงกลับมาแทน
+          if(/ก่อนคุณเข้าปาร์ตี้/.test(res.error.message || '')) return refreshAfterKill();
           writeTimer(); // เหมือนเดิม: ประวัติบันทึกไม่ได้ แต่ตัวจับเวลายังเดินต่อ
           return;
         }
@@ -9470,11 +9508,14 @@
   document.getElementById('htabBoss').addEventListener('click', function(){ App.historyTab='boss'; renderHistory(); });
 
   // query ต้องต่อท้ายด้วย .select('id') เพื่อให้รู้ว่าลบได้จริงกี่แถว — ถ้า 0 แถว (ไม่มีสิทธิ/รายการหายไปแล้ว) แจ้งว่าไม่สำเร็จ
-  function runHistoryDelete(query, okMsg){
+  // expected = จำนวนรอบที่บอกไว้ในกล่องยืนยัน — ลบได้น้อยกว่านั้น (เช่น รอบที่สมาชิกเห็นเพราะมีคนหารของให้ แต่ไม่ได้อยู่ในปาร์ตี้ตอนนั้น
+  // = ดูได้แต่ลบไม่ได้) ต้องบอกตามจริงว่าลบไปกี่รอบ ไม่ใช่ขึ้นว่าลบครบ
+  function runHistoryDelete(query, okMsg, expected){
     return query.then(function(res){
       if(res.error){ console.error('history delete', res.error); toast('ลบไม่สำเร็จ: '+res.error.message); return; }
-      if(!(res.data||[]).length){ toast('ลบไม่สำเร็จ: ไม่มีสิทธิลบ หรือรายการถูกลบไปแล้ว'); return loadKills().then(function(){ renderHistory(); renderStats(); renderRoster(); }); }
-      toast(okMsg);
+      var got = (res.data||[]).length;
+      if(!got){ toast('ลบไม่สำเร็จ: ไม่มีสิทธิลบ หรือรายการถูกลบไปแล้ว'); return loadKills().then(function(){ renderHistory(); renderStats(); renderRoster(); }); }
+      toast(expected && got < expected ? okMsg+' '+fmtNum(got)+' จาก '+fmtNum(expected)+' การฆ่า — ที่เหลือไม่มีสิทธิลบ' : okMsg);
       bossNotifyChanged();
       return loadKills().then(function(){ renderHistory(); renderStats(); renderRoster(); });
     });
@@ -9483,8 +9524,10 @@
     var n = App.killStats ? App.killStats.kills : App.kills.length;
     var m = App.killStats ? App.killStats.items : App.kills.reduce(function(s,k){ return s+k.items.length; }, 0);
     if(!n) return;
-    showConfirm('ลบประวัติทั้งหมดของปาร์ตี้นี้ '+n+' การฆ่า · '+m+' ไอเทม (รวมข้อมูลหาร/ยอดขาย)? ลบแล้วกู้คืนไม่ได้', function(){
-      runHistoryDelete(supa.from('kills').delete().eq('host_id', activeOwnerId()).select('id'), 'ลบประวัติทั้งหมดแล้ว');
+    // สมาชิกลบได้เฉพาะรอบที่ตัวเองเห็น (ตั้งแต่เข้าปาร์ตี้) — ประวัติก่อนหน้าของหัวปาร์ตี้ไม่ถูกลบ ข้อความต้องบอกตามจริง
+    var asMember = !!App.viewingHostId;
+    showConfirm((asMember ? 'ลบประวัติทั้งหมดที่คุณเห็นในปาร์ตี้นี้ ' : 'ลบประวัติทั้งหมดของปาร์ตี้นี้ ')+n+' การฆ่า · '+m+' ไอเทม (รวมข้อมูลหาร/ยอดขาย)? ลบแล้วกู้คืนไม่ได้', function(){
+      runHistoryDelete(supa.from('kills').delete().eq('host_id', activeOwnerId()).select('id'), asMember ? 'ลบประวัติที่คุณเห็นแล้ว' : 'ลบประวัติทั้งหมดแล้ว', n);
     });
   });
 
@@ -9532,7 +9575,7 @@
         var q = supa.from('kills').delete().eq('host_id', activeOwnerId()).eq('boss_id', bid);
         q = sid ? q.eq('server_id', sid) : q.is('server_id', null);
         if(who==='none') q = q.is('killed_by', null); else if(who!=null) q = q.eq('killed_by', who);
-        runHistoryDelete(q.select('id'), 'ลบประวัติบอสแล้ว');
+        runHistoryDelete(q.select('id'), 'ลบประวัติบอสแล้ว', killCount);
       });
       return;
     }
@@ -9551,6 +9594,8 @@
       if(!it) return;
       var arr = it.sharedWith.slice();
       var pos = arr.indexOf(sh.dataset.member);
+      var shKill = findKillByItem(it.id);
+      if(pos===-1 && shKill && !wasInPartyAt(sh.dataset.member, shKill)){ toast('เพิ่มคนนี้ไม่ได้ — ยังไม่ได้อยู่ในปาร์ตี้ตอนได้ของชิ้นนี้'); return; }
       if(pos===-1) arr.push(sh.dataset.member); else arr.splice(pos,1);
       updateKillItem(it.id, { shared: arr.length>0, shared_with: arr });
       return;

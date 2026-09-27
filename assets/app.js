@@ -242,13 +242,22 @@
     }
     // ถ้าโควต้าที่มีอยู่ครอบคลุมทุกเซิร์ฟในระบบแล้ว ช่องใหม่จะยังไม่มีเซิร์ฟให้ใส่
     // ไม่ห้ามซื้อ (เผื่อมีเซิร์ฟใหม่เข้าระบบ) แต่ต้องบอกให้รู้ตัวก่อนเสียแต้ม
-    var wasteWarn = serverQuota() >= SERVER_RATES.length
-      ? '<br><br><b>หมายเหตุ:</b> ตอนนี้ระบบมี '+SERVER_RATES.length+' เซิร์ฟเวอร์ และคุณมีโควต้า '+serverQuota()+' ช่องแล้ว ช่องที่ซื้อเพิ่มจะยังใช้ไม่ได้จนกว่าจะมีเซิร์ฟเวอร์ใหม่เข้าระบบ'
+    var quota = serverQuota();
+    var wasteWarn = quota >= SERVER_RATES.length
+      ? '<span class="buy-confirm-warn"><b>หมายเหตุ:</b> ตอนนี้ระบบมี '+SERVER_RATES.length+' เซิร์ฟเวอร์ และคุณมีโควต้า '+quota+' ช่องแล้ว ช่องที่ซื้อเพิ่มจะยังใช้ไม่ได้จนกว่าจะมีเซิร์ฟเวอร์ใหม่เข้าระบบ</span>'
       : '';
-    // showConfirm ใช้ innerHTML เลยต้องขึ้นบรรทัดด้วย <br>
-    showConfirm('เพิ่มช่องเซิร์ฟเวอร์อีก 1 ช่อง ใช้ <b>'+SERVER_SLOT_COST+' แต้ม</b> (เหลือ '+fmtNum(have-SERVER_SLOT_COST)+' แต้ม)<br><br>'+
-      'ช่องใหม่จะซ้ำกับเซิร์ฟแรกไปก่อน — ไปเลือกว่าช่องใหม่เป็นเซิร์ฟไหนได้ที่หน้า <b>ตั้งค่า</b><br>'+
-      'ช่องที่ซื้อเป็นของถาวร ลบการ์ดทิ้งแล้วเพิ่มใหม่ได้ฟรี'+wasteWarn, function(){
+    // หน้าตาเดียวกับกล่องยืนยันซื้อแพ็กเกจ (คลาส buy-confirm-*): หัว + ตาราง จำนวนช่อง/ราคา/แต้มคงเหลือ + หมายเหตุเป็นข้อ
+    showConfirm('<span class="buy-confirm-title">ยืนยันเพิ่มช่องเซิร์ฟเวอร์</span>'+
+      '<span class="buy-confirm-plan">+1 ช่อง</span>'+
+      '<span class="buy-confirm-rows">'+
+        '<span class="buy-confirm-row"><span>จำนวนช่อง</span><span>'+quota+' → '+(quota+1)+' ช่อง</span></span>'+
+        '<span class="buy-confirm-row"><span>ราคา</span><span><b>'+SERVER_SLOT_COST+' แต้ม</b></span></span>'+
+        '<span class="buy-confirm-row"><span>แต้มคงเหลือหลังซื้อ</span><span>'+fmtNum(have-SERVER_SLOT_COST)+' แต้ม</span></span>'+
+      '</span>'+
+      '<span class="buy-confirm-notes">'+
+        '<span>ช่องใหม่จะใช้เซิร์ฟเดียวกับช่องแรกไปก่อน เลือกเซิร์ฟที่ต้องการได้ที่หน้า "ตั้งค่า"</span>'+
+        '<span>ช่องที่ซื้อเป็นของถาวร ลบการ์ดแล้วเพิ่มใหม่ได้ฟรี</span>'+
+      '</span>'+wasteWarn, function(){
       supa.rpc('buy_server_slot').then(function(res){
         if(res.error){ toast(res.error.message || 'ซื้อโควต้าไม่สำเร็จ'); return; }
         return refreshProfile().then(function(){

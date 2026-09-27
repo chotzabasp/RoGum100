@@ -3759,6 +3759,11 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 .forgot-sent{margin:-.2rem 0 .9rem;padding:.6rem .75rem;border-radius:10px;background:color-mix(in srgb,var(--success) 12%,transparent);border:1px solid color-mix(in srgb,var(--success) 38%,transparent);color:#94dfbd;font-size:.8rem;line-height:1.6}
 .forgot-sent b{display:block;margin-bottom:.15rem;font-size:.86rem;color:#c9f2de}
 .forgot-alt{margin:.9rem 0 0;font-size:.76rem;line-height:1.6;color:var(--text-dim)}
+/* ลิงก์ในอีเมลหมดอายุ/เคยกดไปแล้ว: กล่องแจ้งบนหน้าต่างเข้าสู่ระบบ (โทนเตือนสีเหลือง) */
+.auth-link-notice{margin:0 0 1rem;padding:.65rem .8rem;border-radius:10px;background:color-mix(in srgb,var(--warn) 12%,transparent);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);color:#f0cf86;font-size:.8rem;line-height:1.6}
+.auth-link-notice b{display:block;margin-bottom:.15rem;font-size:.86rem;color:#f7e2b0}
+.auth-link-notice ul{margin:.35rem 0 0;padding-left:1.1rem}
+.auth-link-notice li+li{margin-top:.2rem}
 .forgot-alt a{color:var(--accent);font-weight:600}
 .party-pill{display:inline-flex;align-items:center;padding:2px 8px;border:1px solid transparent;border-radius:999px;font-size:.72rem;font-weight:600;line-height:1.5}
 .party-pill-paid{background:color-mix(in srgb,var(--warn) 14%,transparent);border-color:color-mix(in srgb,var(--warn) 40%,transparent);color:#f0cf86}

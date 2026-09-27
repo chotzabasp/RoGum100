@@ -8,6 +8,19 @@
 (async function(){
   "use strict";
 
+  // ลิงก์ในอีเมล (ยืนยันอีเมล / ตั้งรหัสผ่านใหม่) ที่หมดอายุหรือเคยกดไปแล้ว: Supabase พากลับมาที่ app.html พร้อม
+  // #error=access_denied&error_code=otp_expired&error_description=... — อ่านเก็บไว้ก่อนสร้าง client
+  // แล้วตอนบูตเสร็จ (ท้ายไฟล์) ค่อยล้างออกจาก URL + แจ้งผู้ใช้ว่าต้องขอลิงก์ใหม่
+  var emailLinkError = (function(){
+    try{
+      var hp = new URLSearchParams(location.hash.replace(/^#/, '')), qp = new URLSearchParams(location.search);
+      var code = hp.get('error_code') || qp.get('error_code') || '';
+      var desc = hp.get('error_description') || qp.get('error_description') || '';
+      var err = hp.get('error') || qp.get('error') || '';
+      return (code || desc || err) ? { code:code, desc:desc, error:err } : null;
+    }catch(e){ return null; }
+  })();
+
   var supa = window.supabase.createClient(
     'https://jnwckkcjurchnppekhpc.supabase.co',
     'sb_publishable_Z_xnoeSTMY2t-VqaDfPmKg_FfOCjTOf'
@@ -4939,12 +4952,12 @@
     updateItemsRailBadge();
   }
 
-  function toast(msg){
+  function toast(msg, ms){
     var el = document.getElementById('toast');
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(toast._t);
-    toast._t = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+    toast._t = setTimeout(function(){ el.classList.remove('show'); }, ms || 2200);
   }
 
   // A short-lived pill anchored right above `el` — for warnings tied to one specific
@@ -5134,6 +5147,7 @@
     document.getElementById('authSwitchText').firstChild.textContent = isRegister ? 'มีบัญชีแล้ว? ' : 'ยังไม่มีบัญชี? ';
     document.getElementById('authError').textContent = '';
     document.getElementById('authResendWrap').hidden = true;
+    document.getElementById('authLinkNotice').hidden = true;
   }
   document.getElementById('authToggle').addEventListener('click', function(){ setAuthMode(!isRegister); });
   // ---------- Captcha (Cloudflare Turnstile) สำหรับล็อกอิน/สมัครสมาชิก ----------
@@ -5205,6 +5219,18 @@
     if(/security purposes|rate limit|only request this/i.test(msg)) return 'ส่งคำขอถี่เกินไป กรุณารออีกสักครู่แล้วลองใหม่';
     if(/captcha/i.test(msg)) return 'ยืนยันว่าไม่ใช่บอทไม่สำเร็จ — รอกล่องยืนยันด้านบนปุ่มขึ้นเครื่องหมายถูก แล้วกดอีกครั้ง (ถ้าไม่ขึ้นลองรีเฟรชหน้า)';
     return msg;
+  }
+  // ผลสมัครสมาชิกตอนเปิด "Confirm email": อีเมลซ้ำ Supabase ไม่ตอบ error (กันคนสุ่มเช็คอีเมล) ต้องดูจาก user ที่ตอบกลับเอง
+  //  'exists' = อีเมลนี้มีบัญชีที่ยืนยันแล้ว → ได้ user ปลอม (identities ว่าง) และไม่มีอีเมลส่งไป
+  //  'resent' = อีเมลนี้มีบัญชีที่ยังไม่ยืนยัน → Supabase ส่งลิงก์ยืนยันให้บัญชีเดิมอีกรอบ แต่ไม่แก้ Username/รหัสผ่านตามที่เพิ่งกรอก
+  //             ดูจาก created_at (ตอนสมัครครั้งแรก) ห่างจาก confirmation_sent_at (เพิ่งส่ง) — ส่งซ้ำได้ทุก 60 วิ บัญชีใหม่ห่างกันไม่ถึงวินาที
+  //  'new'    = บัญชีใหม่จริง (อ่านค่าไม่ได้ก็ถือเป็นแบบนี้ = ข้อความสมัครสำเร็จตามเดิม)
+  function signUpOutcome(user){
+    if(!user) return 'new';
+    if(Array.isArray(user.identities) && user.identities.length === 0) return 'exists';
+    var created = Date.parse(user.created_at), sent = Date.parse(user.confirmation_sent_at);
+    if(created && sent && sent - created > 30000) return 'resent';
+    return 'new';
   }
 
   // ---------- Username: a-z 0-9 _ . ยาว 3-20 ตัว เช็คว่าว่างไหมทันทีที่พิมพ์ (ผ่าน RPC username_available) ----------
@@ -5278,6 +5304,15 @@
           authBusy = false;
           resetCaptcha();
           if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
+          var outcome = signUpOutcome(res.data && res.data.user);
+          if(outcome === 'exists'){ errEl.textContent = 'อีเมลนี้สมัครไว้แล้ว'; return; }
+          if(outcome === 'resent' && !res.data.session){
+            // บัญชีเดิมใช้ Username/รหัสผ่านชุดแรก → ใส่อีเมลให้ในช่องล็อกอินแทน Username ที่เพิ่งพิมพ์ (อาจไม่ตรงกับบัญชีเดิม)
+            document.getElementById('authToggle').click();
+            document.getElementById('li-email').value = email;
+            document.getElementById('authError').textContent = 'อีเมลนี้เคยสมัครไว้แล้วแต่ยังไม่ได้ยืนยัน ส่งลิงก์ยืนยันไปที่ '+email+' ให้อีกครั้งแล้ว — กดลิงก์ในอีเมล แล้วเข้าสู่ระบบด้วยรหัสผ่านที่ตั้งตอนสมัครครั้งแรก (จำไม่ได้ กด "ลืมรหัสผ่าน?")';
+            return;
+          }
           Track.push('signup');
           Track.flush();
           // โปรเจกต์เปิด "ยืนยันอีเมล" ไว้: สมัครแล้วยังไม่มีเซสชันจนกว่าจะกดลิงก์ในอีเมล → พาไปหน้าล็อกอินพร้อมบอกให้ไปยืนยัน
@@ -9563,15 +9598,26 @@
     var entryUrl = new URL(window.location.href);
     var authMode = entryUrl.searchParams.get('auth');
     var hasAuthIntent = authMode === 'login' || authMode === 'register';
-    if(hasAuthIntent){
-      entryUrl.searchParams.delete('auth');
+    if(hasAuthIntent) entryUrl.searchParams.delete('auth');
+    // ลิงก์ในอีเมลใช้ไม่ได้ (emailLinkError บนสุดของไฟล์): ล้าง error ออกจาก URL ด้วย — รีเฟรชแล้วไม่เด้งซ้ำ ปุ่ม back ไม่พากลับมา
+    if(emailLinkError){
+      ['error','error_code','error_description'].forEach(function(k){ entryUrl.searchParams.delete(k); });
+      if(/(^|&)error(_code|_description)?=/.test(entryUrl.hash.replace(/^#/, ''))) entryUrl.hash = '';
+    }
+    if(hasAuthIntent || emailLinkError){
       history.replaceState(history.state, '', entryUrl.pathname + entryUrl.search + entryUrl.hash);
     }
     if(session){
       enterApp(session.user);
+      // ล็อกอินอยู่แล้ว (ลิงก์เสียไม่ทำให้หลุดจากระบบ) — แค่บอกให้รู้ว่าลิงก์นั้นใช้ไม่ได้
+      if(emailLinkError) toast('ลิงก์ในอีเมลนี้ใช้ไม่ได้แล้ว (หมดอายุหรือเคยกดไปแล้ว) — ยังล็อกอินอยู่ ใช้งานต่อได้ตามปกติ', 7000);
     } else {
       enterGuestPreview();
-      if(hasAuthIntent){
+      if(emailLinkError){
+        // เปิดหน้าต่างเข้าสู่ระบบพร้อมกล่องบอกวิธีขอลิงก์ใหม่ (ลิงก์ยืนยันอีเมล / ลิงก์ตั้งรหัสใหม่)
+        openAuthModal(false);
+        document.getElementById('authLinkNotice').hidden = false;
+      } else if(hasAuthIntent){
         openAuthModal(authMode === 'register');
         document.getElementById(authMode === 'register' ? 'rg-server' : 'li-email').focus();
       }

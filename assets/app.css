@@ -538,8 +538,6 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-entry-actions button:hover{color:var(--accent)}
 .mr-entry-actions button.mr-del:hover{color:var(--danger)}
 .panel-farm-cost.mr-entry-editing{border-color:var(--danger);box-shadow:0 0 0 1px rgba(239,90,86,.35)}
-/* ป้ายราคาบนปุ่ม "+ เพิ่มเซิร์ฟเวอร์" ตอนที่โควต้าเต็มแล้วต้องจ่ายแต้มเพิ่ม */
-.rate-chip-cost{font-size:.68rem;font-weight:700;padding:.08rem .38rem;border-radius:999px;margin-left:.35rem;white-space:nowrap;background:color-mix(in srgb, var(--accent) 22%, transparent);color:var(--accent)}
 /* ชิปเซิร์ฟที่เลือกไม่ได้เพราะโควต้าเต็ม */
 .share-chip.chip-locked{opacity:.4;cursor:not-allowed}
 .server-quota-hint{margin-top:.5rem}
@@ -2365,7 +2363,9 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #rateChips .rate-chip{min-width:142px;min-height:62px;padding:.5rem .68rem;gap:.3rem;border-color:rgba(103,151,232,.5);background:linear-gradient(145deg,rgba(40,70,121,.84),rgba(17,32,57,.98));}
 #rateChips .rate-chip .rate-select{width:100%;padding:0 .8rem .28rem 0;border-bottom-color:rgba(140,182,244,.32);color:#e5f0ff;font-size:.78rem;letter-spacing:.01em}
 #rateChips .rate-chip .rate-values{gap:.45rem}
-#rateChips .rate-chip .rate-label{font-size:.6rem;color:#a8bdd7;letter-spacing:.06em}
+/* "รับ" กับจำนวนอยู่บรรทัดเดียวกัน (ผู้ใช้ขอ 28 ก.ย. 2569) */
+#rateChips .rate-chip .rate-values > div{flex-direction:row;align-items:baseline;gap:.4rem}
+#rateChips .rate-chip .rate-label{font-size:.72rem;font-weight:700;color:#dce8f8;letter-spacing:.06em}
 #rateChips .rate-chip .rate-num{font-size:1.08rem;color:#ff9e65;text-shadow:0 0 9px rgba(255,139,89,.16)}
 /* ปุ่ม "เข้าสู่ระบบ/สมัครสมาชิก" ตอนยังไม่ล็อกอิน — สูงเท่ากับกล่องผู้ใช้/แต้มตอนล็อกอินแล้ว กันแบนเนอร์เตี้ยลง */
 #homeBannerZone #guestAuthButtons{align-items:center}

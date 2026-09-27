@@ -2740,13 +2740,10 @@
       '</div>';
     }).join('');
     // ปุ่มนี้ทำ 2 หน้าที่: ถ้ายังมีเซิร์ฟในโควต้าที่ยังไม่ได้วางการ์ด = เพิ่มฟรี
-    // ถ้าใช้โควต้าหมดแล้ว = ซื้อโควต้าเพิ่ม SERVER_SLOT_COST แต้ม (ป้ายราคาจะขึ้นให้เห็นก่อนกด)
-    var freeSlotLeft = App.rateSlots.length < serverQuota();
+    // ถ้าใช้โควต้าหมดแล้ว = ซื้อโควต้าเพิ่ม SERVER_SLOT_COST แต้ม — ราคาขึ้นในกล่องยืนยันตอนกด (ป้ายราคาบนปุ่มเอาออกตามที่ผู้ใช้ขอ 28 ก.ย. 2569)
     var addBtn = App.rateSlots.length < MAX_RATE_CHIP_SLOTS
       ? '<button type="button" class="stat-chip rate-chip-add" id="addRateChipBtn">'+
-          '<span class="rate-chip-add-label">+ เพิ่มเซิร์ฟเวอร์'+
-            (freeSlotLeft ? '' : ' <span class="rate-chip-cost">'+SERVER_SLOT_COST+' แต้ม</span>')+
-          '</span>'+
+          '<span class="rate-chip-add-label">+ เพิ่มเซิร์ฟเวอร์</span>'+
           // ใช้ไปกี่ช่อง / ซื้อไว้ทั้งหมดกี่ช่อง
           '<span class="rate-chip-count">('+App.rateSlots.length+'/'+serverQuota()+')</span>'+
         '</button>'

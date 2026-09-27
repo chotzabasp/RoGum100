@@ -3726,6 +3726,23 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 .confirm-message .buy-confirm-notes>span{position:relative;padding-left:.9rem;font-size:.76rem;line-height:1.55;color:var(--text-dim)}
 .confirm-message .buy-confirm-notes>span::before{content:"•";position:absolute;left:0}
 .confirm-message .buy-confirm-warn{display:block;margin-top:.7rem;padding:.55rem .7rem;border:1px solid color-mix(in srgb,var(--warn) 45%,transparent);border-radius:8px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:#f0cf86;font-size:.76rem;line-height:1.55;text-align:left}
+/* เพิ่มเพื่อนเข้าปาร์ตี้: ผลตรวจก่อนยืนยัน (ชื่อเพื่อน + ค่าเข้าปาร์ตี้ ฟรี/50 แต้ม) */
+.party-add-quote{display:grid;gap:.2rem;margin:.1rem 0 .7rem;padding:.6rem .75rem;border:1px solid var(--border);border-radius:10px;background:var(--bg);font-size:.82rem;line-height:1.5}
+.party-add-quote>b{font-size:.95rem;color:var(--text);overflow-wrap:anywhere}
+.party-add-quote>span{color:var(--text-dim)}
+.party-add-free{color:var(--success);font-weight:700}
+.party-add-short{display:block;color:var(--danger);font-weight:600}
+/* หน้าจับเวลาบอสของสมาชิกที่เข้าปาร์ตี้ฟรีแล้วแพ็กหมดอายุ: มืดทั้งหน้า + การ์ดให้เลือกทางไปต่อ */
+#view-timers{position:relative}
+#view-timers .party-lock{position:absolute;inset:0;z-index:30;background:rgba(4,7,13,.8);backdrop-filter:blur(2px)}
+#view-timers .party-lock-card{position:sticky;top:12vh;box-sizing:border-box;width:min(440px,calc(100% - 32px));margin:10vh auto 0;padding:1.4rem 1.3rem;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:var(--shadow);text-align:center}
+#view-timers .party-lock-card h2{margin:0 0 .5rem;font-size:1.1rem;line-height:1.4;text-wrap:balance}
+#view-timers .party-lock-card p{margin:0 0 1rem;font-size:.86rem;line-height:1.6;color:var(--text-dim)}
+#view-timers .party-lock-options{display:grid;gap:.7rem}
+/* ปุ่มเลือกทางไปต่อ: ชื่อปุ่ม + คำอธิบายอยู่ในกรอบเดียวกัน */
+#view-timers .party-lock .party-lock-choice{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;min-height:56px;padding:10px 14px;line-height:1.35;white-space:normal;text-align:center}
+#view-timers .party-lock-choice b{font-size:.92rem;font-weight:700}
+#view-timers .party-lock-choice small{font-size:.74rem;font-weight:400;line-height:1.45;opacity:.78}
 
 @media(max-width:760px){
   .content{padding-bottom:calc(2rem + env(safe-area-inset-bottom,0px))}

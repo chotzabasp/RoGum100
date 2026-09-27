@@ -3847,3 +3847,11 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 .settings-discord-host[hidden]{display:none}
 #view-timers .boss-sound-popover-note:has(+ .boss-sound-popover-tip){margin-bottom:.1rem}
 #view-timers .boss-sound-popover-tip{font-size:.72rem;color:#a9b8d6;margin-bottom:.7rem}
+/* การ์ดกรอกรายการ "รายการซื้อ-ขาย" (บัญชีนักลงทุน) และ "ต้นทุนต่อกั้ม" (ยอดนักฟาร์ม) เลื่อนตามหน้าจอ
+   เฉพาะจอกว้างที่แบ่ง 2 ฝั่ง (เกิน 1100px — แคบกว่านี้การ์ดเรียงแถวเดียว ไม่ต้องตาม)
+   การ์ดสูงไม่เกินจอ: ค้างห่างขอบบน 1rem · สูงกว่าจอ: top ติดลบ = เลื่อนไปจนขอบล่างการ์ด (ปุ่มบันทึก) ห่างขอบล่างจอ 1rem แล้วค้าง
+   --sticky-card-h = ความสูงการ์ด วัดโดย ResizeObserver ใน app.js (ไม่มีค่า = 0 → ค้างขอบบนอย่างเดียว) */
+@media (min-width:1101px){
+  #view-home #mrEntryPanel,
+  #view-farm .panel-farm-cost{position:sticky;top:min(1rem, calc(100vh - var(--sticky-card-h, 0px) - 1rem))}
+}

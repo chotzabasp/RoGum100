@@ -9589,6 +9589,19 @@
     try{ toast('เกิดข้อผิดพลาด: '+(ev.message||'unknown')); }catch(e){}
   });
 
+  // การ์ดกรอกรายการเลื่อนตามหน้าจอ (position:sticky ท้าย app.css): ส่งความสูงการ์ดให้ CSS เลือกว่าจะค้างขอบบน
+  // (การ์ดอยู่ในจอพอดี) หรือค้างขอบล่าง (การ์ดสูงกว่าจอ ปุ่มบันทึกยังเห็น) — เพิ่ม/ลบแถวรายการ ความสูงเปลี่ยน ก็วัดใหม่เอง
+  if(window.ResizeObserver){
+    var stickyCardRO = new ResizeObserver(function(entries){
+      entries.forEach(function(en){
+        en.target.style.setProperty('--sticky-card-h', Math.ceil(en.target.getBoundingClientRect().height)+'px');
+      });
+    });
+    [document.getElementById('mrEntryPanel'), document.querySelector('#view-farm .panel-farm-cost')].forEach(function(el){
+      if(el) stickyCardRO.observe(el);
+    });
+  }
+
   // ---------- boot ----------
   loadCatalog();
   loadItemImages();

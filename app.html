@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260927-party-add-copy2">
+<link rel="stylesheet" href="assets/app.css?v=20260928-party-lock1">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -476,6 +476,12 @@
           <button type="button" class="btn btn-ghost btn-sm" id="partyPanelToggle">จัดการปาร์ตี้</button>
         </div>
       </div>
+      <!-- แจ้งเรื่องแพ็กเกจของหัวปาร์ตี้ (อยู่นอกส่วนที่พับ ให้เห็นโดยไม่ต้องกดจัดการปาร์ตี้) — ดู renderPartyNote ใน app.js
+           หัวปาร์ตี้: ปาร์ตี้ถูกล็อก / แพ็กใกล้หมด · สมาชิก: แพ็กของหัวปาร์ตี้ใกล้หมด -->
+      <div class="party-panel-note" id="partyPanelNote" role="status" hidden>
+        <span id="partyPanelNoteText"></span>
+        <button type="button" class="btn btn-gradient btn-sm" id="partyPanelNoteBtn" hidden>ต่ออายุแพ็กเกจ</button>
+      </div>
       <div id="partyPanelBody" class="party-panel-body" hidden>
         <div class="panel-head">
           <h2>สมาชิกในปาร์ตี้</h2>
@@ -602,16 +608,20 @@
     <div class="roster" id="roster"></div>
     </div>
     </div>
-    <!-- สมาชิกปาร์ตี้ที่เข้ามาฟรีเพราะมีแพ็กเกจ "จับเวลาบอส" แล้วแพ็กหมดอายุ: หน้านี้มืดใช้ไม่ได้
-         จนกว่าจะต่ออายุ / จ่าย 50 แต้มอยู่ถาวร (แบบแพ็กฟรี) / ออกจากปาร์ตี้ — ดู renderPartyLock ใน app.js -->
+    <!-- หน้านี้มืดใช้ไม่ได้ 2 กรณี — ดู renderPartyLock ใน app.js
+         seat: สมาชิกที่เข้ามาฟรีเพราะมีแพ็กเกจ "จับเวลาบอส" แล้วแพ็กหมดอายุ → ต่ออายุ / จ่าย 50 แต้มอยู่ถาวร (แบบแพ็กฟรี) / ออกจากปาร์ตี้
+         host: แพ็กเกจของหัวปาร์ตี้หมดอายุ → ล็อกทั้งปาร์ตี้จนกว่าหัวปาร์ตี้จะต่ออายุ (ตรวจสอบอีกครั้ง / ออกจากปาร์ตี้) -->
     <div class="party-lock" id="timersPartyLock" hidden>
       <div class="party-lock-card" role="alertdialog" aria-labelledby="partyLockTitle" aria-describedby="partyLockDesc">
         <h2 id="partyLockTitle">แพ็กเกจ "จับเวลาบอส" ของคุณหมดอายุแล้ว</h2>
         <p id="partyLockDesc">คุณเข้าปาร์ตี้<span id="partyLockHostWrap"> ของ <b id="partyLockHost">-</b> </span>แบบฟรีเพราะมีแพ็กเกจนี้ เลือกวิธีใช้ปาร์ตี้ต่อ</p>
+        <p id="partyLockDescHost" hidden>แพ็กเกจ "จับเวลาบอส" ของหัวปาร์ตี้<span id="partyLockHostWrap2"> <b id="partyLockHost2">-</b></span> หมดอายุ ทุกคนในปาร์ตี้ใช้จับเวลาบอสของปาร์ตี้ไม่ได้จนกว่าหัวปาร์ตี้จะต่ออายุ — ข้อมูลบอสและประวัติยังอยู่ครบ</p>
         <div class="party-lock-options">
           <button type="button" class="btn btn-gradient party-lock-choice" id="partyLockRenewBtn"><b>ต่ออายุแพ็กเกจ "จับเวลาบอส"</b><small>กลับมาใช้ปาร์ตี้ได้เต็มทันที</small></button>
-          <button type="button" class="btn btn-ghost party-lock-choice" id="partyLockSeatBtn"><b>จ่าย 50 แต้ม อยู่ปาร์ตี้ถาวร</b><small>ใช้แบบแพ็กฟรี: ดูเวลาบอสได้ เพิ่ม/บันทึก/แก้ไขไม่ได้</small></button>
-          <button type="button" class="btn btn-ghost party-lock-choice" id="partyLockLeaveBtn"><b>ออกจากปาร์ตี้</b><small>กลับไปใช้จับเวลาบอสของตัวเอง (แพ็กฟรี 1 ตัว)</small></button>
+          <button type="button" class="btn btn-ghost party-lock-choice" id="partyLockSeatBtn"><b>จ่าย 50 แต้ม อยู่ปาร์ตี้ถาวร</b><small>ใช้แบบแพ็กฟรี: ดูเวลาบอสได้ เพิ่ม/บันทึก/แก้ไขไม่ได้ (ใช้ได้เมื่อหัวปาร์ตี้มีแพ็กเกจ)</small></button>
+          <button type="button" class="btn btn-gradient party-lock-choice" id="partyLockRecheckBtn" hidden><b>ตรวจสอบอีกครั้ง</b><small>หัวปาร์ตี้ต่ออายุแล้ว กดเพื่อกลับมาใช้ได้ทันที</small></button>
+          <button type="button" class="btn btn-ghost party-lock-choice" id="partyLockHistoryBtn"><b>ดูไอเทมที่ได้ส่วนแบ่ง</b><small>ประวัติไอเทมที่ถูกติ๊กหารให้คุณ (ดูได้อย่างเดียว)</small></button>
+          <button type="button" class="btn btn-ghost party-lock-choice" id="partyLockLeaveBtn"><b>ออกจากปาร์ตี้</b><small id="partyLockLeaveNote">กลับไปใช้จับเวลาบอสของตัวเอง (แพ็กฟรี 1 ตัว)</small></button>
         </div>
       </div>
     </div>
@@ -1240,7 +1250,7 @@
     <ul class="post-announce-note party-add-rules">
       <!-- ราคานำหน้าบรรทัด (สีเดียวกับป้ายในแผงปาร์ตี้: ฟรี = เขียว / 50 แต้ม = ทอง) · ข้อความตามที่ผู้ใช้เขียน 27 ก.ย. 2569 -->
       <li><b class="party-add-price party-add-price-free">ฟรี</b> — เพื่อนมีแพ็กเกจ "จับเวลาบอส" หรือ 4 in 1 <span class="party-add-keep">ใช้ได้เต็มทุกอย่าง</span>จนหมดอายุแพ็กเกจ</li>
-      <li><b class="party-add-price party-add-price-paid">เสีย 50 แต้ม</b> — เพิ่มเพื่อนไม่มีแพ็กเกจ อยู่ในปาร์ตี้ถาวร <span class="party-add-keep">ใช้สิทธิแพ็กฟรี</span> <span class="party-add-keep">ดูเวลาบอสได้อย่างเดียว</span></li>
+      <li><b class="party-add-price party-add-price-paid">เสีย 50 แต้ม</b> — เพิ่มเพื่อนไม่มีแพ็กเกจ อยู่ในปาร์ตี้ถาวร (ใช้ได้เมื่อหัวปาร์ตี้มีแพ็กเกจ) <span class="party-add-keep">ใช้สิทธิแพ็กฟรี</span> <span class="party-add-keep">ดูเวลาบอสได้อย่างเดียว</span></li>
       <li class="party-add-warn">⚠ <b>ห้ามกดออกจากปาร์ตี้</b> — ออกแล้วเพิ่มกลับต้องเสียแต้มใหม่</li>
     </ul>
     <div class="confirm-actions">
@@ -1252,4 +1262,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260927-party-join3"></script>
+<script src="assets/app.js?v=20260928-party-lock3"></script>

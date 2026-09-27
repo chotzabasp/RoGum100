@@ -358,7 +358,7 @@
     return {
       db:'mvpwatch_db_'+email, active:'mvpwatch_active_'+email,
       lastPage:'mvpwatch_lastpage_'+email,
-      expiryWarn:'mvpwatch_expirywarn_'+email, pkgWarn:'mvpwatch_pkgwarn_'+email, pkgExpiredSeen:'mvpwatch_pkgexpired_'+email,
+      expiryWarn:'mvpwatch_expirywarn_'+email, pkgWarn:'mvpwatch_pkgwarn_'+email, pkgExpiredSeen:'mvpwatch_pkgexpired_'+email, hostPlanWarn:'mvpwatch_hostplanwarn_'+email,
       rateSlots:'mvpwatch_rateslots_'+email, rateSlotsVer:'mvpwatch_rateslotsver_'+email, merchantLog:'mvpwatch_merchantlog_'+email,
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
@@ -379,7 +379,7 @@
   // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
-  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, partySeat:null, db:[], active:{}, markers:{}, kills:[], myLifetimeShare:{zeny:0,baht:0,count:0}, partyRoster:[], departedSharerNames:{}, keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, partySeat:null, partyStatus:null, hostHasTimers:null, db:[], active:{}, markers:{}, kills:[], myLifetimeShare:{zeny:0,baht:0,count:0}, partyRoster:[], departedSharerNames:{}, keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, threeMin:{} };
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -1315,7 +1315,7 @@
   async function customTask(work,done){
     if(customBusy)return;customBusy=true;
     try {await work();if(done)done();await customReload();bossNotifyChanged();toast('บันทึก Custom Boss แล้ว');}
-    catch(error){toast(error.message||'บันทึกไม่สำเร็จ');}
+    catch(error){toast(error.message||'บันทึกไม่สำเร็จ');if(/ปาร์ตี้ถูกล็อก/.test(error.message||''))refreshPartyAccess();}
     finally{customBusy=false;}
   }
   // ลบรูปที่บอสไม่ได้ใช้แล้วออกจากถัง — เช็คกับข้อมูลล่าสุดในฐานข้อมูลก่อนเสมอ (รูปที่บอสยังใช้อยู่จะไม่ถูกลบ)
@@ -1391,41 +1391,131 @@
   // ฟังก์ชันนี้เช็คจากฐานข้อมูลจริงว่าตอนนี้ฉันอยู่ปาร์ตี้ใคร แล้วอัปเดต App.viewingHostId ให้ตรงเสมอ
   // seat = เข้าปาร์ตี้แบบไหน: 'paid' จ่าย 50 แต้มแล้ว (ถาวร) · 'plan' เข้าฟรีเพราะมีแพ็กเกจ "จับเวลาบอส"
   // (ถ้าฐานข้อมูลยังไม่มีคอลัมน์ seat ถอยไปอ่านแบบเดิม = นับเป็นจ่ายแล้ว)
+  // อ่านจาก my_party_status() (migration 20260928000100) — รู้ด้วยว่าแพ็กเกจของหัวปาร์ตี้ยังอยู่ไหม (ปาร์ตี้ถูกล็อก)
+  // + ชื่อหัวปาร์ตี้ + วันหมดแพ็กของหัวปาร์ตี้ (เตือนล่วงหน้า) · เป็นหัวปาร์ตี้เอง = จำนวนสมาชิก (เตือนว่าปาร์ตี้จะถูกล็อก)
+  // ยังไม่ได้รัน SQL → อ่านแถวสมาชิกแบบเดิม (ไม่รู้แพ็กของหัวปาร์ตี้ = ไม่ล็อกแบบหัวปาร์ตี้)
+  // โหลดไม่สำเร็จ → คงสถานะเดิมไว้ (ตัวนี้ถูกเรียกซ้ำทุกนาที เน็ตสะดุดครั้งเดียวต้องไม่สลับไปข้อมูลของตัวเอง)
   function resolvePartyContext(){
     function fetchMembership(withSeat){
       return supa.from('party_members').select('host_id, '+(withSeat ? 'seat, ' : '')+'profiles!host_id(display_name)').eq('member_id', App.session.id).is('removed_at', null).maybeSingle();
     }
-    return withSkewRetry(function(){ return fetchMembership(true); }).then(function(res){
-      return (res.error && res.error.code==='42703') ? fetchMembership(false) : res;
-    }).then(function(res){
-      if(res.error){ console.error('resolvePartyContext', res.error); App.viewingHostId = null; App.viewingHostName = null; App.partySeat = null; renderPartyLock(); return; }
-      if(res.data){
-        App.viewingHostId = res.data.host_id;
-        App.viewingHostName = (res.data.profiles && res.data.profiles.display_name) || '-';
-        App.partySeat = res.data.seat || 'paid';
+    function legacy(){
+      return withSkewRetry(function(){ return fetchMembership(true); }).then(function(res){
+        return (res.error && res.error.code==='42703') ? fetchMembership(false) : res;
+      }).then(function(res){
+        if(res.error){ console.error('resolvePartyContext', res.error); return; }
+        App.partyStatus = null;
+        App.hostHasTimers = null;
+        if(res.data){
+          App.viewingHostId = res.data.host_id;
+          App.viewingHostName = (res.data.profiles && res.data.profiles.display_name) || '-';
+          App.partySeat = res.data.seat || 'paid';
+        } else {
+          App.viewingHostId = null;
+          App.viewingHostName = null;
+          App.partySeat = null;
+        }
+      });
+    }
+    return withSkewRetry(function(){ return supa.rpc('my_party_status'); }).then(function(res){
+      if(res.error && /my_party_status|PGRST202/.test((res.error.message||'')+' '+(res.error.code||''))) return legacy();
+      if(res.error){ console.error('resolvePartyContext', res.error); return; }
+      var st = res.data || { role:'none' };
+      App.partyStatus = st;
+      if(st.role === 'member'){
+        App.viewingHostId = st.host_id;
+        App.viewingHostName = st.host_name || '-';
+        App.partySeat = st.seat || 'paid';
+        App.hostHasTimers = st.host_has_timers !== false;
       } else {
         App.viewingHostId = null;
         App.viewingHostName = null;
         App.partySeat = null;
+        App.hostHasTimers = null;
       }
+    }).then(function(){
       renderPartyLock();
+      renderPartyNote();
     });
   }
-  // เข้าปาร์ตี้ฟรีเพราะมีแพ็กเกจ "จับเวลาบอส" แล้วแพ็กหมดอายุ = หน้าจับเวลาบอสใช้ไม่ได้
-  // (ฐานข้อมูลตัดสิทธิข้อมูลปาร์ตี้จริงด้วย is_party_member_of — ตรงนี้ทำหน้าจอมืด + ให้เลือกทางไปต่อ)
-  function isPartyLocked(){ return !!App.viewingHostId && App.partySeat === 'plan' && !hasTimersPlan(); }
+  // ถูกเอาออก / ย้ายปาร์ตี้ / หัวปาร์ตี้ต่ออายุหรือแพ็กหมด ระหว่างเปิดหน้าเว็บอยู่ → เช็คใหม่ทุกนาที + ตอนกลับมาที่แท็บ
+  // + ตอนเปิดหน้าจับเวลาบอส (เดิมรู้แค่ตอนล็อกอิน/ออกจากปาร์ตี้เอง)
+  var partyAccessBusy = false;
+  function refreshPartyAccess(){
+    if(!App.session || !App.session.id || App.isGuest || partyAccessBusy) return Promise.resolve();
+    partyAccessBusy = true;
+    var prevHost = App.viewingHostId, prevName = App.viewingHostName;
+    return resolvePartyContext().then(function(){
+      partyAccessBusy = false;
+      checkHostPlanReminder();
+      if(prevHost === App.viewingHostId) return;
+      // เปลี่ยนปาร์ตี้ = ข้อมูลบอส/ประวัติที่ค้างอยู่เป็นของปาร์ตี้เดิม → โหลดของปาร์ตี้ใหม่ (หรือของตัวเอง)
+      if(prevHost && !App.viewingHostId) toast('คุณไม่ได้อยู่ในปาร์ตี้ของ '+(prevName||'-')+' แล้ว — กลับมาใช้จับเวลาบอสของตัวเอง');
+      else if(App.viewingHostId) toast('ตอนนี้คุณอยู่ในปาร์ตี้ของ '+(App.viewingHostName||'-'));
+      document.getElementById('historyOverlay').hidden = true;
+      bossLiveSync();
+      bossScheduleReload();
+      if(!document.getElementById('view-timers').hidden){ renderPartyPanel(); loadDiscordAlert(); }
+    }, function(err){ partyAccessBusy = false; console.warn('party access', err); });
+  }
+  setInterval(function(){ if(!document.hidden) refreshPartyAccess(); }, 60000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) refreshPartyAccess(); });
+  // หน้าจับเวลาบอสใช้ไม่ได้ (ฐานข้อมูลตัดสิทธิข้อมูลปาร์ตี้จริงด้วย is_party_member_of — ตรงนี้ทำหน้าจอมืด + ให้เลือกทางไปต่อ)
+  //   'host' = แพ็กเกจของหัวปาร์ตี้หมดอายุ → ล็อกทั้งปาร์ตี้จนกว่าหัวปาร์ตี้จะต่ออายุ (มาก่อนกรณีอื่น)
+  //   'seat' = เข้าปาร์ตี้ฟรีเพราะมีแพ็กเกจ "จับเวลาบอส" แล้วแพ็กของตัวเองหมดอายุ (โปรไฟล์ยังไม่โหลด = ยังไม่ตัดสิน)
+  function partyLockReason(){
+    if(!App.viewingHostId) return null;
+    if(App.hostHasTimers === false) return 'host';
+    if(App.partySeat === 'plan' && App.profile && !hasTimersPlan()) return 'seat';
+    return null;
+  }
+  function isPartyLocked(){ return !!partyLockReason(); }
+  var partyLockShown = false;
   function renderPartyLock(){
     var lock = document.getElementById('timersPartyLock'); if(!lock) return;
-    var locked = isPartyLocked();
+    var reason = partyLockReason(), locked = !!reason, byHost = reason === 'host';
     lock.hidden = !locked;
     var hostName = App.viewingHostName && App.viewingHostName !== '-' ? App.viewingHostName : '';
     document.getElementById('partyLockHostWrap').hidden = !hostName;
     document.getElementById('partyLockHost').textContent = hostName;
+    document.getElementById('partyLockHostWrap2').hidden = !hostName;
+    document.getElementById('partyLockHost2').textContent = hostName;
+    document.getElementById('partyLockTitle').textContent = byHost ? 'ปาร์ตี้ถูกล็อก — แพ็กเกจของหัวปาร์ตี้หมดอายุ' : 'แพ็กเกจ "จับเวลาบอส" ของคุณหมดอายุแล้ว';
+    document.getElementById('partyLockDesc').hidden = byHost;
+    document.getElementById('partyLockDescHost').hidden = !byHost;
+    lock.querySelector('.party-lock-card').setAttribute('aria-describedby', byHost ? 'partyLockDescHost' : 'partyLockDesc');
+    // ปาร์ตี้ถูกล็อกเพราะหัวปาร์ตี้: ต่ออายุแพ็กของตัวเอง/จ่าย 50 แต้มก็ไม่ปลดล็อก → ซ่อน เหลือตรวจสอบอีกครั้ง + ออกจากปาร์ตี้
+    document.getElementById('partyLockRenewBtn').hidden = byHost;
+    document.getElementById('partyLockSeatBtn').hidden = byHost;
+    document.getElementById('partyLockRecheckBtn').hidden = !byHost;
+    document.getElementById('partyLockLeaveNote').textContent = byHost
+      ? 'กลับไปใช้จับเวลาบอสของตัวเอง — จะกลับเข้าปาร์ตี้นี้ ต้องให้หัวปาร์ตี้ (ที่ต่อแพ็กเกจแล้ว) เพิ่มใหม่'
+      : 'กลับไปใช้จับเวลาบอสของตัวเอง (แพ็กฟรี 1 ตัว)';
     // ทั้งหน้าด้านหลังกด/แท็บไปไม่ได้ระหว่างที่ล็อก
     Array.prototype.forEach.call(lock.parentNode.children, function(el){ if(el !== lock) el.inert = locked; });
+    if(locked === partyLockShown) return;
+    partyLockShown = locked;
+    if(locked){
+      // เพิ่งล็อก: เลิกฟังการเปลี่ยนแปลงของปาร์ตี้ + ล้างข้อมูลปาร์ตี้ที่ค้างในเครื่อง (กันเสียงเตือนบอสดังจากเวลาเก่า)
+      // หน้าประวัติอยู่นอกส่วนที่ถูกล็อก → ปิดไปด้วย
+      document.getElementById('historyOverlay').hidden = true;
+      App.db = []; App.active = {}; App.markers = {};
+      App.kills = []; App.killsHasMore = false; App.killStats = null;
+      bossLiveSync();
+      renderRoster(); renderStats();
+      // ไอเทมที่ถูกหารให้ฉันยังดูได้ (ปุ่ม "ดูไอเทมที่ได้ส่วนแบ่ง" บนหน้าล็อก)
+      if(App.session && !App.isGuest) loadKills().then(renderStats);
+    } else if(App.session && !App.isGuest){
+      // ปลดล็อก (ต่ออายุแล้ว / ออกจากปาร์ตี้) → โหลดข้อมูลกลับมา
+      bossLiveSync();
+      bossScheduleReload();
+    }
+    if(App.session && !App.isGuest && !document.getElementById('view-timers').hidden){ renderPartyPanel(); loadDiscordAlert(); }
   }
   function loadUserBosses(){
     if(!App.session || !App.session.id){ App.db = []; App.active = {}; App.markers = {}; return Promise.resolve(); }
+    // ปาร์ตี้ถูกล็อก = ไม่โหลดบอสของหัวปาร์ตี้ (ฐานข้อมูลไม่ให้อยู่แล้ว ได้แต่รายการว่างที่ดูเหมือนไม่มีบอส)
+    if(isPartyLocked()){ App.db = []; App.active = {}; App.markers = {}; return Promise.resolve(); }
     return withSkewRetry(function(){ return supa.from('user_bosses').select('boss_id, target_time, started_by, marker_x, marker_y, bosses(*)').eq('user_id', activeOwnerId()); }).then(function(res){
       if(res.error){ console.error('loadUserBosses', res.error); return; }
       App.db = (res.data||[]).map(function(r){
@@ -1488,7 +1578,13 @@
     if(!App.session || !App.session.id){ App.kills = []; App.killsHasMore = false; App.killStats = null; App.killStatsRange = null; App.killStatsRangeSince = null; return Promise.resolve(); }
     return Promise.all([loadKillsForActiveOwner(), loadKillStats(), loadMyLifetimeShare()]).then(function(){ App.killsVersion++; });
   }
-  function historyScopeArgs(){ return { p_host: activeOwnerId(), p_include_self: !!App.viewingHostId }; }
+  // ปาร์ตี้ถูกล็อก: ฐานข้อมูลไม่ให้ดูประวัติของหัวปาร์ตี้ แต่ไอเทมที่ถูกติ๊กหารให้ฉันยังดูได้ (กติกา 1ก)
+  // → ขอขอบเขตของตัวเอง (boss_history_* คืนรอบของฉัน + รอบที่มีไอเทมหารให้ฉัน) และแผงประวัติเป็นแบบดูอย่างเดียว
+  function historyScopeArgs(){
+    if(isPartyLocked()) return { p_host: App.session.id, p_include_self: false };
+    return { p_host: activeOwnerId(), p_include_self: !!App.viewingHostId };
+  }
+  function historyScopeKey(){ var a = historyScopeArgs(); return a.p_host+'|'+a.p_include_self; }
   function mapKillRow(k){
     return { id:k.id, bossId:k.boss_id, bossName:k.boss_name, ts:new Date(k.killed_at).getTime(), rawKilledAt:k.killed_at,
       serverId:k.server_id || null, hostId:k.host_id || null, killedById:k.killed_by || null, killedBy:k.killer_name || null,
@@ -1505,7 +1601,7 @@
     return withSkewRetry(function(){ return supa.rpc('boss_history_page', args); });
   }
   function loadKillsForActiveOwner(){
-    var owner = activeOwnerId(), scopeKey = owner+'|'+(!!App.viewingHostId);
+    var owner = activeOwnerId(), scopeKey = historyScopeKey();
     // รีโหลด (เช่นมีคนกด MVP) ให้ได้จำนวนเท่าที่โหลดไว้แล้ว ไม่หดกลับเหลือหน้าแรก
     var want = Math.min(1000, Math.max(HISTORY_PAGE, App.killsScopeKey === scopeKey ? App.kills.length : 0));
     return fetchHistoryPage(null, want).then(function(res){
@@ -1513,7 +1609,7 @@
         if(res.error.code === 'PGRST202') return legacyLoadKillsForActiveOwner();
         console.error('loadKills', res.error); return;
       }
-      if(activeOwnerId() !== owner) return;
+      if(activeOwnerId() !== owner || historyScopeKey() !== scopeKey) return;
       var rows = (res.data || []).map(mapKillRow);
       var hasMore = rows.length === want;
       // ช่วงเวลาที่เลือกในแผงประวัติ (วันนี้/7/30 วัน) ต้องได้ของครบช่วง — หน้าแรกยังไม่ถึงต้นช่วงก็โหลดต่อ
@@ -1531,7 +1627,7 @@
         });
       }
       return more().then(function(){
-        if(activeOwnerId() !== owner) return;
+        if(activeOwnerId() !== owner || historyScopeKey() !== scopeKey) return;
         App.kills = rows; App.killsHasMore = hasMore; App.killsScopeKey = scopeKey;
       });
     });
@@ -1539,11 +1635,11 @@
   function loadOlderKills(){
     if(!App.killsHasMore || !App.kills.length || App.killsLoadingMore) return Promise.resolve();
     App.killsLoadingMore = true;
-    var owner = activeOwnerId();
+    var owner = activeOwnerId(), scopeKey = historyScopeKey();
     return fetchHistoryPage(App.kills[App.kills.length-1], HISTORY_PAGE).then(function(res){
       App.killsLoadingMore = false;
       if(res.error){ toast('โหลดประวัติไม่สำเร็จ: '+res.error.message); return; }
-      if(activeOwnerId() !== owner) return;
+      if(activeOwnerId() !== owner || historyScopeKey() !== scopeKey) return;
       var seen = {}; App.kills.forEach(function(k){ seen[k.id] = true; });
       var data = res.data || [];
       App.kills = App.kills.concat(data.map(mapKillRow).filter(function(k){ return !seen[k.id]; }));
@@ -1559,14 +1655,14 @@
   // ยอดรวมทั้งหมด (การ์ดสรุป) + ยอดตามช่วงเวลาที่เลือกในแผงประวัติ — นับจากทุกแถวในฐานข้อมูล
   // ช่วง "ทั้งหมด" ใช้ยอดรวมตัวเดียวกัน ไม่ต้องถามซ้ำ
   function loadKillStats(){
-    var args = historyScopeArgs(), owner = args.p_host;
+    var args = historyScopeArgs(), owner = activeOwnerId(), scopeKey = historyScopeKey();
     var sinceTs = huntRangeSinceTs();
     var argsRange = sinceTs == null ? null : Object.assign({}, args, { p_since: new Date(sinceTs).toISOString() });
     return Promise.all([
       withSkewRetry(function(){ return supa.rpc('boss_history_stats', args); }),
       argsRange ? withSkewRetry(function(){ return supa.rpc('boss_history_stats', argsRange); }) : Promise.resolve({ data:null })
     ]).then(function(rs){
-      if(activeOwnerId() !== owner) return;
+      if(activeOwnerId() !== owner || historyScopeKey() !== scopeKey) return;
       var err = rs[0].error || rs[1].error;
       if(err){
         if(err.code !== 'PGRST202') console.error('boss_history_stats', err);
@@ -1710,7 +1806,7 @@
       if(on) btn.setAttribute('aria-busy', 'true'); else btn.removeAttribute('aria-busy');
     });
   }
-  function bossPageOpen(){ return !!App.session && !App.isGuest && !document.getElementById('view-timers').hidden; }
+  function bossPageOpen(){ return !!App.session && !App.isGuest && !document.getElementById('view-timers').hidden && !isPartyLocked(); }
   function bossLiveSync(){
     var hostId = bossPageOpen() ? activeOwnerId() : null;
     if(bossLive.hostId === hostId) return;
@@ -2181,6 +2277,7 @@
     expiry.className = 'membership-time'+(soon?' soon':'');
     renderExpiryState();
     renderPartyLock(); // แพ็กเกจเปลี่ยน (ต่ออายุ/หมดอายุ) → ปลด/ล็อกหน้าจับเวลาบอสของสมาชิกที่เข้าปาร์ตี้ฟรี
+    renderPartyNote(); // หัวปาร์ตี้: แพ็กหมด = ปาร์ตี้ถูกล็อก / ใกล้หมด
   }
 
   // โทเค็นที่เพิ่งต่ออายุอาจถูกเซิร์ฟเวอร์ปฏิเสธชั่วคราว (นาฬิกาเหลื่อมกันไม่กี่วินาที → PGRST303)
@@ -2261,7 +2358,7 @@
     document.getElementById('htabKills').className = App.historyTab==='kills' ? 'active' : '';
     document.getElementById('htabItems').className = App.historyTab==='items' ? 'active' : '';
     document.getElementById('htabBoss').className = App.historyTab==='boss' ? 'active' : '';
-    document.getElementById('historyDeleteAll').hidden = !App.kills.length || isFreePartyMember();
+    document.getElementById('historyDeleteAll').hidden = !App.kills.length || isFreePartyMember() || isPartyLocked();
     if(App.historyTab==='items'){ renderLootView(list, entries.filter(function(l){ return l.items.length>0; }), sinceTs); return; }
     if(App.historyTab==='boss'){ renderBossView(list, entries, sinceTs); return; }
     if(!entries.length){ list.innerHTML = '<p class="empty-note">ไม่มีข้อมูลในช่วงนี้</p>' + historyMoreHtml(sinceTs); return; }
@@ -2269,7 +2366,7 @@
       // รายการของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) หรือ
       // เป็นสมาชิกฟรีของปาร์ตี้ปัจจุบัน (isFreePartyMember) ลบไม่ได้
       // สมาชิกแก้/ลบได้เฉพาะรอบที่ตัวเองอยู่ในปาร์ตี้ตอนนั้น (ตรงกับ RLS ใหม่ party_kill_visible) — รอบที่เห็นเพราะมีคนหารให้ = ดูอย่างเดียว
-      var writable = l.hostId===App.session.id || (l.hostId===activeOwnerId() && !isFreePartyMember() && wasInPartyAt(App.session.id, l));
+      var writable = !isPartyLocked() && (l.hostId===App.session.id || (l.hostId===activeOwnerId() && !isFreePartyMember() && wasInPartyAt(App.session.id, l)));
       var delBtn = writable ? '<button type="button" class="hist-del" data-del-kill="'+l.id+'" title="ลบรายการนี้">✕</button>' : '';
       return '<div class="log-row">'+historyAvatarHtml(l.bossId, l.bossName)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">'+fmtDateTime(l.ts)+(l.killedBy ? ' · '+escapeHtml(l.killedBy) : '')+'</div>'+
@@ -2392,7 +2489,7 @@
     // เขียนได้ถ้าไม่ใช่ "สมาชิกฟรี" (isFreePartyMember), ของปาร์ตี้อื่นที่เคยได้ส่วนแบ่งไว้แต่ไม่ได้อยู่
     // แล้ว (ดึงมาโชว์ผ่าน fetchSharedKills) ล็อกทั้งแถวเสมอ ดูได้อย่างเดียว
     // + ต้องอยู่ในปาร์ตี้ตอนได้ของชิ้นนี้ (ตรงกับ RLS ใหม่ party_item_visible) — ของที่เห็นเพราะมีคนหารให้ = ดูอย่างเดียว
-    var writable = k.hostId===App.session.id || (k.hostId===activeOwnerId() && !isFreePartyMember() && wasInPartyAt(App.session.id, k));
+    var writable = !isPartyLocked() && (k.hostId===App.session.id || (k.hostId===activeOwnerId() && !isFreePartyMember() && wasInPartyAt(App.session.id, k)));
     // รายการนี้เป็นประวัติส่วนตัวของตัวเอง (ก่อนเข้าปาร์ตี้ปัจจุบัน) ที่ถูกรวมมาแสดงปนกับของ
     // ปาร์ตี้ (ดู loadKillsForActiveOwner) — ต้องหารกับตัวเองเท่านั้น ไม่ใช่ roster ของปาร์ตี้ที่กำลังดูอยู่
     // เพราะไอเทมนี้ไม่ได้เกี่ยวอะไรกับปาร์ตี้นั้นเลย
@@ -2418,7 +2515,7 @@
         return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'">'+(on?'✓ ':'')+escapeHtml(p.name)+'</button>';
       }).join('')+
       departed.map(function(p){
-        return '<button type="button" class="share-chip on chip-locked" disabled title="'+(writable ? 'ออกจากปาร์ตี้ไปแล้ว — แก้ไขไม่ได้' : (k.hostId===activeOwnerId() ? 'ดูได้อย่างเดียว' : 'ปาร์ตี้อื่น — ดูได้อย่างเดียว'))+'">✓ '+escapeHtml(p.name)+'</button>';
+        return '<button type="button" class="share-chip on chip-locked" disabled title="'+(writable ? 'ออกจากปาร์ตี้ไปแล้ว — แก้ไขไม่ได้' : (isPartyLocked() || k.hostId===activeOwnerId() ? 'ดูได้อย่างเดียว' : 'ปาร์ตี้อื่น — ดูได้อย่างเดียว'))+'">✓ '+escapeHtml(p.name)+'</button>';
       }).join('')+'</div>' : '';
     var soldHtml;
     if(it.soldAmount!=null && (lootEditing!==it.id || !writable)){
@@ -2570,7 +2667,7 @@
       var svAttr = ' data-del-server="'+escapeHtml(sid)+'"';
       return '<div class="log-row">'+historyAvatarHtml(g.boss_id, g.boss_name)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">ฆ่าแล้ว '+fmtNum(g.kills)+' ครั้ง · วันนี้ '+fmtNum(g.today)+' · ล่าสุด '+fmtDateTime(new Date(g.last_at).getTime())+'</div>'+
-          '<button type="button" class="hist-del" data-del-boss="'+String(g.boss_id).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>'+
+          (isPartyLocked() ? '</div>' : '<button type="button" class="hist-del" data-del-boss="'+String(g.boss_id).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>')+
         '<div class="boss">'+escapeHtml(g.boss_name)+'</div>'+byHtml+
         '<div class="chip-row">'+(items.length ? items.map(function(it){ return '<span class="chip">'+itemIconHtml(it.name,'item-ic')+escapeHtml(it.name)+(it.count>1 ? ' ×'+it.count : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div></div>';
     }).join('');
@@ -2618,7 +2715,7 @@
       var svAttr = ' data-del-server="'+(g.serverId||'')+'"';
       return '<div class="log-row">'+historyAvatarHtml(g.bossId, g.name)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">ฆ่าแล้ว '+g.kills.length+' ครั้ง · วันนี้ '+todayCount+' · ล่าสุด '+fmtDateTime(g.kills[0].ts)+'</div>'+
-          '<button type="button" class="hist-del" data-del-boss="'+String(g.bossId).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>'+
+          (isPartyLocked() ? '</div>' : '<button type="button" class="hist-del" data-del-boss="'+String(g.bossId).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>')+
         '<div class="boss">'+escapeHtml(displayName)+'</div>'+byHtml+
         '<div class="chip-row">'+(names.length ? names.map(function(it){ return '<span class="chip">'+itemIconHtml(it,'item-ic')+escapeHtml(it)+(g.items[it]>1 ? ' ×'+g.items[it] : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div></div>';
     }).join('');
@@ -5132,7 +5229,7 @@
       '8. ถ้ายอดเงิน "ยังไม่ได้ OC" ให้ใส่ยอดเงิน แล้วจึงกด OC 24% บันทึก'
     ]},
     timers: { title:'จับเวลาบอส', lines:[
-      '1. เพิ่มเพื่อนเข้าปาร์ตี้: เพื่อนมีแพ็กเกจ "จับเวลาบอส" เพิ่มฟรี (ถ้าแพ็กหมดอายุ ต้องต่ออายุ หรือจ่าย 50 แต้มเองเพื่ออยู่ต่อ) · ไม่มีแพ็กเกจใช้ 50 แต้ม อยู่ถาวร — ห้าม! กดออกปาร์ตี้',
+      '1. เพิ่มเพื่อนเข้าปาร์ตี้ (หัวปาร์ตี้ต้องมีแพ็กเกจ "จับเวลาบอส" · สมาชิกที่จะกดเพิ่มต้องมีแพ็กเกจด้วย): เพื่อนมีแพ็กเกจ "จับเวลาบอส" เพิ่มฟรี (ถ้าแพ็กหมดอายุ ต้องต่ออายุ หรือจ่าย 50 แต้มเองเพื่ออยู่ต่อ) · ไม่มีแพ็กเกจใช้ 50 แต้ม อยู่ถาวร (ใช้ได้เมื่อหัวปาร์ตี้มีแพ็กเกจ) — ห้าม! กดออกปาร์ตี้',
       '2. เพิ่มบอสได้ไม่จำกัด เลือกที่ค้นหาบอส กดเพิ่มตัวที่ต้องการ',
       '3. เพิ่มบอสเองได้ กรณีมีบอสพิเศษ หรือบอสใหม่จากแพตช์ที่ยังไม่มีในระบบ',
       '4. ช่องใส่เวลาตาย ตามเวลาหลุมบอส เช่น 14.30 / 1430 แล้วกด MVP',
@@ -5147,7 +5244,8 @@
       '3. คนที่กด MVP คนแรกกดซ้ำได้ เวลาเกิดจะเริ่มนับใหม่ ส่วนคนอื่นในปาร์ตี้กดซ้ำ เวลาเกิดยังคงเป็นของคนแรก',
       '4. ลืมเลือกไอเทม ให้เลือกไอเทมแล้วกด MVP อีกครั้งภายใน 1 นาที ไอเทมจะเพิ่มเข้ารายการเดิม (ทุกคนในปาร์ตี้ที่กด MVP ได้ ทำได้เหมือนกัน)',
       {sub:true, text:'เพิ่มเติม 2'},
-      {warn:true, text:'สำหรับแพ็กเกจฟรี เมื่อถูกเพิ่มเข้าปาร์ตี้ จะดูข้อมูลได้อย่างเดียว!'}
+      {warn:true, text:'สำหรับแพ็กเกจฟรี เมื่อถูกเพิ่มเข้าปาร์ตี้ จะดูข้อมูลได้อย่างเดียว!'},
+      {warn:true, text:'แพ็กเกจของหัวปาร์ตี้หมดอายุ ปาร์ตี้จะถูกล็อกทั้งปาร์ตี้ จนกว่าหัวปาร์ตี้จะต่ออายุ!'}
     ]}
   };
   var howtoReturnFocus = null;
@@ -5574,8 +5672,9 @@
     // เคลียร์ข้อมูลที่โหลดมาจาก Supabase ตอนล็อกอินจริงรอบก่อน (ถ้ามี) กันไม่ให้เหลือค้างโชว์
     // ผิดๆ ตอนกลับมาเป็นผู้เยี่ยมชม — ต้องว่างเปล่าจริงเหมือนบัญชีใหม่เอี่ยม
     App.db = []; App.active = {}; App.markers = {}; App.kills = []; App.partyRoster = []; App.partyStints = {}; App.partyStintsHost = null; App.departedSharerNames = {};
-    App.viewingHostId = null; App.viewingHostName = null; App.partySeat = null;
+    App.viewingHostId = null; App.viewingHostName = null; App.partySeat = null; App.partyStatus = null; App.hostHasTimers = null;
     renderPartyLock();
+    renderPartyNote();
     cloudEnd();
     bossLiveStop(); bossLive.knownState = null; bossLive.stateHost = null;
     loadUserData('guest'); // โหลดจาก localStorage namespace 'guest' แยกต่างหาก (ว่างเปล่าเสมอ)
@@ -5629,6 +5728,7 @@
       renderExpiryState();
       checkExpiryReminder();
       checkPackageReminder();
+      checkHostPlanReminder();
       // บัญชีเก่าก่อนมีช่องเซิร์ฟเวอร์ตอนสมัคร (ยังว่าง) → บังคับเลือกครั้งเดียวก่อนใช้งาน (บัญชีใหม่เลือกจากฟอร์มสมัครแล้ว)
       if(!App.profile || !(App.profile.servers||[]).length) openServerPick();
     });
@@ -6900,7 +7000,7 @@
       if(page==='pricing') renderPricingPage();
       if(page==='admin') openAdminPage();
       if(page==='settings') renderSettingsPage();
-      if(page==='timers'){ renderPartyPanel(); loadDiscordAlert(); }
+      if(page==='timers'){ renderPartyPanel(); loadDiscordAlert(); refreshPartyAccess(); }
     } else if(page==='pricing') renderPricingPage();
     document.querySelectorAll('.rail-btn[data-page]').forEach(function(b){
       b.classList.toggle('active', b.dataset.page===page);
@@ -7742,7 +7842,7 @@
     var errEl = document.getElementById('stDiscordError');
     errEl.textContent = '';
     if(!App.session || !App.session.id) return;
-    var host = (App.viewingHostId && App.viewingHostId !== App.session.id) ? App.viewingHostId : null;
+    var host = (App.viewingHostId && App.viewingHostId !== App.session.id && !isPartyLocked()) ? App.viewingHostId : null;
     Promise.all([
       supa.rpc('get_my_discord_alert'),
       host ? supa.rpc('party_discord_alert_status', { p_host: host }) : Promise.resolve(null)
@@ -8069,22 +8169,100 @@
     var showSoon = soon.length > 0 && store(App.keys.pkgWarn, '') !== soonStamp;
     if(!showSoon && !gone.length) return;
     var parts = [];
+    // เป็นหัวปาร์ตี้ที่มีสมาชิก: แพ็ก "จับเวลาบอส" หมด = ปาร์ตี้ถูกล็อกทั้งปาร์ตี้ → บอกในป๊อปอัปเดียวกัน
+    var hostedN = hostedMemberCount(), ownTimersExp = ownTimersExpiry();
+    var timersGone = gone.some(function(g){ return g.key === 'timers' || g.key === 'all'; }) && !hasTimersPlan();
+    var timersSoon = !!ownTimersExp && Math.ceil((ownTimersExp-now)/86400000) <= PKG_WARN_DAYS;
     if(gone.length){
       parts.push(gone.map(function(g){ return g.name+' หมดอายุเมื่อ '+fmtDate(g.expiry); }).join('\n')+
-        '\nตอนนี้ใช้สิทธิแบบฟรี ข้อมูลเดิมของคุณไม่ถูกลบ ต่ออายุเมื่อไหร่ก็กลับมาใช้ได้เต็มที่');
+        '\nตอนนี้ใช้สิทธิแบบฟรี ข้อมูลเดิมของคุณไม่ถูกลบ ต่ออายุเมื่อไหร่ก็กลับมาใช้ได้เต็มที่'+
+        (hostedN && timersGone ? '\nปาร์ตี้ของคุณ (สมาชิก '+hostedN+' คน) ถูกล็อกแล้ว — ต่ออายุแพ็กเกจ "จับเวลาบอส" เพื่อปลดล็อกให้ทุกคน' : ''));
     }
     if(showSoon){
       parts.push(soon.map(function(s){ return s.name+' — เหลืออีก '+s.days+' วัน (หมด '+fmtDate(s.expiry)+')'; }).join('\n')+
-        '\nต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า ถ้าปล่อยให้หมดจะกลับไปใช้สิทธิแบบฟรี');
+        '\nต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า ถ้าปล่อยให้หมดจะกลับไปใช้สิทธิแบบฟรี'+
+        (hostedN && timersSoon ? '\nปาร์ตี้ของคุณมีสมาชิก '+hostedN+' คน — ถ้าแพ็กเกจ "จับเวลาบอส" หมดอายุ ปาร์ตี้จะถูกล็อก สมาชิกทุกคนใช้จับเวลาบอสของปาร์ตี้ไม่ได้จนกว่าคุณจะต่ออายุ' : ''));
     }
     showExpiryPopup(gone.length && showSoon ? 'แจ้งเตือนแพ็กเกจ' : gone.length ? 'แพ็กเกจหมดอายุแล้ว' : 'แพ็กเกจใกล้หมดอายุ', parts.join('\n\n'));
     if(showSoon) persist(App.keys.pkgWarn, soonStamp);
     if(gone.length) persist(App.keys.pkgExpiredSeen, seen.concat(gone.map(function(g){ return g.key+':'+g.expiry; })).slice(-20));
   }
-  function showExpiryPopup(title, msg){
+  function showExpiryPopup(title, msg, noPricing){
     document.getElementById('expiryTitle').textContent = title;
     document.getElementById('expiryMsg').textContent = msg;
-    document.getElementById('expiryOverlay').hidden = false;
+    var ov = document.getElementById('expiryOverlay');
+    ov.querySelector('[data-go-pricing]').hidden = !!noPricing;
+    ov.querySelector('.confirm-actions [data-expiry-close]:not([data-go-pricing])').textContent = noPricing ? 'รับทราบ' : 'ไว้ก่อน';
+    ov.hidden = false;
+  }
+  // ---------- แพ็กเกจของหัวปาร์ตี้ (ปาร์ตี้ถูกล็อกเมื่อแพ็ก "จับเวลาบอส" ของหัวปาร์ตี้หมดอายุ) ----------
+  // จำนวนสมาชิกในปาร์ตี้ที่ฉันเป็นหัว (จาก my_party_status) · วันหมดแพ็ก "จับเวลาบอส" ของฉัน (ไม่จำกัด/หมดแล้ว = null)
+  function hostedMemberCount(){ return App.partyStatus && App.partyStatus.role === 'host' ? (Number(App.partyStatus.member_count) || 0) : 0; }
+  function ownTimersExpiry(){
+    var p = App.profile;
+    if(!p || p.role === 'admin' || p.legacy_unlimited === undefined || p.legacy_unlimited) return null;
+    var t = new Date(p.plan_timers_expires_at || 0).getTime();
+    return t > Date.now() ? t : null;
+  }
+  // วันหมดแพ็กของหัวปาร์ตี้ที่ฉันเป็นสมาชิก (ยังไม่หมด + ไม่ใช่แบบไม่จำกัด) — ไม่มี = null
+  function hostTimersExpiry(){
+    var st = App.partyStatus;
+    if(!App.viewingHostId || !st || st.role !== 'member' || App.hostHasTimers === false || st.host_unlimited || !st.host_timers_expires_at) return null;
+    var t = new Date(st.host_timers_expires_at).getTime();
+    return t > Date.now() ? t : null;
+  }
+  // แถบในการ์ดปาร์ตี้: หัวปาร์ตี้ = ปาร์ตี้ถูกล็อก (แดง) / แพ็กใกล้หมด 3 วัน (เหลือง) · สมาชิก = แพ็กของหัวปาร์ตี้ใกล้หมด (เหลือง)
+  var partyNoteHostLocked = null;
+  function renderPartyNote(){
+    var el = document.getElementById('partyPanelNote'); if(!el) return;
+    if(!App.viewingHostId && App.session && !App.isGuest && App.profile){
+      var hl = myPartyLockedByHost();
+      var flipped = partyNoteHostLocked !== null && hl !== partyNoteHostLocked;
+      partyNoteHostLocked = hl;
+      if(flipped && !document.getElementById('view-timers').hidden) renderPartyPanel();
+    } else partyNoteHostLocked = null;
+    var text = '', tone = '', renew = false, now = Date.now();
+    if(App.session && App.session.id && !App.isGuest && App.profile){
+      if(App.viewingHostId){
+        var hx = hostTimersExpiry(), hd = hx ? Math.ceil((hx-now)/86400000) : 0;
+        if(hx && hd <= PKG_WARN_DAYS){
+          tone = 'soon';
+          text = 'แพ็กเกจ "จับเวลาบอส" ของหัวปาร์ตี้ '+(App.viewingHostName||'-')+' เหลืออีก '+hd+' วัน (หมด '+fmtDate(hx)+') — ถ้าไม่ต่ออายุ ปาร์ตี้จะถูกล็อก ทุกคนในปาร์ตี้ใช้จับเวลาบอสของปาร์ตี้ไม่ได้จนกว่าหัวปาร์ตี้จะต่ออายุ';
+        }
+      } else {
+        var n = hostedMemberCount();
+        if(n && !hasTimersPlan()){
+          tone = 'locked'; renew = true;
+          text = 'ปาร์ตี้ถูกล็อก — แพ็กเกจ "จับเวลาบอส" ของคุณหมดอายุ สมาชิก '+n+' คนใช้จับเวลาบอสของปาร์ตี้ไม่ได้จนกว่าคุณจะต่ออายุ';
+        } else if(n){
+          var ox = ownTimersExpiry(), od = ox ? Math.ceil((ox-now)/86400000) : 0;
+          if(ox && od <= PKG_WARN_DAYS){
+            tone = 'soon'; renew = true;
+            text = 'แพ็กเกจ "จับเวลาบอส" ของคุณเหลืออีก '+od+' วัน (หมด '+fmtDate(ox)+') — ถ้าหมดอายุ ปาร์ตี้ (สมาชิก '+n+' คน) จะถูกล็อกจนกว่าจะต่ออายุ';
+          }
+        }
+      }
+    }
+    el.hidden = !text;
+    el.className = 'party-panel-note'+(tone ? ' is-'+tone : '');
+    document.getElementById('partyPanelNoteText').textContent = text;
+    document.getElementById('partyPanelNoteBtn').hidden = !renew;
+    renderAddPartyBtnState(); // แพ็กเปลี่ยน → ปุ่มเพิ่มเพื่อนกดได้/ไม่ได้ตาม
+  }
+  document.getElementById('partyPanelNoteBtn').addEventListener('click', function(){ switchPage('pricing'); });
+  // ป๊อปอัปเตือนสมาชิก: แพ็กของหัวปาร์ตี้เหลือไม่เกิน 3 วัน — วันละครั้งต่อหัวปาร์ตี้/จำนวนวันที่เหลือ (จำในเครื่อง)
+  function checkHostPlanReminder(){
+    if(!App.session || App.isGuest || !App.keys || !App.profile) return;
+    var hx = hostTimersExpiry(); if(!hx) return;
+    var now = Date.now(), d = Math.ceil((hx-now)/86400000);
+    if(d > PKG_WARN_DAYS) return;
+    // ป๊อปอัปอื่นแสดงอยู่ → รอรอบถัดไป (ยังไม่จดว่าแจ้งแล้ว)
+    if(!document.getElementById('expiryOverlay').hidden) return;
+    var stamp = todayKey(now)+':'+App.viewingHostId+':'+d;
+    if(store(App.keys.hostPlanWarn, '') === stamp) return;
+    persist(App.keys.hostPlanWarn, stamp);
+    showExpiryPopup('แพ็กเกจหัวปาร์ตี้ใกล้หมดอายุ', 'แพ็กเกจ "จับเวลาบอส" ของหัวปาร์ตี้ '+(App.viewingHostName||'-')+' เหลืออีก '+d+' วัน (หมด '+fmtDate(hx)+')'+
+      '\nถ้าหัวปาร์ตี้ไม่ต่ออายุ ปาร์ตี้จะถูกล็อก — ทุกคนในปาร์ตี้ใช้จับเวลาบอสของปาร์ตี้ไม่ได้จนกว่าหัวปาร์ตี้จะต่ออายุ ข้อมูลบอสและประวัติไม่หาย', true);
   }
   var expiryPopupShownForSession = false;
   // หมดอายุ: popup ทุกครั้งที่เข้าแอป · ใกล้หมด 3/2/1 วัน: popup วันละครั้งต่อบัญชี (จำในเครื่อง)
@@ -8110,7 +8288,7 @@
     if(e.target.closest('[data-expiry-close]')) document.getElementById('expiryOverlay').hidden = true;
   });
   // เปิดแอปค้างไว้ข้ามวัน: เช็คทุกนาที แถบ/โหมดดูอย่างเดียวจะอัปเดตเอง
-  setInterval(function(){ if(App.session && App.profile){ renderExpiryState(); checkExpiryReminder(); checkPackageReminder(); } }, 60000);
+  setInterval(function(){ if(App.session && App.profile){ renderExpiryState(); checkExpiryReminder(); checkPackageReminder(); checkHostPlanReminder(); renderPartyNote(); renderPartyLock(); } }, 60000);
 
   // ---------- อัปเดตแต้ม/แพ็กเกจเบื้องหลัง ----------
   // เดิมโปรไฟล์โหลดใหม่แค่ตอนล็อกอิน/หลังทำรายการเอง — แอดมินยืนยันรายการเติมเงินที่ค้างตรวจ, เติม/หักแต้ม,
@@ -8457,11 +8635,19 @@
   // ---------- การ์ด "ปาร์ตี้" บนหน้าจับเวลาบอส (พับได้) ----------
   // ลิสต์เดียวรวมหัวปาร์ตี้+สมาชิกทั้งหมด — แสดงปาร์ตี้ที่ตัวเองอยู่ตอนนี้เท่านั้น (คนละ 1 ปาร์ตี้ต่อครั้ง)
   var partyPanelMemberCount = 0;
+  // ปาร์ตี้ของฉันถูกล็อกไหม: สมาชิก = แพ็กของหัวปาร์ตี้หมด · หัวปาร์ตี้ = แพ็กตัวเองหมดทั้งที่มีสมาชิกอยู่
+  function myPartyLockedByHost(){
+    if(App.viewingHostId) return partyLockReason() === 'host';
+    return !!App.profile && hostedMemberCount() > 0 && !hasTimersPlan();
+  }
   function updatePartyPanelSummary(){
     var prefix = App.viewingHostId ? ('กำลังดูปาร์ตี้ของ '+(App.viewingHostName||'-')+' · ') : '';
-    document.getElementById('partyPanelSummary').textContent =
-      prefix+'สมาชิกในปาร์ตี้ '+partyPanelMemberCount+' คน';
+    // สมาชิกที่ถูกล็อกไม่ได้โหลดรายชื่อปาร์ตี้ (ฐานข้อมูลไม่ให้ดู) → ไม่โชว์จำนวนคน
+    document.getElementById('partyPanelSummary').textContent = (App.viewingHostId && isPartyLocked())
+      ? prefix+'ปาร์ตี้ถูกล็อก'
+      : prefix+'สมาชิกในปาร์ตี้ '+partyPanelMemberCount+' คน'+(myPartyLockedByHost() ? ' · ปาร์ตี้ถูกล็อก' : '');
     document.getElementById('partyPanel').classList.toggle('viewing-party', !!App.viewingHostId);
+    renderPartyNote();
   }
   // ป้ายสิทธิสมาชิกในแผงปาร์ตี้ (ข้อมูลจาก party_roster)
   // ป้ายแรก = เข้าปาร์ตี้แบบไหน · ป้ายสอง = ใช้งานได้แค่ไหน (ตามแพ็กเกจ "จับเวลาบอส" ของคนนั้นเอง)
@@ -8470,12 +8656,15 @@
     if(r.seat === 'plan') return '<span class="party-pill party-pill-free">'+(r.has_timers ? 'สิทธิ · มีแพ็กจับเวลาบอส' : 'สิทธิ · แพ็กหมดอายุ')+'</span>';
     return '<span class="party-pill party-pill-paid">จ่าย 50 แต้ม · ถาวร (ห้ามกดออก)</span>';
   }
-  function partyRightsPillHtml(r){
+  // hostLocked = หัวปาร์ตี้ไม่มีแพ็ก "จับเวลาบอส" แล้วยังมีสมาชิก → ทั้งปาร์ตี้ถูกล็อกจนกว่าหัวปาร์ตี้จะต่ออายุ
+  function partyRightsPillHtml(r, hostLocked){
     var label = escapeHtml(r.timers_label || 'จับเวลาบอส');
-    // หัวปาร์ตี้: แพ็กของหัวปาร์ตี้กำหนดจำนวนบอสที่ทั้งปาร์ตี้เพิ่มได้
+    // หัวปาร์ตี้: แพ็กของหัวปาร์ตี้กำหนดจำนวนบอสที่ทั้งปาร์ตี้เพิ่มได้ + เพิ่มเพื่อนได้ไหม
     if(r.is_host) return r.has_timers
       ? '<span class="party-pill party-pill-full">'+label+' · เพิ่มบอสได้ไม่จำกัด</span>'
-      : '<span class="party-pill party-pill-view">แพ็กฟรี · เพิ่มบอสได้ 1 ตัว</span>';
+      : (hostLocked ? '<span class="party-pill party-pill-locked">แพ็กหมดอายุ — ปาร์ตี้ถูกล็อก</span>'
+                    : '<span class="party-pill party-pill-view">แพ็กฟรี · เพิ่มบอสได้ 1 ตัว · เพิ่มเพื่อนไม่ได้</span>');
+    if(hostLocked) return '<span class="party-pill party-pill-locked">ถูกล็อก — รอหัวปาร์ตี้ต่ออายุ</span>';
     if(r.has_timers) return '<span class="party-pill party-pill-full">'+label+' · ใช้ได้เต็ม'+
       (r.timers_expires_at ? ' · ถึง '+fmtDate(new Date(r.timers_expires_at).getTime()) : '')+'</span>';
     // เข้าฟรีแล้วแพ็กหมด = ถูกพักสิทธิ (หน้าจับเวลาบอสของคนนั้นล็อกอยู่)
@@ -8490,6 +8679,13 @@
       updatePartyPanelSummary();
       return;
     }
+    renderAddPartyBtnState();
+    // สมาชิกของปาร์ตี้ที่ถูกล็อก: ฐานข้อมูลไม่ให้ดูรายชื่อปาร์ตี้ (หน้าล็อกบังอยู่แล้ว)
+    if(isPartyLocked()){
+      listEl.innerHTML = '<p class="admin-topup-empty">ปาร์ตี้ถูกล็อก</p>';
+      updatePartyPanelSummary();
+      return;
+    }
     listEl.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';
     var amHost = !App.viewingHostId;
     var contextHostId = App.viewingHostId || App.session.id;
@@ -8498,11 +8694,14 @@
     // withRights = มีข้อมูลสิทธิจาก party_roster (ป้ายเข้าแบบไหน + ใช้งานได้แค่ไหน) · ไม่มี = รายชื่ออย่างเดียวแบบเดิม
     function draw(hostInfo, members, withRights){
       partyPanelMemberCount = members.length + 1;
+      // หัวปาร์ตี้เปิดดูเอง: จำนวนสมาชิกล่าสุดใช้กับแถบ/สรุป "ปาร์ตี้ถูกล็อก" ทันที ไม่ต้องรอเช็ครอบถัดไป
+      if(amHost && App.partyStatus) App.partyStatus = Object.assign({}, App.partyStatus, { role: members.length ? 'host' : 'none', member_count: members.length });
       updatePartyPanelSummary();
+      var hostLocked = !!(withRights && hostInfo && !hostInfo.has_timers && members.length);
       var hostName = (hostInfo && hostInfo.display_name) || contextHostName;
       var hostRow = '<div class="admin-topup-row party-member-row">'+
         '<div class="admin-topup-main"><div class="admin-topup-user">'+escapeHtml(hostName)+' <span class="party-role-tag">หัวปาร์ตี้'+(amHost?' · คุณ':'')+'</span></div>'+
-          (withRights && hostInfo ? '<div class="party-pills">'+partyRightsPillHtml(hostInfo)+'</div>' : '')+'</div>'+
+          (withRights && hostInfo ? '<div class="party-pills">'+partyRightsPillHtml(hostInfo, hostLocked)+'</div>' : '')+'</div>'+
         '<div class="admin-topup-actions">'+(!amHost ? '<button type="button" class="btn btn-ghost btn-sm" data-leave-party="'+contextHostId+'">ออกจากปาร์ตี้</button>' : '')+'</div>'+
       '</div>';
       var memberRows = members.map(function(m){
@@ -8510,7 +8709,7 @@
         var isMe = m.member_id === App.session.id;
         return '<div class="admin-topup-row party-member-row">'+
           '<div class="admin-topup-main"><div class="admin-topup-user">'+escapeHtml(name)+(isMe?' <span class="party-role-tag">คุณ</span>':'')+'</div>'+
-            (withRights ? '<div class="party-pills">'+partySeatPillHtml(m)+partyRightsPillHtml(m)+'</div>' : '')+'</div>'+
+            (withRights ? '<div class="party-pills">'+partySeatPillHtml(m)+partyRightsPillHtml(m, hostLocked)+'</div>' : '')+'</div>'+
           '<div class="admin-topup-actions">'+(amHost ? '<button type="button" class="btn btn-ghost btn-sm" data-remove-member="'+m.member_id+'">เอาออก</button>' : '')+'</div>'+
         '</div>';
       }).join('');
@@ -8571,7 +8770,8 @@
   });
   // ออกจากปาร์ตี้ (ปุ่มในแผงปาร์ตี้ + ปุ่มในหน้าล็อกของสมาชิกที่แพ็กหมดอายุ)
   function confirmLeaveParty(hostId){
-    showConfirm('ออกจากปาร์ตี้ของ '+escapeHtml(App.viewingHostName||'-')+'?<br>ถ้าจะกลับเข้ามาอีก ต้องให้คนในปาร์ตี้กดเพิ่มเพื่อนใหม่ — ฟรีถ้าคุณมีแพ็กเกจ "จับเวลาบอส" ไม่มีแพ็กเกจใช้ 50 แต้ม', function(){
+    showConfirm('ออกจากปาร์ตี้ของ '+escapeHtml(App.viewingHostName||'-')+'?<br>ถ้าจะกลับเข้ามาอีก ต้องให้หัวปาร์ตี้หรือสมาชิกที่มีแพ็กเกจ "จับเวลาบอส" กดเพิ่มใหม่ — ฟรีถ้าคุณมีแพ็กเกจ ไม่มีแพ็กเกจใช้ 50 แต้ม'+
+      (App.partySeat === 'paid' ? '<br>ที่นั่งถาวร 50 แต้มที่จ่ายไว้จะหายไปด้วย' : ''), function(){
       supa.rpc('leave_party', { target_host_id: hostId }).then(function(res){
         if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
         toast('ออกจากปาร์ตี้แล้ว');
@@ -8586,6 +8786,14 @@
   var PARTY_SEAT_COST = 50;
   document.getElementById('partyLockRenewBtn').addEventListener('click', function(){ switchPage('pricing'); });
   document.getElementById('partyLockLeaveBtn').addEventListener('click', function(){ if(App.viewingHostId) confirmLeaveParty(App.viewingHostId); });
+  document.getElementById('partyLockHistoryBtn').addEventListener('click', function(){ openHistory('items'); });
+  document.getElementById('partyLockRecheckBtn').addEventListener('click', function(){
+    var btn = this; btn.disabled = true;
+    refreshPartyAccess().then(function(){
+      btn.disabled = false;
+      if(partyLockReason() === 'host') toast('ยังล็อกอยู่ — รอหัวปาร์ตี้ต่ออายุแพ็กเกจ "จับเวลาบอส"');
+    });
+  });
   document.getElementById('partyLockSeatBtn').addEventListener('click', function(){
     var have = (App.profile && App.profile.points) || 0;
     var hostName = App.viewingHostName && App.viewingHostName !== '-' ? App.viewingHostName : '';
@@ -8597,12 +8805,12 @@
       '<span class="buy-confirm-rows">'+row('ราคา', '<b>'+PARTY_SEAT_COST+' แต้ม</b>')+
         (have >= PARTY_SEAT_COST ? row('แต้มคงเหลือหลังจ่าย', fmtNum(have-PARTY_SEAT_COST)+' แต้ม')
           : row('แต้มไม่พอ', '<span class="buy-confirm-short">ขาดอีก '+fmtNum(PARTY_SEAT_COST-have)+' แต้ม</span>'))+'</span>'+
-      '<span class="buy-confirm-notes"><span>อยู่ปาร์ตี้ถาวร ไม่หมดอายุ ใช้แบบแพ็กฟรี: ดูเวลาบอสได้ เพิ่ม/บันทึก/แก้ไขไม่ได้</span>'+
+      '<span class="buy-confirm-notes"><span>อยู่ปาร์ตี้ถาวร (ใช้ได้เมื่อหัวปาร์ตี้มีแพ็กเกจ) ใช้แบบแพ็กฟรี: ดูเวลาบอสได้ เพิ่ม/บันทึก/แก้ไขไม่ได้</span>'+
         '<span>ต่ออายุแพ็กเกจ "จับเวลาบอส" เมื่อไหร่ ก็กลับมาใช้ได้เต็มทันที</span></span>', function(){
       restoreOk();
       if(have < PARTY_SEAT_COST){ openTopup(); return; }
       supa.rpc('buy_party_seat').then(function(res){
-        if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
+        if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); if(/ปาร์ตี้ถูกล็อก/.test(res.error.message||'')) refreshPartyAccess(); return; }
         toast('อยู่ปาร์ตี้ถาวรแล้ว — ใช้แบบแพ็กฟรี (ดูเวลาบอส)');
         refreshProfile();
         resolvePartyContext().then(function(){ return Promise.all([ loadUserBosses(), loadKills() ]); })
@@ -8623,7 +8831,42 @@
     document.getElementById('addPartyMemberConfirmBtn').textContent = 'ตรวจสอบ';
   }
   function closeAddPartyMember(){ document.getElementById('addPartyMemberOverlay').hidden = true; }
+  // ใครเพิ่มเพื่อนเข้าปาร์ตี้ได้ (ต้องตรงกับ add_party_member / party_add_quote ในฐานข้อมูล — migration 20260928000100):
+  // หัวปาร์ตี้ต้องมีแพ็กเกจ "จับเวลาบอส" · สมาชิกที่กดเพิ่มต้องมีแพ็กเกจด้วย และปาร์ตี้ต้องไม่ถูกล็อก
+  function addPartyBlockReason(){
+    if(App.viewingHostId){
+      if(isPartyLocked()) return 'locked';
+      if(isFreePartyMember()) return 'view';
+      return null;
+    }
+    return hasTimersPlan() ? null : 'need-plan';
+  }
+  function renderAddPartyBtnState(){
+    var btn = document.getElementById('addPartyMemberBtn');
+    var why = addPartyBlockReason();
+    btn.textContent = why ? '🔒 เพิ่มเพื่อน' : '+ เพิ่มเพื่อน';
+    btn.title = why === 'need-plan' ? 'ต้องมีแพ็กเกจ "จับเวลาบอส" ก่อน ถึงจะเพิ่มเพื่อนเข้าปาร์ตี้ได้'
+      : why === 'view' ? 'สมาชิกแพ็กฟรี (ดูอย่างเดียว) เพิ่มเพื่อนไม่ได้'
+      : why === 'locked' ? 'ปาร์ตี้ถูกล็อก' : '';
+  }
+  function showNeedTimersPlanForParty(){
+    var okBtn = document.getElementById('confirmOkBtn'), okText = okBtn.textContent;
+    function restoreOk(){ okBtn.textContent = okText; }
+    showConfirm('<span class="buy-confirm-title">ต้องมีแพ็กเกจก่อน</span>ต้องมีแพ็กเกจ "จับเวลาบอส" (หรือ 4 in 1) ก่อน ถึงจะเพิ่มเพื่อนเข้าปาร์ตี้ได้<br>แพ็กเกจหมดอายุเมื่อไหร่ ปาร์ตี้จะถูกล็อกจนกว่าจะต่ออายุ',
+      function(){ restoreOk(); switchPage('pricing'); }, restoreOk);
+    okBtn.textContent = 'ดูแพ็กเกจ';
+  }
+  // error จากฐานข้อมูลตอนเพิ่มเพื่อน: สิทธิเปลี่ยนระหว่างเปิดหน้าต่าง (แพ็กหมด/ปาร์ตี้ถูกล็อก) → บอกแบบเดียวกับตอนกดปุ่ม
+  function addPartyErrorHandled(msg){
+    if(/ถึงจะเพิ่มเพื่อนเข้าปาร์ตี้ได้/.test(msg)){ closeAddPartyMember(); showNeedTimersPlanForParty(); return true; }
+    if(/ปาร์ตี้ถูกล็อก/.test(msg)){ closeAddPartyMember(); toast(msg); refreshPartyAccess(); return true; }
+    return false;
+  }
   document.getElementById('addPartyMemberBtn').addEventListener('click', function(){
+    var why = addPartyBlockReason();
+    if(why === 'need-plan'){ showNeedTimersPlanForParty(); return; }
+    if(why === 'locked'){ toast('ปาร์ตี้ถูกล็อก — แพ็กเกจ "จับเวลาบอส" ของหัวปาร์ตี้หมดอายุ'); return; }
+    if(why === 'view'){ toast('แพ็กเกจฟรี เข้าร่วมปาร์ตี้ เยี่ยมชมเท่านั้น'); return; }
     document.getElementById('addPartyMemberEmail').value = '';
     resetAddPartyQuote();
     document.getElementById('addPartyMemberOverlay').hidden = false;
@@ -8649,7 +8892,7 @@
       // ขั้น 1: ตรวจว่าเพิ่มได้ไหม + ชื่อที่แสดง + ค่าเข้าปาร์ตี้
       supa.rpc('party_add_quote', { member_email: ident }).then(function(res){
         addPartyMemberBusy = false;
-        if(res.error){ toast('เพิ่มไม่สำเร็จ: '+res.error.message); return; }
+        if(res.error){ if(!addPartyErrorHandled(res.error.message||'')) toast('เพิ่มไม่สำเร็จ: '+res.error.message); return; }
         var d = res.data || {};
         addPartyQuote = { ident: ident, name: d.display_name || ident, cost: Number(d.cost) || 0 };
         var q = document.getElementById('addPartyMemberQuote');
@@ -8667,7 +8910,7 @@
     var quote = addPartyQuote;
     supa.rpc('add_party_member', { member_email: ident, p_expected_cost: quote.cost }).then(function(res){
       addPartyMemberBusy = false;
-      if(res.error){ toast('เพิ่มไม่สำเร็จ: '+res.error.message); resetAddPartyQuote(); return; }
+      if(res.error){ if(!addPartyErrorHandled(res.error.message||'')) toast('เพิ่มไม่สำเร็จ: '+res.error.message); resetAddPartyQuote(); return; }
       closeAddPartyMember();
       refreshProfile();
       renderPartyPanel();
@@ -9306,6 +9549,7 @@
     supaAddBoss(boss.id).then(function(res){
       if(res.error){
         console.error('supaAddBoss', res.error);
+        if(App.viewingHostId) refreshPartyAccess();
         App.db = App.db.filter(function(b){ return b.id!==boss.id; });
         renderRoster();
         toast(res.error.message || ('เพิ่ม '+boss.name+' ไม่สำเร็จ ลองใหม่อีกครั้ง'));
@@ -9433,6 +9677,8 @@
           unlockKill(bossId, true); console.error('record_kill', res.error); toast('บันทึกประวัติการฆ่าไม่สำเร็จ: '+res.error.message);
           // รอบนี้หัวปาร์ตี้บันทึกไว้ก่อนเราเข้าปาร์ตี้ (ฐานข้อมูลไม่ให้รวม) → ไม่เขียนเวลาทับของหัวปาร์ตี้ โหลดเวลาจริงกลับมาแทน
           if(/ก่อนคุณเข้าปาร์ตี้/.test(res.error.message || '')) return refreshAfterKill();
+          // ปาร์ตี้ถูกล็อก (แพ็กของหัวปาร์ตี้หมด) → ฐานข้อมูลไม่ให้บันทึก/แก้เวลา → เช็คสิทธิใหม่ให้หน้าล็อกขึ้น
+          if(/ปาร์ตี้ถูกล็อก/.test(res.error.message || '')) return refreshPartyAccess();
           writeTimer(); // เหมือนเดิม: ประวัติบันทึกไม่ได้ แต่ตัวจับเวลายังเดินต่อ
           return;
         }

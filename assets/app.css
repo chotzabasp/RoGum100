@@ -746,6 +746,12 @@ svg.icon{width:18px;height:18px;display:block}
 .party-role-tag{color:var(--text-dim);font-weight:400;font-size:.72rem}
 .party-panel-body{display:flex;flex-direction:column;gap:.9rem}
 .party-panel-body .admin-topup-list{margin-top:0}
+/* แจ้งเรื่องแพ็กเกจของหัวปาร์ตี้ (ล็อก = แดง / ใกล้หมด = เหลือง) โทนเดียวกับแถบเตือนแพ็กเกจ .expiry-banner */
+.party-panel-note{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap;margin:.2rem 0 .9rem;padding:.6rem .85rem;border-radius:var(--radius-m);border:1px solid;font-size:.8rem;line-height:1.45;color:var(--text)}
+.party-panel-note > span{flex:1;min-width:200px}
+.party-panel-note .btn{flex:none}
+.party-panel-note.is-locked{background:color-mix(in srgb, var(--danger) 14%, transparent);border-color:color-mix(in srgb, var(--danger) 55%, transparent)}
+.party-panel-note.is-soon{background:color-mix(in srgb, var(--warn) 14%, transparent);border-color:color-mix(in srgb, var(--warn) 55%, transparent)}
 
 /* auto-fit: ที่แคบลงจะลดจาก 4 ใบต่อแถวเป็น 2 หรือ 1 เองโดยไม่ดันหน้าให้ล้น */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin-bottom:1.3rem}

@@ -5189,7 +5189,7 @@
     }).then(function(){
       captcha.widgetId = window.turnstile.render('#authCaptcha', {
         sitekey: TURNSTILE_SITE_KEY, theme: 'dark', size: 'flexible', language: 'th',
-        callback: function(t){ captcha.token = t; captcha.errored = false; document.getElementById('authError').textContent = ''; },
+        callback: function(t){ captcha.token = t; captcha.errored = false; clearCaptchaNotices(); },
         'expired-callback': function(){ captcha.token = null; },
         'error-callback': function(code){
           captcha.token = null; captcha.errored = true;
@@ -5202,6 +5202,16 @@
       Track.error('load', 'turnstile: ' + (err && err.message || err));
     });
   }
+  // ข้อความที่เกี่ยวกับ Captcha เท่านั้น — ได้ token แล้วค่อยลบ (ข้อความอื่น เช่น ยังไม่ได้ยืนยันอีเมล / รหัสผิด / สมัครสำเร็จ
+  // ต้องค้างไว้ให้อ่าน: เดิมลบ authError ทั้งหมดทุกครั้งที่ Captcha ตรวจผ่านใหม่หลัง resetCaptcha เลยหายเร็วเกิน)
+  var CAPTCHA_WAIT_MSG = 'รอระบบยืนยันว่าไม่ใช่บอทสักครู่ (กล่องด้านบนปุ่ม) แล้วกดอีกครั้ง';
+  var CAPTCHA_FAIL_MSG = 'ยืนยันว่าไม่ใช่บอทไม่สำเร็จ — รอกล่องยืนยันด้านบนปุ่มขึ้นเครื่องหมายถูก แล้วกดอีกครั้ง (ถ้าไม่ขึ้นลองรีเฟรชหน้า)';
+  function clearCaptchaNotices(){
+    ['authError', 'forgotError'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && (el.textContent === CAPTCHA_WAIT_MSG || el.textContent === CAPTCHA_FAIL_MSG)) el.textContent = '';
+    });
+  }
   function resetCaptcha(){
     captcha.token = null;
     if(captcha.widgetId !== null && window.turnstile){ try{ window.turnstile.reset(captcha.widgetId); }catch(e){} }
@@ -5209,7 +5219,7 @@
   // ก่อนกดส่ง: เปิด Captcha อยู่แต่ยังไม่ได้ token → บอกให้รอ (โหลดสคริปต์ไม่ขึ้นเลย = ปล่อยผ่าน ให้ Supabase ตัดสิน)
   function captchaNotReady(errEl){
     if(!TURNSTILE_SITE_KEY || captcha.failed || captcha.errored || captcha.token) return false;
-    errEl.textContent = 'รอระบบยืนยันว่าไม่ใช่บอทสักครู่ (กล่องด้านบนปุ่ม) แล้วกดอีกครั้ง';
+    errEl.textContent = CAPTCHA_WAIT_MSG;
     return true;
   }
   function captchaOptions(){ return captcha.token ? { captchaToken: captcha.token } : {}; }
@@ -5230,7 +5240,7 @@
     if(/database error saving new user/i.test(msg)) return 'สมัครไม่สำเร็จ — Username นี้อาจเพิ่งมีคนใช้ ลองเปลี่ยนแล้วสมัครใหม่';
     if(/email not confirmed/i.test(msg)) return 'บัญชีนี้ยังไม่ได้ยืนยันอีเมล กรุณากดลิงก์ยืนยันในอีเมลก่อนเข้าสู่ระบบ';
     if(/security purposes|rate limit|only request this/i.test(msg)) return 'ส่งคำขอถี่เกินไป กรุณารออีกสักครู่แล้วลองใหม่';
-    if(/captcha/i.test(msg)) return 'ยืนยันว่าไม่ใช่บอทไม่สำเร็จ — รอกล่องยืนยันด้านบนปุ่มขึ้นเครื่องหมายถูก แล้วกดอีกครั้ง (ถ้าไม่ขึ้นลองรีเฟรชหน้า)';
+    if(/captcha/i.test(msg)) return CAPTCHA_FAIL_MSG;
     return msg;
   }
   // ผลสมัครสมาชิกตอนเปิด "Confirm email": อีเมลซ้ำ Supabase ไม่ตอบ error (กันคนสุ่มเช็คอีเมล) ต้องดูจาก user ที่ตอบกลับเอง

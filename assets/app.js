@@ -6985,6 +6985,7 @@
     document.getElementById('view-pricing').hidden = page !== 'pricing';
     document.getElementById('view-admin').hidden = page !== 'admin';
     document.getElementById('view-settings').hidden = page !== 'settings';
+    if(App.session && App.profile) renderExpiryState();
     if(page==='home') refreshAnnouncementsIfChanged();
     if(resetMerchantTf){ renderMerchantHistory(); renderMrChart(); }
     var resetFarmTf = page==='farm' && (farmTfPage!=='farm' || farmTfUser!==tfUser);
@@ -8117,6 +8118,10 @@
     }
     // วันหมดอายุรวมของบัญชียังไม่ใกล้ (บัญชีใหม่ = 2099) → เช็คแพ็กเกจที่ซื้อไว้แทน
     var soon = packageExpiringSoon();
+    // หน้าจับเวลาบอส: แถบในการ์ดปาร์ตี้ (แพ็กใกล้หมด/ปาร์ตี้ถูกล็อก + ปุ่มต่ออายุ) ขึ้นอยู่แล้ว → ไม่โชว์แถบบนสุดซ้ำ เหลือแถบเดียว
+    // (หน้าอื่นยังเห็นแถบบนสุดตามเดิม)
+    var partyNote = document.getElementById('partyPanelNote');
+    if(soon.length && partyNote && !partyNote.hidden && !document.getElementById('view-timers').hidden) soon = [];
     if(soon.length){
       banner.hidden = false; banner.className = 'expiry-banner soon'; bannerBtn.textContent = 'ต่ออายุแพ็กเกจ';
       document.getElementById('expiryBannerText').textContent = 'แพ็กเกจใกล้หมดอายุ: '+soon.map(function(s){ return s.name+' เหลืออีก '+s.days+' วัน'; }).join(' · ')+' — ต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า';
@@ -8256,6 +8261,7 @@
     document.getElementById('partyPanelNoteText').textContent = text;
     document.getElementById('partyPanelNoteBtn').hidden = !renew;
     renderAddPartyBtnState(); // แพ็กเปลี่ยน → ปุ่มเพิ่มเพื่อนกดได้/ไม่ได้ตาม
+    if(App.session && App.profile) renderExpiryState(); // แถบในการ์ดปาร์ตี้ขึ้น = ซ่อนแถบบนสุดที่ซ้ำกัน (หน้าจับเวลาบอส)
   }
   document.getElementById('partyPanelNoteBtn').addEventListener('click', function(){ switchPage('pricing'); });
   // ป๊อปอัปเตือนสมาชิก: แพ็กของหัวปาร์ตี้เหลือไม่เกิน 3 วัน — วันละครั้งต่อหัวปาร์ตี้/จำนวนวันที่เหลือ (จำในเครื่อง)

@@ -401,7 +401,9 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-log-divider{border-top:1px solid var(--border)}
 .farm-log-field{display:flex;flex-direction:column;gap:.3rem}
 .farm-log-field label, .farm-log-field-label{font-size:.76rem;color:var(--text-dim)}
-.farm-revenue-server{font-size:.72rem;font-weight:600;color:var(--accent);background:color-mix(in srgb, var(--accent) 16%, transparent);border-radius:999px;padding:.15rem .55rem;margin-left:.4rem;vertical-align:middle}
+/* ป้าย Sv. ข้างหัวข้อ (ประวัติซื้อ–ขาย / กราฟเงินสุทธิ / กำไรสุทธิ ฟาร์ม) = ชิปสีทองเหมือนป้ายในการ์ดประวัติ */
+.farm-revenue-server{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;height:20px;max-width:100%;padding:.1rem .45rem 0;border:1px solid rgba(216,180,103,.5);border-radius:999px;background:rgba(216,180,103,.15);box-shadow:none;color:#f6dfaf;font-size:.66rem;font-weight:400;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:.4rem;vertical-align:middle}
+.farm-revenue-server:empty{display:none}
 .mr-chart-server-tags{display:inline-flex;flex-wrap:wrap;gap:.3rem;margin-left:.4rem;vertical-align:middle}
 .mr-chart-server-tags .farm-revenue-server{margin-left:0}
 .farm-oc-toggle{display:inline-flex;align-items:center;vertical-align:middle;margin-left:.35rem;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:999px;padding:.08rem .5rem;font-size:.66rem;font-weight:600;cursor:pointer;transition:border-color .12s ease, background .12s ease, color .12s ease}
@@ -3370,7 +3372,9 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 /* Server belongs to the item identity, not a detached category pill. */
 #view-home #mrHistoryList .mr-it-namewrap:has(.mr-history-server){row-gap:.1rem;text-align:left}
 #view-home #mrHistoryList .mr-history-server{display:flex;align-items:baseline;flex-wrap:wrap;flex-basis:100%;gap:.25rem .5rem;padding-left:2.5rem;box-sizing:border-box;min-width:0;font-size:.75rem;line-height:1.6;color:var(--history-muted);font-weight:400}
-#view-home #mrHistoryList .mr-history-server .mr-cat-tag{padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#c4d7f3;font:inherit;font-weight:500;white-space:normal;overflow-wrap:anywhere}
+/* ป้ายเซิร์ฟเวอร์ในการ์ด = ชิปสีทองแบบเดียวกับชิปเซิร์ฟในแผงประกาศ (#tickerServerChips .chip.selected) — ผู้ใช้ขอ 28 ก.ย. 2569
+   เล็ก + ตัวหนังสืออยู่กึ่งกลางกรอบ (inline-flex + line-height:1 + สูงตายตัว) ใช้ค่าเดียวกับป้าย Sv. ข้างหัวข้อ (.farm-revenue-server) */
+#view-home #mrHistoryList .mr-history-server .mr-cat-tag{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;height:20px;max-width:100%;padding:.1rem .45rem 0;border:1px solid rgba(216,180,103,.5);border-radius:999px;background:rgba(216,180,103,.15);box-shadow:none;color:#f6dfaf;font-size:.66rem;font-weight:400;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #view-home #mrHistoryList .mr-history-zeny .mr-history-server{flex-basis:auto;padding-left:0}
 /* การ์ดไอเทม / อื่นๆ: "เซิร์ฟเวอร์ Sv.xxx" อยู่บรรทัดเดียวกับชื่อ ต่อจากป้าย "ล่าสุด" (แบบเดียวกับการ์ด Zeny)
    ชื่อยาวจนไม่พอที่ค่อยตัดขึ้นบรรทัดใหม่เอง · ทับกฎเว้นซ้าย 2.25–2.5rem เดิมที่เคยจัดให้อยู่ใต้ชื่อ */

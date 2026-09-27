@@ -248,11 +248,11 @@
       toast('มีช่องเซิร์ฟเวอร์ครบ '+MAX_RATE_CHIP_SLOTS+' ช่องแล้ว (สูงสุด)');
       return;
     }
+    // แต้มไม่พอก็เปิดกล่องยืนยันเหมือนกัน (เหมือนกล่องซื้อแพ็กเกจ/ที่นั่งปาร์ตี้): บอกว่าขาดกี่แต้ม + ปุ่มขวาเป็น "เติมแต้ม"
     var have = (App.profile && App.profile.points) || 0;
-    if(have < SERVER_SLOT_COST){
-      toast('แต้มไม่พอ (ต้องการ '+SERVER_SLOT_COST+' แต้ม · มีอยู่ '+fmtNum(have)+')');
-      return;
-    }
+    var enough = have >= SERVER_SLOT_COST;
+    var okBtn = document.getElementById('confirmOkBtn'), okText = okBtn.textContent;
+    function restoreOk(){ okBtn.textContent = okText; }
     // ถ้าโควต้าที่มีอยู่ครอบคลุมทุกเซิร์ฟในระบบแล้ว ช่องใหม่จะยังไม่มีเซิร์ฟให้ใส่
     // ไม่ห้ามซื้อ (เผื่อมีเซิร์ฟใหม่เข้าระบบ) แต่ต้องบอกให้รู้ตัวก่อนเสียแต้ม
     var quota = serverQuota();
@@ -265,12 +265,16 @@
       '<span class="buy-confirm-rows">'+
         '<span class="buy-confirm-row"><span>จำนวนช่อง</span><span>'+quota+' → '+(quota+1)+' ช่อง</span></span>'+
         '<span class="buy-confirm-row"><span>ราคา</span><span><b>'+SERVER_SLOT_COST+' แต้ม</b></span></span>'+
-        '<span class="buy-confirm-row"><span>แต้มคงเหลือหลังซื้อ</span><span>'+fmtNum(have-SERVER_SLOT_COST)+' แต้ม</span></span>'+
+        (enough
+          ? '<span class="buy-confirm-row"><span>แต้มคงเหลือหลังซื้อ</span><span>'+fmtNum(have-SERVER_SLOT_COST)+' แต้ม</span></span>'
+          : '<span class="buy-confirm-row"><span>แต้มไม่พอ</span><span><span class="buy-confirm-short">ขาดอีก '+fmtNum(SERVER_SLOT_COST-have)+' แต้ม</span></span></span>')+
       '</span>'+
       '<span class="buy-confirm-notes">'+
         '<span>ช่องใหม่จะใช้เซิร์ฟเดียวกับช่องแรกไปก่อน เลือกเซิร์ฟที่ต้องการได้ที่หน้า "ตั้งค่า"</span>'+
         '<span>ช่องที่ซื้อเป็นของถาวร ลบการ์ดแล้วเพิ่มใหม่ได้ฟรี</span>'+
       '</span>'+wasteWarn, function(){
+      restoreOk();
+      if(!enough){ openTopup(); return; }
       supa.rpc('buy_server_slot').then(function(res){
         if(res.error){ toast(res.error.message || 'ซื้อโควต้าไม่สำเร็จ'); return; }
         return refreshProfile().then(function(){
@@ -282,7 +286,8 @@
           toast('ได้ช่องเซิร์ฟเวอร์เพิ่มแล้ว — เลือกเซิร์ฟที่หน้า "ตั้งค่า"');
         });
       }, function(err){ console.warn('buy_server_slot', err); toast('ซื้อโควต้าไม่สำเร็จ ลองใหม่อีกครั้ง'); });
-    });
+    }, restoreOk);
+    okBtn.textContent = enough ? okText : 'เติมแต้ม';
   }
   // เพิ่มการ์ดราคา 1 ใบ: ถ้ายังมีเซิร์ฟที่เลือกไว้แต่ยังไม่มีการ์ด ใช้ตัวนั้นก่อน
   // ถ้าไม่มี (เช่นเพิ่งซื้อช่องแต่ยังไม่ได้เลือกเซิร์ฟที่ 2) ก็ซ้ำกับการ์ดแรกไปก่อน

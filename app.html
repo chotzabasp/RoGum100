@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260927-zeny-coin2">
+<link rel="stylesheet" href="assets/app.css?v=20260927-topup-min">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -1184,17 +1184,17 @@
   <div class="confirm-backdrop"></div>
   <div class="confirm-box topup-box">
     <h3 class="post-announce-title topup-title">เติมแต้ม</h3>
-    <p class="topup-rate"><span class="topup-rate-copy">1 บาท = 1 แต้ม</span><span class="topup-notice">⚠ ช่วงเวลา 00:00 - 02:00 ระบบล่าช้า ติดต่อ Admin เพจ FB</span></p>
+    <p class="topup-rate"><span class="topup-rate-copy">1 บาท = 1 แต้ม</span><span class="topup-notice"><span>⚠ ช่วงเวลา 00:00 - 02:00 ระบบล่าช้า ติดต่อ <a class="topup-notice-link" href="https://www.facebook.com/rogum100/" target="_blank" rel="noopener noreferrer">Admin</a> เพจ FB</span></span></p>
     <div class="topup-presets" id="topupPresets">
-      <button type="button" class="topup-preset-btn" data-amount="20">20 บ</button>
       <button type="button" class="topup-preset-btn" data-amount="50">50 บ</button>
       <button type="button" class="topup-preset-btn" data-amount="100">100 บ</button>
       <button type="button" class="topup-preset-btn" data-amount="300">300 บ</button>
       <button type="button" class="topup-preset-btn active" data-amount="500">500 บ</button>
+      <button type="button" class="topup-preset-btn" data-amount="1000">1000 บ</button>
     </div>
     <div class="post-announce-field">
       <label for="topupCustomAmount">หรือระบุจำนวนเงินเอง (บาท)</label>
-      <input type="number" inputmode="numeric" min="20" step="1" id="topupCustomAmount" class="mono" placeholder="ระบุจำนวน (ขั้นต่ำ 20 บาท)" aria-describedby="topupAmountError">
+      <input type="number" inputmode="numeric" min="50" step="1" id="topupCustomAmount" class="mono" placeholder="ระบุจำนวนเอง (ขั้นต่ำ 50 บาท)" aria-describedby="topupAmountError">
       <small class="topup-amount-error" id="topupAmountError" role="status" hidden></small>
     </div>
     <div class="post-announce-field" hidden>
@@ -1251,4 +1251,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260927-announce-timer"></script>
+<script src="assets/app.js?v=20260927-topup-min"></script>

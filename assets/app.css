@@ -3860,3 +3860,6 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 #view-home #mrHistoryList .mr-history-icon.mr-history-icon-coin{background:none;border-radius:0;overflow:hidden}
 /* รูปมีขอบว่างรอบเหรียญ (เหรียญกว้าง ~73% ของรูป และอยู่สูงกว่ากึ่งกลาง ~1.8%) → ขยาย 1.35 เท่า + เลื่อนลง 2.4% ให้เหรียญเต็มกรอบพอดีกลาง */
 #view-home #mrHistoryList .mr-history-icon-coin img{display:block;width:100%;height:100%;object-fit:contain;transform:translateY(2.4%) scale(1.35)}
+/* หน้าต่างเติมแต้ม: คำว่า "Admin" ในกล่องเตือนสีเหลือง = ลิงก์ไปเพจ Facebook — สีเดียวกับข้อความเตือน ตัวหนา ขีดเส้นใต้ */
+#topupOverlay .topup-notice-link{color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+#topupOverlay .topup-notice-link:hover{color:#ffe2a6}

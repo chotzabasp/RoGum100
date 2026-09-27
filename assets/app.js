@@ -8113,7 +8113,7 @@
 
   // ---------- เติมแต้ม: QR PromptPay ผ่าน TMWEASY Edge Function ----------
   var topupAmount = 500;
-  var TOPUP_MIN_AMOUNT = 20;
+  var TOPUP_MIN_AMOUNT = 50; // ต้องตรงกับ topup_rate_guard() ใน DB (migration 20260927000900) — เดิม 20
   var topupQrPollTimer = null;
   var topupQrClockTimer = null;
   // QR หมดเวลาแล้วยังเช็คผลต่ออีก 2 นาที: จ่ายช่วงวินาทีท้ายๆ ข้อความยืนยันจาก TMWEASY อาจมาช้ากว่านาฬิกา

@@ -892,6 +892,17 @@ svg.icon{width:18px;height:18px;display:block}
 #expiryOverlay .confirm-backdrop{z-index:85}
 #expiryOverlay .confirm-box{z-index:86}
 .expiry-msg{margin:0 0 1.1rem;font-size:.88rem;line-height:1.55;color:var(--text);white-space:pre-line}
+/* ป๊อปอัปแพ็กเกจแบบจัดรูป: ชื่อแพ็ก (หนา) + วันที่ → กรอบเรื่องปาร์ตี้ (เหลือง/แดง) → คำแนะนำตัวเล็ก */
+.expiry-msg.is-rich{white-space:normal}
+.pkg-pop-item{display:block;margin-bottom:.55rem}
+.pkg-pop-item > b{display:block;font-size:.95rem;font-weight:700}
+.pkg-pop-item > span{display:block;font-size:.84rem;color:var(--text-dim)}
+.pkg-pop-alert{display:block;margin:.8rem 0;padding:.6rem .8rem;border-radius:var(--radius-m);border:1px solid;font-size:.84rem;line-height:1.5}
+.pkg-pop-alert > b{display:block;margin-bottom:.15rem}
+.pkg-pop-alert.is-warn{background:color-mix(in srgb, var(--warn) 14%, transparent);border-color:color-mix(in srgb, var(--warn) 55%, transparent)}
+.pkg-pop-alert.is-danger{background:color-mix(in srgb, var(--danger) 14%, transparent);border-color:color-mix(in srgb, var(--danger) 55%, transparent)}
+.pkg-pop-note{display:block;margin-top:.7rem;font-size:.78rem;line-height:1.5;color:var(--text-dim)}
+.pkg-pop-sep{display:block;height:1px;margin:.9rem 0;background:var(--border)}
 /* เลือกเซิร์ฟเวอร์ที่เล่น (ตอนสมัคร + หน้าตั้งค่า) */
 #serverPickOverlay .confirm-backdrop{z-index:87}
 #serverPickOverlay .confirm-box{z-index:88}

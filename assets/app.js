@@ -8169,27 +8169,35 @@
     var showSoon = soon.length > 0 && store(App.keys.pkgWarn, '') !== soonStamp;
     if(!showSoon && !gone.length) return;
     var parts = [];
-    // เป็นหัวปาร์ตี้ที่มีสมาชิก: แพ็ก "จับเวลาบอส" หมด = ปาร์ตี้ถูกล็อกทั้งปาร์ตี้ → บอกในป๊อปอัปเดียวกัน
+    // เป็นหัวปาร์ตี้ที่มีสมาชิก: แพ็ก "จับเวลาบอส" หมด = ปาร์ตี้ถูกล็อกทั้งปาร์ตี้ → บอกในกรอบเด่นกลางป๊อปอัป
     var hostedN = hostedMemberCount(), ownTimersExp = ownTimersExpiry();
     var timersGone = gone.some(function(g){ return g.key === 'timers' || g.key === 'all'; }) && !hasTimersPlan();
     var timersSoon = !!ownTimersExp && Math.ceil((ownTimersExp-now)/86400000) <= PKG_WARN_DAYS;
     if(gone.length){
-      parts.push(gone.map(function(g){ return g.name+' หมดอายุเมื่อ '+fmtDate(g.expiry); }).join('\n')+
-        '\nตอนนี้ใช้สิทธิแบบฟรี ข้อมูลเดิมของคุณไม่ถูกลบ ต่ออายุเมื่อไหร่ก็กลับมาใช้ได้เต็มที่'+
-        (hostedN && timersGone ? '\nปาร์ตี้ของคุณ (สมาชิก '+hostedN+' คน) ถูกล็อกแล้ว — ต่ออายุแพ็กเกจ "จับเวลาบอส" เพื่อปลดล็อกให้ทุกคน' : ''));
+      parts.push(gone.map(function(g){ return pkgPopItem(g.name, 'หมดอายุแล้วเมื่อ '+fmtDate(g.expiry)); }).join('')+
+        (hostedN && timersGone ? pkgPopAlert('danger', 'ปาร์ตี้ของคุณถูกล็อกแล้ว', 'สมาชิก '+hostedN+' คนใช้จับเวลาบอสของปาร์ตี้ไม่ได้ จนกว่าคุณจะต่ออายุ') : '')+
+        pkgPopNote('ตอนนี้ใช้สิทธิแบบฟรี ข้อมูลเดิมของคุณไม่ถูกลบ', 'ต่ออายุเมื่อไหร่ก็กลับมาใช้ได้เต็มที่'));
     }
     if(showSoon){
-      parts.push(soon.map(function(s){ return s.name+' — เหลืออีก '+s.days+' วัน (หมด '+fmtDate(s.expiry)+')'; }).join('\n')+
-        '\nต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า ถ้าปล่อยให้หมดจะกลับไปใช้สิทธิแบบฟรี'+
-        (hostedN && timersSoon ? '\nปาร์ตี้ของคุณมีสมาชิก '+hostedN+' คน — ถ้าแพ็กเกจ "จับเวลาบอส" หมดอายุ ปาร์ตี้จะถูกล็อก สมาชิกทุกคนใช้จับเวลาบอสของปาร์ตี้ไม่ได้จนกว่าคุณจะต่ออายุ' : ''));
+      parts.push(soon.map(function(s){ return pkgPopItem(s.name, 'เหลืออีก '+s.days+' วัน · หมด '+fmtDate(s.expiry)); }).join('')+
+        (hostedN && timersSoon ? pkgPopAlert('warn', 'ปาร์ตี้ของคุณจะถูกล็อก',
+          (soon.length === 1 ? 'ถ้าแพ็กเกจหมดอายุ' : 'ถ้าแพ็กเกจ "จับเวลาบอส" หมดอายุ')+' สมาชิก '+hostedN+' คนจะใช้จับเวลาบอสของปาร์ตี้ไม่ได้ จนกว่าคุณจะต่ออายุ') : '')+
+        pkgPopNote('ต่ออายุตอนนี้ วันที่เหลือจะถูกนับต่อ ไม่เสียเปล่า', 'ถ้าปล่อยให้หมด จะกลับไปใช้สิทธิแบบฟรี'));
     }
-    showExpiryPopup(gone.length && showSoon ? 'แจ้งเตือนแพ็กเกจ' : gone.length ? 'แพ็กเกจหมดอายุแล้ว' : 'แพ็กเกจใกล้หมดอายุ', parts.join('\n\n'));
+    showExpiryPopup(gone.length && showSoon ? 'แจ้งเตือนแพ็กเกจ' : gone.length ? 'แพ็กเกจหมดอายุแล้ว' : 'แพ็กเกจใกล้หมดอายุ',
+      parts.join('<span class="pkg-pop-sep"></span>'), false, true);
     if(showSoon) persist(App.keys.pkgWarn, soonStamp);
     if(gone.length) persist(App.keys.pkgExpiredSeen, seen.concat(gone.map(function(g){ return g.key+':'+g.expiry; })).slice(-20));
   }
-  function showExpiryPopup(title, msg, noPricing){
+  // ชิ้นส่วนของป๊อปอัปแพ็กเกจ (ใช้ span ทั้งหมด เพราะกล่องข้อความเป็น <p>) — ข้อความจากผู้ใช้ต้องผ่าน escapeHtml
+  function pkgPopItem(name, detail){ return '<span class="pkg-pop-item"><b>'+escapeHtml(name)+'</b><span>'+escapeHtml(detail)+'</span></span>'; }
+  function pkgPopAlert(tone, head, body){ return '<span class="pkg-pop-alert is-'+tone+'"><b>⚠ '+escapeHtml(head)+'</b><span>'+escapeHtml(body)+'</span></span>'; }
+  function pkgPopNote(line1, line2){ return '<span class="pkg-pop-note">'+escapeHtml(line1)+(line2 ? '<br>'+escapeHtml(line2) : '')+'</span>'; }
+  function showExpiryPopup(title, msg, noPricing, html){
     document.getElementById('expiryTitle').textContent = title;
-    document.getElementById('expiryMsg').textContent = msg;
+    var msgEl = document.getElementById('expiryMsg');
+    msgEl.classList.toggle('is-rich', !!html);
+    if(html) msgEl.innerHTML = msg; else msgEl.textContent = msg;
     var ov = document.getElementById('expiryOverlay');
     ov.querySelector('[data-go-pricing]').hidden = !!noPricing;
     ov.querySelector('.confirm-actions [data-expiry-close]:not([data-go-pricing])').textContent = noPricing ? 'รับทราบ' : 'ไว้ก่อน';
@@ -8261,8 +8269,10 @@
     var stamp = todayKey(now)+':'+App.viewingHostId+':'+d;
     if(store(App.keys.hostPlanWarn, '') === stamp) return;
     persist(App.keys.hostPlanWarn, stamp);
-    showExpiryPopup('แพ็กเกจหัวปาร์ตี้ใกล้หมดอายุ', 'แพ็กเกจ "จับเวลาบอส" ของหัวปาร์ตี้ '+(App.viewingHostName||'-')+' เหลืออีก '+d+' วัน (หมด '+fmtDate(hx)+')'+
-      '\nถ้าหัวปาร์ตี้ไม่ต่ออายุ ปาร์ตี้จะถูกล็อก — ทุกคนในปาร์ตี้ใช้จับเวลาบอสของปาร์ตี้ไม่ได้จนกว่าหัวปาร์ตี้จะต่ออายุ ข้อมูลบอสและประวัติไม่หาย', true);
+    showExpiryPopup('แพ็กเกจหัวปาร์ตี้ใกล้หมดอายุ',
+      pkgPopItem('หัวปาร์ตี้ '+(App.viewingHostName||'-'), 'แพ็กเกจ "จับเวลาบอส" เหลืออีก '+d+' วัน · หมด '+fmtDate(hx))+
+      pkgPopAlert('warn', 'ถ้าหัวปาร์ตี้ไม่ต่ออายุ ปาร์ตี้จะถูกล็อก', 'ทุกคนในปาร์ตี้ใช้จับเวลาบอสของปาร์ตี้ไม่ได้ จนกว่าหัวปาร์ตี้จะต่ออายุ')+
+      pkgPopNote('ข้อมูลบอสและประวัติไม่หาย'), true, true);
   }
   var expiryPopupShownForSession = false;
   // หมดอายุ: popup ทุกครั้งที่เข้าแอป · ใกล้หมด 3/2/1 วัน: popup วันละครั้งต่อบัญชี (จำในเครื่อง)

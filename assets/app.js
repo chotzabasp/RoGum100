@@ -6879,6 +6879,9 @@
     }
   }
   function renderPricingPage(){
+    // หัวหน้าแพ็กเกจ "เริ่มต้นเพียง X บาท/เดือน" = ราคารายเดือนที่ถูกที่สุดตอนนี้ (ช่วงโปร 99 · หลังจบโปร 199)
+    var startPriceEl = document.getElementById('pricingStartPrice');
+    if(startPriceEl) startPriceEl.textContent = fmtNum(Math.min.apply(null, PRICING_PLANS.filter(function(p){ return !p.free; }).map(function(p){ return isPromoActive() ? p.promoMonthly : p.monthly; })));
     var grid = document.getElementById('pricingGrid');
     grid.innerHTML = [PRICING_PLANS[4],PRICING_PLANS[3],PRICING_PLANS[5]].concat(PRICING_PLANS.slice(0,3)).map(function(p){
       var monthly = pricingCycle==='monthly' || (p.yearly == null && p.displayYearly == null);

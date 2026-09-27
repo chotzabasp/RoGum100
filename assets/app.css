@@ -125,10 +125,10 @@ svg.icon{width:18px;height:18px;display:block}
   padding:1rem .65rem;gap:.15rem;
 }
 .rail-brand{display:flex;align-items:center;justify-content:center;padding:.1rem .3rem .85rem;margin-bottom:.4rem;border-bottom:1px solid var(--border)}
-/* ลิงก์เพจ Facebook บนเมนูซ้าย: ปุ่มแคปซูลไอคอน f + ข้อความ (แบบเดียวกับ "พูดคุยกับ Gum100" ท้ายหน้าแรก) */
-.rail-logo-fb{display:inline-flex;align-items:center;gap:.5rem;min-height:36px;padding:.4rem .85rem;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.04);color:var(--text);font-size:.8rem;font-weight:600;line-height:1.2;white-space:nowrap;text-decoration:none;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+/* ลิงก์เพจ Facebook บนเมนูซ้าย: ปุ่มแคปซูลสีฟ้า Facebook (#0866FF สีโลโก้ปัจจุบัน) ไอคอน f + ข้อความสีขาว */
+.rail-logo-fb{display:inline-flex;align-items:center;gap:.5rem;min-height:36px;padding:.4rem .85rem;border:1px solid #0866FF;border-radius:999px;background:#0866FF;color:#fff;font-size:.8rem;font-weight:600;line-height:1.2;white-space:nowrap;text-decoration:none;transition:background .16s ease,border-color .16s ease,transform .16s ease}
 .rail-logo-fb svg{width:15px;height:15px;flex:none;fill:currentColor}
-.rail-logo-fb:hover{background:rgba(121,167,255,.14);border-color:var(--accent);transform:translateY(-1px)}
+.rail-logo-fb:hover{background:#0758DB;border-color:#0758DB;transform:translateY(-1px)}
 .rail-btn{
   width:100%;min-height:40px;border-radius:var(--radius-s);
   display:flex;align-items:center;gap:.65rem;justify-content:flex-start;
@@ -2370,7 +2370,8 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-pricing .pricing-cycle-toggle .seg-btn{min-width:108px;padding:.5rem 1rem;border-radius:8px;font-size:.85rem}
 #view-pricing .pricing-cycle-toggle .seg-btn.active{background:#344766;color:#fff;box-shadow:0 2px 8px #0003}
 #view-pricing .pricing-promo-banner{margin:.15rem 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:.25rem .7rem;padding:.55rem 1rem;border-radius:10px;background:#202839;border:1px solid #3a4760;box-shadow:none;color:#c6cedc;font-size:.76rem;font-weight:400}
-#view-pricing .pricing-promo-banner strong{color:#efcf89;font-weight:700}
+#view-pricing .pricing-promo-banner strong{color:#fff;font-weight:700}
+#view-pricing .pricing-promo-banner .pricing-promo-off{color:var(--danger)}
 #view-pricing .pricing-promo-banner{width:fit-content;max-width:100%;box-sizing:border-box;align-items:center;justify-content:center;gap:.5rem 1rem;padding:.55rem .8rem;border-radius:9px;background:#192333;border-color:#3a4760;text-align:left}
 #view-pricing .pricing-promo-copy{flex:0 0 auto;line-height:1.4}
 #view-pricing .pricing-promo-copy strong{font-size:.85rem}
@@ -2583,6 +2584,10 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-settings .settings-kv b{font-size:.82rem;font-weight:600;line-height:1.6}
 #view-settings .settings-servers .panel-head{margin:0;gap:12px}
 #view-settings .settings-servers .settings-note{margin:0}
+/* หัวการ์ด: "เซิร์ฟเวอร์ที่เล่น" + คำแนะนำ "✓ ออก เพื่อเลือกเซิร์ฟเวอร์ใหม่" บรรทัดเดียวกัน (จอแคบขึ้นบรรทัดใหม่เอง) */
+#view-settings .settings-servers-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px;min-width:0}
+#view-settings .settings-servers .settings-note-link{font-weight:600;text-decoration:underline;text-underline-offset:2px}
+#view-settings .settings-servers .settings-note-link:hover{color:#a9c4ff}
 #view-settings .settings-servers-head-actions{gap:8px}
 #view-settings .settings-servers-head-actions .settings-package-upgrade{min-height:40px;padding:7px 10px}
 #view-settings .settings-servers .server-pick-list{gap:8px;margin:0}

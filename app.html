@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260927-new-prices2">
+<link rel="stylesheet" href="assets/app.css?v=20260927-servers-note">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -671,13 +671,13 @@
       <div class="page-scroll">
       <div class="pricing-hero">
         <span class="pricing-badge">✦ ปลดล็อกฟีเจอร์เต็มรูปแบบ</span>
-        <div class="pricing-benefits"><span>✓ เริ่มต้นเพียง 99 บาท/เดือน</span><span>✓ เลือกใช้ตามระบบที่ต้องการ</span></div>
+        <div class="pricing-benefits"><span>✓ เริ่มต้นเพียง <span id="pricingStartPrice">99</span> บาท/เดือน</span><span>✓ เลือกใช้ตามระบบที่ต้องการ</span></div>
         <div class="seg-toggle pricing-cycle-toggle" id="pricingCycleToggle">
           <button type="button" class="seg-btn active" data-cycle="monthly">รายเดือน</button>
           <button type="button" class="seg-btn" data-cycle="yearly">รายปี</button>
         </div>
         <div class="pricing-promo-banner">
-          <div class="pricing-promo-copy"><strong>ราคาโปรโมชันเปิดตัวลด 50%</strong></div>
+          <div class="pricing-promo-copy"><strong>ราคาโปรโมชันเปิดตัว <span class="pricing-promo-off">ลด 50%</span></strong></div>
           <div class="pricing-promo-clock" role="timer" aria-live="off" aria-label="เวลาคงเหลือของโปรโมชั่น">
             <span class="pricing-promo-status" id="pricingPromoStatus">รอกำหนดวันสิ้นสุดโปรโมชั่น</span>
             <div class="pricing-promo-digits" id="pricingPromoDigits" hidden>
@@ -740,7 +740,10 @@
         </div>
         <div class="panel settings-card settings-servers">
           <div class="panel-head">
-            <h2>เซิร์ฟเวอร์ที่เล่น</h2>
+            <div class="settings-servers-title">
+              <h2>เซิร์ฟเวอร์ที่เล่น</h2>
+              <span class="settings-note"><span class="chip-check-gold">✓</span> ออก เพื่อเลือกเซิร์ฟเวอร์ใหม่</span>
+            </div>
             <div class="settings-servers-head-actions">
               <span class="party-panel-summary" id="stServersSummary"></span>
               <!-- ซื้อช่องเซิร์ฟเวอร์เพิ่มแบบเดียวกับปุ่ม "+ เพิ่มเซิร์ฟเวอร์" หน้าแรก (buyServerSlotFlow มี
@@ -748,7 +751,7 @@
               <button type="button" class="btn btn-sm settings-package-upgrade" id="stAddServerSlotBtn">+ เพิ่มเซิร์ฟเวอร์</button>
             </div>
           </div>
-          <p class="settings-note">กด ✓ ออก เพื่อเลือกเซิร์ฟเวอร์ใหม่</p>
+          <p class="settings-note">ติดต่อ <a class="settings-note-link" href="https://www.facebook.com/rogum100/" target="_blank" rel="noopener noreferrer">Admin</a> เพื่อเพิ่มเซิร์ฟเวอร์ที่เล่น</p>
           <div class="server-pick-list" id="stServerList"></div>
           <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" id="stSaveServers">บันทึกเซิร์ฟเวอร์</button></div>
         </div>
@@ -758,7 +761,7 @@
              เซิร์ฟพักที่มีประวัติเลย (โชว์ข้อความว่างแทน) -->
         <div class="panel settings-card settings-servers" id="stRetiredServerCard">
           <div class="panel-head"><h2>เซิร์ฟเวอร์เก่า (พัก) ที่มีประวัติ</h2></div>
-          <p class="settings-note">ติ๊ก ✓ เลือก Sv. เพื่อให้เซิร์ฟเวอร์นั้นกลับมาแสดง "ประวัติ" เก่า</p>
+          <p class="settings-note"><span class="chip-check-gold">✓</span> เลือก Sv. เพื่อให้เซิร์ฟเวอร์นั้นกลับมาแสดง "ประวัติ" เก่า</p>
           <div class="server-pick-list" id="stRetiredServerList"></div>
         </div>
       </div>
@@ -1197,4 +1200,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260927-new-prices"></script>
+<script src="assets/app.js?v=20260927-start-price"></script>

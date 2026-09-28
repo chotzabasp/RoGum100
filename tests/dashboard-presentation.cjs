@@ -142,19 +142,44 @@ const addedCode = [
   'setInterval(function(){ if(!document.hidden && state.data) loadLive(); }, 60000);',
   'loadLive();'
 ];
+// 2026-09-29 audit fixes (intentional; behavior asserted at the end): expiring plans count Bangkok calendar days,
+// a lost session (42501) gets its own state, and "not installed" needs PGRST202 and no longer names the old SQL files.
+// Only these exact edits are mapped back to the original lines; everything else must still match.
+const auditFunctions = ['bkkDay', 'fmtDateBkk'];
+const auditAdded = [
+  "else if(res.error.code === '42501' || /permission denied|JWT/i.test(msg)) showState('เซสชันหมดอายุ', 'ล็อกอินด้วยบัญชีแอดมินที่หน้าเว็บอีกครั้ง แล้วกลับมารีเฟรชหน้านี้', 'ไปหน้าเว็บเพื่อล็อกอิน');"
+];
+const auditEdits = [
+  ['var days = Math.max(0, Math.ceil((new Date(x.expires_at).getTime() - Date.now()) / 86400000));',
+   'var days = Math.max(0, bkkDay(new Date(x.expires_at).getTime()) - bkkDay(Date.now()));'],
+  [`'<div class="row-side"><b>' + (days === 0 ? 'วันนี้' : 'อีก ' + days + ' วัน') + '</b>' + fmtDate(x.expires_at) + '</div></div>';`,
+   `'<div class="row-side"><b>' + (days === 0 ? 'วันนี้' : 'อีก ' + days + ' วัน') + '</b>' + fmtDateBkk(x.expires_at) + '</div></div>';`],
+  ["else if(/admin_dashboard|function|does not exist|schema cache/i.test(msg)) showState('ยังไม่ได้ติดตั้งฟังก์ชันสรุปข้อมูล', 'ต้องรันไฟล์ SQL 20260924000300_admin_dashboard.sql ใน Supabase ก่อน');",
+   "else if(res.error.code === 'PGRST202') showState('ยังไม่ได้ติดตั้งฟังก์ชันสรุปข้อมูล', 'ต้องรันไฟล์ migration ล่าสุดของ admin_dashboard ใน Supabase ก่อน');"],
+  ['renderTraffic(tr && tr.data, tmsg ? (/admin_traffic|function|does not exist|schema cache/i.test(tmsg)',
+   "renderTraffic(tr && tr.data, tmsg ? (tr.error.code === 'PGRST202'"],
+  ["? 'ยังไม่ได้ติดตั้งระบบเก็บการเข้าชม — รันไฟล์ SQL 20260924000400_app_events.sql ใน Supabase ก่อน'",
+   "? 'ยังไม่ได้ติดตั้งระบบเก็บการเข้าชม — รันไฟล์ migration ล่าสุดของ admin_traffic ใน Supabase ก่อน'"]
+];
 const referenceComments = new Set(reference.script.split('\n').map(line => line.trim()).filter(line => line.startsWith('//')));
 function comparableSource(h) {
   let script = withoutPresentation(h);
-  for (const name of addedFunctions) {
+  for (const name of [...addedFunctions, ...auditFunctions]) {
     if (typeof h.api[name] === 'function') script = script.replace(h.api[name].toString(), '');
   }
   return script.split('\n').filter(line => {
     const t = line.trim();
-    return t && !addedCode.includes(t) && !(t.startsWith('//') && !referenceComments.has(t));
+    return t && !addedCode.includes(t) && !auditAdded.includes(t) && !(t.startsWith('//') && !referenceComments.has(t));
+  }).map(line => {
+    const edit = auditEdits.find(([, next]) => line.trim() === next);
+    return edit ? line.slice(0, line.length - line.trimStart().length) + edit[0] : line;
   }).join('\n');
 }
 for (const line of addedCode) {
   assert.equal(modified.script.split('\n').filter(l => l.trim() === line).length, 1, `Added hook appears exactly once: ${line}`);
+}
+for (const line of [...auditAdded, ...auditEdits.map(([, next]) => next)]) {
+  assert.equal(modified.script.split('\n').filter(l => l.trim() === line).length, 1, `Audit edit appears exactly once: ${line}`);
 }
 assert.equal(comparableSource(modified), comparableSource(reference),
   'Auth/client configuration, fetching, handlers, calculations and other renderers unchanged');
@@ -164,7 +189,7 @@ const plain = value => JSON.parse(JSON.stringify(value));
 // Analytics parts (live strip / usage cards / landing block, added 2026-09-28) are checked by their own assertions
 // below; once they are in the baseline, later intentional edits to them must not fail the unchanged-cards comparison.
 const ANALYTICS_IDS = ['liveStrip', 'liveTiles', 'liveSince', 'liveStatus', 'usageRow', 'usagePeak', 'usageNote', 'usageStats',
-  'chartHours', 'landingBlock', 'landingSince', 'landingStats'];
+  'chartHours', 'landingBlock', 'landingSince', 'landingStats', 'usageLegend'];
 function snapshot(h, ids = originalIds.filter(id => !['plans', 'plansNote'].includes(id) && !ANALYTICS_IDS.includes(id))) {
   return Object.fromEntries(ids.map(id => {
     const n = h.nodes[id];
@@ -268,12 +293,19 @@ checks++;
     assert.equal(existingCalls(b).length, 2, 'Repeated refresh is ignored while loading');
     assert.equal(b.rpc.length, 4, 'Repeated refresh adds no analytics calls while loading');
     const dashboard = scenario === 'forbidden' ? { error: { message: 'สำหรับแอดมินเท่านั้น' } }
-      : scenario === 'missing-function' ? { error: { message: 'admin_dashboard does not exist' } }
+      // 2026-09-29 audit: PostgREST's real missing-function error (PGRST202) — "not installed" now requires that code
+      : scenario === 'missing-function' ? { error: { code: 'PGRST202', message: 'Could not find the function public.admin_dashboard(p_days) in the schema cache' } }
       : scenario === 'dashboard-reject' ? { message: 'offline fixture' }
       : { data: { generated_at: '2026-09-26T05:00:00Z', kpi: { members: 20, paid_users: 4, active_7d: 7 }, revenue: {} } };
     for (const h of [a, b]) {
       await h.respond('admin_traffic', scenario === 'traffic-reject' ? { message: 'traffic fixture offline' } : { data: traffic }, scenario === 'traffic-reject');
       await h.respond('admin_dashboard', dashboard, scenario === 'dashboard-reject');
+    }
+    if (scenario === 'missing-function') {
+      // 2026-09-29 audit: same state, but the hint no longer names the 2026-09-24 file (re-running it reverts newer versions)
+      assert.equal(b.nodes.stateTitle.textContent, a.nodes.stateTitle.textContent, 'Missing function keeps the "not installed" title');
+      assert.ok(!/20260924/.test(b.nodes.stateText.textContent) && b.nodes.stateText.textContent.includes('admin_dashboard'), 'Missing-function hint names no old SQL file');
+      b.nodes.stateText.textContent = a.nodes.stateText.textContent;
     }
     compare(a, b, `${scenario}: settled state`);
     assert.equal(b.nodes.refreshBtn.disabled, false, 'Refresh re-enabled after settlement');
@@ -404,6 +436,43 @@ checks++;
     assert.equal(b.nodes.dash.hidden, false, 'Dashboard stays visible without the new functions');
     b.api.load();
     assert.equal(b.rpc.filter(c => c.name === 'admin_usage').length, 2, 'Missing admin_usage is not requested again');
+    checks++;
+  }
+
+  // 2026-09-29 audit fixes: signed out while the page stays open → anon gets 42501 "permission denied for function …".
+  // That is a lost session (not "not installed", no old SQL file names) and must not switch the live strip off for good.
+  {
+    const b = harness(current);
+    await b.auth({ user: { id: 'local-test' } });
+    await b.respond('admin_traffic', { data: traffic });
+    await b.respond('admin_dashboard', { error: { code: '42501', message: 'permission denied for function admin_dashboard' } });
+    assert.equal(b.nodes.stateTitle.textContent, 'เซสชันหมดอายุ', 'Lost session gets its own state');
+    assert.equal(b.nodes.stateLink.hidden, false, 'Lost session offers the login link');
+    assert.equal(b.nodes.dash.hidden, true, 'Lost session hides the dashboard');
+    await b.respond('admin_live', { error: { code: '42501', message: 'permission denied for function admin_live' } });
+    b.api.loadLive();
+    assert.equal(b.rpc.filter(c => c.name === 'admin_live').length, 2, 'Permission denied does not stop the live strip');
+    const dashboard = { data: { generated_at: '2026-09-26T05:00:00Z', kpi: {}, revenue: {} } };
+    b.api.load();
+    await b.respond('admin_traffic', { error: { code: '42883', message: 'function public.foo() does not exist' } });
+    await b.respond('admin_dashboard', dashboard);
+    assert.equal(b.nodes.trafficEmpty.textContent, 'โหลดข้อมูลการเข้าชมไม่สำเร็จ: function public.foo() does not exist', 'Only PGRST202 means not installed');
+    b.api.load();
+    await b.respond('admin_traffic', { error: { code: 'PGRST202', message: 'Could not find the function public.admin_traffic(p_days) in the schema cache' } });
+    await b.respond('admin_dashboard', dashboard);
+    assert.ok(b.nodes.trafficEmpty.textContent.startsWith('ยังไม่ได้ติดตั้งระบบเก็บการเข้าชม') && !/20260924/.test(b.nodes.trafficEmpty.textContent), 'Traffic hint names no old SQL file');
+
+    // Expiring plans count Bangkok calendar days (fixed now = 26 ก.ย. 13:00 เวลาไทย): 2 h → วันนี้, 25 h → อีก 1 วัน.
+    b.api.renderExpiring([
+      { name: 'a', username: 'a', plan: 'p', expires_at: '2026-09-26T08:00:00Z' },
+      { name: 'b', username: 'b', plan: 'p', expires_at: '2026-09-26T17:30:00Z' },
+      { name: 'c', username: 'c', plan: 'p', expires_at: '2026-09-27T07:00:00Z' },
+      { name: 'd', username: 'd', plan: 'p', expires_at: '2026-09-29T16:59:00Z' }
+    ]);
+    const rows = b.nodes.expiring.innerHTML.split('<div class="row" ').slice(1);
+    assert.deepEqual(rows.map(r => r.match(/<b>([^<]*)<\/b>/)[1]), ['วันนี้', 'อีก 1 วัน', 'อีก 1 วัน', 'อีก 3 วัน'], 'Days left by Bangkok date');
+    assert.ok(rows[1].includes('27 ก.ย.'), 'Date label uses the Bangkok date');
+    assert.deepEqual(rows.map(r => r.includes('var(--danger)')), [true, true, true, false], 'Red stripe for today to 2 days');
     checks++;
   }
   console.log(`PASS dashboard presentation: ${checks} checks; ${originalIds.length} existing IDs and range hooks preserved; source and mocked data/auth/loading/error behavior match baseline`);

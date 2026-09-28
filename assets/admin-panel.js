@@ -79,6 +79,7 @@ export function initAdminPanel(ctx){
   var adminQrRows = [], adminQrTotal = 0, adminQrCounts = {}, adminQrFilter = 'attention', adminQrTerm = '', adminQrRange = 'all';
   var adminQrBusy = false, adminQrSeq = 0, adminQrSearchTimer = null;
   var adminGrantTarget = null, adminGrantBusy = false;
+  var adminGrantSeq = 0;   // เลขรอบการค้นหาสมาชิก — แก้ช่องค้นหาระหว่างรอผล ผลของรอบเก่าจะถูกทิ้ง (กันเลือกคนเก่ากลับมา)
 
   function updateAdminBadge(){
     var n = adminBadgeState.qr + adminBadgeState.slip;
@@ -224,6 +225,7 @@ export function initAdminPanel(ctx){
       });
   }
   function runAdminQrAction(fn, id, onDone, note){
+    if(adminQrBusy) return; // กันยิงซ้ำ (เติม/หักแต้มซ้ำ) — ไม่พึ่งกล่องยืนยันอย่างเดียว
     adminQrBusy = true;
     supa.rpc(fn, { p_transaction_id: id, p_note: note==null ? null : note }).then(function(res){
       adminQrBusy = false;
@@ -374,6 +376,8 @@ export function initAdminPanel(ctx){
   function adminPromoRowHtml(p){
     var expText = p.expires_at ? fmtDate(new Date(p.expires_at).getTime()) : 'ไม่หมดอายุ';
     var full = p.used_count >= p.max_uses;
+    // หมดอายุ/ปิดใช้งานแล้ว (ปุ่ม "ปิดใช้งาน" ตั้ง expires_at = ตอนกด) — ฐานข้อมูลไม่รับโค้ดนี้แล้ว เช็กก่อน "ใช้ครบ" เหมือน admin.html
+    var expired = !!p.expires_at && new Date(p.expires_at).getTime() < Date.now();
     var rewardText = p.reward_type==='plan_days' ? ('แพ็กเกจ '+(ADMIN_PROMO_PLAN_NAMES[p.plan_key||'all']||'4 in 1')+' '+fmtNum(p.plan_days)+' วัน/คน')
       : p.reward_type==='discount' ? ('ส่วนลด '+fmtNum(p.discount_percent)+'% ตอนซื้อ'+(p.plan_key ? 'เฉพาะ '+(ADMIN_PROMO_PLAN_NAMES[p.plan_key]||p.plan_key) : 'ทุกแพ็กเกจ'))
       : ('+'+fmtNum(p.points)+' แต้ม/คน');
@@ -383,10 +387,13 @@ export function initAdminPanel(ctx){
         '<div class="sub" style="font-size:.78rem;margin-top:.15rem">'+rewardText+' · ใช้แล้ว '+fmtNum(p.used_count)+'/'+fmtNum(p.max_uses)+' · หมดอายุ: '+expText+(p.group_key?' · กลุ่ม '+escapeHtml(p.group_key):'')+(p.note?' · '+escapeHtml(p.note):'')+'</div>'+
         '<div data-promo-redeem-list hidden style="margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--border)"></div>'+
       '</div>'+
-      (full ? '<span class="membership-pill neutral">ใช้ครบแล้ว</span>' : '<span class="membership-pill ok">ใช้งานได้</span>')+
+      (expired ? '<span class="membership-pill neutral">หมดอายุ / ปิดแล้ว</span>' : full ? '<span class="membership-pill neutral">ใช้ครบแล้ว</span>' : '<span class="membership-pill ok">ใช้งานได้</span>')+
       '<div class="admin-topup-actions">'+
         (p.used_count > 0 ? '<button type="button" class="btn btn-ghost btn-sm" data-promo-view title="ดูว่าใครใช้โค้ดนี้ไปบ้าง">ดูผู้ใช้</button>' : '')+
-        '<button type="button" class="btn btn-ghost btn-sm" data-promo-delete title="ลบโค้ดนี้">ลบ</button>'+
+        // ลบได้เฉพาะโค้ดที่ยังไม่มีคนใช้ — ลบโค้ดที่ใช้แล้ว ประวัติการแลกจะถูกลบตาม (on delete cascade) ทำให้คนเดิมใช้โค้ดอื่นในกลุ่ม/โค้ดชื่อซ้ำได้อีก
+        // โค้ดที่มีคนใช้แล้วให้ "ปิดใช้งาน" แทน (ประวัติคนที่ใช้ไปแล้วอยู่ครบ)
+        (p.used_count === 0 ? '<button type="button" class="btn btn-ghost btn-sm" data-promo-delete title="ลบโค้ดนี้">ลบ</button>'
+          : (!expired && !full ? '<button type="button" class="btn btn-ghost btn-sm" data-promo-disable title="ปิดโค้ดนี้ คนที่ยังไม่ได้ใช้จะใช้ไม่ได้อีก">ปิดใช้งาน</button>' : ''))+
       '</div>'+
     '</div>';
   }
@@ -466,9 +473,26 @@ export function initAdminPanel(ctx){
       var row = delBtn.closest('[data-promo-code]');
       var code = row.dataset.promoCode;
       showConfirm('ลบโค้ด "'+escapeHtml(code)+'" ออกจากระบบถาวร? คนที่ยังไม่ได้ใช้จะใช้โค้ดนี้ไม่ได้อีก กู้คืนไม่ได้', function(){
-        supa.from('promo_codes').delete().eq('code', code).then(function(res){
+        // ลบเฉพาะตอนยังไม่มีคนใช้ (used_count = 0) — กันกรณีมีคนแลกโค้ดเข้ามาหลังรายการวาดไปแล้ว ประวัติการแลกจะได้ไม่หายตาม
+        supa.from('promo_codes').delete().eq('code', code).eq('used_count', 0).select('code').then(function(res){
           if(res.error){ toast('ลบไม่สำเร็จ: '+res.error.message); return; }
+          if(!res.data || !res.data.length){ toast('ลบไม่ได้ — โค้ดนี้มีคนใช้แล้ว (หรือถูกลบไปแล้ว) ใช้ "ปิดใช้งาน" แทน'); loadAdminPromoCodes(); return; }
           toast('ลบโค้ดแล้ว');
+          loadAdminPromoCodes();
+        });
+      });
+      return;
+    }
+    // ปิดใช้งานโค้ดที่มีคนใช้แล้ว: ตั้งวันหมดอายุเป็นตอนนี้ (ฐานข้อมูลปฏิเสธโค้ดที่หมดอายุแล้ว) — ไม่ลบแถว ประวัติการแลกจึงอยู่ครบ
+    // และกติกา 1 บัญชี 1 ครั้ง / 1 โค้ดต่อกลุ่ม ยังนับคนที่ใช้ไปแล้ว (ไม่ตั้ง max_uses = used_count เพราะติดเงื่อนไข max_uses > 0)
+    var disableBtn = e.target.closest('[data-promo-disable]');
+    if(disableBtn){
+      var row3 = disableBtn.closest('[data-promo-code]');
+      var code3 = row3.dataset.promoCode;
+      showConfirm('ปิดใช้งานโค้ด "'+escapeHtml(code3)+'"? คนที่ยังไม่ได้ใช้จะใช้โค้ดนี้ไม่ได้อีก ประวัติคนที่ใช้ไปแล้วยังอยู่ครบ', function(){
+        supa.from('promo_codes').update({ expires_at: new Date().toISOString() }).eq('code', code3).then(function(res){
+          if(res.error){ toast('ปิดใช้งานไม่สำเร็จ: '+res.error.message); return; }
+          toast('ปิดใช้งานโค้ดแล้ว');
           loadAdminPromoCodes();
         });
       });
@@ -606,8 +630,10 @@ export function initAdminPanel(ctx){
     if(ident.length < 3){ toast('กรอก username หรืออีเมลอย่างน้อย 3 ตัวอักษร'); return; }
     if(adminGrantBusy) return;
     adminGrantBusy = true;
+    var seq = ++adminGrantSeq;
     supa.rpc('admin_find_member', { p_identifier: ident }).then(function(res){
       adminGrantBusy = false;
+      if(seq !== adminGrantSeq) return;   // ช่องค้นหาถูกแก้หลังส่งคำค้นนี้ไปแล้ว → ทิ้งผลเก่า (ต้องกดค้นหาใหม่)
       var found = document.getElementById('adminGrantFound');
       if(res.error){ adminGrantTarget = null; found.hidden = true; toast(res.error.message); return; }
       adminGrantTarget = res.data;
@@ -618,7 +644,7 @@ export function initAdminPanel(ctx){
       adminGrantSetMode('grant');
       adminGrantLoadRecent(res.data.id);
       adminResetRender(res.data);
-    }).catch(function(err){ adminGrantBusy = false; toast('ค้นหาไม่สำเร็จ: '+(err && err.message || err)); });
+    }).catch(function(err){ adminGrantBusy = false; if(seq !== adminGrantSeq) return; toast('ค้นหาไม่สำเร็จ: '+(err && err.message || err)); });
   }
   // ---------- รีเซ็ตรหัสผ่านให้สมาชิกที่ลืมรหัส (ติดต่อมาทางเพจ — เว็บไม่ส่งอีเมลรีเซ็ต) ----------
   // ยืนยันตัวตนด้วยวันเกิดที่กรอกตอนสมัคร (อีเมลใช้ยืนยันไม่ได้ ระบบไม่เคยตรวจอีเมล) → สุ่มรหัสชั่วคราว
@@ -645,18 +671,14 @@ export function initAdminPanel(ctx){
     return Array.prototype.map.call(buf, function(n){ return chars[n % chars.length]; }).join('');
   }
   function adminResetShowResult(t, pw){
-    var ok = document.getElementById('confirmOkBtn'), cancel = document.getElementById('confirmCancelBtn');
-    var okText = ok.textContent, cancelText = cancel.textContent;
-    ok.textContent = 'คัดลอกรหัส'; cancel.textContent = 'ปิด';
-    function restore(){ ok.textContent = okText; cancel.textContent = cancelText; }
+    // ชื่อปุ่มส่งผ่าน opts ของ showConfirm (app.js) — กล่องปิดแล้วกลับเป็น ยืนยัน/ยกเลิก เอง ไม่ต้องคืนค่าเอง
     showConfirm('ตั้งรหัสชั่วคราวให้ <b>'+escapeHtml(t.display_name||'-')+'</b> (@'+escapeHtml(t.username||'-')+') แล้ว<br>'+
       '<span class="admin-reset-temp">'+escapeHtml(pw)+'</span><br>'+
       '<small>ส่งรหัสนี้ให้สมาชิกทางแชทส่วนตัว แล้วให้เปลี่ยนเองที่ ตั้งค่า → เปลี่ยนรหัสผ่าน<br>ปิดหน้าต่างนี้แล้วจะดูรหัสนี้อีกไม่ได้ (ลืมคัดลอกให้กดรีเซ็ตใหม่)</small>', function(){
-      restore();
       var done = function(){ toast('คัดลอกรหัสแล้ว'); };
       if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pw).then(done, function(){ toast('คัดลอกไม่สำเร็จ — เลือกรหัสแล้วคัดลอกเอง'); adminResetShowResult(t, pw); });
       else { toast('เบราว์เซอร์ไม่รองรับการคัดลอกอัตโนมัติ — เลือกรหัสแล้วคัดลอกเอง'); adminResetShowResult(t, pw); }
-    }, restore);
+    }, null, { ok:'คัดลอกรหัส', cancel:'ปิด' });
   }
   document.getElementById('adminResetPassBtn').addEventListener('click', function(){
     var t = adminGrantTarget;
@@ -664,6 +686,7 @@ export function initAdminPanel(ctx){
     showConfirm('<b>รีเซ็ตรหัสผ่าน</b>ของ <b>'+escapeHtml(t.display_name||'-')+'</b> (@'+escapeHtml(t.username||'-')+') ?<br>'+
       '<small>ยืนยันตัวตนแล้วใช่ไหม'+(t.birth_date ? ' (วันเกิดในระบบ '+escapeHtml(fmtDate(new Date(t.birth_date+'T00:00:00').getTime()))+')' : '')+
       '<br>ระบบจะสุ่มรหัสชั่วคราวให้ และทุกเครื่องที่ค้างล็อกอินบัญชีนี้อยู่จะถูกออกจากระบบ</small>', function(){
+      if(adminResetBusy) return; // กำลังรีเซ็ตอยู่ — ไม่สุ่มรหัสซ้อน
       var pw = adminResetTempPassword();
       adminResetBusy = true;
       supa.rpc('admin_reset_password', { p_user_id: t.id, p_new_password: pw }).then(function(res){
@@ -705,7 +728,7 @@ export function initAdminPanel(ctx){
   document.getElementById('adminGrantIdent').addEventListener('keydown', function(e){ if(e.key==='Enter') adminGrantFind(); });
   // แก้ช่องค้นหาแล้ว ต้องค้นใหม่ก่อนถึงจะเติมได้ (กันเติมผิดคน)
   document.getElementById('adminGrantIdent').addEventListener('input', function(){
-    adminGrantTarget = null; document.getElementById('adminGrantFound').hidden = true;
+    adminGrantSeq++; adminGrantTarget = null; document.getElementById('adminGrantFound').hidden = true;
   });
   document.getElementById('adminGrantSubmit').addEventListener('click', function(){
     if(!adminGrantTarget || adminGrantBusy) return;
@@ -717,6 +740,7 @@ export function initAdminPanel(ctx){
     var t = adminGrantTarget;
     var deduct = adminGrantMode==='deduct';
     showConfirm((deduct ? 'หัก' : 'เติม')+' <b>'+fmtNum(pts)+' แต้ม</b> '+(deduct ? 'ออกจาก' : 'ให้')+'<br><b>'+escapeHtml(t.display_name||'-')+'</b> (@'+escapeHtml(t.username||'-')+') ?<br><small>หมายเหตุ: '+escapeHtml(note)+'<br>'+(deduct ? 'ตรวจให้แน่ใจก่อนหักแต้มของสมาชิก (หักได้ไม่เกินแต้มคงเหลือ)' : 'เติมผิดแก้ได้ด้วยการหักแต้มภายหลัง แต่ตรวจยอดโอนให้ตรงก่อนกดยืนยัน')+'</small>', function(){
+      if(adminGrantBusy) return; // กันเติม/หักแต้มซ้ำ — ไม่พึ่งกล่องยืนยันอย่างเดียว
       adminGrantBusy = true;
       supa.rpc(deduct ? 'admin_deduct_points' : 'admin_grant_points', { p_user_id: t.id, p_points: pts, p_note: note }).then(function(res){
         adminGrantBusy = false;

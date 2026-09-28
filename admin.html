@@ -583,6 +583,9 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   }
   function fmtDate(ts){ return new Date(ts).toLocaleDateString('th-TH', { day:'numeric', month:'short' }); }
   function fmtDateTime(ts){ return new Date(ts).toLocaleString('th-TH', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }); }
+  // วันตามปฏิทินไทย (Asia/Bangkok = UTC+7 ไม่มีเวลาออมแสง) — แบบเดียวกับที่ RPC จัดกลุ่มวัน
+  function bkkDay(ms){ return Math.floor((ms + 7 * 3600000) / 86400000); }
+  function fmtDateBkk(ts){ return new Date(ts).toLocaleDateString('th-TH', { day:'numeric', month:'short', timeZone:'Asia/Bangkok' }); }
 
   // ---------- A. ตัวเลขหลัก ----------
   function renderKpis(k){
@@ -703,11 +706,12 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   function renderExpiring(list){
     $('expiringCount').textContent = fmt(list.length);
     $('expiring').innerHTML = list.length ? list.map(function(x){
-      var days = Math.max(0, Math.ceil((new Date(x.expires_at).getTime() - Date.now()) / 86400000));
+      // นับตามวันที่ (เวลาไทย): 0 = หมดวันนี้, 1 = พรุ่งนี้ … — ไม่ปัดเวลาที่เหลือขึ้น (เดิมไม่เคยขึ้น "วันนี้" และเกินจริง 1 วัน)
+      var days = Math.max(0, bkkDay(new Date(x.expires_at).getTime()) - bkkDay(Date.now()));
       return '<div class="row" style="--stripe:' + (days <= 2 ? 'var(--danger)' : 'var(--warn)') + '"><span class="row-stripe"></span>' +
         '<div class="row-main"><div class="row-title">' + esc(x.name || '-') + ' <span style="color:var(--text-mute);font-weight:500">@' + esc(x.username || '-') + '</span></div>' +
         '<div class="row-sub">' + esc(x.plan) + '</div></div>' +
-        '<div class="row-side"><b>' + (days === 0 ? 'วันนี้' : 'อีก ' + days + ' วัน') + '</b>' + fmtDate(x.expires_at) + '</div></div>';
+        '<div class="row-side"><b>' + (days === 0 ? 'วันนี้' : 'อีก ' + days + ' วัน') + '</b>' + fmtDateBkk(x.expires_at) + '</div></div>';
     }).join('') : '<div class="empty">ไม่มีแพ็กที่จะหมดอายุใน 7 วัน</div>';
   }
   var FEED_META = {
@@ -814,7 +818,9 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     }
     $('trafficBody').hidden = false; detail.hidden = false; $('trafficEmpty').hidden = true;
     $('trafficSince').textContent = t.since ? 'เริ่มเก็บข้อมูล ' + fmtDateTime(t.since) + ' · ไม่นับเครื่องของแอดมิน' : 'ยังไม่มีข้อมูล — จะเริ่มนับเมื่อมีคนเข้าเว็บ';
-    var rate = t.new_guest_visitors ? (t.signups / t.new_guest_visitors * 100) : 0;
+    // signups_new (SQL 20260929000100) = ผู้เข้าชมใหม่ในช่วงนี้ที่สมัคร — ไม่เกินจำนวนผู้เข้าชมใหม่ % จึงไม่เกิน 100 · ยังไม่มี = แบบเดิม
+    var su = t.signups_new != null ? Number(t.signups_new) : t.signups;
+    var rate = t.new_guest_visitors ? (su / t.new_guest_visitors * 100) : 0;
     var stats = [
       [fmt(t.visitors_today), 'ผู้เข้าชมวันนี้', 'เมื่อวาน ' + fmt(t.visitors_yesterday) + ' คน'],
       // ช่องที่ 2 = 7 วันล่าสุดเสมอ (ไม่ตามช่วงที่เลือก) · ฟังก์ชันรุ่นเก่ายังไม่มี visitors_7d ใช้ช่องเดิมตามช่วงที่เลือก
@@ -822,10 +828,10 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         ? [fmt(t.visitors_period), 'ผู้เข้าชม ' + state.days + ' วัน', 'ล็อกอินแล้ว ' + fmt(t.members_period) + ' คน']
         : [fmt(t.visitors_7d), 'ผู้เข้าชม 7 วัน', 'ล็อกอินแล้ว ' + fmt(t.members_7d) + ' คน'],
       [fmt(t.new_guest_visitors), 'ผู้เข้าชมใหม่ (ยังไม่ล็อกอิน)', 'เข้าเว็บครั้งแรกในช่วงนี้'],
-      [rate.toFixed(1) + '%', 'สมัครสมาชิก', fmt(t.signups) + ' คนจากผู้เข้าชมใหม่']
+      [rate.toFixed(1) + '%', 'สมัครสมาชิก', fmt(su) + ' คนจากผู้เข้าชมใหม่']
     ];
     $('trafficStats').innerHTML = stats.map(function(s, i){
-      return '<div class="stat' + (i === 3 && t.signups > 0 ? ' hot' : '') + '"><b>' + s[0] + '</b><span>' + s[1] + '</span><small>' + s[2] + '</small></div>';
+      return '<div class="stat' + (i === 3 && su > 0 ? ' hot' : '') + '"><b>' + s[0] + '</b><span>' + s[1] + '</span><small>' + s[2] + '</small></div>';
     }).join('');
 
     // หน้าแรก (landing) ในช่วงที่เลือก — ไม่มีข้อมูลนี้ (SQL รุ่นเก่า) = ซ่อนทั้งส่วน
@@ -885,9 +891,10 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   // ฐานข้อมูลยังไม่มีฟังก์ชัน admin_live / admin_usage = ซ่อนเฉพาะส่วนใหม่ การ์ดเดิมแสดงตามปกติ
   var live = { busy:false, off:false, shown:false };
   var usage = { seq:0, off:false };
-  function rpcMissing(error, name){
-    if(!error) return false;
-    return error.code === 'PGRST202' || String(error.message || error).indexOf(name) !== -1;
+  // ไม่มีฟังก์ชันจริงๆ = PGRST202 เท่านั้น — ห้ามเทียบชื่อฟังก์ชันในข้อความ: ออกจากระบบแล้วจะได้
+  // "permission denied for function admin_live" (42501) ซึ่งมีชื่อฟังก์ชันด้วย แถบจะถูกปิดไปจนกว่าจะโหลดหน้าใหม่
+  function rpcMissing(error){
+    return !!error && error.code === 'PGRST202';
   }
   function fmt1(n){
     var v = Number(n);
@@ -953,7 +960,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         return;
       }
       // ยังไม่ได้ติดตั้งฟังก์ชัน: ซ่อนแถบและเลิกดึง (รีเฟรชหน้าหลังรัน SQL แล้วจะกลับมาเอง)
-      if(rpcMissing(r && r.error, 'admin_live')){ live.off = true; $('liveStrip').hidden = true; return; }
+      if(rpcMissing(r && r.error)){ live.off = true; $('liveStrip').hidden = true; return; }
       // พลาดชั่วคราว (เน็ต/เซิร์ฟเวอร์): คงตัวเลขเดิมไว้ แล้วลองใหม่รอบถัดไปเอง
       if(live.shown) $('liveStatus').textContent = ' · รอบล่าสุดอัปเดตไม่สำเร็จ จะลองใหม่อัตโนมัติ';
     });
@@ -971,7 +978,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     job.then(function(r){
       if(r.seq !== usage.seq) return;
       if(r.error || !r.data){
-        if(rpcMissing(r.error, 'admin_usage')) usage.off = true;
+        if(rpcMissing(r.error)) usage.off = true;
         $('usageRow').hidden = true;
         return;
       }
@@ -1091,14 +1098,17 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       if(res.error){
         var msg = res.error.message || '';
         if(msg.indexOf('แอดมิน') !== -1) showState('สำหรับแอดมินเท่านั้น', 'บัญชีที่ล็อกอินอยู่ไม่มีสิทธิดูหน้านี้', 'กลับหน้าเว็บ');
-        else if(/admin_dashboard|function|does not exist|schema cache/i.test(msg)) showState('ยังไม่ได้ติดตั้งฟังก์ชันสรุปข้อมูล', 'ต้องรันไฟล์ SQL 20260924000300_admin_dashboard.sql ใน Supabase ก่อน');
+        // ออกจากระบบ/เซสชันหมดตอนเปิดหน้านี้ค้างไว้: เรียกแบบไม่ล็อกอิน (anon ไม่มีสิทธิ) → 42501 permission denied — ไม่ใช่ "ยังไม่ได้ติดตั้ง"
+        else if(res.error.code === '42501' || /permission denied|JWT/i.test(msg)) showState('เซสชันหมดอายุ', 'ล็อกอินด้วยบัญชีแอดมินที่หน้าเว็บอีกครั้ง แล้วกลับมารีเฟรชหน้านี้', 'ไปหน้าเว็บเพื่อล็อกอิน');
+        // ไม่มีฟังก์ชันจริงๆ (PGRST202) เท่านั้น — ไม่ระบุชื่อไฟล์เก่า (รันไฟล์ 24 ก.ย. ซ้ำจะย้อนฟังก์ชันรุ่นใหม่ทิ้ง)
+        else if(res.error.code === 'PGRST202') showState('ยังไม่ได้ติดตั้งฟังก์ชันสรุปข้อมูล', 'ต้องรันไฟล์ migration ล่าสุดของ admin_dashboard ใน Supabase ก่อน');
         else showState('โหลดข้อมูลไม่สำเร็จ', msg || 'ลองกดรีเฟรชอีกครั้ง');
         return;
       }
       render(res.data || {});
       var tmsg = tr && tr.error ? (tr.error.message || String(tr.error)) : '';
-      renderTraffic(tr && tr.data, tmsg ? (/admin_traffic|function|does not exist|schema cache/i.test(tmsg)
-        ? 'ยังไม่ได้ติดตั้งระบบเก็บการเข้าชม — รันไฟล์ SQL 20260924000400_app_events.sql ใน Supabase ก่อน'
+      renderTraffic(tr && tr.data, tmsg ? (tr.error.code === 'PGRST202'
+        ? 'ยังไม่ได้ติดตั้งระบบเก็บการเข้าชม — รันไฟล์ migration ล่าสุดของ admin_traffic ใน Supabase ก่อน'
         : 'โหลดข้อมูลการเข้าชมไม่สำเร็จ: ' + tmsg) : '');
       showUsage(usageJob);
     }, function(err){

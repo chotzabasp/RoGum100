@@ -47,17 +47,31 @@ async function remove(boss, owner, server) {
   return result(client.from('user_bosses').delete().eq('user_id', owner).eq('boss_id', boss.rawId).eq('server_id', server));
 }
 // Keep the same request and death timestamp after a network failure, including a page reload.
+// ใช้ของเดิมซ้ำได้แค่ช่วงสั้นๆ (~2 นาที) และเวลาตายต้องใกล้กัน — กดรอบหลัง (บอสตายรอบใหม่) ต้องได้ request id + เวลาตายใหม่เสมอ
+// ไม่งั้นรอบใหม่จะได้เวลาตายเก่า (เวลาเกิดเลยไปแล้ว) หรือ request id เก่าที่บันทึกไปแล้ว (ฐานข้อมูลคืนรายการเดิม ไม่บันทึกรอบใหม่)
+const PENDING_KILL_MS = 120000;
 async function record(boss, owner, server, user, killedAt, items, draftKey, displayName) {
   const key = `${PROJECT_ID}:kill:${user}:${owner}:${server}:${boss.id}`;
   if (boss.custom) {
+    const now = Date.now();
     let pending;
     try { pending = JSON.parse(sessionStorage.getItem(key)); } catch { /* No valid pending request. */ }
-    if (!pending || pending.draftKey !== draftKey) {
-      pending = { draftKey, args: { p_boss_id: boss.rawId, p_server_id: server, p_killed_at: killedAt, p_items: items, p_request_id: crypto.randomUUID() } };
-      sessionStorage.setItem(key, JSON.stringify(pending));
+    const fresh = !!pending && pending.draftKey === draftKey && typeof pending.createdAt === 'number'
+      && Math.abs(now - pending.createdAt) < PENDING_KILL_MS && !!pending.args
+      && Math.abs(Date.parse(pending.args.p_killed_at) - Date.parse(killedAt)) < PENDING_KILL_MS;
+    if (!fresh) {
+      pending = { draftKey, createdAt: now, args: { p_boss_id: boss.rawId, p_server_id: server, p_killed_at: killedAt, p_items: items, p_request_id: crypto.randomUUID() } };
+      try { sessionStorage.setItem(key, JSON.stringify(pending)); } catch { /* ใช้ sessionStorage ไม่ได้ = ส่งครั้งเดียวแบบไม่มีสำรอง */ }
     }
-    const id = await rpc('record_custom_kill', pending.args);
-    sessionStorage.removeItem(key);
+    let id;
+    try { id = await rpc('record_custom_kill', pending.args); }
+    catch (err) {
+      // ฐานข้อมูลตอบกลับเป็น error (RAISE = P0001, 'Request ID already used' ฯลฯ) = ไม่มีอะไรถูกบันทึก ส่ง id เดิมซ้ำก็ไม่ช่วย → ทิ้ง
+      // เน็ตหลุด (supabase-js ให้ code '') / gateway ตอบกลับไม่ใช่ JSON (ไม่มี code) = อาจบันทึกไปแล้ว → เก็บไว้ให้กดซ้ำใช้ id เดิม
+      if (err && err.code) { try { sessionStorage.removeItem(key); } catch { /* ignore */ } }
+      throw err;
+    }
+    try { sessionStorage.removeItem(key); } catch { /* ignore */ }
     return id;
   }
   const id = await rpc('record_kill', { p_boss_id: boss.rawId, p_boss_name: boss.name, p_killed_at: killedAt, p_items: items });
@@ -83,9 +97,10 @@ async function removeImages(paths) {
   if (!list.length) return;
   await result(bucket().remove(list));
 }
+// ลิงก์รูปอยู่ได้ 1 ชั่วโมง (เท่า cache-control ตอนอัปโหลด) — ลิงก์ในรายการค้นหา/ประวัติใช้ทีหลังได้ ไม่หมดอายุภายใน 1 นาทีแบบเดิม
 async function imageUrl(path) {
   if (!path) return null;
-  return (await result(bucket().createSignedUrl(path, 60))).signedUrl;
+  return (await result(bucket().createSignedUrl(path, 3600))).signedUrl;
 }
 async function pageState(owner) {
   return JSON.stringify(await Promise.all([rpc('boss_page_state', { p_host: owner }), rpc('custom_boss_page_state', { p_host: owner })]));

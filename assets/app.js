@@ -25,7 +25,7 @@
     'https://jnwckkcjurchnppekhpc.supabase.co',
     'sb_publishable_Z_xnoeSTMY2t-VqaDfPmKg_FfOCjTOf'
   );
-  var CustomAPI = (await import('./custom-boss-api.js?v=20260924a')).createCustomBossAPI(supa);
+  var CustomAPI = (await import('./custom-boss-api.js?v=20260929-audit1')).createCustomBossAPI(supa);
 
   // ---------- บันทึกการใช้งานเว็บ (ส่งเข้า log_events → แดชบอร์ดแอดมิน admin.html) ----------
   // เก็บแค่: เข้าเว็บ, เปิดหน้าไหน/อยู่นานเท่าไหร่, ขั้นตอนการซื้อแพ็กเกจ, สมัครสมาชิก
@@ -132,8 +132,11 @@
   // Parses "the clock time the boss died" from the นาที field, accepting either
   // "14.35" (hour.minute — minute taken literally, so ".5" means :05) or a bare "1435"/
   // "935" (HHMM/HMM, last 2 digits are minutes). Returns a timestamp for today at that
-  // time, rolled back one day if it would otherwise land in the future (a boss can't die
-  // later than "now") — or null if the text doesn't parse into a valid time at all.
+  // time, rolled back one day only if it lands more than 5 min ahead of the device clock
+  // (a boss can't die later than "now" — up to 5 min ahead counts as clock skew between
+  // this device and the game/party clock, so it stays today; typed 00.00 at 23.59 = the
+  // minute just starting) — or null if the text doesn't parse into a valid time at all.
+  // เวลาที่พิมพ์ใช้ตามจริง ไม่ตัดให้เท่า "ตอนนี้" — สมาชิกที่พิมพ์นาทีเดียวกันได้เวลาเดียวกัน
   function parseDeathTimeInput(raw){
     raw = String(raw||'').trim();
     if(!raw) return null;
@@ -149,9 +152,11 @@
       return null;
     }
     if(!(hh>=0 && hh<=23) || !(mm>=0 && mm<=59)) return null;
-    var d = new Date();
+    var now = Date.now(), SKEW = 5*60000;
+    var d = new Date(now);
     d.setHours(hh, mm, 0, 0);
-    if(d.getTime() > Date.now()) d.setDate(d.getDate()-1);
+    if(d.getTime() > now + SKEW) d.setDate(d.getDate()-1);                 // เช่น พิมพ์ 23.50 ตอน 00.10 → เมื่อวาน
+    else if(now - d.getTime() > 86400000 - SKEW) d.setDate(d.getDate()+1);  // เช่น พิมพ์ 00.00 ตอน 23.59.40 → นาทีที่กำลังจะถึง
     return d.getTime();
   }
 
@@ -269,13 +274,15 @@
     // แต้มไม่พอก็เปิดกล่องยืนยันเหมือนกัน (เหมือนกล่องซื้อแพ็กเกจ/ที่นั่งปาร์ตี้): บอกว่าขาดกี่แต้ม + ปุ่มขวาเป็น "เติมแต้ม"
     var have = (App.profile && App.profile.points) || 0;
     var enough = have >= SERVER_SLOT_COST;
-    var okBtn = document.getElementById('confirmOkBtn'), okText = okBtn.textContent;
-    function restoreOk(){ okBtn.textContent = okText; }
     // ถ้าโควต้าที่มีอยู่ครอบคลุมทุกเซิร์ฟในระบบแล้ว ช่องใหม่จะยังไม่มีเซิร์ฟให้ใส่
     // ไม่ห้ามซื้อ (เผื่อมีเซิร์ฟใหม่เข้าระบบ) แต่ต้องบอกให้รู้ตัวก่อนเสียแต้ม
     var quota = serverQuota();
-    var wasteWarn = quota >= SERVER_RATES.length
-      ? '<span class="buy-confirm-warn"><b>หมายเหตุ:</b> ตอนนี้ระบบมี '+SERVER_RATES.length+' เซิร์ฟเวอร์ และคุณมีโควต้า '+quota+' ช่องแล้ว ช่องที่ซื้อเพิ่มจะยังใช้ไม่ได้จนกว่าจะมีเซิร์ฟเวอร์ใหม่เข้าระบบ</span>'
+    // นับเฉพาะเซิร์ฟที่เลือกได้จริง (เปิดให้บริการ หรือเลือกไว้อยู่แล้ว) — กฎเดียวกับชิปในหน้าตั้งค่า (renderServerChips)
+    // ไม่งั้นเซิร์ฟที่ปิดให้บริการถูกนับด้วย แล้วไม่เตือน ทั้งที่ช่องที่ซื้อเพิ่มไม่มีเซิร์ฟให้ใส่
+    var mySel = (App.profile && App.profile.servers) || [];
+    var usable = SERVER_RATES.filter(function(s){ return s.active || mySel.indexOf(s.id)!==-1; }).length;
+    var wasteWarn = quota >= usable
+      ? '<span class="buy-confirm-warn"><b>หมายเหตุ:</b> ตอนนี้ระบบมี '+usable+' เซิร์ฟเวอร์ที่เลือกได้ และคุณมีโควต้า '+quota+' ช่องแล้ว ช่องที่ซื้อเพิ่มจะยังใช้ไม่ได้จนกว่าจะมีเซิร์ฟเวอร์ใหม่เข้าระบบ</span>'
       : '';
     // หน้าตาเดียวกับกล่องยืนยันซื้อแพ็กเกจ (คลาส buy-confirm-*): หัว + ตาราง จำนวนช่อง/ราคา/แต้มคงเหลือ + หมายเหตุเป็นข้อ
     showConfirm('<span class="buy-confirm-title">ยืนยันเพิ่มช่องเซิร์ฟเวอร์</span>'+
@@ -291,9 +298,11 @@
         '<span>ช่องใหม่จะใช้เซิร์ฟเดียวกับช่องแรกไปก่อน เลือกเซิร์ฟที่ต้องการได้ที่หน้า "ตั้งค่า"</span>'+
         '<span>ช่องที่ซื้อเป็นของถาวร ลบการ์ดแล้วเพิ่มใหม่ได้ฟรี</span>'+
       '</span>'+wasteWarn, function(){
-      restoreOk();
       if(!enough){ openTopup(); return; }
+      if(serverSlotBusy){ toast('กำลังทำรายการก่อนหน้าอยู่ รอสักครู่'); return; } // ยืนยันซ้ำระหว่างรอผล — ไม่หักแต้มซ้ำ
+      serverSlotBusy = true;
       supa.rpc('buy_server_slot').then(function(res){
+        serverSlotBusy = false;
         if(res.error){ toast(res.error.message || 'ซื้อโควต้าไม่สำเร็จ'); return; }
         return refreshProfile().then(function(){
           addRateSlot();
@@ -303,10 +312,10 @@
           if(document.getElementById('view-settings') && !document.getElementById('view-settings').hidden) renderSettingsPage();
           toast('ได้ช่องเซิร์ฟเวอร์เพิ่มแล้ว — เลือกเซิร์ฟที่หน้า "ตั้งค่า"');
         });
-      }, function(err){ console.warn('buy_server_slot', err); toast('ซื้อโควต้าไม่สำเร็จ ลองใหม่อีกครั้ง'); });
-    }, restoreOk);
-    okBtn.textContent = enough ? okText : 'เติมแต้ม';
+      }, function(err){ serverSlotBusy = false; console.warn('buy_server_slot', err); toast('ซื้อโควต้าไม่สำเร็จ ลองใหม่อีกครั้ง'); });
+    }, null, { ok: enough ? CONFIRM_OK_TEXT : 'เติมแต้ม' });
   }
+  var serverSlotBusy = false; // กำลังรอ buy_server_slot
   // เพิ่มการ์ดราคา 1 ใบ: ถ้ายังมีเซิร์ฟที่เลือกไว้แต่ยังไม่มีการ์ด ใช้ตัวนั้นก่อน
   // ถ้าไม่มี (เช่นเพิ่งซื้อช่องแต่ยังไม่ได้เลือกเซิร์ฟที่ 2) ก็ซ้ำกับการ์ดแรกไปก่อน
   function addRateSlot(){
@@ -356,7 +365,7 @@
   function defaultRateSlots(){ return myServerIds().slice(0,3); }
   function defaultRateChipSlots(){ return myServerIds().slice(0,1); }
   var MAX_RATE_CHIP_SLOTS = 12;
-  var RATE_MAX_DEVIATION = 0.30; // block a posted price more than ±30% away from the current rate (typo guard)
+  var RATE_MAX_DEVIATION = 0.50; // block a posted price more than ±50% away from the current rate (typo guard) — must match announcements_guard (migration 20260929000300)
   // ลงประกาศใหม่เสียแต้มตามระยะเวลา (แก้ไขประกาศเดิมยังฟรีเหมือนเดิม — ดู postAnnounceSubmitBtn)
   // ค่า cost ต้องตรงกับที่ฟังก์ชัน post_announcement() ฝั่ง DB คำนวณเป๊ะๆ (เทียบจาก value เป็น ms)
   // ราคาชุด 27 ก.ย. 2569 (migration 20260927000800_announcement_prices_hours.sql) — 5/15/30 นาทีเลิกใช้แล้ว
@@ -398,7 +407,7 @@
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
   var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, partySeat:null, partyStatus:null, hostHasTimers:null, db:[], active:{}, markers:{}, kills:[], myLifetimeShare:{zeny:0,baht:0,count:0}, partyRoster:[], departedSharerNames:{}, keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
-  var fired = { warn:{}, threeMin:{} };
+  var fired = { warn:{}, threeMin:{}, target:{} }; // target = targetTime ที่เตือนไปแล้ว — รอบใหม่ (เวลาเปลี่ยน) เริ่มเตือนใหม่
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
   var RATE_SLOTS_VERSION = 2; // bump to force a one-time reset to the new 1-card default
@@ -524,10 +533,11 @@
     itemLineClaimedQty:    function(){ return App.itemLineClaimedQty; },
     itemsServer:           function(){ return App.itemsServerId; },
     currentServer:         function(){ return App.currentServerId; },
-    farmCostItems:         function(){ return App.farmCostItems; },
+    // สามตัวนี้: ระหว่างแก้รายการฟาร์ม ใช้ชุดปัจจุบัน (ตัวสำรอง) แทนค่าในฟอร์ม — ดู farmEditSavedMap
+    farmCostItems:         function(){ return farmEditSavedMap(App.farmCostItems, 'rows'); },
     farmServer:            function(){ return App.farmServerId; },
-    farmExRate:            function(){ return App.farmExchangeRates; },
-    farmMapNames:          function(){ return App.farmMapNames; },
+    farmExRate:            function(){ return farmEditSavedMap(App.farmExchangeRates, 'exchangeRate'); },
+    farmMapNames:          function(){ return farmEditSavedMap(App.farmMapNames, 'mapName'); },
     tickerServers:         function(){ return App.tickerServers; },
     tickerSelectedServers: function(){ return App.tickerSelectedServers; }
   };
@@ -727,11 +737,23 @@
     cloudSaveOutbox();
     showFreeLimitPopup('<b>มี ' + items.length + ' รายการที่บันทึกขึ้นคลาวด์ไม่ได้</b>' +
       '<ul class="confirm-detail cloud-rejected-list">' + items.slice(0, 5).join('') + (items.length > 5 ? '<li>และอีก ' + (items.length - 5) + ' รายการ</li>' : '') + '</ul>' +
-      '<span class="confirm-detail">รายการเหล่านี้ยังอยู่ในเครื่องนี้ แต่จะไม่เห็นในเครื่องอื่น · สมัครแพ็กเกจแล้วระบบจะส่งขึ้นให้อัตโนมัติ · หรือลบรายการนั้นในประวัติได้ตามปกติ</span>');
+      '<span class="confirm-detail">รายการเหล่านี้ยังอยู่ในเครื่องนี้ แต่จะไม่เห็นในเครื่องอื่น · สมัครแพ็กเกจแล้วระบบจะส่งขึ้นให้อัตโนมัติ · หรือลบรายการนั้นในประวัติได้ตามปกติ</span>', true);
   }
 
   function cloudFlush(){
     if(!cloudSync.ready || !App.session) return; // ยังไม่ได้รวมข้อมูลกับคลาวด์ — คิวรอไว้ก่อน
+    // ไม่มีอะไรต้องส่ง → แค่เก็บกวาดคิว ไม่ต้องถามสถานะคลาวด์
+    if(!cloudHasFlushableWork()) return cloudFlushSend(null, null);
+    // อ่านสถานะคลาวด์ "ก่อน" ส่ง: ตรงกับที่รู้ล่าสุด = ไม่มีเครื่องอื่นแก้อะไรระหว่างนั้น → หลังส่งจำสถานะใหม่ได้เลย
+    // ไม่ตรง = มีเครื่องอื่นเพิ่งแก้ → หลังส่งต้องดึงของเครื่องนั้นมาด้วย (เดิมจำสถานะหลังส่งทับไปเลย ของเครื่องอื่นไม่เคยถูกดึง
+    // แล้วคลัง/การตั้งค่าเก่าในเครื่องนี้ส่งทับของใหม่บนคลาวด์ตอนแก้ครั้งถัดไป)
+    var knownBefore = cloudSync.knownState, userAtStart = cloudSync.userId;
+    return cloudFetchState().then(null, function(){ return null; }).then(function(preState){
+      if(!cloudSync.ready || cloudSync.userId !== userAtStart || !App.session) return;
+      return cloudFlushSend(preState, knownBefore);
+    });
+  }
+  function cloudFlushSend(preState, knownBefore){
     var userId = cloudSync.userId, ob = cloudSync.outbox, jobs = [];
     var entriesAllowed = !isExpiredAccount();
     var delJobs = [], upTasks = [];
@@ -808,8 +830,17 @@
       if(failed.length){ cloudOnFlushError(failed[0]); return; }
       cloudOnFlushOk();
       if(cloudHasFlushableWork()) cloudScheduleFlush(0);
-      // จำสถานะล่าสุดหลังเราส่งเอง จะได้ไม่นับว่าเป็น "ของใหม่จากเครื่องอื่น"
-      return cloudFetchState().then(function(state){ cloudSync.knownState = state; }, function(){});
+      // จำสถานะล่าสุดหลังเราส่งเอง จะได้ไม่นับว่าเป็น "ของใหม่จากเครื่องอื่น" — เฉพาะตอนก่อนส่งไม่มีเครื่องอื่นแก้แทรก
+      // มีเครื่องอื่นแก้แทรก → ดึงของใหม่มารวม (ของที่ยังค้างในคิวใช้ของในเครื่องเหมือนเดิม) · ห้าม return ตัวดึง
+      // เพราะ cloudRefresh ต่อคิวหลัง cloudFlush ที่กำลังทำอยู่นี้ จะรอกันเองไม่จบ
+      return cloudFetchState().then(function(state){
+        if(cloudSync.userId !== userId) return;
+        if(preState !== null && preState === knownBefore) cloudSync.knownState = state;
+        else {
+          cloudSync.lastCheck = 0;
+          setTimeout(function(){ cloudRefresh({}).catch(function(e){ console.warn('cloud refresh after flush', e); }); }, 0);
+        }
+      }, function(){});
     });
   }
   function cloudOnFlushError(err){
@@ -1015,9 +1046,11 @@
 
     // โหลดผ่าน loadUserData ตัวเดิม เพื่อใช้กฎแปลงข้อมูลเก่า/ค่าเริ่มต้นชุดเดียวกันทั้งหมด
     var keepAnnouncements = App.rateAnnouncements, keepPendingItems = App.pendingItems;
+    var keepFarmEdit = farmEditHoldValues(); // กำลังแก้รายการฟาร์ม — ค่าที่โหลดมาเป็นตัวสำรองใหม่ แล้วใส่ค่าในฟอร์มกลับ
     loadUserData(cloudSync.email, values);
     App.rateAnnouncements = keepAnnouncements;
     App.pendingItems = keepPendingItems;
+    farmEditReapply(keepFarmEdit);
 
     // loadUserData อาจแปลง/เติมค่าบางอย่าง → ส่งตัวที่แปลงแล้วขึ้นไปด้วย
     Object.keys(CLOUD_ENTRY_SETS).forEach(function(set){
@@ -1196,13 +1229,13 @@
     });
   }
   // เช็คก่อนค่อยดึง: ถามแค่ "ประกาศที่ยังไม่หมดอายุมีกี่อัน + แก้ล่าสุดเมื่อไหร่" (announcements_state)
-  // ถ้าเหมือนรอบก่อนก็ไม่ต้องโหลดทั้งกระดาน — และปกติเช็คเฉพาะตอนอยู่หน้าบัญชีนักลงทุน
-  // (กระดาน + การ์ดราคารับ M อยู่หน้านี้หน้าเดียว) force = ข้ามทั้งสองเงื่อนไข ใช้หลังลง/แก้/ลบประกาศเอง
+  // ถ้าเหมือนรอบก่อนก็ไม่ต้องโหลดทั้งกระดาน · เช็คได้ทุกหน้า: การ์ดราคารับ M (#rateChips) อยู่บนแถบด้านบนทุกหน้า
+  // และกระดานย้ายไปอยู่หน้ายอดนักฟาร์มด้วย (เดิมเช็คเฉพาะหน้าบัญชีนักลงทุน หน้าอื่นเห็นราคา/ประกาศเก่าค้าง)
+  // force = เช็คใหม่แม้สถานะเหมือนเดิม ใช้หลังลง/แก้/ลบประกาศเอง
   var announcementsKnownState = null;
   var announcementsCheckRun = null;
   function refreshAnnouncementsIfChanged(force){
     if(!App.session) return Promise.resolve();
-    if(!force && document.getElementById('view-home').hidden) return Promise.resolve();
     if(announcementsCheckRun){
       // กำลังเช็คอยู่: ปกติใช้ผลรอบนั้นเลย / แบบ force ต้องรอให้จบแล้วเช็คใหม่ (รอบเดิมอาจอ่านก่อนเราลงประกาศ)
       return force ? announcementsCheckRun.then(function(){ return refreshAnnouncementsIfChanged(true); }) : announcementsCheckRun;
@@ -1296,14 +1329,20 @@
   function visibleCustomCatalog(){return CustomAPI && App.session && !App.isGuest && customCatalogHost===activeOwnerId() ? customCatalog : [];}
   function isCustomBossId(id){ return !!CustomAPI && String(id).indexOf('custom:')===0; }
   function customRef(id){ return {custom:true, id:id, rawId:String(id).slice(7)}; }
-  async function loadCustomBosses(){
-    if(!CustomAPI) return;
-    var host=activeOwnerId();
+  // เรียกจาก loadUserBosses เท่านั้น: เติมบอส Custom ลงรายการชั่วคราว (db/active/markers) ของรอบโหลดนั้น
+  // แล้วค่อยแทนที่ App.db/App.active/App.markers ทีเดียว — รอบที่ถูกรอบใหม่แซงแล้ว (seq ไม่ตรง) หรือสลับปาร์ตี้/ออกจากระบบ
+  // ระหว่างรอ ทิ้งผลไปเลย (เดิมรอบเก่าที่จบทีหลังเอาเวลาเก่าของบอส Custom ที่เพิ่งเคลียร์กลับมาทับได้)
+  // โหลด Custom ไม่สำเร็จ (เน็ตสะดุด) → คงบอส Custom ชุดเดิมของปาร์ตี้เดียวกันไว้ ไม่หายทั้งแถบ + ให้รอบเช็คถัดไปโหลดใหม่
+  async function loadCustomBosses(host, seq, db, active, markers){
+    function current(){ return seq === bossLoadSeq && !!App.session && !!App.session.id && !App.isGuest && activeOwnerId() === host; }
+    function commit(){ App.db = db; App.active = active; App.markers = markers; bossLiveSync(); }
+    if(!CustomAPI){ if(current()) commit(); return; }
     try {
       var results=await Promise.all([
         CustomAPI.result(supa.from('custom_bosses').select('*').eq('owner_id',host).is('archived_at',null)),
         CustomAPI.result(supa.from('custom_boss_timers').select('*').eq('owner_id',host).eq('server_id',TIMERS_SERVER))
       ]);
+      if(!current()) return;
       var definitions=await Promise.all(results[0].map(async function(b){
         var images=await Promise.allSettled([CustomAPI.imageUrl(b.image_path),CustomAPI.imageUrl(b.map_image_path)]);
         return {id:'custom:'+b.id,rawId:b.id,custom:true,ownerId:b.owner_id,name:b.name,minutes:b.respawn_minutes,
@@ -1311,16 +1350,29 @@
           imageUrl:images[0].status==='fulfilled'?images[0].value:null,
           mapImageUrl:images[1].status==='fulfilled'?images[1].value:null};
       }));
-      if(activeOwnerId()!==host) return;
-      customCatalog=definitions;customCatalogHost=host;
-      App.db=App.db.filter(function(b){return !b.custom;});
+      if(!current()) return;
       results[1].forEach(function(t){
         var b=definitions.find(function(b){return b.rawId===t.custom_boss_id;}); if(!b)return;
-        App.db.push(b);
-        if(t.target_time)App.active[b.id]={targetTime:new Date(t.target_time).getTime(),startedBy:t.started_by};
-        if(t.marker_x!=null && t.marker_y!=null)App.markers[b.id]={x:Number(t.marker_x),y:Number(t.marker_y)};
+        db.push(b);
+        if(t.target_time)active[b.id]={targetTime:new Date(t.target_time).getTime(),startedBy:t.started_by};
+        if(t.marker_x!=null && t.marker_y!=null)markers[b.id]={x:Number(t.marker_x),y:Number(t.marker_y)};
       });
-    }catch(error){customCatalog=[];toast('โหลด Custom Boss ไม่สำเร็จ: '+error.message);}
+      customCatalog=definitions;customCatalogHost=host;
+      commit();
+    }catch(error){
+      if(!current()) return;
+      if(customCatalogHost===host){
+        App.db.forEach(function(b){
+          if(!b.custom) return;
+          db.push(b);
+          if(App.active[b.id]) active[b.id]=App.active[b.id];
+          if(App.markers[b.id]) markers[b.id]=App.markers[b.id];
+        });
+      }
+      commit();
+      bossLive.knownState=null; // รอบเช็คถัดไป (30 วิ / กลับมาที่แท็บ) จะเห็นว่าไม่ตรงแล้วโหลดใหม่เอง
+      toast('โหลด Custom Boss ไม่สำเร็จ: '+error.message);
+    }
   }
   async function customReload(){
     await Promise.all([loadUserBosses(),loadKills()]); renderRoster();renderStats();
@@ -1530,31 +1582,35 @@
     }
     if(App.session && !App.isGuest && !document.getElementById('view-timers').hidden){ renderPartyPanel(); loadDiscordAlert(); }
   }
+  var bossLoadSeq = 0; // เลขรอบโหลดบอสล่าสุด — ดู loadCustomBosses
   function loadUserBosses(){
+    var seq = ++bossLoadSeq; // รอบที่ยังค้างอยู่ (ถ้ามี) หมดสิทธิเขียนทับ รวมถึงตอนออกจากระบบ/ถูกล็อกด้านล่าง
     if(!App.session || !App.session.id){ App.db = []; App.active = {}; App.markers = {}; return Promise.resolve(); }
     // ปาร์ตี้ถูกล็อก = ไม่โหลดบอสของหัวปาร์ตี้ (ฐานข้อมูลไม่ให้อยู่แล้ว ได้แต่รายการว่างที่ดูเหมือนไม่มีบอส)
     if(isPartyLocked()){ App.db = []; App.active = {}; App.markers = {}; return Promise.resolve(); }
-    return withSkewRetry(function(){ return supa.from('user_bosses').select('boss_id, target_time, started_by, marker_x, marker_y, bosses(*)').eq('user_id', activeOwnerId()); }).then(function(res){
+    var host = activeOwnerId();
+    return withSkewRetry(function(){ return supa.from('user_bosses').select('boss_id, target_time, started_by, marker_x, marker_y, bosses(*)').eq('user_id', host); }).then(function(res){
       if(res.error){ console.error('loadUserBosses', res.error); return; }
-      App.db = (res.data||[]).map(function(r){
+      if(seq !== bossLoadSeq || !App.session || !App.session.id || activeOwnerId() !== host) return;
+      // สร้างในตัวแปรชั่วคราวก่อน แล้ว loadCustomBosses เติมบอส Custom และแทนที่ของเดิมทีเดียว
+      var db = (res.data||[]).map(function(r){
         var b = r.bosses || {};
         return { id:b.id, name:b.name, glyph:b.glyph, imageUrl:b.image_url, map:b.map, mapImageUrl:b.map_image_url, loc:b.map_location, minutes:b.respawn_minutes, items:b.items||[] };
       });
-      App.active = {};
-      App.markers = {};
+      var active = {};
+      var markers = {};
       (res.data||[]).forEach(function(r){
         if(r.marker_x!=null && r.marker_y!=null){
-          App.markers[r.boss_id] = { x:r.marker_x, y:r.marker_y };
+          markers[r.boss_id] = { x:r.marker_x, y:r.marker_y };
         }
         if(r.target_time){
-          App.active[r.boss_id] = {
+          active[r.boss_id] = {
             targetTime: new Date(r.target_time).getTime(),
             startedBy: r.started_by
           };
         }
       });
-      bossLiveSync();
-      return loadCustomBosses();
+      return loadCustomBosses(host, seq, db, active, markers);
     });
   }
   function supaAddBoss(bossId){
@@ -1878,7 +1934,11 @@
     }, function(){});
   }
   function bossCheckForChanges(force){
-    if(!bossPageOpen() || document.hidden) return;
+    // เสียงเตือนบอสดังได้ทุกหน้า → เช็คต่อแม้ไม่ได้อยู่หน้าจับเวลาบอส ถ้าเครื่องนี้มีบอสที่จับเวลาอยู่
+    // (เดิมเช็คเฉพาะหน้าจับเวลาบอส: อยู่หน้าอื่นแล้วสมาชิกกด MVP/เคลียร์/ปรับเวลา เครื่องนี้เตือนตามเวลาเก่า)
+    // ห้องแจ้งเตือนสด (Realtime) ยังต่อเฉพาะหน้าจับเวลาบอสเหมือนเดิม
+    if(!App.session || App.isGuest || isPartyLocked() || document.hidden) return;
+    if(!bossPageOpen() && !Object.keys(App.active).length) return;
     var now = Date.now();
     if(!force && now - bossLive.lastCheck < 10000) return;
     bossLive.lastCheck = now;
@@ -1892,9 +1952,11 @@
     clearTimeout(bossLive.reloadTimer);
     bossLive.reloadTimer = setTimeout(bossReloadNow, 300);
   }
+  // นับเฉพาะช่องที่การโหลดใหม่วาดทับจริง (ช่องเวลาตายใน #roster · ช่องยอดขาย/สกุลเงินใน #historyList)
+  // ช่องอื่น (ค้นหาบอส, แถบเสียง, ตั้งค่า Discord, ช่วงเวลาประวัติ) ไม่ถูกวาดทับ — โฟกัสค้างไว้ต้องไม่กั้นการอัปเดตสด
   function bossTypingInPage(){
     var a = document.activeElement;
-    return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.closest && a.closest('#view-timers, #historyOverlay'));
+    return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.closest && a.closest('#roster, #historyList'));
   }
   function bossReloadNow(){
     if(!App.session || App.isGuest) return;
@@ -1906,13 +1968,20 @@
       bossLive.knownState = state;
       bossLive.stateHost = host;
     }, function(){}).then(function(){
-      return Promise.all([ loadUserBosses(), loadKills() ]);
+      // แผงประวัติเปิดอยู่ → โหลดรายชื่อ/ช่วงเวลาสมาชิกปาร์ตี้ใหม่ด้วย (มีคนเข้า/ออกระหว่างเปิดแผงค้างไว้
+      // ไอเทมใหม่ต้องติ๊กหารคนที่เพิ่งเข้าได้ และไม่ให้ติ๊กคนที่ออกไปแล้ว) + ชื่อคนหารที่ออกไปแล้ว
+      var histOpen = !document.getElementById('historyOverlay').hidden;
+      return Promise.all([ loadUserBosses(), loadKills(), histOpen ? loadPartyRoster() : null ]);
     }).then(function(){
-      if(activeOwnerId() !== host) return;
+      if(!App.session || activeOwnerId() !== host) return;
       renderRoster();
       renderStats();
       updatePartyPanelSummary();
-      if(!document.getElementById('historyOverlay').hidden) renderHistory();
+      var ov = document.getElementById('historyOverlay');
+      if(ov.hidden) return;
+      return loadDepartedSharerNames().then(function(){
+        if(App.session && activeOwnerId() === host && !ov.hidden) renderHistory();
+      });
     });
   }
   document.addEventListener('focusout', function(){
@@ -1930,11 +1999,38 @@
     var b = CATALOG.filter(function(c){ return String(c.id)===String(bossId); })[0];
     return '<div class="log-avatar">'+(b ? bossAvatarHtml(b) : escapeHtml((bossName||'').charAt(0)))+'</div>';
   }
-  function saveFarmCostItems(){ persist(App.keys.farmCostItems, App.farmCostItems); cloudQueueKV('farmCostItems'); }
+  // ระหว่างแก้รายการฟาร์มเก่า (editingFarmId) ต้นทุน/เรท/ชื่อแผนที่ของเซิร์ฟนั้นในหน่วยความจำเป็นค่าของรายการที่แก้ (ฟอร์ม)
+  // ของที่บันทึกลงเครื่อง/ส่งขึ้นคลาวด์ต้องยังเป็น "ชุดปัจจุบัน" (ตัวสำรอง farmEditCostBackup) — ตัวนี้คืนก้อนที่ใช้บันทึก
+  // (เดิมบันทึกค่าของฟอร์มทับทันที ปิดแท็บ/รีเฟรชระหว่างแก้ = ชุดปัจจุบันหายถาวรทุกเครื่อง) · เซิร์ฟอื่นบันทึกตามปกติ
+  // ใช้ทั้งใน save* และ CLOUD_KV (ตัวส่งขึ้นคลาวด์/ตัวดึงคลาวด์อ่านค่าในเครื่องผ่าน CLOUD_KV) ค่าของฟอร์มจึงไม่หลุดออกไปทางไหนเลย
+  function farmEditSavedMap(map, field){
+    if(!editingFarmId || !farmEditCostBackup) return map;
+    var out = Object.assign({}, map), v = farmEditCostBackup[field];
+    if(v === undefined) delete out[farmEditCostBackup.serverId]; else out[farmEditCostBackup.serverId] = v;
+    return out;
+  }
+  function saveFarmCostItems(){ persist(App.keys.farmCostItems, CLOUD_KV.farmCostItems()); cloudQueueKV('farmCostItems'); }
   function saveFarmLog(){ persist(App.keys.farmLog, App.farmLog); cloudQueueEntries('farm'); }
   function saveFarmServer(){ persist(App.keys.farmServer, App.farmServerId); cloudQueueKV('farmServer'); }
-  function saveFarmExchangeRates(){ persist(App.keys.farmExRate, App.farmExchangeRates); cloudQueueKV('farmExRate'); }
-  function saveFarmMapNames(){ persist(App.keys.farmMapNames, App.farmMapNames); cloudQueueKV('farmMapNames'); }
+  function saveFarmExchangeRates(){ persist(App.keys.farmExRate, CLOUD_KV.farmExRate()); cloudQueueKV('farmExRate'); }
+  function saveFarmMapNames(){ persist(App.keys.farmMapNames, CLOUD_KV.farmMapNames()); cloudQueueKV('farmMapNames'); }
+  // ดึงข้อมูลคลาวด์ระหว่างแก้รายการฟาร์ม (cloudApply): ค่าที่โหลดมาคือ "ชุดปัจจุบัน" ตัวล่าสุด → เก็บเป็นตัวสำรองที่จะคืนตอนจบการแก้
+  // แล้วใส่ค่าในฟอร์มกลับ ไม่งั้นฟอร์มที่กำลังแก้ถูกแทนด้วยชุดปัจจุบัน แล้วกดบันทึกการแก้ไขได้ค่าผิดลงรายการ
+  // (เรียกทันทีหลัง loadUserData — ก่อนบันทึกลงเครื่อง/จำ snapshot ซึ่งอ่านผ่าน CLOUD_KV แล้วได้ตัวสำรองตัวใหม่นี้)
+  function farmEditHoldValues(){
+    if(!editingFarmId || !farmEditCostBackup) return null;
+    var sid = farmEditCostBackup.serverId;
+    return { sid:sid, rows:App.farmCostItems[sid], rate:App.farmExchangeRates[sid], map:App.farmMapNames[sid] };
+  }
+  function farmEditReapply(keep){
+    if(!keep || !editingFarmId || !farmEditCostBackup || farmEditCostBackup.serverId !== keep.sid) return;
+    farmEditCostBackup.rows = farmSnapshotCostRows(keep.sid);
+    farmEditCostBackup.exchangeRate = App.farmExchangeRates[keep.sid];
+    farmEditCostBackup.mapName = App.farmMapNames[keep.sid];
+    App.farmCostItems[keep.sid] = keep.rows;
+    App.farmExchangeRates[keep.sid] = keep.rate;
+    App.farmMapNames[keep.sid] = keep.map;
+  }
 
   // ---------- audio ----------
   var actx = null;
@@ -2167,6 +2263,9 @@
       var bossId = card.dataset.boss;
       var act = App.active[bossId];
       if(!act) return;
+      // เวลาเกิดเปลี่ยน (รอบใหม่ ไม่ว่าจะกดจากเครื่องนี้หรือสมาชิกคนอื่น) → เริ่มนับเตือนใหม่
+      // ไม่งั้นบอสเกิดเร็ว (≤5 นาที) จะไม่เคยเข้าสถานะ normal ให้รีเซ็ต แล้วไม่ดังอีกเลยจนรีเฟรชหน้า
+      if(fired.target[bossId] !== act.targetTime){ fired.target[bossId] = act.targetTime; fired.warn[bossId] = false; fired.threeMin[bossId] = false; }
       var remaining = act.targetTime - Date.now();
       var st = timerState(remaining);
       var timeEl = card.querySelector('[data-time]');
@@ -2361,6 +2460,7 @@
   }
 
   function renderHistory(){
+    if(!App.session || !App.session.id) return; // ออกจากระบบไปแล้ว (เช่น .then ที่ค้างของการแก้ไอเทม) — ไม่มีอะไรให้วาด
     var list = document.getElementById('historyList');
     var today = todayKey(Date.now());
     // สมาชิกปาร์ตี้ดูประวัติย้อนหลังได้ไม่จำกัดเสมอ ไม่ว่าตัวเองจะมีแพ็กเกจไหม (สิทธิดูมาจากการเป็น
@@ -2530,7 +2630,7 @@
     var shareHtml = (roster.length > 0 || departed.length > 0) ? '<div class="loot-line"><span class="loot-lbl">หาร</span>'+
       roster.map(function(p){
         var on = it.sharedWith.indexOf(p.id)!==-1;
-        return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'">'+(on?'✓ ':'')+escapeHtml(p.name)+'</button>';
+        return '<button type="button" class="share-chip'+(on?' on':'')+'" data-share-toggle="'+it.id+'" data-member="'+p.id+'"'+(itemSaving[it.id]?' disabled':'')+'>'+(on?'✓ ':'')+escapeHtml(p.name)+'</button>';
       }).join('')+
       departed.map(function(p){
         return '<button type="button" class="share-chip on chip-locked" disabled title="'+(writable ? 'ออกจากปาร์ตี้ไปแล้ว — แก้ไขไม่ได้' : (isPartyLocked() || k.hostId===activeOwnerId() ? 'ดูได้อย่างเดียว' : 'ปาร์ตี้อื่น — ดูได้อย่างเดียว'))+'">✓ '+escapeHtml(p.name)+'</button>';
@@ -2557,10 +2657,10 @@
     if(it.soldAmount!=null) pill = '<span class="membership-pill ok">ขายแล้ว</span>';
     else if(kept){
       pill = '<span class="membership-pill neutral">เก็บไว้</span>';
-      if(writable) action = '<button type="button" class="loot-act" data-keep-undo="'+it.id+'" title="กลับไปเป็นรอแบ่ง">ยกเลิก</button>';
+      if(writable) action = '<button type="button" class="loot-act" data-keep-undo="'+it.id+'" title="กลับไปเป็นรอแบ่ง"'+(itemSaving[it.id]?' disabled':'')+'>ยกเลิก</button>';
     } else {
       pill = it.sharedWith.length ? '<span class="membership-pill soon">หาร '+it.sharedWith.length+' คน</span>' : '<span class="membership-pill neutral">รอแบ่ง</span>';
-      if(writable) action = '<button type="button" class="loot-act" data-keep="'+it.id+'" title="ของไม่มีมูลค่า ไม่หาร ไม่ขาย — เก็บประวัติไว้เฉยๆ">เก็บไว้</button>';
+      if(writable) action = '<button type="button" class="loot-act" data-keep="'+it.id+'" title="ของไม่มีมูลค่า ไม่หาร ไม่ขาย — เก็บประวัติไว้เฉยๆ"'+(itemSaving[it.id]?' disabled':'')+'>เก็บไว้</button>';
     }
     var bodyHtml = kept
       ? '<div class="loot-line"><span class="loot-lbl">เก็บไว้</span><span class="loot-each">ไม่หาร ไม่ขาย · กดเก็บเมื่อ '+fmtDateTime(it.keptAt)+'</span></div>'
@@ -2607,14 +2707,29 @@
     }
     return null;
   }
-  function updateKillItem(itemId, patch){
+  // ไอเทมที่กำลังบันทึกอยู่ — ปุ่มของแถวนั้นกดไม่ได้จนบันทึก+โหลดใหม่เสร็จ (เดิมติ๊กหารรัวๆ แต่ละครั้งสร้างจากสำเนาเดิมแล้วทับกันเอง)
+  var itemSaving = {};
+  // opts.guard(q) = เงื่อนไขว่าแถวในฐานข้อมูลยังเป็นค่าที่อ่านมา — มีคนแก้พร้อมกัน = 0 แถว ไม่เขียนทับของคนอื่น
+  // opts.unchanged(item) = หลังโหลดใหม่ แถวยังเหมือนเดิมไหม: เหมือนเดิม = ไม่มีสิทธิแก้ · เปลี่ยนไปแล้ว = มีคนแก้พร้อมกัน
+  function updateKillItem(itemId, patch, opts){
+    opts = opts || {};
+    itemSaving[itemId] = true;
+    renderHistory();
+    var q = supa.from('kill_items').update(patch).eq('id', itemId);
+    if(opts.guard) q = opts.guard(q);
     // .select('id') = รู้ว่าแก้ได้จริงกี่แถว — 0 แถว = ไม่มีสิทธิแก้รายการนี้ (RLS กรองทิ้งเงียบๆ) ต้องบอกผู้ใช้
-    return supa.from('kill_items').update(patch).eq('id', itemId).select('id').then(function(res){
+    return q.select('id').then(function(res){
+      var none = false;
       if(res.error){ console.error('updateKillItem', res.error); toast('บันทึกไม่สำเร็จ: '+res.error.message); }
-      else if(!(res.data||[]).length){ toast('บันทึกไม่สำเร็จ: ไม่มีสิทธิแก้ไขรายการนี้'); }
+      else if(!(res.data||[]).length){ none = true; }
       else bossNotifyChanged();
-      return loadKills();
-    }).then(function(){ renderHistory(); renderStats(); });
+      return loadKills().then(function(){
+        if(!none) return;
+        var now = findKillItem(itemId);
+        toast(opts.guard && now && !(opts.unchanged && opts.unchanged(now)) ? 'มีคนแก้ไขรายการนี้พร้อมกัน ลองอีกครั้ง' : 'บันทึกไม่สำเร็จ: ไม่มีสิทธิแก้ไขรายการนี้');
+      });
+    }).then(function(){ delete itemSaving[itemId]; renderHistory(); renderStats(); },
+      function(err){ delete itemSaving[itemId]; console.error('updateKillItem', err); toast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); renderHistory(); });
   }
   // มุมมอง "ตามบอส" แยกตามคนกด MVP/ตายแล้ว (kills.killed_by): ปุ่มเลือกคน = สมาชิกปาร์ตี้ + คนที่เคยกดแม้ออกจากปาร์ตี้ไปแล้ว
   // 'all' = ทุกคน (มีบรรทัด "กดโดย ใคร ×กี่ครั้ง" ใต้ชื่อบอส), 'none' = รอบเก่าที่ไม่รู้ว่าใครกด
@@ -2631,7 +2746,7 @@
     return opts;
   }
   // มุมมอง "ตามบอส": ฐานข้อมูลรวมยอดจากทุกแถว (boss_history_by_boss) — นับครบแม้ยังไม่ได้โหลดประวัติเก่า
-  var bossView = { req:0, argsKey:null, version:-1, data:null };
+  var bossView = { req:0, argsKey:null, version:-1, data:null, since:null }; // since = p_since ของ data (ปุ่ม ✕ ลบให้ตรงช่วงเดียวกัน)
   App.bossGroupsIndex = {}; App.bossKillersIndex = {};
   function renderBossView(list, entries, sinceTs){
     var todayIso = new Date(todayStartTs()).toISOString();
@@ -2655,7 +2770,7 @@
         list.innerHTML = '<p class="empty-note">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</p>';
         return;
       }
-      bossView.argsKey = argsKey; bossView.version = version; bossView.data = res.data || {};
+      bossView.argsKey = argsKey; bossView.version = version; bossView.data = res.data || {}; bossView.since = args.p_since;
       drawBossView(list, bossView.data);
     }, function(err){ console.error('boss_history_by_boss', err); });
   }
@@ -2680,12 +2795,13 @@
     var cards = groups.map(function(g){
       var sid = g.server_id || '';
       var items = g.items || [];
-      App.bossGroupsIndex[g.boss_id+''+sid] = { name:g.boss_name, kills:Number(g.kills)||0, items:items.reduce(function(s,i){ return s+(Number(i.count)||0); }, 0) };
+      // since = ต้นช่วงที่ฐานข้อมูลใช้นับการ์ดนี้ (null = ทั้งหมด) — ปุ่ม ✕ ต้องลบเฉพาะรอบในช่วงเดียวกับที่นับให้ดู
+      App.bossGroupsIndex[g.boss_id+''+sid] = { name:g.boss_name, kills:Number(g.kills)||0, items:items.reduce(function(s,i){ return s+(Number(i.count)||0); }, 0), since:bossView.since };
       var byHtml = killer==='all' ? '<div class="hist-by">กดโดย '+(g.by||[]).map(function(b){ return escapeHtml(b.name)+' ×'+b.count; }).join(' · ')+'</div>' : '';
       var svAttr = ' data-del-server="'+escapeHtml(sid)+'"';
       return '<div class="log-row">'+historyAvatarHtml(g.boss_id, g.boss_name)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">ฆ่าแล้ว '+fmtNum(g.kills)+' ครั้ง · วันนี้ '+fmtNum(g.today)+' · ล่าสุด '+fmtDateTime(new Date(g.last_at).getTime())+'</div>'+
-          (isPartyLocked() ? '</div>' : '<button type="button" class="hist-del" data-del-boss="'+String(g.boss_id).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>')+
+          ((isPartyLocked() || isFreePartyMember()) ? '</div>' : '<button type="button" class="hist-del" data-del-boss="'+String(g.boss_id).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>')+
         '<div class="boss">'+escapeHtml(g.boss_name)+'</div>'+byHtml+
         '<div class="chip-row">'+(items.length ? items.map(function(it){ return '<span class="chip">'+itemIconHtml(it.name,'item-ic')+escapeHtml(it.name)+(it.count>1 ? ' ×'+it.count : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div></div>';
     }).join('');
@@ -2733,7 +2849,7 @@
       var svAttr = ' data-del-server="'+(g.serverId||'')+'"';
       return '<div class="log-row">'+historyAvatarHtml(g.bossId, g.name)+'<div class="log-body">'+
         '<div class="hist-head"><div class="when">ฆ่าแล้ว '+g.kills.length+' ครั้ง · วันนี้ '+todayCount+' · ล่าสุด '+fmtDateTime(g.kills[0].ts)+'</div>'+
-          (isPartyLocked() ? '</div>' : '<button type="button" class="hist-del" data-del-boss="'+String(g.bossId).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>')+
+          ((isPartyLocked() || isFreePartyMember()) ? '</div>' : '<button type="button" class="hist-del" data-del-boss="'+String(g.bossId).replace(/"/g,'&quot;')+'"'+svAttr+delAttr+' title="'+(delAttr ? 'ลบประวัติบอสตัวนี้เฉพาะรอบที่คนนี้กด' : 'ลบประวัติบอสตัวนี้ทั้งหมด')+'">✕</button></div>')+
         '<div class="boss">'+escapeHtml(displayName)+'</div>'+byHtml+
         '<div class="chip-row">'+(names.length ? names.map(function(it){ return '<span class="chip">'+itemIconHtml(it,'item-ic')+escapeHtml(it)+(g.items[it]>1 ? ' ×'+g.items[it] : '')+'</span>'; }).join('') : '<span class="chip">ยังไม่เคยได้ไอเทม</span>')+'</div></div></div>';
     }).join('');
@@ -3059,7 +3175,12 @@
     var start = new Date(earliestTs); start.setHours(0,0,0,0);
     var days = Math.floor((now.getTime()-start.getTime())/86400000)+1;
     if(days<=31) return { unit:'day', count:Math.max(1,days), label:cfg.label };
-    if(days<=182) return { unit:'week', count:Math.ceil(days/7), label:cfg.label };
+    // นับจากเลขสัปดาห์ (สัปดาห์เริ่มวันพุธ ตาม farmWeekIndex) ไม่ใช่ days/7 — ไม่งั้นรายการแรกสุดอาจตกอยู่ก่อนแท่งเก่าสุด
+    // แล้วหายไปจากกราฟ/ยอดรวม "ทั้งหมด" (เช่น เริ่มบันทึกวันเสาร์ ห่าง 40 วัน ได้ 6 แท่ง แต่ต้องใช้ 7)
+    if(days<=182){
+      var weeks = farmWeekIndex(now.getTime()) - farmWeekIndex(start.getTime()) + 1;
+      return { unit:'week', count:Math.max(1,weeks), label:cfg.label };
+    }
     var months = (now.getFullYear()-start.getFullYear())*12 + (now.getMonth()-start.getMonth()) + 1;
     return { unit:'month', count:Math.min(Math.max(1,months),60), label:cfg.label };
   }
@@ -3756,6 +3877,7 @@
     App.farmCostItems[farmEditCostBackup.serverId] = farmEditCostBackup.rows;
     App.farmExchangeRates[farmEditCostBackup.serverId] = farmEditCostBackup.exchangeRate;
     App.farmMapNames[farmEditCostBackup.serverId] = farmEditCostBackup.mapName;
+    // ระหว่างแก้ ค่าในเครื่อง/คลาวด์ยังเป็นชุดนี้อยู่แล้ว (farmEditSavedMap) — บันทึกซ้ำได้ ไม่เปลี่ยนอะไร
     saveFarmCostItems();
     saveFarmExchangeRates();
     saveFarmMapNames();
@@ -3777,11 +3899,14 @@
     var scrollX = window.scrollX, scrollY = window.scrollY;
     var entry = App.farmLog.filter(function(e){ return e.id===id; })[0];
     if(!entry) return;
+    // กดแก้รายการอื่นระหว่างแก้อยู่ → คืนชุดปัจจุบันก่อน ไม่งั้นตัวสำรองใหม่จะเก็บค่าของรายการแรกแทนชุดปัจจุบัน
+    if(editingFarmId && farmEditCostBackup) restoreFarmEditCostBackup();
     farmOcHintAcknowledged = false;
     App.farmServerId = entry.serverId;
     saveFarmServer();
     document.getElementById('farmServerSelect').value = entry.serverId;
     farmEditCostBackup = { serverId: entry.serverId, rows: farmSnapshotCostRows(entry.serverId), exchangeRate: App.farmExchangeRates[entry.serverId], mapName: App.farmMapNames[entry.serverId] };
+    editingFarmId = id; // ตั้งก่อนใส่ค่าของรายการลงฟอร์ม — save* ด้านล่างจะไม่บันทึกทับชุดปัจจุบัน
     if(entry.costItems && entry.costItems.length){
       App.farmCostItems[entry.serverId] = entry.costItems.map(function(r){
         return { id: r.id || uid(), name:r.name, price:r.price, qty:r.qty, currency:r.currency||'zeny' };
@@ -4044,6 +4169,17 @@
     renderMrChart();
   }
 
+  // เปลี่ยน/ลบการ์ดราคาแล้วเซิร์ฟของกล่องซื้อ-ขายถูกสลับให้เอง (syncMerchantServersWithRateSlots) → อัปเดตเรทที่โชว์
+  // + ล้างของที่เลือกจากคลังของเซิร์ฟเดิม (เดิมช่องยังโชว์เรทของเซิร์ฟเดิม แต่บันทึกด้วยเรทของเซิร์ฟใหม่
+  // และขายของจากคลังเซิร์ฟเดิมโดยไม่ตัดสต็อก) · ไม่ใช้ selectMerchantServer เพราะตัวนั้นล็อกตัวกรองประวัติ/กราฟไว้ที่เซิร์ฟนั้นด้วย
+  function refreshMerchantFormAfterServerSwitch(prevServer){
+    if(App.currentServerId === prevServer) return;
+    renderMrExchangeRate();
+    [App.zenyRows, App.itemRows, App.otherRows].forEach(function(rows){
+      (rows||[]).forEach(function(row){ if(row.stockGroupKey){ row.stockGroupKey = null; row.stockGroup = null; } });
+    });
+    renderItemRows();
+  }
   function renderMrExchangeRate(){
     var input = document.getElementById('mrExRateInput');
     var v = App.merchantExchangeRates[App.currentServerId];
@@ -4556,8 +4692,9 @@
       box.innerHTML = '<p class="mr-suggest-empty">ไม่มีชื่อที่บันทึกไว้</p>';
     } else {
       box.innerHTML = matches.map(function(n){
-        return '<div class="mr-suggest-row" data-pick="'+n.replace(/"/g,'&quot;')+'"><span>'+n+'</span>'+
-          '<button type="button" class="chip-x" data-remove-name="'+n.replace(/"/g,'&quot;')+'">✕</button>'+
+        // escapeHtml ทุกจุด (ชื่อที่บันทึกไว้เป็นข้อความที่ผู้ใช้พิมพ์เอง) — dataset อ่านกลับได้ชื่อเดิมเป๊ะ
+        return '<div class="mr-suggest-row" data-pick="'+escapeHtml(n)+'"><span>'+escapeHtml(n)+'</span>'+
+          '<button type="button" class="chip-x" data-remove-name="'+escapeHtml(n)+'">✕</button>'+
         '</div>';
       }).join('');
     }
@@ -4689,10 +4826,11 @@
     var entries = App.merchantLog.slice();
     if(historyState.serverId!=='all') entries = entries.filter(function(e){ return e.serverId===historyState.serverId; });
     if(historyState.category!=='all') entries = entries.filter(function(e){ return (e.category||'zeny')===historyState.category; });
-    if(!opts.ignoreRange){
-      var startTs = historyRangeStartTs();
-      if(startTs!=null) entries = entries.filter(function(e){ return e.ts>=startTs; });
-    }
+    // ignoreRange ข้ามแค่ช่วงเวลาที่เลือก — เพดานของแพ็กฟรี (ดูได้แค่วันนี้) ยังบังคับเสมอ
+    // (เดิมการ์ดไอเทม/M ที่มีรายการวันนี้ ดึงประวัติเก่าทั้งหมดมาโชว์ บัญชีฟรีเลยเห็นประวัติย้อนหลังได้ครบ)
+    // แพ็กที่ปลดลิมิต: capStartTsForPlan(null, true) = null → เหมือนเดิม
+    var startTs = opts.ignoreRange ? capStartTsForPlan(null, hasTradePlan()) : historyRangeStartTs();
+    if(startTs!=null) entries = entries.filter(function(e){ return e.ts>=startTs; });
     if(historyState.search) entries = entries.filter(function(e){ return (e.lines||[]).some(historyLineMatches); });
     return entries;
   }
@@ -5161,24 +5299,70 @@
   }
 
   // onCancel (ไม่บังคับ) = เรียกตอนกด "ยกเลิก" หรือกดพื้นหลังปิด
-  function showConfirm(message, onConfirm, onCancel){
+  // opts (ไม่บังคับ): ok / cancel = ชื่อปุ่มของกล่องนี้ (ไม่ส่ง = ยืนยัน/ยกเลิก) — กล่องปิดแล้วกลับเป็นค่าเริ่มต้นเอง ผู้เรียกไม่ต้องคืนค่า
+  //   wait = ข้อความที่เด้งเองเบื้องหลัง (ไม่ได้มาจากการกดของผู้ใช้): มีกล่องเปิดอยู่ → รอคิวจนกล่องนั้นปิดก่อน ไม่แย่งที่
+  // เรียกซ้อนตอนกล่องเดิมยังเปิดอยู่ = ปิดกล่องเดิมแบบ "ยกเลิก" (ถอดตัวฟังของกล่องเดิมออกก่อน) แล้วเปิดกล่องใหม่แทน
+  // เดิมตัวฟังของกล่องแรกค้างอยู่ กดยืนยันครั้งเดียวรันทั้งสองกล่อง (เช่น ลบรายการที่ยังไม่ได้ยืนยัน / เติม-หักแต้มซ้ำ)
+  // และป้ายปุ่มชั่วคราวของกล่องหนึ่ง (ดูแพ็กเกจ/เติมแต้ม/ปิด) ค้างไปโผล่ในกล่องอื่น
+  var CONFIRM_OK_TEXT = 'ยืนยัน', CONFIRM_CANCEL_TEXT = 'ยกเลิก';
+  var activeConfirm = null;  // { close, onCancel } ของกล่องที่เปิดอยู่
+  var confirmQueue = [];     // ข้อความแบบ wait ที่รอกล่องปัจจุบันปิด
+  function showConfirm(message, onConfirm, onCancel, opts){
+    opts = opts || {};
+    if(opts.wait && activeConfirm){ confirmQueue.push([message, onConfirm, onCancel, opts]); return; }
+    // กล่องเดิมยังเปิดอยู่: ปิดก่อน (ถอดตัวฟัง) แล้วบอกเจ้าของกล่องเดิมว่าถูกยกเลิก (เช่น ลบรูปที่อัพค้างไว้)
+    while(activeConfirm){
+      var prev = activeConfirm;
+      prev.close();
+      if(prev.onCancel){ try{ prev.onCancel(); }catch(err){ console.error('confirm onCancel', err); } }
+    }
     var overlay = document.getElementById('confirmOverlay');
-    document.getElementById('confirmMessage').innerHTML = message;
-    overlay.hidden = false;
     var okBtn = document.getElementById('confirmOkBtn');
     var cancelBtn = document.getElementById('confirmCancelBtn');
     var backdrop = overlay.querySelector('.confirm-backdrop');
-    function close(){
+    // ปุ่มที่โฟกัสอยู่ก่อนเปิดกล่อง — คืนโฟกัสให้ตอนกล่องปิด (ผู้ใช้คีย์บอร์ดไม่หลุดไปต้นหน้า)
+    // กล่องที่มาแทนกล่องเดิม: กล่องเดิมคืนโฟกัสให้ตัวเดิมไปแล้วตอนปิดด้านบน จึงได้ตัวเดียวกันต่อ
+    // ไม่คืนให้ช่องกรอก (input/select/textarea): หลายช่องมีงานตอนได้โฟกัส (เปิดรายการชื่อ/หน้าต่างเตือน OC/หน้าล็อกอินของผู้เยี่ยมชม)
+    var returnFocus = document.activeElement;
+    if(!returnFocus || returnFocus === document.body || overlay.contains(returnFocus) || /^(INPUT|SELECT|TEXTAREA)$/.test(returnFocus.tagName)) returnFocus = null;
+    document.getElementById('confirmMessage').innerHTML = message;
+    okBtn.textContent = opts.ok || CONFIRM_OK_TEXT;
+    cancelBtn.textContent = opts.cancel || CONFIRM_CANCEL_TEXT;
+    okBtn.disabled = false; // ปุ่มที่กล่องก่อนปิดไว้ (เช่น รอตรวจโค้ดส่วนลด) ต้องไม่ติดมากล่องนี้
+    overlay.hidden = false;
+    var me = { close: close, onCancel: onCancel };
+    activeConfirm = me;
+    function close(noFocus){
+      if(activeConfirm !== me) return;
+      activeConfirm = null;
       overlay.hidden = true;
       okBtn.removeEventListener('click', onOk);
       cancelBtn.removeEventListener('click', onCancelClick);
       backdrop.removeEventListener('click', onCancelClick);
+      okBtn.textContent = CONFIRM_OK_TEXT;
+      cancelBtn.textContent = CONFIRM_CANCEL_TEXT;
+      okBtn.disabled = false;
+      if(!noFocus && returnFocus && returnFocus.isConnected){ try{ returnFocus.focus({ preventScroll:true }); }catch(e){} }
+      setTimeout(confirmShowNext, 0); // มีข้อความแบบ wait รออยู่ → เปิดต่อ (ถ้า callback ไม่ได้เปิดกล่องใหม่เอง)
     }
     function onOk(){ close(); onConfirm(); }
     function onCancelClick(){ close(); if(onCancel) onCancel(); }
     okBtn.addEventListener('click', onOk);
     cancelBtn.addEventListener('click', onCancelClick);
     backdrop.addEventListener('click', onCancelClick);
+    // ย้ายโฟกัสเข้ากล่อง — ไม่งั้นโฟกัสค้างที่ปุ่มในหน้าที่กดเปิดกล่อง กด Enter/Space ซ้ำ = เปิดกล่องซ้อน/รันซ้ำ
+    // ตั้งที่ "ยกเลิก" ไม่ใช่ "ยืนยัน": กด Enter พลาดต้องไม่ยืนยันการลบ/หักแต้ม
+    try{ cancelBtn.focus({ preventScroll:true }); }catch(e){}
+  }
+  function confirmShowNext(){
+    if(activeConfirm || !confirmQueue.length) return;
+    var next = confirmQueue.shift();
+    showConfirm(next[0], next[1], next[2], next[3]);
+  }
+  // ปิดกล่องยืนยันที่เปิดค้าง + ทิ้งคิว โดยไม่เรียก onConfirm/onCancel ของกล่องนั้น — ใช้ตอนออกจากระบบ
+  function dismissConfirm(){
+    confirmQueue.length = 0;
+    if(activeConfirm) activeConfirm.close(true); // ไม่คืนโฟกัส — หน้ากำลังสลับเป็นผู้เยี่ยมชม
   }
 
   function showFarmRateRequiredPopup(){
@@ -5327,6 +5511,21 @@
     document.getElementById('authLinkNotice').hidden = true;
   }
   document.getElementById('authToggle').addEventListener('click', function(){ setAuthMode(!isRegister); });
+  // ล้างช่องกรอกของฟอร์มล็อกอิน/สมัคร/ลืมรหัส/ตั้งรหัสใหม่/เปลี่ยนรหัส ทุกครั้งที่สลับบัญชี (เข้าแอป / กลับเป็นผู้เยี่ยมชม)
+  // เดิมออกจากระบบแล้ว Username + รหัสผ่านของคนก่อนยังค้างในหน้าต่างล็อกอิน คนถัดไปกด "เข้าสู่ระบบ" เป็นคนนั้นได้เลย
+  // (สมัครแบบยังไม่มีเซสชันใส่ Username ให้ในช่องล็อกอินเอง — ทางนั้นไม่เรียกตัวนี้ enterApp ล้างให้ทีหลัง)
+  function clearAuthFields(){
+    ['li-email','li-pass','rg-name','rg-username','rg-email','rg-pass','rg-pass2','rg-birth',
+     'stPassOld','stPassNew','stPassNew2','forgotEmail','recoveryPass','recoveryPass2'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    var sv = document.getElementById('rg-server');
+    if(sv) sv.value = '';
+    clearTimeout(usernameCheckTimer); usernameCheckSeq++; // ผลตรวจ Username ที่ยังค้างอยู่ไม่ต้องโชว์แล้ว
+    usernameOk = null;
+    setUsernameHint('');
+  }
   // ---------- Captcha (Cloudflare Turnstile) สำหรับล็อกอิน/สมัครสมาชิก ----------
   // ใช้คู่กับ "Bot and Abuse Protection" ของ Supabase Auth: เปิดแล้ว signInWithPassword/signUp ต้องแนบ captchaToken
   // ลำดับติดตั้ง: ใส่ Site Key ตรงนี้ + deploy ก่อน → แล้วค่อยเปิด Captcha ใน Supabase (ใส่ Secret Key)
@@ -5376,17 +5575,51 @@
       if(el && (el.textContent === CAPTCHA_WAIT_MSG || el.textContent === CAPTCHA_FAIL_MSG)) el.textContent = '';
     });
   }
-  function resetCaptcha(){
-    captcha.token = null;
-    if(captcha.widgetId !== null && window.turnstile){ try{ window.turnstile.reset(captcha.widgetId); }catch(e){} }
+  // st = สถานะกล่อง Captcha ที่ใช้ (ไม่ใส่ = กล่องในหน้าต่างล็อกอิน/สมัคร · forgotCaptcha = กล่องในหน้าต่างลืมรหัสผ่าน)
+  function resetCaptcha(st){
+    st = st || captcha;
+    st.token = null;
+    if(st.widgetId !== null && window.turnstile){ try{ window.turnstile.reset(st.widgetId); }catch(e){} }
   }
   // ก่อนกดส่ง: เปิด Captcha อยู่แต่ยังไม่ได้ token → บอกให้รอ (โหลดสคริปต์ไม่ขึ้นเลย = ปล่อยผ่าน ให้ Supabase ตัดสิน)
-  function captchaNotReady(errEl){
-    if(!TURNSTILE_SITE_KEY || captcha.failed || captcha.errored || captcha.token) return false;
+  function captchaNotReady(errEl, st){
+    st = st || captcha;
+    if(!TURNSTILE_SITE_KEY || st.failed || st.errored || st.token) return false;
     errEl.textContent = CAPTCHA_WAIT_MSG;
     return true;
   }
-  function captchaOptions(){ return captcha.token ? { captchaToken: captcha.token } : {}; }
+  function captchaOptions(st){ st = st || captcha; return st.token ? { captchaToken: st.token } : {}; }
+  // หน้าต่างลืมรหัสผ่านมีกล่อง Captcha ของตัวเอง (#forgotCaptcha) — หน้าต่างนี้ซ้อนทับหน้าต่างล็อกอิน
+  // กล่องเดิม (#authCaptcha) เลยอยู่ใต้ฉากหลัง กดไม่ได้ ส่งลิงก์รีเซ็ตไม่ได้ (ย้ายกล่องเดิมไม่ได้ — ย้าย iframe แล้ววิดเจ็ตโหลดใหม่พัง)
+  var forgotCaptcha = { widgetId:null, token:null, failed:false, errored:false, rendering:false };
+  function ensureForgotCaptcha(){
+    if(!TURNSTILE_SITE_KEY) return;
+    ensureCaptcha(); // โหลดสคริปต์ Turnstile (ถ้ายังไม่ได้โหลด/โหลดไม่ขึ้นรอบก่อน ลองใหม่)
+    document.getElementById('forgotCaptcha').hidden = false;
+    if(forgotCaptcha.widgetId !== null || forgotCaptcha.rendering) return;
+    if(!captcha.loading){ forgotCaptcha.failed = true; return; } // โหลดสคริปต์ไม่ได้ = ปล่อยผ่าน ให้ Supabase ตัดสิน (เหมือนกล่องเดิม)
+    forgotCaptcha.rendering = true;
+    captcha.loading.then(function(){
+      forgotCaptcha.rendering = false;
+      if(forgotCaptcha.widgetId !== null) return;
+      if(!window.turnstile){ forgotCaptcha.failed = true; return; }
+      try{
+        forgotCaptcha.widgetId = window.turnstile.render('#forgotCaptcha', {
+          sitekey: TURNSTILE_SITE_KEY, theme: 'dark', size: 'flexible', language: 'th',
+          callback: function(t){ forgotCaptcha.token = t; forgotCaptcha.errored = false; clearCaptchaNotices(); },
+          'expired-callback': function(){ forgotCaptcha.token = null; },
+          'error-callback': function(code){
+            forgotCaptcha.token = null; forgotCaptcha.errored = true;
+            Track.error('load', 'turnstile (forgot) error ' + code);
+          }
+        });
+        forgotCaptcha.failed = false;
+      }catch(err){
+        forgotCaptcha.failed = true;
+        console.warn('captcha (forgot)', err);
+      }
+    });
+  }
 
   function openAuthModal(register){
     setAuthMode(register);
@@ -5405,6 +5638,10 @@
     if(/email not confirmed/i.test(msg)) return 'บัญชีนี้ยังไม่ได้ยืนยันอีเมล กรุณากดลิงก์ยืนยันในอีเมลก่อนเข้าสู่ระบบ';
     if(/security purposes|rate limit|only request this/i.test(msg)) return 'ส่งคำขอถี่เกินไป กรุณารออีกสักครู่แล้วลองใหม่';
     if(/captcha/i.test(msg)) return CAPTCHA_FAIL_MSG;
+    // ข้อความอังกฤษที่เหลือที่เจอจริง: ตั้งรหัสใหม่ซ้ำรหัสเดิม / ส่งอีเมลไม่สำเร็จ (SMTP) / อีเมลรูปแบบที่ Supabase ไม่รับ
+    if(/different from the old password/i.test(msg)) return 'รหัสผ่านใหม่ต้องต่างจากรหัสเดิม';
+    if(/error sending .*mail/i.test(msg)) return 'ส่งอีเมลไม่สำเร็จในตอนนี้ กรุณาลองใหม่ภายหลัง';
+    if(/email address .* is invalid/i.test(msg)) return 'รูปแบบอีเมลไม่ถูกต้อง';
     return msg;
   }
   // ผลสมัครสมาชิกตอนเปิด "Confirm email": อีเมลซ้ำ Supabase ไม่ตอบ error (กันคนสุ่มเช็คอีเมล) ต้องดูจาก user ที่ตอบกลับเอง
@@ -5567,8 +5804,15 @@
   });
 
   var manualSignOut = false;
-  document.getElementById('logoutBtn').addEventListener('click', function(){
+  // ออกจากระบบเอง: บอกแท็บอื่นของเครื่องนี้ด้วย (localStorage ใช้ร่วมกันทุกแท็บ) — แท็บอื่นได้ SIGNED_OUT ตามมา
+  // ต้องไม่ขึ้น "บัญชีนี้เพิ่งถูกใช้ล็อกอินจากที่อื่น" (ดูตัวจับ SIGNED_OUT ด้านล่าง — ถือว่าตั้งใจออกเองภายใน 30 วิ)
+  var MANUAL_LOGOUT_KEY = 'gum100_manual_logout';
+  function markManualSignOut(){
     manualSignOut = true;
+    try{ localStorage.setItem(MANUAL_LOGOUT_KEY, String(Date.now())); }catch(e){}
+  }
+  document.getElementById('logoutBtn').addEventListener('click', function(){
+    markManualSignOut();
     supa.auth.signOut();
   });
 
@@ -5608,6 +5852,7 @@
     document.getElementById('forgotError').textContent = '';
     document.getElementById('forgotSent').hidden = true;
     document.getElementById('forgotPasswordOverlay').hidden = false;
+    ensureForgotCaptcha();
   });
   document.addEventListener('click', function(e){
     if(e.target.closest('[data-forgot-close]')) document.getElementById('forgotPasswordOverlay').hidden = true;
@@ -5619,11 +5864,11 @@
     var email = document.getElementById('forgotEmail').value.trim().toLowerCase();
     errEl.textContent = ''; sentEl.hidden = true;
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errEl.textContent = 'กรอกอีเมลที่ใช้สมัครให้ถูกต้อง'; return; }
-    if(captchaNotReady(errEl)) return;
+    if(captchaNotReady(errEl, forgotCaptcha)) return;
     forgotBusy = true; btn.disabled = true;
-    supa.auth.resetPasswordForEmail(email, Object.assign({ redirectTo: AUTH_REDIRECT_URL }, captchaOptions())).then(function(res){
+    supa.auth.resetPasswordForEmail(email, Object.assign({ redirectTo: AUTH_REDIRECT_URL }, captchaOptions(forgotCaptcha))).then(function(res){
       forgotBusy = false; btn.disabled = false;
-      resetCaptcha();
+      resetCaptcha(forgotCaptcha);
       if(res.error){ errEl.textContent = mapAuthError(res.error.message); return; }
       // ข้อความคงที่ (ไม่มีข้อมูลจากผู้ใช้) — ไม่บอกตรงๆ ว่าอีเมลนี้มีบัญชีไหม
       // ข้อ 3 ครอบคลุมกรณีอีเมลไม่มีบัญชีโดยไม่ยืนยันตรงๆ · ขอลิงก์ซ้ำ = ฉบับก่อนหน้าใช้ไม่ได้ จึงย้ำ "ฉบับล่าสุด"
@@ -5652,7 +5897,7 @@
   });
   document.getElementById('recoveryCancelBtn').addEventListener('click', function(){
     document.getElementById('recoveryPasswordOverlay').hidden = true;
-    manualSignOut = true;
+    markManualSignOut();
     supa.auth.signOut();
   });
 
@@ -5668,19 +5913,33 @@
       return;
     }
     if(event !== 'SIGNED_OUT') return;
-    var wasManual = manualSignOut;
+    // ออกเองจากแท็บนี้ หรือจากแท็บอื่นของเครื่องนี้ไม่เกิน 30 วิที่แล้ว (signOut รอคำขอ /logout ก่อนแจ้ง — เน็ตช้าอาจเกิน 10 วิ)
+    // ถูกเตะจริงมาทางต่ออายุเซสชันไม่ผ่าน ไม่ได้มาหลังกดออกเอง เลยไม่ถูกกลบ
+    var lastManual = 0;
+    try{ lastManual = Number(localStorage.getItem(MANUAL_LOGOUT_KEY)) || 0; }catch(e){}
+    var wasManual = manualSignOut || (Date.now() - lastManual < 30000);
     manualSignOut = false;
     if(!App.session) return;
     App.session = null;
     App.profile = null;
     document.getElementById('authModal').hidden = true;
-    enterGuestPreview();
-    if(!wasManual) toast('บัญชีนี้เพิ่งถูกใช้ล็อกอินจากที่อื่น กรุณาล็อกอินใหม่');
+    try{ enterGuestPreview(); }catch(e){ console.error('enterGuestPreview', e); } // พังตรงนี้ก็ต้องโหลดหน้าใหม่ต่อ
+    // แล้วโหลดหน้าใหม่ทั้งหน้า (Supabase ลบเซสชันในเครื่องไปแล้วก่อนแจ้ง SIGNED_OUT → เปิดใหม่เป็นผู้เยี่ยมชมหน้าเดิม)
+    // เดิมสลับเป็นผู้เยี่ยมชมในหน้าเดิมอย่างเดียว: คลัง/ฟาร์ม/สถิติบอส/ปาร์ตี้/ฟอร์มกรอก/แถบวันหมดอายุของบัญชีเดิมยังค้างโชว์
+    // และหน้าต่างที่เปิดค้างตอนถูกเตะ (ยืนยัน/เติมแต้ม/ประวัติล่าบอส ฯลฯ) ปิดไม่ได้ เพราะผู้เยี่ยมชมกดอะไรก็เด้งหน้าล็อกอิน
+    // ข้อความ "ถูกเตะ" ส่งข้ามการโหลดใหม่ด้วย sessionStorage แล้วโชว์ตอนบูต (ท้ายไฟล์)
+    if(!wasManual){ try{ sessionStorage.setItem('gum100_kicked', '1'); }catch(e){} }
+    try{
+      // URL ยังมี token จากลิงก์ในอีเมล (ถ้ามี) → ล้างก่อนโหลดใหม่ ไม่งั้นเปิดมาแล้วล็อกอินกลับด้วย token เดิม
+      if(/access_token|refresh_token|type=recovery|type=signup/.test(location.hash)) history.replaceState(history.state, '', location.pathname + location.search);
+    }catch(e){}
+    location.reload();
   });
 
   // ---------- โหมดผู้เยี่ยมชม: ยังไม่ได้ล็อกอิน แต่เห็นหน้าตาแอพเหมือนจริงได้ (ข้อมูลว่างเปล่าตามจริง
   // เพราะไม่มีสิทธิดึงข้อมูลของใคร) กดเมนูดูหน้าอื่นได้ แต่ทุกอย่างที่ไม่อยู่ใน GUEST_VIEW_ALLOW โดนกันด้วย guestBlock แล้วเด้ง popup login ----------
   function enterGuestPreview(){
+    clearAuthFields(); // Username/รหัสผ่านของบัญชีก่อนหน้าต้องไม่ค้างในหน้าต่างล็อกอิน
     App.session = null;
     App.profile = null;
     App.isGuest = true;
@@ -5688,6 +5947,14 @@
     // ผิดๆ ตอนกลับมาเป็นผู้เยี่ยมชม — ต้องว่างเปล่าจริงเหมือนบัญชีใหม่เอี่ยม
     App.db = []; App.active = {}; App.markers = {}; App.kills = []; App.partyRoster = []; App.partyStints = {}; App.partyStintsHost = null; App.departedSharerNames = {};
     App.viewingHostId = null; App.viewingHostName = null; App.partySeat = null; App.partyStatus = null; App.hostHasTimers = null;
+    // ปิดหน้าต่างของบัญชีที่เพิ่งออก (ประวัติล่าบอส/เพิ่มเพื่อน/เติมแต้ม/เลือกเซิร์ฟ/หมดอายุ/กล่องยืนยัน) — ผู้เยี่ยมชมกดปิดไม่ได้
+    // (กดอะไรก็เด้งหน้าล็อกอิน) และห้ามค้างข้อมูลของบัญชีเดิมไว้ · หน้าต่างล็อกอิน/ลืมรหัส/ตั้งรหัสใหม่ไม่ปิด (ผู้เยี่ยมชมใช้)
+    ['historyOverlay','addPartyMemberOverlay','topupOverlay','serverPickOverlay','expiryOverlay'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.hidden = true;
+    });
+    dismissConfirm();
+    lootEditing = null;
     renderPartyLock();
     renderPartyNote();
     cloudEnd();
@@ -5708,6 +5975,7 @@
   }
 
   function enterApp(user){
+    clearAuthFields(); // ล็อกอิน/สมัครเสร็จ หรือเปิดหน้ามาพร้อมเซสชัน — รหัสผ่านที่เพิ่งพิมพ์ไม่ต้องค้างไว้ในฟอร์ม
     App.isGuest = false;
     document.getElementById('farmChartGuest').hidden = true;
     document.body.classList.remove('ro-mode');
@@ -5746,7 +6014,14 @@
       checkHostPlanReminder();
       presencePing(true); // ล็อกอินเสร็จ = ออนไลน์ทันที ไม่ต้องรอรอบ 1 นาที
       // บัญชีเก่าก่อนมีช่องเซิร์ฟเวอร์ตอนสมัคร (ยังว่าง) → บังคับเลือกครั้งเดียวก่อนใช้งาน (บัญชีใหม่เลือกจากฟอร์มสมัครแล้ว)
-      if(!App.profile || !(App.profile.servers||[]).length) openServerPick();
+      // โหลดโปรไฟล์ไม่สำเร็จ (เน็ตสะดุด) ≠ ยังไม่มีเซิร์ฟ — เดิมเด้งให้เลือกเซิร์ฟใหม่ทับเซิร์ฟที่บัญชีเลือกไว้แล้ว
+      // → บอกแล้วลองโหลดใหม่ (อีก 3 วิ + รอบ 60 วิ/กลับมาที่แท็บ ใน syncProfileQuietly) โหลดได้แล้วค่อยเช็คเซิร์ฟ
+      if(App.profile){
+        if(!(App.profile.servers||[]).length) openServerPick();
+      } else {
+        toast('โหลดข้อมูลบัญชีไม่สำเร็จ กำลังลองใหม่', 4000);
+        setTimeout(function(){ syncProfileQuietly(true); }, 3000);
+      }
     });
   }
 
@@ -5756,9 +6031,11 @@
     App.rateSlots[parseInt(sel.dataset.slot,10)] = sel.value;
     saveRateSlots();
     renderRateChips();
+    var prevServer = App.currentServerId;
     syncMerchantServersWithRateSlots();
     syncTickerServersWithRateSlots();
     renderMerchantServers();
+    refreshMerchantFormAfterServerSwitch(prevServer);
     renderMrChart();
     renderTickerServerChips();
   });
@@ -5787,9 +6064,11 @@
       App.rateSlots.splice(parseInt(rmBtn.dataset.removeRateSlot,10), 1);
       saveRateSlots();
       renderRateChips();
+      var prevRmServer = App.currentServerId;
       syncMerchantServersWithRateSlots();
       syncTickerServersWithRateSlots();
       renderMerchantServers();
+      refreshMerchantFormAfterServerSwitch(prevRmServer);
       renderMrChart();
       renderTickerServerChips();
     }
@@ -6195,10 +6474,11 @@
       }
       if(!result.failed.length){ commitAndCleanup(); return; }
       // อัพไม่ขึ้น: ไม่บันทึกเงียบๆ โดยทิ้งรูป — ถามก่อน (ยกเลิก = แถว/รูปยังอยู่ครบ กดบันทึกใหม่ได้)
+      // wait: ระหว่างอัพรูปผู้ใช้อาจเปิดกล่องยืนยันอื่นค้างไว้ → ถามต่อหลังกล่องนั้นปิด ไม่แย่งที่
       showConfirm('อัพรูปไม่สำเร็จ '+result.failed.length+' จาก '+rowsWithImage.length+' รูป'+
         '<span class="confirm-detail">ยืนยัน = บันทึกรายการเลย (แถวที่อัพไม่ขึ้นจะไม่มีรูป)<br>ยกเลิก = กลับไปกดบันทึกใหม่อีกครั้ง</span>',
         commitAndCleanup,
-        function(){ removeItemImages(uploaded); });
+        function(){ removeItemImages(uploaded); }, { wait:true });
     });
   });
 
@@ -6254,6 +6534,8 @@
       var warnHtml = multiNote + (hasWarehouseSale ? '<p class="confirm-warehouse-note">รายการนี้เชื่อมกับคลัง — จำนวนที่ถูกลบจะถูกคืนกลับเข้าคลัง</p>'
         : hasWarehousedBuy ? '<p class="confirm-warehouse-note">รายการนี้ถูกลงคลังไปแล้ว — ลบรายการนี้จะดึงจำนวนที่ยังอยู่ในคลังออกไปด้วย (ส่วนที่ถูกขายออกไปแล้วจะไม่ถูกแตะ)</p>' : '');
       showConfirm('ยืนยันลบรายการนี้?'+detail+warnHtml, function(){
+        // รายการถูกลบไปแล้วระหว่างเปิดกล่อง (เช่น ลบจากอีกเครื่องแล้วซิงก์มา) → ไม่ทำซ้ำ ไม่งั้นคืนของเข้าคลังซ้ำสองรอบ
+        if(!App.merchantLog.some(function(e){ return e.id===id; })) return;
         if(hasWarehouseSale){
           (entry.lines||[]).forEach(function(l){
             if(l.warehouseSale) restoreWarehouseStock(entry.serverId, l.warehouseSale);
@@ -6433,12 +6715,9 @@
   function freeTradeLeft(){ return hasTradePlan() ? Infinity : Math.max(0, FREE_TRADE_DAILY_MAX - countLoggedToday(App.merchantLog)); }
   function freeFarmLeft(){ return hasFarmPlan() ? Infinity : Math.max(0, FREE_FARM_DAILY_MAX - countLoggedToday(App.farmLog)); }
   // กล่องแจ้งครบลิมิต — ใช้กล่องยืนยันตัวเดิม แค่เปลี่ยนชื่อปุ่มชั่วคราว (ดูแพ็กเกจ / ปิด)
-  function showFreeLimitPopup(message){
-    var ok = document.getElementById('confirmOkBtn'), cancel = document.getElementById('confirmCancelBtn');
-    var okText = ok.textContent, cancelText = cancel.textContent;
-    ok.textContent = 'ดูแพ็กเกจ'; cancel.textContent = 'ปิด';
-    function restore(){ ok.textContent = okText; cancel.textContent = cancelText; }
-    showConfirm(message, function(){ restore(); switchPage('pricing'); }, restore);
+  // wait = แจ้งเองเบื้องหลัง (เช่น ส่งขึ้นคลาวด์ไม่ได้) — มีกล่องอื่นเปิดอยู่ให้รอจนกล่องนั้นปิดก่อน ไม่ยกเลิกกล่องที่ผู้ใช้กำลังตอบ
+  function showFreeLimitPopup(message, wait){
+    showConfirm(message, function(){ switchPage('pricing'); }, null, { ok:'ดูแพ็กเกจ', cancel:'ปิด', wait:!!wait });
   }
   // ตัวเลขเหลือกี่รายการใต้ปุ่มบันทึก
   function renderFreeQuotaNotes(){
@@ -7002,7 +7281,7 @@
     document.getElementById('view-admin').hidden = page !== 'admin';
     document.getElementById('view-settings').hidden = page !== 'settings';
     if(App.session && App.profile) renderExpiryState();
-    if(page==='home') refreshAnnouncementsIfChanged();
+    if(page==='home' || page==='farm') refreshAnnouncementsIfChanged(); // สองหน้าที่มีกระดาน — เช็คทันทีที่เปิด (หน้าอื่นรอรอบ 60 วิ)
     if(resetMerchantTf){ renderMerchantHistory(); renderMrChart(); }
     var resetFarmTf = page==='farm' && (farmTfPage!=='farm' || farmTfUser!==tfUser);
     farmTfPage = page;
@@ -7301,6 +7580,7 @@
 
   // ซื้อแพ็กเกจด้วยแต้ม: RPC buy_package หักแต้ม + ต่ออายุ (30/365 วัน ต่อจากวันหมดอายุเดิมถ้ายังไม่หมด) + บันทึกประวัติ
   // ราคาจริงอยู่ฝั่งเซิร์ฟเวอร์ ตัวเลขในหน้านี้ใช้แสดงผลเท่านั้น
+  var buyPlanBusy = false; // กำลังรอ buy_plan — กดยืนยันซื้อซ้ำระหว่างรอไม่ส่งซ้ำ
   document.getElementById('pricingGrid').addEventListener('click', function(e){
     var btn = e.target.closest('.pricing-cta');
     if(!btn) return;
@@ -7365,8 +7645,12 @@
       '</span><span class="buy-confirm-code-msg" id="buyConfirmCodeMsg" role="status"></span></span>';
     // ปุ่มยืนยันของกล่องใช้ร่วมทั้งแอป — เปลี่ยนชื่อ/ปิดชั่วคราว แล้วคืนค่าเดิมทุกครั้งที่กล่องปิด
     var okBtn = document.getElementById('confirmOkBtn');
-    var okText = okBtn.textContent;
-    function restoreOk(){ okBtn.textContent = okText; okBtn.disabled = false; }
+    var okText = CONFIRM_OK_TEXT; // ค่าเริ่มต้นคงที่ — ไม่อ่านจากปุ่ม (ป้ายที่ค้างจากกล่องก่อนหน้าต้องไม่ติดมา)
+    // dlgOpen = กล่องนี้ยังเปิดอยู่ — ผลตรวจโค้ดที่กลับมาหลังปิดกล่องแล้ว ห้ามแตะปุ่มยืนยันที่ใช้ร่วมกับกล่องอื่น
+    // (เดิมปุ่มค้างสถานะปิด/ป้าย "เติมแต้ม" ไปโผล่ในกล่องยืนยันอันถัดไป) · restoreOk = ทุกทางที่กล่องนี้ปิด
+    var dlgOpen = true;
+    var promoAtOpen = isPromoActive(); // ราคาในกล่องคิดจากสถานะโปรตอนเปิด — ดูตอนกดยืนยัน
+    function restoreOk(){ dlgOpen = false; okBtn.textContent = okText; okBtn.disabled = false; }
     function setCodeMsg(text, kind){
       var m = document.getElementById('buyConfirmCodeMsg'); if(!m) return;
       m.textContent = text;
@@ -7378,6 +7662,7 @@
     }
     // วาดตารางใหม่ + ปุ่ม: แต้มไม่พอ = "เติมแต้ม" · พิมพ์โค้ดแล้วยังไม่กด "ใช้โค้ด" = ปิดปุ่มไว้ก่อน (กันเข้าใจว่าได้ส่วนลดแล้ว)
     function refresh(){
+      if(!dlgOpen) return;
       var rowsEl = document.getElementById('buyConfirmRows'); if(!rowsEl) return;
       rowsEl.innerHTML = rowsHtml();
       var typed = typedCode();
@@ -7390,7 +7675,7 @@
       codeBtn.disabled = true;
       setCodeMsg('กำลังตรวจโค้ด...', '');
       supa.rpc('check_discount_code', { p_code: code, p_plan_key: planKey, p_cycle: cycle }).then(function(res){
-        if(document.getElementById('buyConfirmCodeBtn') !== codeBtn) return; // กล่องนี้ปิด/เปิดใหม่ไปแล้ว
+        if(!dlgOpen || document.getElementById('buyConfirmCodeBtn') !== codeBtn) return; // กล่องนี้ปิด/เปิดใหม่ไปแล้ว
         codeBtn.disabled = false;
         if(typedCode() !== code) return; // พิมพ์โค้ดใหม่ระหว่างรอผล
         if(res.error){ discount = null; setCodeMsg(res.error.message, 'error'); refresh(); return; }
@@ -7402,16 +7687,34 @@
     }
     showConfirm(confirmHtml, function(){
       restoreOk();
+      // โปรจบ/เริ่มระหว่างเปิดกล่องค้างไว้ → ราคาที่โชว์ไม่ใช่ราคาที่ฐานข้อมูลจะหักแล้ว (ต่างกันราว 2 เท่า) — ไม่ซื้อ ให้ดูราคาใหม่ก่อน
+      // (ทางสำรองฝั่งหน้าเว็บ ตัวจริงคือ p_expected_price ด้านล่างที่ฐานข้อมูลเทียบกับราคาที่หักจริง)
+      if(isPromoActive() !== promoAtOpen){ toast('ราคาแพ็กเกจเปลี่ยนแล้ว กรุณาตรวจสอบราคาใหม่แล้วกดซื้ออีกครั้ง', 5000); renderPricingPage(); return; }
       var pay = payNow();
       if(have < pay){ openTopup(); return; }
-      var args = { p_plan_key: planKey, p_cycle: cycle };
+      if(buyPlanBusy){ toast('กำลังทำรายการก่อนหน้าอยู่ รอสักครู่'); return; }
+      var args = { p_plan_key: planKey, p_cycle: cycle, p_expected_price: pay };
       if(discount) args.p_code = discount.code;
+      buyPlanBusy = true;
       supa.rpc('buy_plan', args).then(function(res){
-        if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); return; }
+        // ฐานข้อมูลยังไม่ได้รัน migration ที่เพิ่ม p_expected_price (หาฟังก์ชันไม่เจอ) → ซื้อแบบเดิมไม่ส่งราคา
+        if(res.error && /PGRST202|Could not find the function/i.test((res.error.code||'')+' '+(res.error.message||''))){
+          delete args.p_expected_price;
+          return supa.rpc('buy_plan', args);
+        }
+        return res;
+      }).then(function(res){
+        buyPlanBusy = false;
+        if(res.error){
+          toast('ทำรายการไม่สำเร็จ: '+res.error.message, /ราคาเปลี่ยน/.test(res.error.message||'') ? 6000 : undefined);
+          // ราคาที่ฐานข้อมูลหักไม่ตรงกับที่กล่องโชว์ (ไม่ได้หักแต้ม) → โหลดสิทธิ/ราคาใหม่ให้เห็นก่อนกดซื้ออีกครั้ง
+          if(/ราคาเปลี่ยน/.test(res.error.message||'')) refreshProfile().then(renderPricingPage);
+          return;
+        }
         Track.push('buy_success', 'pricing', pay, planKey+':'+cycle);
         refreshProfile().then(renderPricingPage);
         toast((renewing ? 'ต่ออายุ ' : 'สมัคร ')+nameMain+(discount ? ' (ใช้โค้ด '+discount.code+' ลด '+discount.percent+'%)' : '')+' สำเร็จ — '+(planKey==='all'?'ใช้งานครบทุกระบบได้ถึง ':'ใช้งานได้ถึง ')+fmtDate(new Date(res.data).getTime()));
-      });
+      }, function(err){ buyPlanBusy = false; console.warn('buy_plan', err); toast('ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง'); });
     }, restoreOk);
     document.getElementById('buyConfirmCodeBtn').addEventListener('click', applyCode);
     document.getElementById('buyConfirmCode').addEventListener('keydown', function(ev){
@@ -7603,6 +7906,10 @@
     saveServers(document.getElementById('serverPickList'), document.getElementById('serverPickError'), function(){
       document.getElementById('serverPickOverlay').hidden = true;
       updateServersSummary();
+      // เหมือนปุ่มบันทึกในหน้าตั้งค่า: การ์ดราคา/ชิปประกาศ/เซิร์ฟของกล่องซื้อ-ขาย ตามเซิร์ฟที่เพิ่งเลือกทันที
+      // (เดิมยังเป็นเซิร์ฟเริ่มต้นเดิม รายการซื้อ-ขายไปลงเซิร์ฟที่ผู้ใช้ไม่ได้เลือก)
+      pruneServerSelections(true);
+      renderAll();
       toast('บันทึกเซิร์ฟเวอร์ที่เล่นแล้ว');
     });
   });
@@ -7798,6 +8105,9 @@
       input.value = '';
       var data = res.data || {};
       refreshProfile().then(function(){
+        // แท็บประวัติโค้ด/ประวัติแต้มในหน้าเดียวกันต้องเห็นรายการที่เพิ่งใช้ทันที
+        // (ไม่ใช้ renderSettingsPage — ตัวนั้นเขียนช่องชื่อ/ลิงก์ Facebook ทับจากโปรไฟล์ ของที่พิมพ์ค้างไว้หาย)
+        loadPromoHistory(); loadPointsHistory();
         if(data.reward_type === 'plan_days'){
           toast('ใช้โค้ดสำเร็จ ได้รับแพ็กเกจ '+promoPlanName(data.plan_key)+' เพิ่ม '+fmtNum(data.plan_days)+' วัน');
         } else {
@@ -8341,11 +8651,37 @@
     return p ? JSON.stringify([p.role, p.expires_at, p.legacy_unlimited, p.plan_bundle_expires_at, p.plan_timers_expires_at, p.feature_expiries]) : '';
   }
   function syncProfileQuietly(force){
-    if(!App.session || !App.session.id || App.isGuest || !App.profile) return Promise.resolve(false);
+    if(!App.session || !App.session.id || App.isGuest) return Promise.resolve(false);
     if(profileSyncBusy || (!force && Date.now() - profileSyncAt < 15000)) return Promise.resolve(false);
     profileSyncBusy = true;
     profileSyncAt = Date.now();
     var uid = App.session.id;
+    // ไม่มีโปรไฟล์ = โหลดตอนล็อกอินไม่สำเร็จ (enterApp) → รอบนี้ลองโหลดใหม่ด้วย refreshProfile (มีทางสำรองของตัวเอง)
+    // เดิมไม่เคยลองใหม่: แอปทำงานแบบไม่มีโปรไฟล์ (ถือเป็นบัญชีฟรี ไม่รู้เซิร์ฟที่เลือกไว้) จนกว่าจะรีเฟรชหน้า
+    if(!App.profile){
+      return refreshProfile().then(function(){
+        profileSyncBusy = false;
+        if(!App.profile || !App.session || App.session.id !== uid) return false;
+        // เพิ่งรู้เซิร์ฟ/สิทธิแพ็กของบัญชี → จัดการ์ดราคา/กล่องซื้อ-ขายให้ตรง แล้ววาดส่วนที่ขึ้นกับโปรไฟล์ใหม่
+        // (ไม่ใช้ renderAll — ตัวนั้นล้างแถวที่กำลังกรอกในกล่องซื้อ-ขายทิ้ง)
+        var prevServer = App.currentServerId;
+        pruneServerSelections();
+        renderUser(); renderStats(); renderRoster(); renderRateChips(); renderTickerServerChips(); renderMerchantServers();
+        refreshMerchantFormAfterServerSwitch(prevServer);
+        renderMerchantHistory(); renderMerchantSummary(); renderMrChart(); updateItemsRailBadge();
+        renderExpiryState(); renderFreeQuotaNotes();
+        if(!document.getElementById('view-farm').hidden){ renderFarmHistory(); renderFarmChart(); }
+        if(!document.getElementById('view-items').hidden) renderItemsPage();
+        if(!document.getElementById('view-pricing').hidden) renderPricingPage();
+        if(!document.getElementById('view-settings').hidden) renderSettingsPage();
+        if(!(App.profile.servers||[]).length) openServerPick();
+        return true;
+      }, function(err){
+        profileSyncBusy = false;
+        console.warn('profile retry', err);
+        return false;
+      });
+    }
     // withSkewRetry: นาฬิกาเครื่องผู้ใช้เร็วกว่าเซิร์ฟเวอร์ → token "issued at future" ได้ 401 ชั่วคราว ให้ลองซ้ำเหมือน refreshProfile
     return withSkewRetry(function(){ return supa.rpc('my_profile'); }).then(function(res){
       if(res.error || !res.data) return null;
@@ -8391,6 +8727,7 @@
   // ---------- เติมแต้ม: QR PromptPay ผ่าน TMWEASY Edge Function ----------
   var topupAmount = 500;
   var TOPUP_MIN_AMOUNT = 50; // ต้องตรงกับ topup_rate_guard() ใน DB (migration 20260927000900) — เดิม 20
+  var TOPUP_MAX_AMOUNT = 100000; // ต้องตรงกับ Edge Function tmweasy-create-pay (เกินนี้ได้ 400) — เดิมหน้าเว็บไม่เช็ค
   var topupQrPollTimer = null;
   var topupQrClockTimer = null;
   // QR หมดเวลาแล้วยังเช็คผลต่ออีก 2 นาที: จ่ายช่วงวินาทีท้ายๆ ข้อความยืนยันจาก TMWEASY อาจมาช้ากว่านาฬิกา
@@ -8409,6 +8746,7 @@
     doneButton.disabled = false; doneButton.textContent = 'เสร็จสิ้น';
   }
   document.getElementById('topupCustomAmount').min = String(TOPUP_MIN_AMOUNT);
+  document.getElementById('topupCustomAmount').max = String(TOPUP_MAX_AMOUNT);
   function stopTopupQrWatch(){
     clearInterval(topupQrPollTimer); clearInterval(topupQrClockTimer); clearTimeout(topupQrGraceTimer);
     topupQrPollTimer = null; topupQrClockTimer = null; topupQrGraceTimer = null; topupQrInGrace = false;
@@ -8505,7 +8843,13 @@
       setTopupPaymentStatus('failed','เติมแต้มไม่สำเร็จ กรุณาลองใหม่หรือติดต่อ Admin');
       var failedButton=document.getElementById('topupCreateQrBtn'); failedButton.disabled=false; failedButton.textContent='สร้าง QR ใหม่';
     } else if(status==='manual_review'){
-      setTopupPaymentStatus('review','รายการกำลังรอตรวจสอบโดย Admin');
+      // จ่ายแล้วแต่ยอดไม่ตรงกับ QR (credit_tmweasy_topup ตั้งสถานะนี้กรณีเดียว) — หยุดนาฬิกา/รอบรอ ไม่งั้นครบเวลาแล้ว
+      // ข้อความ "QR หมดอายุ กรุณาสร้างใหม่" ขึ้นทับ คนที่จ่ายไปแล้วเข้าใจว่าต้องจ่ายใหม่ · ปิดรูป QR กันสแกนจ่ายซ้ำ
+      stopTopupQrWatch();
+      setTopupQrCover('รอตรวจสอบ');
+      setTopupPaymentStatus('review','ได้รับการชำระเงินแล้ว ยอดไม่ตรงกับที่สร้าง QR — รอแอดมินตรวจสอบและเติมแต้มให้ (ไม่ต้องโอนซ้ำ)');
+      showTopupDone(); // ปุ่มหลักเป็น "เสร็จสิ้น" แทน "สร้าง QR ใหม่"
+      loadTopupHistory();
     } else if(status==='expired'){
       stopTopupQrWatch();
       setTopupQrCover('QR หมดอายุ');
@@ -8517,7 +8861,9 @@
   }
   function pollTopupTransaction(){
     if(!topupQrTransactionId || !App.session){ stopTopupQrWatch(); return; }
-    supa.from('topup_transactions').select('*').eq('id',topupQrTransactionId).eq('user_id',App.session.id).maybeSingle().then(function(res){
+    var txId = topupQrTransactionId; // ผลที่กลับมาหลังเปลี่ยนไปรายการอื่น/ปิดหน้าต่างแล้ว ทิ้งไป ไม่ให้ทับสถานะของ QR ใหม่
+    supa.from('topup_transactions').select('*').eq('id',txId).eq('user_id',App.session.id).maybeSingle().then(function(res){
+      if(txId !== topupQrTransactionId) return;
       if(res.error){ console.warn('poll topup_transactions',res.error); return; }
       handleTopupTransaction(res.data);
     });
@@ -8531,13 +8877,16 @@
   function updateTopupPreview(){
     var input = document.getElementById('topupCustomAmount');
     var error = document.getElementById('topupAmountError');
-    var valid = Number.isSafeInteger(topupAmount) && topupAmount>=TOPUP_MIN_AMOUNT;
+    var valid = Number.isSafeInteger(topupAmount) && topupAmount>=TOPUP_MIN_AMOUNT && topupAmount<=TOPUP_MAX_AMOUNT;
     var hasInput = input.value!=='' || input.validity.badInput;
-    var message = hasInput && !valid ? 'กรุณาระบุจำนวนเต็มตั้งแต่ '+TOPUP_MIN_AMOUNT+' บาทขึ้นไป' : '';
+    var message = hasInput && !valid ? 'กรุณาระบุจำนวนเต็ม '+TOPUP_MIN_AMOUNT+' - '+fmtNum(TOPUP_MAX_AMOUNT)+' บาท' : '';
     error.textContent = message;
     error.hidden = !message;
     input.setAttribute('aria-invalid',message ? 'true' : 'false');
-    document.getElementById('topupCreateQrBtn').disabled = topupDone ? false : !valid;
+    // QR ยังรอจ่ายอยู่ (ยังไม่หมดเวลา) หรือกำลังสร้าง QR → ปุ่ม "กำลังรอชำระเงิน" ต้องกดไม่ได้ แม้เลือกจำนวนใหม่
+    // (เดิมเลือกจำนวนใหม่แล้วปุ่มกดได้ กดแล้ว QR ที่รออยู่หายไปเงียบๆ) · หมดเวลา/ไม่สำเร็จ/หยุดรอแล้ว = กดสร้างใหม่ได้ตามเดิม
+    var qrWaiting = !!topupQrTransactionId && !!topupQrPollTimer && !topupQrInGrace;
+    document.getElementById('topupCreateQrBtn').disabled = topupDone ? false : (topupBusy || qrWaiting || !valid);
     document.getElementById('topupBahtPreview').textContent = fmtNum(topupAmount);
     document.getElementById('topupPointsPreview').textContent = fmtNum(topupAmount);
   }
@@ -8582,7 +8931,7 @@
     if(topupDone){ closeTopup(); return; }
     if(topupBusy || button.disabled) return;
     if(!App.session){ toast('กรุณาเข้าสู่ระบบก่อนเติมแต้ม'); return; }
-    if(!Number.isSafeInteger(topupAmount) || topupAmount<TOPUP_MIN_AMOUNT){ updateTopupPreview(); return; }
+    if(!Number.isSafeInteger(topupAmount) || topupAmount<TOPUP_MIN_AMOUNT || topupAmount>TOPUP_MAX_AMOUNT){ updateTopupPreview(); return; }
     topupBusy=true; resetTopupQrPanel();
     button.disabled=true; button.textContent='กำลังสร้าง QR...';
     // สร้าง QR ได้ไม่เกิน 5 ครั้งต่อชั่วโมง (ฐานข้อมูลบังคับจริง) — เช็กก่อนตรงนี้เพื่อขึ้นข้อความให้เข้าใจ
@@ -8607,8 +8956,18 @@
     }).catch(function(err){
       button.disabled=false; button.textContent='สร้าง QR PromptPay';
       if(err && err.limit){ showConfirm('<b>คุณทำรายการมากเกินไป</b><br>ติดต่อแอดมินเพื่อทำรายการ', function(){}); return; }
-      toast('สร้าง QR ไม่สำเร็จ: '+(err.message||err));
       console.error('tmweasy-create-pay',err);
+      // Edge Function ตอบ 4xx/5xx → supabase-js ให้แค่ "Edge Function returned a non-2xx status code" (อังกฤษ)
+      // ข้อความภาษาไทยจริงอยู่ใน body ของคำตอบ (err.context) → อ่านมาโชว์ · ข้อความอาจมาจาก TMWEASY → ใช้ toast (textContent) เท่านั้น
+      var ctx = err && err.context;
+      if(ctx && typeof ctx.json==='function'){
+        (typeof ctx.clone==='function' ? ctx.clone() : ctx).json().then(function(b){
+          if(b && b.code==='rate_limited'){ showConfirm('<b>คุณทำรายการมากเกินไป</b><br>ติดต่อแอดมินเพื่อทำรายการ', function(){}); return; }
+          toast('สร้าง QR ไม่สำเร็จ: '+((b && (b.error || b.msg || b.message)) || err.message));
+        }, function(){ toast('สร้าง QR ไม่สำเร็จ: '+(err.message||err)); });
+        return;
+      }
+      toast('สร้าง QR ไม่สำเร็จ: '+((err && err.message)||err));
     }).finally(function(){ topupBusy=false; });
   });
   var topupBusy = false;
@@ -8645,7 +9004,7 @@
   function openAdminPage(){
     if(adminPanel){ adminPanel.openAdminPage(); return; }
     if(!adminPanelLoading){
-      adminPanelLoading = import('./admin-panel.js?v=20260927-promo-groups').then(function(mod){
+      adminPanelLoading = import('./admin-panel.js?v=20260929-audit1').then(function(mod){
         adminPanel = mod.initAdminPanel({
           supa:supa, escapeHtml:escapeHtml, fmtNum:fmtNum, fmtDate:fmtDate, fmtDateTime:fmtDateTime,
           toast:toast, showConfirm:showConfirm, loadServers:loadServers,
@@ -8832,8 +9191,6 @@
   document.getElementById('partyLockSeatBtn').addEventListener('click', function(){
     var have = (App.profile && App.profile.points) || 0;
     var hostName = App.viewingHostName && App.viewingHostName !== '-' ? App.viewingHostName : '';
-    var okBtn = document.getElementById('confirmOkBtn'), okText = okBtn.textContent;
-    function restoreOk(){ okBtn.textContent = okText; }
     function row(label, value){ return '<span class="buy-confirm-row"><span>'+label+'</span><span>'+value+'</span></span>'; }
     showConfirm('<span class="buy-confirm-title">ยืนยันอยู่ปาร์ตี้ถาวร</span>'+
       '<span class="buy-confirm-plan">'+(hostName ? 'ปาร์ตี้ของ '+escapeHtml(hostName) : 'ปาร์ตี้เดิม')+'</span>'+
@@ -8842,7 +9199,6 @@
           : row('แต้มไม่พอ', '<span class="buy-confirm-short">ขาดอีก '+fmtNum(PARTY_SEAT_COST-have)+' แต้ม</span>'))+'</span>'+
       '<span class="buy-confirm-notes"><span>อยู่ปาร์ตี้ถาวร (ใช้ได้เมื่อหัวปาร์ตี้มีแพ็กเกจ) ใช้แบบแพ็กฟรี: ดูเวลาบอสได้ เพิ่ม/บันทึก/แก้ไขไม่ได้</span>'+
         '<span>ต่ออายุแพ็กเกจ "จับเวลาบอส" เมื่อไหร่ ก็กลับมาใช้ได้เต็มทันที</span></span>', function(){
-      restoreOk();
       if(have < PARTY_SEAT_COST){ openTopup(); return; }
       supa.rpc('buy_party_seat').then(function(res){
         if(res.error){ toast('ทำรายการไม่สำเร็จ: '+res.error.message); if(/ปาร์ตี้ถูกล็อก/.test(res.error.message||'')) refreshPartyAccess(); return; }
@@ -8851,8 +9207,7 @@
         resolvePartyContext().then(function(){ return Promise.all([ loadUserBosses(), loadKills() ]); })
           .then(function(){ renderRoster(); renderStats(); updatePartyPanelSummary(); renderPartyPanel(); });
       });
-    }, restoreOk);
-    okBtn.textContent = have >= PARTY_SEAT_COST ? okText : 'เติมแต้ม';
+    }, null, { ok: have >= PARTY_SEAT_COST ? CONFIRM_OK_TEXT : 'เติมแต้ม' });
   });
 
   // ---------- เพิ่มเพื่อนเข้าปาร์ตี้ 2 ขั้น: ตรวจชื่อ + ค่าเข้าปาร์ตี้ (party_add_quote) → ยืนยัน (add_party_member) ----------
@@ -8885,11 +9240,8 @@
       : why === 'locked' ? 'ปาร์ตี้ถูกล็อก' : '';
   }
   function showNeedTimersPlanForParty(){
-    var okBtn = document.getElementById('confirmOkBtn'), okText = okBtn.textContent;
-    function restoreOk(){ okBtn.textContent = okText; }
     showConfirm('<span class="buy-confirm-title">ต้องมีแพ็กเกจก่อน</span>ต้องมีแพ็กเกจ "จับเวลาบอส" (หรือ 4 in 1) ก่อน ถึงจะเพิ่มเพื่อนเข้าปาร์ตี้ได้<br>แพ็กเกจหมดอายุเมื่อไหร่ ปาร์ตี้จะถูกล็อกจนกว่าจะต่ออายุ',
-      function(){ restoreOk(); switchPage('pricing'); }, restoreOk);
-    okBtn.textContent = 'ดูแพ็กเกจ';
+      function(){ switchPage('pricing'); }, null, { ok:'ดูแพ็กเกจ' });
   }
   // error จากฐานข้อมูลตอนเพิ่มเพื่อน: สิทธิเปลี่ยนระหว่างเปิดหน้าต่าง (แพ็กหมด/ปาร์ตี้ถูกล็อก) → บอกแบบเดียวกับตอนกดปุ่ม
   function addPartyErrorHandled(msg){
@@ -8985,7 +9337,11 @@
   function openPostAnnouncement(entry){
     editingAnnouncementId = entry ? entry.id : null;
     var sel = document.getElementById('postAnnounceServer');
-    sel.innerHTML = App.tickerServers.map(function(id){
+    // แก้ไขประกาศของเซิร์ฟที่ไม่มีการ์ดราคาแล้ว (ลบ/เปลี่ยนการ์ดไป) → ใส่เซิร์ฟเดิมของประกาศไว้ในตัวเลือกด้วย
+    // ไม่งั้นช่องว่างเปล่า แล้วกดบันทึกส่งเซิร์ฟว่างไป = บันทึกไม่สำเร็จแบบไม่รู้สาเหตุ
+    var serverIds = App.tickerServers.slice();
+    if(entry && entry.serverId && serverIds.indexOf(entry.serverId)===-1) serverIds.push(entry.serverId);
+    sel.innerHTML = serverIds.map(function(id){
       var s = serverRateById(id);
       return '<option value="'+id+'">'+(s?s.name:id)+'</option>';
     }).join('');
@@ -9044,22 +9400,18 @@
   // ลงประกาศใหม่ต้องมีลิงก์ Facebook ก่อน (ให้คนที่สนใจติดต่อได้) — ฐานข้อมูลเช็คซ้ำใน post_announcement()
   function hasFacebookUrl(){ return !!(App.profile && String(App.profile.facebook_url||'').trim()); }
   function showFacebookRequiredPopup(){
-    var okBtn = document.getElementById('confirmOkBtn'), cancelBtn = document.getElementById('confirmCancelBtn');
-    var okText = okBtn.textContent, cancelText = cancelBtn.textContent;
-    function restore(){ okBtn.textContent = okText; cancelBtn.textContent = cancelText; }
-    okBtn.textContent = 'ไปหน้าตั้งค่า'; cancelBtn.textContent = 'ปิด';
     showConfirm('<b>กรุณาใส่ลิงก์ Facebook ที่หน้า "ตั้งค่า" ก่อนลงประกาศ</b><br>เพื่อให้คนที่สนใจติดต่อคุณได้', function(){
-      restore();
       closePostAnnouncement();
       switchPage('settings');
       var fb = document.getElementById('stFacebookUrl');
       if(fb){ fb.scrollIntoView({ block:'center' }); fb.focus(); }
-    }, restore);
+    }, null, { ok:'ไปหน้าตั้งค่า', cancel:'ปิด' });
   }
 
   document.getElementById('postAnnounceSubmitBtn').addEventListener('click', function(){
     if(!editingAnnouncementId && !hasFacebookUrl()){ showFacebookRequiredPopup(); return; }
     var serverId = document.getElementById('postAnnounceServer').value;
+    if(!serverId){ toast('กรุณาเลือกเซิร์ฟเวอร์'); return; }
     var buyVal = parseFloat(document.getElementById('postAnnounceBuyPrice').value.replace(/,/g,''));
     if(!(buyVal>0)){ toast('กรอกราคารับ M'); return; }
     var refSv = serverRateById(serverId);
@@ -9615,7 +9967,8 @@
       App.markers[bossId] = { x:x, y:y };
       renderRoster();
       supaSetBossMarker(bossId, x, y).then(function(res){
-        if(res.error) console.error('supaSetBossMarker', res.error);
+        // บันทึกไม่สำเร็จ → บอก + โหลดของจริงจากฐานข้อมูลกลับมา (หมุดกลับที่เดิม) ไม่ค้างหน้าจอที่ไม่ตรงกับที่บันทึกไว้
+        if(res.error){ console.error('supaSetBossMarker', res.error); toast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); bossScheduleReload(); }
       });
       return;
     }
@@ -9656,7 +10009,7 @@
       renderRoster();
       toast('เอา '+boss.name+' ออกจากรายการแล้ว');
       supaRemoveBoss(bossId).then(function(res){
-        if(res.error) console.error('supaRemoveBoss', res.error);
+        if(res.error){ console.error('supaRemoveBoss', res.error); toast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); bossScheduleReload(); }
       });
     } else if(action==='kill'){
       if(isFreePartyMember()){ toast('แพ็กเกจฟรี เข้าร่วมปาร์ตี้ เยี่ยมชมเท่านั้น'); return; }
@@ -9673,20 +10026,24 @@
       if(killSaving[bossId]) return;
       var items = (App.pendingItems[bossId] || []).slice();
       if(boss.custom){
-        if(customBusy) return;
-        var customFailed = false, customKillId = null;
+        // ไม่ผ่านตัวกั้น customBusy ของทั้งแอป (ใช้กับหน้าต่างแก้ไข/ลบบอสเท่านั้น) — เดิมกด MVP บอส Custom ตัวที่ 2
+        // ระหว่างตัวแรกยังบันทึกไม่เสร็จ ถูกทิ้งเงียบๆ ไม่บันทึกอะไรเลย · กันกดซ้ำด้วยล็อกรายตัว (killSaving) แทน
         lockKill(bossId);
-        customTask(function(){
-          return CustomAPI.record(customRef(bossId), activeOwnerId(), TIMERS_SERVER, App.session.id,
-            new Date(deathTs).toISOString(), items, JSON.stringify([rawTimeInput, items.slice().sort()]), App.profile && App.profile.display_name)
-            .then(function(id){ customKillId = id; return id; }, function(err){ customFailed = true; throw err; });
-        }, function(){ delete App.pendingItems[bossId]; fired.warn[bossId]=false; fired.threeMin[bossId]=false; })
-          .then(function(){
-            unlockKill(bossId, customFailed);
-            // รวมเข้ารายการเดิม (ห่างไม่เกิน 60 วิ): ของคนอื่น = คงเวลาคนแรก · ของตัวเอง = ฐานข้อมูลนับเวลาใหม่ให้
-            var rec = customKillId ? App.kills.filter(function(k){ return k.id === customKillId; })[0] : null;
-            if(rec) killMergedToast(boss, rec, deathTs, items);
-          }, function(){ unlockKill(bossId, true); });
+        CustomAPI.record(customRef(bossId), activeOwnerId(), TIMERS_SERVER, App.session.id,
+          new Date(deathTs).toISOString(), items, JSON.stringify([rawTimeInput, items.slice().sort()]), App.profile && App.profile.display_name)
+          .then(function(id){
+            delete App.pendingItems[bossId]; fired.warn[bossId]=false; fired.threeMin[bossId]=false;
+            return customReload().then(function(){
+              bossNotifyChanged(); toast('บันทึก Custom Boss แล้ว'); unlockKill(bossId, false);
+              // รวมเข้ารายการเดิม (ห่างไม่เกิน 60 วิ): ของคนอื่น = คงเวลาคนแรก · ของตัวเอง = ฐานข้อมูลนับเวลาใหม่ให้
+              var rec = App.kills.filter(function(k){ return k.id === id; })[0];
+              if(rec) killMergedToast(boss, rec, deathTs, items);
+            });
+          }, function(err){
+            unlockKill(bossId, true); toast((err && err.message) || 'บันทึกไม่สำเร็จ');
+            if(/ปาร์ตี้ถูกล็อก/.test((err && err.message) || '')) refreshPartyAccess();
+            return customReload();
+          }).catch(function(err){ unlockKill(bossId, true); console.error('custom kill', err); });
         return;
       }
       lockKill(bossId);
@@ -9739,7 +10096,7 @@
       renderRoster(); renderStats();
       toast('เคลียร์เวลาของ '+boss.name+' แล้ว');
       supaSetBossTime(bossId, null, null).then(function(res){
-        if(res.error) console.error('supaSetBossTime clear', res.error);
+        if(res.error){ console.error('supaSetBossTime clear', res.error); toast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); bossScheduleReload(); }
       });
     }
   });
@@ -9764,7 +10121,8 @@
     renderRoster();
     toast('ปรับเวลาแล้ว');
     supaSetBossTime(bossId, act.targetTime, act.startedBy).then(function(res){
-      if(res.error) console.error('supaSetBossTime adjust', res.error);
+      // ช่องเวลายังโฟกัสอยู่ = การโหลดใหม่จะรอจนเลิกพิมพ์ → เอาโฟกัสออกก่อน ให้เวลาจริงกลับมาทันที
+      if(res.error){ console.error('supaSetBossTime adjust', res.error); toast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); var fa = document.activeElement; if(fa && fa.closest && fa.closest('#roster') && fa.blur) fa.blur(); bossScheduleReload(); }
     });
   });
 
@@ -9796,7 +10154,9 @@
       if(res.error){ console.error('history delete', res.error); toast('ลบไม่สำเร็จ: '+res.error.message); return; }
       var got = (res.data||[]).length;
       if(!got){ toast('ลบไม่สำเร็จ: ไม่มีสิทธิลบ หรือรายการถูกลบไปแล้ว'); return loadKills().then(function(){ renderHistory(); renderStats(); renderRoster(); }); }
-      toast(expected && got < expected ? okMsg+' '+fmtNum(got)+' จาก '+fmtNum(expected)+' การฆ่า — ที่เหลือไม่มีสิทธิลบ' : okMsg);
+      // ลบได้มากกว่าที่บอกไว้ (เช่น มีรอบใหม่เข้ามาระหว่างเปิดกล่องยืนยัน) → บอกจำนวนจริงที่ลบไป
+      toast(expected && got < expected ? okMsg+' '+fmtNum(got)+' จาก '+fmtNum(expected)+' การฆ่า — ที่เหลือไม่มีสิทธิลบ'
+        : (expected && got > expected ? okMsg+' '+fmtNum(got)+' การฆ่า' : okMsg));
       bossNotifyChanged();
       return loadKills().then(function(){ renderHistory(); renderStats(); renderRoster(); });
     });
@@ -9806,9 +10166,12 @@
     var m = App.killStats ? App.killStats.items : App.kills.reduce(function(s,k){ return s+k.items.length; }, 0);
     if(!n) return;
     // สมาชิกลบได้เฉพาะรอบที่ตัวเองเห็น (ตั้งแต่เข้าปาร์ตี้) — ประวัติก่อนหน้าของหัวปาร์ตี้ไม่ถูกลบ ข้อความต้องบอกตามจริง
+    // ยอดที่นับให้ดู (boss_history_stats) รวมประวัติส่วนตัวของสมาชิกด้วย → ลบทั้งของหัวปาร์ตี้และของตัวเอง
+    // (RLS คุมจริงว่าแถวไหนลบได้) — ที่เหลือจริงๆ คือรอบของปาร์ตี้อื่นที่มีคนหารของให้ ข้อความ "ที่เหลือไม่มีสิทธิลบ" จึงตรง
     var asMember = !!App.viewingHostId;
-    showConfirm((asMember ? 'ลบประวัติทั้งหมดที่คุณเห็นในปาร์ตี้นี้ ' : 'ลบประวัติทั้งหมดของปาร์ตี้นี้ ')+n+' การฆ่า · '+m+' ไอเทม (รวมข้อมูลหาร/ยอดขาย)? ลบแล้วกู้คืนไม่ได้', function(){
-      runHistoryDelete(supa.from('kills').delete().eq('host_id', activeOwnerId()).select('id'), asMember ? 'ลบประวัติที่คุณเห็นแล้ว' : 'ลบประวัติทั้งหมดแล้ว', n);
+    var owners = asMember ? [App.viewingHostId, App.session.id] : [App.session.id];
+    showConfirm((asMember ? 'ลบประวัติทั้งหมดที่คุณเห็นในปาร์ตี้นี้ (รวมประวัติส่วนตัวของคุณ) ' : 'ลบประวัติทั้งหมดของปาร์ตี้นี้ ')+n+' การฆ่า · '+m+' ไอเทม (รวมข้อมูลหาร/ยอดขาย)? ลบแล้วกู้คืนไม่ได้', function(){
+      runHistoryDelete(supa.from('kills').delete().in('host_id', owners).select('id'), asMember ? 'ลบประวัติที่คุณเห็นแล้ว' : 'ลบประวัติทั้งหมดแล้ว', n);
     });
   });
 
@@ -9843,9 +10206,13 @@
       var bid = db.dataset.delBoss;
       var sid = db.dataset.delServer || ''; // '' = การ์ดของรอบเก่าที่ไม่มีเซิร์ฟเวอร์เก็บไว้
       var who = db.dataset.delKiller; // ไม่มี = ทุกคน, 'none' = รอบที่ไม่รู้ว่าใครกด, อื่นๆ = uuid ของคนที่กำลังดูอยู่
-      var ks = App.kills.filter(function(k){ return k.bossId===bid && (k.serverId||'')===sid && (who==null || (k.killedById||'none')===who); });
-      // จำนวนจากฐานข้อมูล (การ์ดที่กดอยู่) — ประวัติในเครื่องอาจโหลดมาไม่ครบ
+      // การ์ดนับเฉพาะรอบในช่วงเวลาที่เลือก (วันนี้/7/30 วัน — บัญชีฟรีถูกล็อกที่วันนี้) → ลบเฉพาะช่วงเดียวกัน
+      // (เดิมไม่กรองเวลา: กล่องยืนยันบอก 2 ครั้ง แต่ลบประวัติบอสตัวนั้นทั้งหมดที่เคยบันทึกไว้)
       var gi = App.bossGroupsIndex[bid+''+sid];
+      var rangeSince = huntRangeSinceTs();
+      var delSince = gi ? gi.since : (rangeSince != null ? new Date(rangeSince).toISOString() : null);
+      var ks = App.kills.filter(function(k){ return k.bossId===bid && (k.serverId||'')===sid && (who==null || (k.killedById||'none')===who) && (rangeSince == null || k.ts >= rangeSince); });
+      // จำนวนจากฐานข้อมูล (การ์ดที่กดอยู่) — ประวัติในเครื่องอาจโหลดมาไม่ครบ
       var killCount = gi ? gi.kills : ks.length;
       if(!killCount) return;
       var itemCount = gi ? gi.items : ks.reduce(function(s,k){ return s+k.items.length; }, 0);
@@ -9853,8 +10220,11 @@
       var killerLabel = who==null ? '' : (App.bossKillersIndex[who] || (ks[0] ? killerNameOf(ks[0]) : ''));
       var scopeText = who==null ? ' ทั้งหมด' : ' เฉพาะรอบที่ '+escapeHtml(killerLabel)+' กด';
       showConfirm('ลบประวัติ '+escapeHtml(delBossName)+scopeText+' '+killCount+' ครั้ง'+(itemCount ? ' พร้อมไอเทม '+itemCount+' ชิ้น (รวมข้อมูลหาร/ยอดขาย)' : '')+(who==null ? '' : ' (ของคนอื่นยังอยู่)')+'? ลบแล้วกู้คืนไม่ได้', function(){
-        var q = supa.from('kills').delete().eq('host_id', activeOwnerId()).eq('boss_id', bid);
+        // ของหัวปาร์ตี้ + ประวัติส่วนตัวของสมาชิกเอง (การ์ดนับรวมทั้งสองแบบ) — RLS คุมจริงว่าลบแถวไหนได้
+        var owners = App.viewingHostId ? [App.viewingHostId, App.session.id] : [App.session.id];
+        var q = supa.from('kills').delete().in('host_id', owners).eq('boss_id', bid);
         q = sid ? q.eq('server_id', sid) : q.is('server_id', null);
+        if(delSince) q = q.gte('killed_at', delSince);
         if(who==='none') q = q.is('killed_by', null); else if(who!=null) q = q.eq('killed_by', who);
         runHistoryDelete(q.select('id'), 'ลบประวัติบอสแล้ว', killCount);
       });
@@ -9866,28 +10236,43 @@
     if(bk){ bossKillerFilter = bk.dataset.bossKiller; renderHistory(); return; }
     // เก็บไว้ = ไม่หาร ไม่ขาย (ยกเลิกได้ กลับเป็นรอแบ่ง) — ไม่ต้องยืนยันเพราะย้อนกลับได้
     var kp = e.target.closest('[data-keep]');
-    if(kp){ updateKillItem(kp.dataset.keep, { kept_at:new Date().toISOString() }); return; }
+    if(kp){
+      if(itemSaving[kp.dataset.keep]) return;
+      // เก็บได้เฉพาะของที่ยังไม่ขาย (เงื่อนไขอยู่ที่ฐานข้อมูล) — อีกคนเพิ่งกดขายไป ห้ามกลายเป็นทั้งขายแล้ว+เก็บไว้
+      updateKillItem(kp.dataset.keep, { kept_at:new Date().toISOString() }, {
+        guard:function(q){ return q.is('sold_amount', null); },
+        unchanged:function(now){ return now.soldAmount==null && !now.keptAt; }
+      });
+      return;
+    }
     var ku = e.target.closest('[data-keep-undo]');
-    if(ku){ updateKillItem(ku.dataset.keepUndo, { kept_at:null }); return; }
+    if(ku){ if(itemSaving[ku.dataset.keepUndo]) return; updateKillItem(ku.dataset.keepUndo, { kept_at:null }); return; }
     var sh = e.target.closest('[data-share-toggle]');
     if(sh){
       var it = findKillItem(sh.dataset.shareToggle);
-      if(!it) return;
+      if(!it || itemSaving[it.id]) return;
+      // เขียนเฉพาะถ้ารายชื่อหารในฐานข้อมูลยังเป็นชุดที่เห็นอยู่ — สองคนติ๊กพร้อมกันจากสำเนาเดิม ต้องไม่ลบชื่อที่อีกคนเพิ่งติ๊ก
+      var prevShared = it.sharedWith.slice();
       var arr = it.sharedWith.slice();
       var pos = arr.indexOf(sh.dataset.member);
       var shKill = findKillByItem(it.id);
       if(pos===-1 && shKill && !wasInPartyAt(sh.dataset.member, shKill)){ toast('เพิ่มคนนี้ไม่ได้ — ยังไม่ได้อยู่ในปาร์ตี้ตอนได้ของชิ้นนี้'); return; }
       if(pos===-1) arr.push(sh.dataset.member); else arr.splice(pos,1);
-      updateKillItem(it.id, { shared: arr.length>0, shared_with: arr });
+      updateKillItem(it.id, { shared: arr.length>0, shared_with: arr }, {
+        guard:function(q){ return prevShared.length ? q.eq('shared_with', '{'+prevShared.join(',')+'}') : q.or('shared_with.is.null,shared_with.eq.{}'); },
+        unchanged:function(now){ return (now.sharedWith||[]).join(',') === prevShared.join(','); }
+      });
       return;
     }
     var ed = e.target.closest('[data-sold-edit]');
     if(ed){ lootEditing = ed.dataset.soldEdit; renderHistory(); return; }
     var cl = e.target.closest('[data-sold-clear]');
-    if(cl){ lootEditing = null; updateKillItem(cl.dataset.soldClear, { sold_amount:null, sold_at:null }); return; }
+    // ยกเลิกขาย = กลับเป็นรอแบ่ง (ล้าง kept_at ด้วย กันแถวที่เคยถูกกดทั้งขาย+เก็บไว้ พลิกเป็น "เก็บไว้")
+    if(cl){ if(itemSaving[cl.dataset.soldClear]) return; lootEditing = null; updateKillItem(cl.dataset.soldClear, { sold_amount:null, sold_at:null, kept_at:null }); return; }
     var sv = e.target.closest('[data-sold-save]');
     if(sv){
       var id = sv.dataset.soldSave;
+      if(itemSaving[id]) return;
       var inp = document.querySelector('[data-sold-input="'+id+'"]');
       var cur = document.querySelector('[data-sold-currency="'+id+'"]');
       var amt = parseFloat((inp.value||'').replace(/,/g,''));
@@ -9994,12 +10379,16 @@
     if(hasAuthIntent || emailLinkError){
       history.replaceState(history.state, '', entryUrl.pathname + entryUrl.search + entryUrl.hash);
     }
+    // เพิ่งโหลดหน้าใหม่เพราะถูกเตะออกจากระบบ (ตัวจับ SIGNED_OUT) → บอกครั้งเดียว
+    var wasKicked = false;
+    try{ wasKicked = sessionStorage.getItem('gum100_kicked') === '1'; sessionStorage.removeItem('gum100_kicked'); }catch(e){}
     if(session){
       enterApp(session.user);
       // ล็อกอินอยู่แล้ว (ลิงก์เสียไม่ทำให้หลุดจากระบบ) — แค่บอกให้รู้ว่าลิงก์นั้นใช้ไม่ได้
       if(emailLinkError) toast('ลิงก์ในอีเมลนี้ใช้ไม่ได้แล้ว (เคยกดไปแล้ว มีอีเมลฉบับใหม่กว่า หรือเกิน 1 ชั่วโมง) — ยังล็อกอินอยู่ ใช้งานต่อได้ตามปกติ', 7000);
     } else {
       enterGuestPreview();
+      if(wasKicked) toast('บัญชีนี้เพิ่งถูกใช้ล็อกอินจากที่อื่น กรุณาล็อกอินใหม่', 5000);
       if(emailLinkError){
         // เปิดหน้าต่างเข้าสู่ระบบพร้อมกล่องบอกวิธีขอลิงก์ใหม่ (ลิงก์ยืนยันอีเมล / ลิงก์ตั้งรหัสใหม่)
         openAuthModal(false);
@@ -10012,7 +10401,7 @@
   });
   setInterval(function(){ tickTimers(); updateSoundLockHint(); updateClock(); tickTickerCountdowns(); }, 1000);
   // กระดานประกาศเป็นของร่วม — เช็คทุก 60 วิ เพื่อให้เห็นประกาศที่คนอื่นเพิ่งลง (โหลดจริงเฉพาะตอนมีอะไรเปลี่ยน)
-  // ข้ามตอนซ่อนแท็บ และตอนอยู่หน้าอื่นที่ไม่มีกระดาน — กลับมาหน้าบัญชีนักลงทุนเมื่อไหร่เช็คให้ทันที
+  // ข้ามตอนซ่อนแท็บ · เช็คทุกหน้า เพราะการ์ดราคารับ M อยู่บนแถบด้านบนทุกหน้า
   setInterval(function(){
     if(App.session && !document.hidden) refreshAnnouncementsIfChanged();
   }, 60000);

@@ -1046,6 +1046,8 @@
       <label for="forgotEmail">อีเมลที่ใช้สมัคร</label>
       <input type="email" id="forgotEmail" placeholder="you@example.com" autocomplete="email" autocapitalize="none" spellcheck="false">
     </div>
+    <!-- กล่อง Captcha ของหน้าต่างนี้เอง (หน้าต่างนี้ทับหน้าต่างล็อกอิน กล่อง #authCaptcha เลยกดไม่ได้) — app.js ensureForgotCaptcha() -->
+    <div class="auth-captcha" id="forgotCaptcha" hidden></div>
     <p class="auth-error" id="forgotError" role="alert"></p>
     <div class="forgot-sent" id="forgotSent" role="status" hidden></div>
     <div class="confirm-actions">
@@ -1262,4 +1264,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260928-presence"></script>
+<script src="assets/app.js?v=20260929-rate50"></script>

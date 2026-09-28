@@ -20,7 +20,20 @@ if (process.argv.includes('--check-js')) {
     assert.ok(first >= 0 && last > first, 'Settings business code boundaries must exist');
     return normalized.slice(first, last);
   };
-  assert.equal(settingsCode(currentJs), settingsCode(baseline), 'Settings business code must match baseline');
+  // Intentional audit fixes (2026-09-29) inside this block — exact text only, stripped from both sides.
+  const intentionalAdditions = [
+    // First-login server picker now applies the picked servers the same way as stSaveServers.
+    '      // เหมือนปุ่มบันทึกในหน้าตั้งค่า: การ์ดราคา/ชิปประกาศ/เซิร์ฟของกล่องซื้อ-ขาย ตามเซิร์ฟที่เพิ่งเลือกทันที\n' +
+    '      // (เดิมยังเป็นเซิร์ฟเริ่มต้นเดิม รายการซื้อ-ขายไปลงเซิร์ฟที่ผู้ใช้ไม่ได้เลือก)\n' +
+    '      pruneServerSelections(true);\n' +
+    '      renderAll();\n',
+    // Redeeming a promo code refreshes the code-history and points-history tabs on the same page.
+    '        // แท็บประวัติโค้ด/ประวัติแต้มในหน้าเดียวกันต้องเห็นรายการที่เพิ่งใช้ทันที\n' +
+    '        // (ไม่ใช้ renderSettingsPage — ตัวนั้นเขียนช่องชื่อ/ลิงก์ Facebook ทับจากโปรไฟล์ ของที่พิมพ์ค้างไว้หาย)\n' +
+    '        loadPromoHistory(); loadPointsHistory();\n',
+  ];
+  const withoutIntentional = code => intentionalAdditions.reduce((c, add) => c.replace(add, ''), code);
+  assert.equal(withoutIntentional(settingsCode(currentJs)), withoutIntentional(settingsCode(baseline)), 'Settings business code must match baseline');
   console.log('PASS settings source layout: settings business code unchanged against supplied baseline');
   process.exit(0);
 }

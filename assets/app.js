@@ -366,7 +366,9 @@
   function defaultRateSlots(){ return myServerIds().slice(0,3); }
   function defaultRateChipSlots(){ return myServerIds().slice(0,1); }
   var MAX_RATE_CHIP_SLOTS = 12;
-  var RATE_MAX_DEVIATION = 0.50; // block a posted price more than ±50% away from the current rate (typo guard) — must match announcements_guard (migration 20260929000300 / 000500)
+  // ราคารับ M: รับแพงขึ้นไม่จำกัด · รับถูกลงได้ไม่เกิน 50% ของราคาอ้างอิง (ผู้ใช้กำหนด 29 ก.ย. 2569)
+  // ต้องตรงกับ announcements_guard (migration 20260929000600) — ข้อความแจ้งเตือนก็ต้องตรงกัน
+  var RATE_MAX_DROP = 0.50;
   // ลงประกาศใหม่เสียแต้มตามระยะเวลา (แก้ไขประกาศเดิมยังฟรีเหมือนเดิม — ดู postAnnounceSubmitBtn)
   // ค่า cost ต้องตรงกับที่ฟังก์ชัน post_announcement() ฝั่ง DB คำนวณเป๊ะๆ (เทียบจาก value เป็น ms)
   // ราคาชุด 27 ก.ย. 2569 (migration 20260927000800_announcement_prices_hours.sql) — 5/15/30 นาทีเลิกใช้แล้ว
@@ -9502,7 +9504,7 @@
     }, null, { ok:'ไปหน้าตั้งค่า', cancel:'ปิด' });
   }
 
-  // ราคาอ้างอิงของตัวกัน ±50% — ต้องคิดแบบเดียวกับ announcements_guard (migration 20260929000500)
+  // ราคาอ้างอิงของตัวกันราคา (รับถูกลงได้ไม่เกิน 50%) — ต้องคิดแบบเดียวกับ announcements_guard (migration 20260929000500 / 000600)
   // แก้ไขในเซิร์ฟเดิม = ราคาอ้างอิงที่ล็อกไว้ตอนลงประกาศ (ref_buy) · ลงใหม่ / ย้ายเซิร์ฟ / ref_buy เป็น 0 หรือว่าง = คิดตามลำดับ
   //   1) ประกาศล่าสุดที่ยังไม่หมดอายุของเซิร์ฟนี้ "ของคนอื่น"  2) ราคาตั้งต้นของแอดมินถ้ามากกว่า 0
   //   3) ประกาศล่าสุดของเซิร์ฟนี้ของใครก็ได้ ภายใน 7 วัน  4) ไม่มีเลย: แก้ไขในเซิร์ฟเดิม = ราคาก่อนแก้ · ลงใหม่ = ไม่ตรวจ
@@ -9552,9 +9554,10 @@
     var editId = editingAnnouncementId;
     (unchanged ? Promise.resolve(null) : announcementRefBuy(serverId, editing)).then(function(refBuy){
       if(document.getElementById('postAnnouncementOverlay').hidden || editingAnnouncementId !== editId){ btn.disabled = false; return; }
-      if(refBuy>0 && Math.abs(buyVal-refBuy)/refBuy > RATE_MAX_DEVIATION){
+      var minBuy = refBuy>0 ? refBuy*(1-RATE_MAX_DROP) : 0;
+      if(refBuy>0 && buyVal < minBuy){
         btn.disabled = false;
-        toast('ราคาต่างจากราคาปัจจุบัน ('+fmtNum(refBuy)+'บ) เกิน '+Math.round(RATE_MAX_DEVIATION*100)+'% กรุณาตรวจสอบราคาอีกครั้ง');
+        toast('ราคารับต่ำกว่าราคาปัจจุบัน ('+fmtNum(refBuy)+'บ) เกิน '+Math.round(RATE_MAX_DROP*100)+'% — ต้องไม่ต่ำกว่า '+fmtNum(minBuy)+'บ', 5000);
         return;
       }
       saveAnnouncement(btn, serverId, buyVal, editId);
@@ -9576,15 +9579,15 @@
       // แก้ได้แค่เซิร์ฟเวอร์กับราคา — นาฬิกานับถอยหลังไม่รีเซ็ต (ฝั่ง DB ก็ล็อกไว้ด้วย trigger) ไม่เสียแต้มเพิ่ม
       supa.from('announcements').update({ server_id:serverId, buy:buyVal })
         .eq('id', editId)
-        // ฐานข้อมูลปฏิเสธ (P0001 เช่น ราคาต่างจากราคาอ้างอิงเกิน 50%) → โชว์เหตุผลจริง ลองซ้ำก็ไม่ผ่าน
+        // ฐานข้อมูลปฏิเสธ (P0001 เช่น ราคารับต่ำกว่าราคาปัจจุบันเกิน 50%) → โชว์เหตุผลจริง ลองซ้ำก็ไม่ผ่าน (5 วิ เท่าตัวเช็คในหน้าเว็บ)
         // เน็ตหลุด/โทเค็นหมดอายุ (supabase-js ไม่ reject แต่ส่ง error ภาษาอังกฤษมา) → ข้อความไทยเดิม
-        .then(function(res){ if(res.error){ btn.disabled = false; console.warn('announcement save', res.error); toast(res.error.code === 'P0001' ? res.error.message : 'บันทึกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง'); return; } done('แก้ไขประกาศแล้ว'); }, failed);
+        .then(function(res){ if(res.error){ btn.disabled = false; console.warn('announcement save', res.error); toast(res.error.code === 'P0001' ? res.error.message : 'บันทึกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง', res.error.code === 'P0001' ? 5000 : undefined); return; } done('แก้ไขประกาศแล้ว'); }, failed);
     } else {
       var durationMs = parseInt(document.getElementById('postAnnounceDuration').dataset.value, 10);
       // ลงประกาศใหม่เสียแต้มตามระยะเวลา — หักแต้ม+บันทึกประกาศทำในฟังก์ชันเดียวกันฝั่ง DB (atomic)
       // กันแต้มถูกหักแต่ประกาศไม่ขึ้น หรือประกาศขึ้นฟรีโดยไม่หักแต้ม
       supa.rpc('post_announcement', { p_server_id:serverId, p_buy:buyVal, p_duration_ms:durationMs }).then(function(res){
-        if(res.error){ btn.disabled = false; toast(res.error.message); return; }
+        if(res.error){ btn.disabled = false; toast(res.error.message, 5000); return; }
         refreshProfile();
         done('ลงประกาศแล้ว');
       }, failed);

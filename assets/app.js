@@ -366,7 +366,7 @@
   function defaultRateSlots(){ return myServerIds().slice(0,3); }
   function defaultRateChipSlots(){ return myServerIds().slice(0,1); }
   var MAX_RATE_CHIP_SLOTS = 12;
-  var RATE_MAX_DEVIATION = 0.50; // block a posted price more than ±50% away from the current rate (typo guard) — must match announcements_guard (migration 20260929000300)
+  var RATE_MAX_DEVIATION = 0.50; // block a posted price more than ±50% away from the current rate (typo guard) — must match announcements_guard (migration 20260929000300 / 000500)
   // ลงประกาศใหม่เสียแต้มตามระยะเวลา (แก้ไขประกาศเดิมยังฟรีเหมือนเดิม — ดู postAnnounceSubmitBtn)
   // ค่า cost ต้องตรงกับที่ฟังก์ชัน post_announcement() ฝั่ง DB คำนวณเป๊ะๆ (เทียบจาก value เป็น ms)
   // ราคาชุด 27 ก.ย. 2569 (migration 20260927000800_announcement_prices_hours.sql) — 5/15/30 นาทีเลิกใช้แล้ว
@@ -9502,19 +9502,38 @@
     }, null, { ok:'ไปหน้าตั้งค่า', cancel:'ปิด' });
   }
 
-  // ราคาอ้างอิงของตัวกัน ±50% — ต้องคิดแบบเดียวกับ announcements_guard (migration 20260929000100 / 000300)
-  // ลงใหม่ / ย้ายเซิร์ฟ / ประกาศเก่าที่ยังไม่มี ref_buy: ประกาศล่าสุดที่ยังไม่หมดอายุของเซิร์ฟนี้ "ของคนอื่น"
-  // (ไม่นับของตัวเอง) · ไม่มี = ราคาตั้งต้นของแอดมิน · แก้ไขในเซิร์ฟเดิม = ราคาอ้างอิงที่ล็อกไว้ตอนลงประกาศ
+  // ราคาอ้างอิงของตัวกัน ±50% — ต้องคิดแบบเดียวกับ announcements_guard (migration 20260929000500)
+  // แก้ไขในเซิร์ฟเดิม = ราคาอ้างอิงที่ล็อกไว้ตอนลงประกาศ (ref_buy) · ลงใหม่ / ย้ายเซิร์ฟ / ref_buy เป็น 0 หรือว่าง = คิดตามลำดับ
+  //   1) ประกาศล่าสุดที่ยังไม่หมดอายุของเซิร์ฟนี้ "ของคนอื่น"  2) ราคาตั้งต้นของแอดมินถ้ามากกว่า 0
+  //   3) ประกาศล่าสุดของเซิร์ฟนี้ของใครก็ได้ ภายใน 7 วัน  4) ไม่มีเลย: แก้ไขในเซิร์ฟเดิม = ราคาก่อนแก้ · ลงใหม่ = ไม่ตรวจ
+  // ข้อ 1 และ 3 อ่านประกาศของเซิร์ฟนี้ภายใน 7 วันจากฐานข้อมูลตอนกดบันทึก (รวมที่หมดอายุแล้ว — App.rateAnnouncements
+  // มีแค่ที่ยังไม่หมดอายุ ใช้แทนไม่ได้ จะเลือกคนละแถวกับฐานข้อมูลแล้วบล็อกราคาที่ฐานข้อมูลยอม) · อ่านไม่สำเร็จ = ไม่ตรวจ
+  // ที่หน้าเว็บ ปล่อยให้ฐานข้อมูลตรวจ (ปฏิเสธพร้อมเหตุผลภาษาไทย ลงใหม่ไม่เสียแต้ม) — หน้าเว็บต้องไม่เข้มกว่าฐานข้อมูล
+  var REF_RECENT_MS = 7 * 86400000;
   function announcementRefBuy(serverId, editing){
-    // ref_buy เป็น 0 = ฐานข้อมูลไม่ตรวจราคา (new.ref_buy > 0) → คืน 0 ให้ผู้เรียกข้ามการตรวจเหมือนกัน
-    if(editing && editing.serverId===serverId && editing.refBuy!=null) return editing.refBuy;
+    if(editing && editing.serverId===serverId && editing.refBuy>0) return Promise.resolve(editing.refBuy);
     var now = Date.now(), me = App.session && App.session.id;
-    var live = App.rateAnnouncements.filter(function(a){
-      return a.serverId===serverId && a.buy>0 && a.buy<1000000 && (a.expiresAt==null || a.expiresAt>now) && a.userId!==me;
-    });
-    if(live.length) return live.reduce(function(a,b){ return b.ts>a.ts ? b : a; }).buy;
-    var sv = serverRateById(serverId);
-    return sv && Number(sv.defaultBuy)>0 ? Number(sv.defaultBuy) : null;
+    return supa.from('announcements').select('id, buy, user_id, created_at, expires_at')
+      .eq('server_id', serverId).gt('created_at', new Date(now - REF_RECENT_MS).toISOString())
+      .order('created_at', { ascending:false }).limit(200)
+      .then(function(res){
+        if(res.error){ console.warn('announcementRefBuy', res.error); return null; }
+        var rows = (res.data||[]).filter(function(a){
+          var b = Number(a.buy);
+          return b>0 && b<1000000 && !(editing && a.id===editing.id);
+        });
+        // 1) ล่าสุดที่ยังไม่หมดอายุ ของคนอื่น (ประกาศมีอายุไม่เกิน 24 ชม. จึงอยู่ในช่วง 7 วันที่ดึงมาเสมอ)
+        var other = rows.filter(function(a){ return Date.parse(a.expires_at) > now && a.user_id !== me; })[0];
+        if(other) return Number(other.buy);
+        // 2) ราคาตั้งต้นของแอดมิน
+        var sv = serverRateById(serverId);
+        if(sv && Number(sv.defaultBuy)>0) return Number(sv.defaultBuy);
+        // 3) ล่าสุดของเซิร์ฟนี้ ของใครก็ได้ ภายใน 7 วัน
+        if(rows.length) return Number(rows[0].buy);
+        // 4) ไม่มีเลย: แก้ไขในเซิร์ฟเดิม = ราคาก่อนแก้ · ลงใหม่ = ไม่ตรวจ (ฐานข้อมูลใช้ราคาของประกาศเอง)
+        if(editing && editing.serverId===serverId && editing.buy>0 && editing.buy<1000000) return editing.buy;
+        return null;
+      }, function(err){ console.warn('announcementRefBuy', err); return null; });
   }
   document.getElementById('postAnnounceSubmitBtn').addEventListener('click', function(){
     if(!editingAnnouncementId && !hasFacebookUrl()){ showFacebookRequiredPopup(); return; }
@@ -9525,16 +9544,23 @@
     var editing = editingAnnouncementId ? App.rateAnnouncements.filter(function(a){ return a.id===editingAnnouncementId; })[0] : null;
     // แก้ไขโดยไม่ได้เปลี่ยนราคา/เซิร์ฟ = ฐานข้อมูลไม่ตรวจราคา → หน้าเว็บก็ไม่ตรวจ
     var unchanged = editing && editing.serverId===serverId && editing.buy===buyVal;
-    var refBuy = unchanged ? null : announcementRefBuy(serverId, editing);
-    if(refBuy>0){
-      var deviation = Math.abs(buyVal-refBuy)/refBuy;
-      if(deviation > RATE_MAX_DEVIATION){
+    var btn = this;
+    if(btn.disabled) return; // กำลังตรวจราคา/บันทึกอยู่ — กดซ้ำไม่ส่งซ้ำ
+    btn.disabled = true;
+    // จำประกาศที่กำลังแก้ไว้ตั้งแต่ตอนกด — ระหว่างรอตรวจราคา ถ้าปิดหน้าต่าง/เปิดแก้ประกาศอื่น ต้องไม่บันทึก
+    // (เดิมอ่าน editingAnnouncementId ตอนบันทึก → ปิดหน้าต่างระหว่างรอ = กลายเป็นลงประกาศใหม่ เสียแต้ม)
+    var editId = editingAnnouncementId;
+    (unchanged ? Promise.resolve(null) : announcementRefBuy(serverId, editing)).then(function(refBuy){
+      if(document.getElementById('postAnnouncementOverlay').hidden || editingAnnouncementId !== editId){ btn.disabled = false; return; }
+      if(refBuy>0 && Math.abs(buyVal-refBuy)/refBuy > RATE_MAX_DEVIATION){
+        btn.disabled = false;
         toast('ราคาต่างจากราคาปัจจุบัน ('+fmtNum(refBuy)+'บ) เกิน '+Math.round(RATE_MAX_DEVIATION*100)+'% กรุณาตรวจสอบราคาอีกครั้ง');
         return;
       }
-    }
-    var btn = this;
-    btn.disabled = true;
+      saveAnnouncement(btn, serverId, buyVal, editId);
+    });
+  });
+  function saveAnnouncement(btn, serverId, buyVal, editId){
     var done = function(msg){
       btn.disabled = false;
       closePostAnnouncement();
@@ -9546,10 +9572,10 @@
       console.warn('announcement save', err);
       toast('บันทึกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง');
     };
-    if(editingAnnouncementId){
+    if(editId){
       // แก้ได้แค่เซิร์ฟเวอร์กับราคา — นาฬิกานับถอยหลังไม่รีเซ็ต (ฝั่ง DB ก็ล็อกไว้ด้วย trigger) ไม่เสียแต้มเพิ่ม
       supa.from('announcements').update({ server_id:serverId, buy:buyVal })
-        .eq('id', editingAnnouncementId)
+        .eq('id', editId)
         // ฐานข้อมูลปฏิเสธ (P0001 เช่น ราคาต่างจากราคาอ้างอิงเกิน 50%) → โชว์เหตุผลจริง ลองซ้ำก็ไม่ผ่าน
         // เน็ตหลุด/โทเค็นหมดอายุ (supabase-js ไม่ reject แต่ส่ง error ภาษาอังกฤษมา) → ข้อความไทยเดิม
         .then(function(res){ if(res.error){ btn.disabled = false; console.warn('announcement save', res.error); toast(res.error.code === 'P0001' ? res.error.message : 'บันทึกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง'); return; } done('แก้ไขประกาศแล้ว'); }, failed);
@@ -9563,7 +9589,7 @@
         done('ลงประกาศแล้ว');
       }, failed);
     }
-  });
+  }
 
   // ---------- "ลงประกาศ" dropdown → manage my own announcements ----------
   document.getElementById('tickerPostMenuToggle').addEventListener('click', function(e){

@@ -3355,6 +3355,8 @@
     var sel = document.getElementById('farmServerSelect');
     var ids = farmServerIds();
     if(ids.indexOf(App.farmServerId)===-1){
+      // เซิร์ฟของรายการที่กำลังแก้ถูกซ่อน/พักระหว่างไปหน้าอื่น → ยกเลิกการแก้ไขก่อนสลับเซิร์ฟ (คืนชุดต้นทุนของเซิร์ฟนั้น)
+      if(editingFarmId){ cancelFarmEdit(); toast('ยกเลิกการแก้ไขแล้ว — เซิร์ฟเวอร์ของรายการนี้ถูกซ่อนอยู่', 4000); }
       App.farmServerId = ids[0] || null;
       saveFarmServer();
     }
@@ -3810,8 +3812,9 @@
         : '';
       return '<div class="farm-history-day">'+
         '<div class="farm-history-day-head"><span>'+historyDayLabel(grp.ts)+'</span><span class="farm-history-day-count">'+grp.rows.length+' รายการ</span><span class="farm-history-day-count">'+dayGamCount+' กั้ม</span>'+
-        '<span class="farm-history-day-total '+(dayProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(dayProfit>=0?'+':'')+fmtNum(dayProfit)+' z'+dayBahtText+'</span>'+toggleBtn+'</div>'+
-        (hiddenCount>0 ? '<div class="farm-history-day-hidden-note">ซ่อนอยู่ '+hiddenCount+' รายการ — แสดงเฉพาะรายการล่าสุด</div>' : '')+
+        '<span class="farm-history-day-total '+(dayProfit>=0?'farm-profit-pos':'farm-profit-neg')+'">กำไรรวม '+(dayProfit>=0?'+':'')+fmtNum(dayProfit)+' z'+dayBahtText+'</span>'+toggleBtn+
+        // ข้อความ "ซ่อนอยู่ N รายการ" อยู่ในแถบหัวของวัน ต่อจากปุ่มแสดงทั้งหมด (ผู้ใช้ขอ 29 ก.ย. — เดิมเป็นบรรทัดแยกใต้แถบหัว)
+        (hiddenCount>0 ? '<span class="farm-history-day-hidden-note">ซ่อนอยู่ '+hiddenCount+' รายการ — แสดงเฉพาะรายการล่าสุด</span>' : '')+'</div>'+
         '<div class="farm-history-day-list">'+entriesHtml+'</div>'+
       '</div>';
     }).join('');
@@ -9684,6 +9687,12 @@
 
   // ---------- ยอดนักฟาร์ม wiring ----------
   document.getElementById('farmServerSelect').addEventListener('change', function(e){
+    // กำลังแก้รายการอยู่ → ไม่ให้เปลี่ยนเซิร์ฟ (ไม่งั้นฟอร์มเป็นต้นทุน/เรทของเซิร์ฟอื่น แล้ว "บันทึกการแก้ไข" ย้ายรายการไปเซิร์ฟนั้น)
+    if(editingFarmId && farmEditCostBackup && e.target.value !== farmEditCostBackup.serverId){
+      e.target.value = farmEditCostBackup.serverId;
+      toast('กำลังแก้ไขรายการอยู่ — กดบันทึกการแก้ไขหรือยกเลิกก่อนเปลี่ยนเซิร์ฟเวอร์', 4000);
+      return;
+    }
     App.farmServerId = e.target.value;
     saveFarmServer();
     resetFarmTimeframes();
@@ -10008,17 +10017,20 @@
   // ลากเมาส์เลือกตัวเลขในการ์ดแล้วปล่อยนอกการ์ด → เบราว์เซอร์ยิง click ที่พื้นที่ร่วมของจุดกดกับจุดปล่อย (นอกการ์ด)
   // เดิมนับเป็นคลิกนอกการ์ด = ยกเลิกการแก้ไข แล้วพิมพ์ตัวเลขใหม่ + บันทึก กลายเป็นรายการใหม่ (ผู้ใช้เจอจริง 29 ก.ย.)
   // → จำจุดที่เริ่มกด เริ่มกดในการ์ด/ที่ที่อนุญาต = ไม่นับว่าคลิกนอก
-  var farmPressStartedInside = false;
-  document.addEventListener('pointerdown', function(e){ farmPressStartedInside = farmEditAllowedTarget(e.target); }, true);
+  // + จุดที่ปล่อย: ลากจากนอกการ์ดมาปล่อยในการ์ด ก็ไม่นับเป็นคลิกนอก
+  var farmPressStartedInside = false, farmPressEndedInside = false;
+  document.addEventListener('pointerdown', function(e){ farmPressStartedInside = farmEditAllowedTarget(e.target); farmPressEndedInside = false; }, true);
+  document.addEventListener('pointerup', function(e){ farmPressEndedInside = farmEditAllowedTarget(e.target); }, true);
   document.addEventListener('click', function(e){
     if(!editingFarmId) return;
-    // ไปหน้าอื่น / อยู่หน้าอื่นอยู่ = โหมดแก้ไขค้างไว้ กลับมาแก้ต่อได้ (ไม่ถามทุกคลิกในหน้าอื่น)
-    if(document.getElementById('view-farm').hidden) return;
-    if(e.target.closest('[data-page]')) return;
+    // นับเฉพาะคลิกภายในหน้ายอดนักฟาร์ม — ไปหน้าอื่น / แถบเมนู / แถบบน (เติมแต้ม การ์ดเรท) / หน้าต่างที่เด้งทับ (เติมแต้ม
+    // ลงประกาศ วิธีใช้ เลือกเซิร์ฟ …) อยู่นอก #view-farm = โหมดแก้ไขค้างไว้ ใช้หน้าต่างเหล่านั้นได้ปกติ แล้วกลับมาแก้ต่อได้
+    // (เดิมทุกคลิกในหน้าต่างที่เด้งจากหน้านี้ถูกนับเป็นคลิกนอกการ์ด → ถามซ้ำทุกคลิก ใช้หน้าต่างนั้นไม่ได้)
+    if(document.getElementById('view-farm').hidden || !e.target.closest('#view-farm')) return;
     // กดช่องยอดที่ฟาร์มได้ → หน้าต่างเตือน OC เด้งขึ้นตอนกดเมาส์ลง แล้วคลิกไปจบบนหน้าต่างนั้น เบราว์เซอร์จึงนับว่าคลิกที่ body
     // (นอกฟอร์ม) — ห้ามถือเป็นการคลิกออกนอกฟอร์ม ไม่งั้นการแก้ไขถูกยกเลิกเองทุกครั้งที่กดช่องยอด
     if(!document.getElementById('farmOcHintOverlay').hidden) return;
-    if(farmEditAllowedTarget(e.target) || farmPressStartedInside) return;
+    if(farmEditAllowedTarget(e.target) || farmPressStartedInside || farmPressEndedInside) return;
     // เดิมยกเลิกเงียบๆ → ไม่รู้ตัวว่าหลุดโหมดแก้ไข กรอกแล้วกด "บันทึก" กลายเป็นรายการใหม่ (ผู้ใช้ทดสอบ 29 ก.ย.)
     // แก้ค่าไปแล้ว = ถามก่อน (ค่าเริ่มต้นของกล่อง = แก้ต่อ) · ยังไม่ได้แก้อะไร = ยกเลิกพร้อมแจ้ง
     if(farmEditBaseline != null && farmEditFormState() !== farmEditBaseline){
@@ -10044,7 +10056,17 @@
       return;
     }
     var editBtn = e.target.closest('[data-farm-edit]');
-    if(editBtn){ startEditFarmEntry(editBtn.dataset.farmEdit); return; }
+    if(editBtn){
+      var nextEditId = editBtn.dataset.farmEdit;
+      // แก้รายการหนึ่งค้างอยู่ (มีค่าที่เปลี่ยน) แล้วกด ✎ อีกรายการ → ถามก่อน ค่าที่แก้ไว้จะหาย
+      if(editingFarmId && editingFarmId !== nextEditId && farmEditBaseline != null && farmEditFormState() !== farmEditBaseline){
+        showConfirm('<b>แก้รายการอื่นแทน?</b><br>ค่าที่แก้ไว้ในรายการเดิมจะหายไป', function(){ startEditFarmEntry(nextEditId); }, null,
+          { ok:'แก้รายการใหม่', cancel:'แก้รายการเดิมต่อ' });
+        return;
+      }
+      startEditFarmEntry(nextEditId);
+      return;
+    }
     var btn = e.target.closest('[data-farm-del]');
     if(!btn) return;
     var id = btn.dataset.farmDel;

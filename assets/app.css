@@ -419,6 +419,8 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-history-day-toggle{margin-left:.5rem;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:999px;padding:.15rem .55rem;font-size:.66rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
 .farm-history-day-toggle:hover{border-color:var(--accent);color:var(--text)}
 .farm-history-day-hidden-note{font-size:.68rem;color:var(--text-dim);font-style:italic;margin:0 0 .4rem}
+/* อยู่ในแถบหัวของวัน ต่อจากปุ่ม "แสดงทั้งหมด" — ตัวเล็ก สีจาง ไม่หนา (หัวแถบเป็นตัวหนา) */
+.farm-history-day-head .farm-history-day-hidden-note{margin:0;font-weight:400}
 .farm-profit-pos{color:var(--success);font-family:"JetBrains Mono"}
 .farm-profit-neg{color:var(--danger);font-family:"JetBrains Mono"}
 .panel-farm-history .chart-tf-select{padding:.35rem .5rem;font-size:.78rem}
@@ -3478,6 +3480,7 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 #view-farm .farm-history-day-count{color:#becbe0;font-size:.75rem}
 #view-farm .farm-history-day-total{white-space:normal;overflow-wrap:anywhere;font-size:.78rem}
 #view-farm .farm-history-day-toggle{min-height:36px;padding:6px 10px;border:1px solid var(--farm-day-edge);border-radius:8px;background:rgba(9,18,32,.3);color:#e0ebfa;font-size:.75rem}
+#view-farm .farm-history-day-head .farm-history-day-hidden-note{font-size:.72rem;color:#b6c4da}
 #view-farm .farm-history-day-list{gap:8px}
 #view-farm .farm-history-day .farm-history-entry:is(.farm-history-alt-odd,.farm-history-alt-even){background:var(--farm-entry-surface);border:1px solid rgba(187,206,239,.26);border-radius:9px;padding:12px;gap:10px;box-shadow:none;filter:none}
 #view-farm .farm-history-day .farm-history-entry:is(.farm-history-alt-odd,.farm-history-alt-even):hover{border-color:var(--farm-day-edge);box-shadow:none;filter:none}

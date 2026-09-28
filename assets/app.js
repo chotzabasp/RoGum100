@@ -3701,6 +3701,8 @@
     if(timeframeEl) timeframeEl.value = 'today';
   }
   var editingFarmId = null;
+  // ค่าในฟอร์มตอนเริ่มแก้ (JSON) — เทียบตอนคลิกนอกกล่อง: เปลี่ยนไปแล้ว = ถามก่อนยกเลิก (ดู farmEditFormState)
+  var farmEditBaseline = null;
   var farmEditCostBackup = null;
   var farmOcActive = false;
   var farmOcHintAcknowledged = false;
@@ -3936,6 +3938,8 @@
     farmOcHintAcknowledged = false;
     editingFarmId = null;
     farmEditCostBackup = null;
+    farmEditBaseline = null;
+    document.getElementById('farmEditBanner').hidden = true;
     document.getElementById('farmCancelEdit').hidden = true;
     document.getElementById('farmLogConfirm').textContent = 'บันทึก';
     document.querySelector('.panel-farm-cost').classList.remove('mr-entry-editing');
@@ -4018,10 +4022,28 @@
     document.getElementById('farmCancelEdit').hidden = false;
     document.getElementById('farmLogConfirm').textContent = 'บันทึกการแก้ไข';
     document.querySelector('.panel-farm-cost').classList.add('mr-entry-editing');
+    // บอกให้ชัดว่ากำลังแก้รายการไหน (เดิมมีแค่กรอบสีแดง + ชื่อปุ่ม — หลุดโหมดแก้ไขแล้วไม่รู้ตัว)
+    var editBanner = document.getElementById('farmEditBanner');
+    editBanner.textContent = 'กำลังแก้ไขรายการ ' + fmtNum(entry.count || 1) + ' กั้ม · ' + fmtDateTime(entry.ts) + (entry.mapName ? ' · ' + entry.mapName : '');
+    editBanner.hidden = false;
+    farmEditBaseline = farmEditFormState();
     renderFarmChart();
     farmHistoryPage = 0;
     renderFarmHistory();
     preserveFarmViewport(scrollX, scrollY);
+  }
+  // ค่าทุกอย่างที่ "บันทึกการแก้ไข" จะเขียนลงรายการ — ใช้ดูว่าผู้ใช้แก้อะไรไปแล้วหรือยัง
+  function farmEditFormState(){
+    var sid = App.farmServerId;
+    return JSON.stringify({
+      c: document.getElementById('farmCountInput').value,
+      e: document.getElementById('farmEarnedInput').value,
+      oc: !!farmOcActive,
+      rare: farmRareItemRows.map(function(r){ return [r.name||'', r.price==null?'':String(r.price), r.qty==null?'':String(r.qty), r.currency||'zeny']; }),
+      cost: farmSnapshotCostRows(sid),
+      rate: App.farmExchangeRates[sid] == null ? null : App.farmExchangeRates[sid],
+      map: App.farmMapNames[sid] || ''
+    });
   }
 
   function renderFarmPage(){
@@ -9909,27 +9931,37 @@
       return s + (r.currency==='baht' ? farmBahtToZeny(lineTotal, costBd.rate) : lineTotal);
     }, 0);
     var totalEarned = val + rareTotal;
+    // จำรายการที่แก้ + ค่าในฟอร์มไว้ตั้งแต่ตอนกด — ระหว่างกล่องยืนยันเปิด ถ้าโหมดแก้ไขหลุด (เดิมอ่าน editingFarmId ตอนยืนยัน
+    // หลุดแล้ว = ตกไปทางบันทึกรายการใหม่) ก็ยังแก้รายการเดิมด้วยค่าที่เห็นตอนกด ไม่มีทางกลายเป็นรายการใหม่
+    var editId = editingFarmId, ocAtClick = farmOcActive, sidAtClick = App.farmServerId;
+    var costItemsAtClick = farmSnapshotCostRows(sidAtClick), exRateAtClick = farmExchangeRate(sidAtClick) || null, mapAtClick = App.farmMapNames[sidAtClick] || '';
 
     function commitFarmLog(){
       var scrollX = window.scrollX, scrollY = window.scrollY;
-      if(editingFarmId){
-        var entry = App.farmLog.filter(function(e){ return e.id===editingFarmId; })[0];
-        if(entry){
-          entry.serverId = App.farmServerId;
-          entry.count = count;
-          entry.cost = cost;
-          entry.earnedBase = val;
-          entry.ocApplied = farmOcActive;
-          entry.rareItems = rareItemsSnapshot;
-          entry.earned = totalEarned;
-          entry.profit = totalEarned-cost;
-          entry.costItems = farmSnapshotCostRows(App.farmServerId);
-          entry.exchangeRate = farmExchangeRate(App.farmServerId) || null;
-          entry.mapName = App.farmMapNames[App.farmServerId] || '';
+      if(editId){
+        var entry = App.farmLog.filter(function(e){ return e.id===editId; })[0];
+        if(!entry){
+          toast('ไม่พบรายการที่แก้ไข (อาจถูกลบไปแล้ว) — ไม่ได้บันทึก');
+          if(editingFarmId === editId) cancelFarmEdit();
+          return;
         }
+        entry.serverId = sidAtClick;
+        entry.count = count;
+        entry.cost = cost;
+        entry.earnedBase = val;
+        entry.ocApplied = ocAtClick;
+        entry.rareItems = rareItemsSnapshot;
+        entry.earned = totalEarned;
+        entry.profit = totalEarned-cost;
+        entry.costItems = costItemsAtClick;
+        entry.exchangeRate = exRateAtClick;
+        entry.mapName = mapAtClick;
         saveFarmLog();
-        restoreFarmEditCostBackup();
-        resetFarmEditState();
+        // ยังแก้รายการนี้อยู่ = คืนชุดต้นทุนปัจจุบัน + ล้างฟอร์ม · หลุดไปแล้ว = ถูกคืน/ล้างไปตอนหลุดแล้ว ไม่แตะซ้ำ
+        if(editingFarmId === editId){
+          restoreFarmEditCostBackup();
+          resetFarmEditState();
+        }
         renderFarmHistory();
         renderFarmChart();
         preserveFarmViewport(scrollX, scrollY);
@@ -9954,7 +9986,7 @@
       }
     }
 
-    if(editingFarmId){
+    if(editId){
       showConfirm('ยืนยันบันทึกการแก้ไขรายการนี้?', commitFarmLog);
     } else {
       commitFarmLog();
@@ -9968,18 +10000,38 @@
   // which would otherwise fail every closest() check below and wrongly treat an
   // inside click as "outside". Clicking anywhere outside the farm-cost panel / the
   // history row being edited while an edit is in progress cancels it.
+  // ที่ที่คลิกแล้วไม่นับว่า "คลิกนอกการ์ด" (การ์ดต้นทุน / ปุ่มแก้-ลบในประวัติ / กล่องยืนยันและหน้าต่างที่เด้งจากการ์ด)
+  function farmEditAllowedTarget(t){
+    return !!(t && t.closest && (t.closest('[data-farm-edit]') || t.closest('[data-farm-del]') || t.closest('.panel-farm-cost') ||
+      t.closest('#confirmOverlay') || t.closest('#farmRateRequiredOverlay') || t.closest('#farmOcHintOverlay')));
+  }
+  // ลากเมาส์เลือกตัวเลขในการ์ดแล้วปล่อยนอกการ์ด → เบราว์เซอร์ยิง click ที่พื้นที่ร่วมของจุดกดกับจุดปล่อย (นอกการ์ด)
+  // เดิมนับเป็นคลิกนอกการ์ด = ยกเลิกการแก้ไข แล้วพิมพ์ตัวเลขใหม่ + บันทึก กลายเป็นรายการใหม่ (ผู้ใช้เจอจริง 29 ก.ย.)
+  // → จำจุดที่เริ่มกด เริ่มกดในการ์ด/ที่ที่อนุญาต = ไม่นับว่าคลิกนอก
+  var farmPressStartedInside = false;
+  document.addEventListener('pointerdown', function(e){ farmPressStartedInside = farmEditAllowedTarget(e.target); }, true);
   document.addEventListener('click', function(e){
     if(!editingFarmId) return;
+    // ไปหน้าอื่น / อยู่หน้าอื่นอยู่ = โหมดแก้ไขค้างไว้ กลับมาแก้ต่อได้ (ไม่ถามทุกคลิกในหน้าอื่น)
+    if(document.getElementById('view-farm').hidden) return;
+    if(e.target.closest('[data-page]')) return;
     // กดช่องยอดที่ฟาร์มได้ → หน้าต่างเตือน OC เด้งขึ้นตอนกดเมาส์ลง แล้วคลิกไปจบบนหน้าต่างนั้น เบราว์เซอร์จึงนับว่าคลิกที่ body
     // (นอกฟอร์ม) — ห้ามถือเป็นการคลิกออกนอกฟอร์ม ไม่งั้นการแก้ไขถูกยกเลิกเองทุกครั้งที่กดช่องยอด
     if(!document.getElementById('farmOcHintOverlay').hidden) return;
-    if(e.target.closest('[data-farm-edit]')) return;
-    if(e.target.closest('[data-farm-del]')) return;
-    if(e.target.closest('.panel-farm-cost')) return;
-    if(e.target.closest('#confirmOverlay')) return;
-    if(e.target.closest('#farmRateRequiredOverlay')) return;
-    if(e.target.closest('#farmOcHintOverlay')) return;
+    if(farmEditAllowedTarget(e.target) || farmPressStartedInside) return;
+    // เดิมยกเลิกเงียบๆ → ไม่รู้ตัวว่าหลุดโหมดแก้ไข กรอกแล้วกด "บันทึก" กลายเป็นรายการใหม่ (ผู้ใช้ทดสอบ 29 ก.ย.)
+    // แก้ค่าไปแล้ว = ถามก่อน (ค่าเริ่มต้นของกล่อง = แก้ต่อ) · ยังไม่ได้แก้อะไร = ยกเลิกพร้อมแจ้ง
+    if(farmEditBaseline != null && farmEditFormState() !== farmEditBaseline){
+      var askId = editingFarmId;
+      showConfirm('<b>ยกเลิกการแก้ไขรายการนี้?</b><br>ค่าที่แก้ไว้จะหายไป', function(){
+        if(editingFarmId !== askId) return;
+        cancelFarmEdit();
+        toast('ยกเลิกการแก้ไขแล้ว');
+      }, null, { ok:'ยกเลิกการแก้ไข', cancel:'แก้ต่อ' });
+      return;
+    }
     cancelFarmEdit();
+    toast('ยกเลิกการแก้ไขแล้ว');
   }, true);
 
   document.getElementById('farmHistoryList').addEventListener('click', function(e){

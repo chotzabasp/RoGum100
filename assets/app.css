@@ -540,6 +540,8 @@ svg.icon{width:18px;height:18px;display:block}
 .mr-entry-actions button:hover{color:var(--accent)}
 .mr-entry-actions button.mr-del:hover{color:var(--danger)}
 .panel-farm-cost.mr-entry-editing{border-color:var(--danger);box-shadow:0 0 0 1px rgba(239,90,86,.35)}
+/* ยอดนักฟาร์ม: กำลังแก้ไขรายการไหน (เหนือปุ่มบันทึกการแก้ไข) */
+.farm-edit-banner{margin:0 0 .55rem;padding:.5rem .7rem;border-radius:var(--radius-s);font-size:.78rem;line-height:1.5;font-weight:600;color:var(--danger);background:color-mix(in srgb, var(--danger) 10%, transparent);border:1px solid color-mix(in srgb, var(--danger) 30%, transparent)}
 /* ชิปเซิร์ฟที่เลือกไม่ได้เพราะโควต้าเต็ม */
 .share-chip.chip-locked{opacity:.4;cursor:not-allowed}
 .server-quota-hint{margin-top:.5rem}

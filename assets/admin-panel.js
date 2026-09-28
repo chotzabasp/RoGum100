@@ -678,7 +678,7 @@ export function initAdminPanel(ctx){
       var done = function(){ toast('คัดลอกรหัสแล้ว'); };
       if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pw).then(done, function(){ toast('คัดลอกไม่สำเร็จ — เลือกรหัสแล้วคัดลอกเอง'); adminResetShowResult(t, pw); });
       else { toast('เบราว์เซอร์ไม่รองรับการคัดลอกอัตโนมัติ — เลือกรหัสแล้วคัดลอกเอง'); adminResetShowResult(t, pw); }
-    }, null, { ok:'คัดลอกรหัส', cancel:'ปิด' });
+    }, null, { ok:'คัดลอกรหัส', cancel:'ปิด', focus:'ok', keepOnBackdrop:true }); // กด Enter / คลิกนอกกล่องพลาดต้องไม่ทำรหัสหาย
   }
   document.getElementById('adminResetPassBtn').addEventListener('click', function(){
     var t = adminGrantTarget;

@@ -3669,7 +3669,7 @@ button,a,input,select,textarea,summary{scroll-margin-block:1rem}
 #view-pricing #pricingGrid .pricing-original{font-size:.85rem;color:var(--plan-muted);font-weight:400}
 #view-pricing #pricingGrid .pricing-promo-badge{position:static;margin:0;padding:2px 7px;border:0;border-radius:5px;background:#512c38;color:#ffb7bd;font-size:.75rem;font-weight:600;box-shadow:none;transform:none}
 #view-pricing #pricingGrid .pricing-perday{padding:0;border:0;background:none;border-radius:0;font-size:.75rem;line-height:1.6;color:#97dac2;font-weight:500;white-space:normal}
-/* รายปี: ป้ายเขียว "ประหยัด X บาท" คู่กับป้ายแดง "ลด 50%" + บรรทัดเล็กบอกยอดรายเดือน 12 เดือนที่ใช้เทียบ */
+/* รายปี: ป้ายเขียว "ประหยัด X บาท" + บรรทัดเล็กบอกยอดรายเดือน 12 เดือนที่ใช้เทียบ (รายปีไม่ลดช่วงโปรแล้ว — ไม่มีป้ายแดง "ลด 50%") */
 #view-pricing #pricingGrid .pricing-yearly-save{display:flex;flex-direction:column;align-items:flex-start;gap:3px;line-height:1.5}
 #view-pricing #pricingGrid .pricing-yearly-save b{padding:2px 7px;border-radius:5px;background:#203c3c;color:#94dfbd;font-size:.75rem;font-weight:600;white-space:nowrap}
 #view-pricing #pricingGrid .pricing-yearly-save small{font-size:.7rem;color:var(--plan-muted)}

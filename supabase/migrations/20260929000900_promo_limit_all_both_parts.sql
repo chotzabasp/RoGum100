@@ -1,12 +1,12 @@
 -- ============================================================
--- ย้อนกลับ 20260929000800_yearly_full_price_promo_limit.sql
---   plan_price → ฉบับ 20260929000700 (รายปีช่วงโปรลด 50%: 495 / 495 / 995 / 895 / 1,495) md5 29d63bb4…
---   buy_plan   → ฉบับ 20260929000400 (ไม่มีตัวจำกัดซื้อรายเดือนล่วงหน้า) md5 22373548…
--- รันคู่กับการคืน PRICING_PLANS / ตัวจำกัดใน assets/app.js (git revert คอมมิตนี้)
---   ตั้งเลข ?v= ของ app.js ใน app.html เป็นค่าใหม่เสมอ ห้ามคืนเป็น 20260929-prices2 (เบราว์เซอร์/CDN อาจเก็บไฟล์คนละฉบับไว้ใต้ชื่อนั้น)
---   ถ้ารัน 20260929000900 ไปแล้ว ต้องรันไฟล์ย้อนกลับของ 000900 ก่อน (ตัวเช็คด้านล่างจะหยุดถ้า buy_plan ไม่ใช่ฉบับ 000800)
--- ลำดับ: ย้อนกลับ = รายปีกลับไปถูกลง → รันไฟล์นี้ก่อน แล้วค่อยเอาหน้าเว็บฉบับเดิมขึ้น
---   (หน้าเว็บใหม่ที่ยังค้างอยู่โชว์รายปีราคาเต็ม ฐานข้อมูลหักถูกกว่า = ซื้อได้ ไม่มีใครโดนหักเกิน)
+-- ตัวจำกัดซื้อรายเดือนล่วงหน้าช่วงโปร: 4 in 1 ต้องเหลือไม่เกิน 30 วันทั้งสองส่วน (ผู้ใช้สั่ง "ทำเลย" 29 ก.ย. 2569)
+-- ช่องโหว่ที่ผลตรวจพบใน 20260929000800: 4 in 1 ดูแค่ส่วนที่หมดก่อน (least) แต่ซื้อทีหนึ่งต่อทั้ง 3 in 1 และจับเวลาบอส
+--   → กดจับเวลาบอส 2 ครั้ง + 4 in 1 อีก 2 ครั้ง ได้จับเวลาบอสล่วงหน้า ~120 วันในราคาโปร (ตั้งใจไว้ ~60 วัน)
+-- แก้: 4 in 1 ดูส่วนที่หมดทีหลัง (greatest) — ใครมีส่วนหนึ่งเหลือเกิน 30 วัน ซื้อแพ็กเดี่ยวของอีกส่วนแทน
+-- buy_plan(): เปลี่ยนบรรทัดเดียว (least → greatest) + คอมเมนต์ 2 บรรทัด ส่วนอื่นคงเดิมทุกตัวอักษร (เนื้อเดิมจาก 20260929000800)
+-- plan_price / ราคา ไม่เปลี่ยน · รันก่อนหรือหลังหน้าเว็บก็ได้ (หน้าเว็บเก่าที่ค้างอยู่แค่เจอข้อความปฏิเสธ ไม่มีการหักแต้ม)
+-- ต้องตรงกับ promoMonthlyLockBase ใน assets/app.js
+-- ย้อนกลับ (ถ้าจำเป็น): supabase/rollbacks/20260929000900_promo_limit_all_both_parts_rollback.sql
 -- ============================================================
 begin;
 
@@ -16,41 +16,13 @@ do $guard$
 declare
   v_md5 text;
 begin
-  select md5(replace(prosrc, E'\r', '')) into v_md5 from pg_proc where oid = to_regprocedure('public.plan_price(text,text)');
-  if v_md5 is distinct from '6aa574dc5821699d6363ef1e10aaf382' then
-    raise exception 'plan_price ไม่ใช่ฉบับรายปีราคาเต็ม (md5 %) — ไม่มีอะไรถูกแก้', coalesce(v_md5, 'ไม่พบฟังก์ชัน');
-  end if;
   select md5(replace(prosrc, E'\r', '')) into v_md5 from pg_proc where oid = to_regprocedure('public.buy_plan(text, text, text, integer)');
   if v_md5 is distinct from '7611a9262acdaeea6d35fb94029edb43' then
-    raise exception 'buy_plan ไม่ใช่ฉบับที่มีตัวจำกัดซื้อล่วงหน้า (md5 %) — ไม่มีอะไรถูกแก้', coalesce(v_md5, 'ไม่พบฟังก์ชัน');
+    raise exception 'buy_plan ไม่ตรงกับที่คาดไว้ (md5 %) — ไม่มีอะไรถูกแก้', coalesce(v_md5, 'ไม่พบฟังก์ชัน');
   end if;
 end;
 $guard$;
 
--- ---------- 1) ตารางราคากลาง — ต้องตรงกับ PRICING_PLANS ใน assets/app.js ----------
-create or replace function public.plan_price(p_plan_key text, p_cycle text)
-returns integer
-language sql
-stable
-set search_path to 'public'
-as $function$
-  select case p_plan_key || ':' || p_cycle
-    when 'farm:monthly'         then case when public.promo_active() then   49 else   99 end
-    when 'farm:yearly'          then case when public.promo_active() then  495 else  990 end
-    when 'accountItems:monthly' then case when public.promo_active() then   49 else   99 end
-    when 'accountItems:yearly'  then case when public.promo_active() then  495 else  990 end
-    when 'timers:monthly'       then case when public.promo_active() then   99 else  199 end
-    when 'timers:yearly'        then case when public.promo_active() then  995 else 1990 end
-    when 'bundle:monthly'       then case when public.promo_active() then   89 else  179 end
-    when 'bundle:yearly'        then case when public.promo_active() then  895 else 1790 end
-    when 'all:monthly'          then case when public.promo_active() then  149 else  299 end
-    when 'all:yearly'           then case when public.promo_active() then 1495 else 2990 end
-  end
-$function$;
-
-revoke all on function public.plan_price(text, text) from public, anon, authenticated;
-
--- ---------- 2) buy_plan: ฉบับก่อนมีตัวจำกัดซื้อรายเดือนล่วงหน้า ----------
 create or replace function public.buy_plan(p_plan_key text, p_cycle text, p_code text default null, p_expected_price integer default null)
 returns timestamp with time zone
 language plpgsql
@@ -60,7 +32,7 @@ as $function$
 declare
   v_uid uuid := auth.uid(); v_price integer; v_days integer; v_points integer;
   v_bundle timestamptz; v_timers timestamptz; v_before timestamptz; v_new timestamptz;
-  v_bundle_new timestamptz; v_timers_new timestamptz; v_name text;
+  v_bundle_new timestamptz; v_timers_new timestamptz; v_name text; v_base timestamptz;
   v_promo public.promo_codes%rowtype; v_code text; v_full_price integer; v_discount integer := 0;
 begin
   if v_uid is null then raise exception 'ต้องล็อกอินก่อน'; end if;
@@ -69,7 +41,7 @@ begin
   end if;
   if p_cycle is null or p_cycle not in ('monthly','yearly') then raise exception 'รอบการชำระไม่ถูกต้อง'; end if;
   v_days := case p_cycle when 'monthly' then 30 else 365 end;
-  -- ราคาจากตารางราคากลาง plan_price (ช่วงโปรลด 50% อยู่ในนั้นแล้ว)
+  -- ราคาจากตารางราคากลาง plan_price (ช่วงโปรลด 50% เฉพาะรายเดือน อยู่ในนั้นแล้ว)
   v_price := public.plan_price(p_plan_key, p_cycle);
   if v_price is null then raise exception 'แพ็กเกจไม่ถูกต้อง'; end if;
   -- โค้ดส่วนลด (%): ลดจากราคาที่ต้องจ่ายตอนนั้น (ซ้อนกับโปรได้) ราคาหลังลดปัดเศษลง
@@ -91,6 +63,26 @@ begin
     from public.profiles where id = v_uid for update;
   if not found then raise exception 'ไม่พบโปรไฟล์'; end if;
   if not public.is_active() then raise exception 'บัญชีหมดอายุ ต่ออายุก่อนสมัครแพ็กเกจ'; end if;
+  -- ช่วงโปร รายเดือนซื้อล่วงหน้าได้สูงสุดราว 2 เดือน (ผู้ใช้สั่ง 29 ก.ย. 2569 ตอนยกเลิกโปรรายปี — กันกดรายเดือนราคาโปรซ้อนแทนรายปี)
+  -- วันที่จะต่อจาก (คิดแบบเดียวกับด้านล่าง) ต้องเหลือไม่เกิน 30 วัน · รายปี / หลังจบโปร ซื้อซ้อนได้ไม่จำกัด
+  -- ต้องตรงกับ promoMonthlyLockedUntil ใน assets/app.js
+  if p_cycle = 'monthly' and public.promo_active() then
+    if p_plan_key in ('farm','accountItems') then
+      select expires_at into v_base from public.package_feature_entitlements where user_id = v_uid and feature = p_plan_key;
+      v_base := greatest(v_base, v_bundle);
+    elsif p_plan_key = 'bundle' then
+      v_base := v_bundle;
+    elsif p_plan_key = 'timers' then
+      v_base := v_timers;
+    else
+      -- 4 in 1 ต่อทั้งสองส่วน → ทั้งสองส่วนต้องเหลือไม่เกิน 30 วัน (ส่วนที่หมดทีหลัง)
+      -- เดิม least = ดูส่วนที่หมดก่อน → กดสลับกับแพ็กเดี่ยวได้ส่วนหนึ่งล่วงหน้า ~120 วัน (ผลตรวจ 29 ก.ย. 2569)
+      v_base := greatest(coalesce(v_bundle, now()), coalesce(v_timers, now()));
+    end if;
+    if v_base > now() + interval '30 days' then
+      raise exception 'ช่วงโปรโมชันซื้อรายเดือนล่วงหน้าได้สูงสุด 2 เดือน — ซื้อเพิ่มได้เมื่อแพ็กนี้เหลือไม่เกิน 30 วัน หรือหลังโปรจบ';
+    end if;
+  end if;
   if coalesce(v_points, 0) < v_price then raise exception 'แต้มไม่พอ (ต้องการ % แต้ม)', v_price; end if;
 
   if p_plan_key in ('farm','accountItems') then
@@ -146,11 +138,9 @@ commit;
 notify pgrst, 'reload schema';
 
 -- ตรวจหลังรัน (อ่านอย่างเดียว) ต้องได้ 1 แถว true
+-- (buy_plan ตรงกับไฟล์นี้ · มีตัวเดียว · สิทธิ์เรียกเหมือนเดิม)
 select
-  (select md5(replace(prosrc, E'\r', '')) from pg_proc where oid = to_regprocedure('public.plan_price(text,text)')) = '29d63bb4ab49e039d78717fc812bde79'
-    and (select md5(replace(prosrc, E'\r', '')) from pg_proc where oid = to_regprocedure('public.buy_plan(text, text, text, integer)')) = '22373548f9efe1120fcacb5c696be310'
+  (select md5(replace(prosrc, E'\r', '')) from pg_proc where oid = to_regprocedure('public.buy_plan(text, text, text, integer)')) = '5d9788d6326d3e64e2823038d2fe7b6b'
     and (select count(*) from pg_proc where pronamespace = 'public'::regnamespace and proname = 'buy_plan') = 1
-    and not has_function_privilege('anon', 'public.plan_price(text,text)', 'execute')
-    and not has_function_privilege('authenticated', 'public.plan_price(text,text)', 'execute')
     and has_function_privilege('authenticated', 'public.buy_plan(text, text, text, integer)', 'execute')
-    and not has_function_privilege('anon', 'public.buy_plan(text, text, text, integer)', 'execute') as yearly_promo_restored_ok;
+    and not has_function_privilege('anon', 'public.buy_plan(text, text, text, integer)', 'execute') as promo_limit_all_ok;

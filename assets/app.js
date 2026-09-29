@@ -7548,6 +7548,7 @@
   }
   var pricingCycle = 'monthly';
   var pricingDetailsOpen = false; // รายละเอียดในการ์ดแพ็กทุกใบ ซ่อนไว้เป็นค่าเริ่มต้น
+  var pricingUnlockTimer = 0; // วาดการ์ดใหม่ตอนล็อกซื้อรายเดือนล่วงหน้าปลด (ดูท้าย renderPricingPage)
 
   // วันสิ้นสุดโปร (ระบุเขตเวลา) — หลังจากนี้หน้าเว็บแสดงราคาปกติ และเซิร์ฟเวอร์ (buy_plan → promo_active) หักราคาปกติ
   // ฝั่งเซิร์ฟเวอร์ตั้งให้สิ้นสุดช้ากว่านี้ 5 นาที กันนาฬิกาเครื่องผู้ใช้เร็วกว่าแล้วโดนหักแพงกว่าราคาที่เห็น
@@ -7610,7 +7611,8 @@
     }
   }
   // วันหมดอายุที่การซื้อครั้งถัดไปจะต่อจาก — คิดแบบเดียวกับ buy_plan (ฐานข้อมูล)
-  // 1 in 1 / 2 in 1 = ของแพ็กนั้นหรือ 3 in 1 ที่ครอบคลุมอยู่ (อันที่นานกว่า) · 4 in 1 = 3 in 1 กับจับเวลาบอส อันที่หมดก่อน
+  // 1 in 1 / 2 in 1 = ของแพ็กนั้นหรือ 3 in 1 ที่ครอบคลุมอยู่ (อันที่นานกว่า) · 4 in 1 = 3 in 1 กับจับเวลาบอส อันที่หมดก่อน (v_before)
+  // ตัวจำกัดซื้อรายเดือนล่วงหน้าไม่ใช้ค่า 4 in 1 นี้ — ใช้ promoMonthlyLockBase (อันที่หมดทีหลัง ตรงกับ greatest ใน buy_plan 000900)
   function planRenewBase(key){
     var p = App.profile || {};
     var scoped = p.feature_expiries || {};
@@ -7627,17 +7629,32 @@
   }
   // ช่วงโปร รายเดือนซื้อล่วงหน้าได้สูงสุดราว 2 เดือน (ผู้ใช้สั่ง 29 ก.ย. 2569 ตอนยกเลิกโปรรายปี — กันกดรายเดือนราคาโปรซ้อนแทนรายปี)
   // แพ็กนั้นเหลือเกิน 30 วัน = ยังซื้อรายเดือนเพิ่มไม่ได้ → คืนเวลาที่ซื้อได้อีกครั้ง · ซื้อได้ / รายปี / หลังจบโปร = 0
-  // ต้องตรงกับตัวจำกัดใน buy_plan (migration 20260929000800)
+  // 4 in 1 ต่อทั้ง 3 in 1 และจับเวลาบอส → ทั้งสองส่วนต้องเหลือไม่เกิน 30 วัน (ดูส่วนที่หมดทีหลัง)
+  //   เดิมดูส่วนที่หมดก่อน → กดสลับกับแพ็กเดี่ยวได้ส่วนหนึ่งล่วงหน้า ~120 วัน (ผลตรวจ 29 ก.ย. 2569)
+  // เผื่อ 5 นาที กันนาฬิกาเครื่องช้ากว่าเซิร์ฟเวอร์แล้วการ์ดล็อกทั้งที่ยังซื้อได้ (ฐานข้อมูลเป็นตัวตัดสินจริง)
+  // ต้องตรงกับตัวจำกัดใน buy_plan (migration 20260929000800 / 20260929000900)
   var PROMO_MONTHLY_AHEAD_MS = 30*24*3600*1000;
+  var PROMO_LOCK_GRACE_MS = 5*60*1000;
+  function promoMonthlyLockBase(key){
+    return key==='all' ? Math.max(planRenewBase('bundle'), planRenewBase('timers')) : planRenewBase(key);
+  }
   function promoMonthlyLockedUntil(key, cycle){
     if(cycle!=='monthly' || !isPromoActive()) return 0;
-    var base = planRenewBase(key);
-    return base > Date.now() + PROMO_MONTHLY_AHEAD_MS ? base - PROMO_MONTHLY_AHEAD_MS : 0;
+    var base = promoMonthlyLockBase(key);
+    return base > Date.now() + PROMO_MONTHLY_AHEAD_MS + PROMO_LOCK_GRACE_MS ? base - PROMO_MONTHLY_AHEAD_MS : 0;
   }
   // วันที่ซื้อเพิ่มได้ — ล็อกยาวเกินวันจบโปร = ซื้อได้ทันทีที่โปรจบ (ราคาปกติ ไม่จำกัดแล้ว) ไม่ใช่วันที่แพ็กเหลือ 30 วัน
+  // ภายใน 24 ชม. บอกเวลาด้วย (บอกแค่วันที่ = ขึ้น "ตั้งแต่ <วันนี้>" คู่กับปุ่มที่ยังกดไม่ได้)
   function promoMonthlyLockText(until){
     var end = PROMO_END_AT ? Date.parse(PROMO_END_AT) : NaN;
-    return Number.isFinite(end) && until > end ? 'ซื้อเพิ่มได้หลังโปรจบ '+fmtDate(end)+' (ราคาปกติ)' : 'ซื้อเพิ่มได้ตั้งแต่ '+fmtDate(until);
+    if(Number.isFinite(end) && until > end) return 'ซื้อเพิ่มได้หลังโปรจบ '+fmtDate(end)+' (ราคาปกติ)';
+    return 'ซื้อเพิ่มได้ตั้งแต่ '+(until - Date.now() < 24*3600*1000 ? fmtDateTime(until)+' น.' : fmtDate(until));
+  }
+  // 4 in 1 ล็อกเพราะส่วนหนึ่งยังเหลือเกิน 30 วัน — บอกว่าส่วนที่เหลือน้อยซื้อแพ็กเดี่ยวได้
+  function promoAllLockHint(){
+    if(!promoMonthlyLockedUntil('bundle', 'monthly')) return ' · ซื้อ 3 in 1 แยกได้';
+    if(!promoMonthlyLockedUntil('timers', 'monthly')) return ' · ซื้อจับเวลาบอสแยกได้';
+    return '';
   }
   function renderPricingPage(){
     // หัวหน้าแพ็กเกจ "เริ่มต้นเพียง X บาท/เดือน" = ราคารายเดือนที่ถูกที่สุดตอนนี้ (ช่วงโปร 49 · หลังจบโปร 99)
@@ -7673,7 +7690,7 @@
         var original = monthly ? p.monthly : (p.yearly == null ? p.displayYearly : p.yearly);
         var price = isPromoActive() ? (monthly ? p.promoMonthly : (p.yearly == null ? p.displayPromoYearly : p.promoYearly)) : original;
         var perDay = price / (monthly ? 30 : 365);
-        // รายปี: ประหยัดเท่าไหร่ เทียบกับจ่ายรายเดือนราคาปกติครบ 12 เดือน (ช่วงโปรหักจากราคาโปรที่จ่ายจริง)
+        // รายปี: ประหยัดเท่าไหร่ เทียบกับจ่ายรายเดือนราคาปกติครบ 12 เดือน (รายปีไม่ลดช่วงโปรแล้ว — ราคาที่จ่ายจริง = ราคาเต็ม)
         var monthsTotal = p.monthly * 12;
         var yearlySave = monthly ? 0 : monthsTotal - price;
         priceHtml = (original > price ? '<div class="pricing-card-price"><span class="pricing-original">'+fmtNum(original)+' บ'+unit+'</span><span class="pricing-promo-badge">ลด 50%</span></div>' : '')+
@@ -7690,7 +7707,7 @@
         ctaHtml = p.yearly==null && pricingCycle==='yearly'
           ? (p.displayYearly != null ? '<small class="pricing-pending-note">รอเปิดใช้งานการซื้อรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ยังไม่เปิดซื้อรายปี</button>' : '<small class="pricing-pending-note">แสดงราคาต่อเดือน · ยังไม่มีแพ็กรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>รองรับเฉพาะรายเดือน</button>')
           : lockedUntil
-          ? '<small class="pricing-pending-note">ช่วงโปรซื้อรายเดือนล่วงหน้าได้สูงสุด 2 เดือน · '+promoMonthlyLockText(lockedUntil)+'</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ซื้อล่วงหน้าครบ 2 เดือนแล้ว</button>'
+          ? '<small class="pricing-pending-note">ช่วงโปรซื้อรายเดือนล่วงหน้าได้สูงสุด 2 เดือน · '+promoMonthlyLockText(lockedUntil)+(p.key==='all' ? promoAllLockHint() : '')+'</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ช่วงโปรซื้อรายเดือนเพิ่มยังไม่ได้</button>'
           : '<button type="button" class="btn btn-ghost btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+escapeHtml(planNamePlain)+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>';
       }
       // มีแพ็กนี้อยู่แล้ว: ป้ายสีเขียวบอกวันหมดอายุ (ไม่บล็อกปุ่ม — กดซื้อซ้ำ = ต่ออายุเพิ่ม)
@@ -7717,6 +7734,14 @@
         ctaHtml+
       '</div>';
     }).join('');
+    // มีการ์ดล็อกซื้อรายเดือน — วาดใหม่ตอนปลด (ไม่งั้นปุ่มปิดค้างจนกว่าจะเปลี่ยนหน้า/สลับรายเดือน-รายปี)
+    // ตั้งทีละไม่เกิน 24 ชม.: เปิดหน้าค้างไว้ข้ามวัน ข้อความก็เปลี่ยนเป็นวันที่+เวลาเมื่อเหลือไม่ถึงวัน
+    clearTimeout(pricingUnlockTimer);
+    var soonestUnlock = PRICING_ORDER.reduce(function(min, key){
+      var until = promoMonthlyLockedUntil(key, pricingCycle);
+      return until && until < min ? until : min;
+    }, Infinity);
+    if(Number.isFinite(soonestUnlock)) pricingUnlockTimer = setTimeout(renderPricingPage, Math.min(24*3600*1000, Math.max(1000, soonestUnlock - Date.now() + 1000)));
   }
 
   document.getElementById('pricingGrid').addEventListener('click', function(e){
@@ -7870,6 +7895,17 @@
       }).then(function(res){
         buyPlanBusy = false;
         if(res.error){
+          // ตัวจำกัดซื้อรายเดือนล่วงหน้าช่วงโปร (buy_plan) — สิทธิ์ในหน้านี้อาจเก่า (ซื้อจากอีกเครื่อง) → โหลดใหม่แล้ววาดการ์ดใหม่
+          // หน้าเว็บจบโปรแล้วแต่ฐานข้อมูลยังนับช่วงโปร (ผ่อนผัน 5 นาทีหลังเที่ยงคืนของ promo_active()) → บอกให้รอสักครู่
+          if(/ซื้อรายเดือนล่วงหน้า/.test(res.error.message||'')){
+            // การ์ดเปิดไว้ในช่วงเผื่อ 5 นาที (นาฬิกาเครื่องเดินตรง) → บอกเวลาที่ลองใหม่ได้ แทนข้อความกลางของฐานข้อมูล
+            var retryAt = promoMonthlyLockBase(planKey) - PROMO_MONTHLY_AHEAD_MS;
+            toast(!isPromoActive() ? 'โปรเพิ่งจบ ระบบกำลังปรับเป็นราคาปกติ ลองใหม่อีก 5 นาที'
+              : retryAt > Date.now() ? 'ช่วงโปรโมชันซื้อรายเดือนล่วงหน้าได้สูงสุด 2 เดือน — '+promoMonthlyLockText(retryAt)
+              : 'ทำรายการไม่สำเร็จ: '+res.error.message, 6000);
+            refreshProfile().then(renderPricingPage);
+            return;
+          }
           toast('ทำรายการไม่สำเร็จ: '+res.error.message, /ราคาเปลี่ยน/.test(res.error.message||'') ? 6000 : undefined);
           // ราคาที่ฐานข้อมูลหักแพงกว่าที่กล่องโชว์ (ไม่ได้หักแต้ม) → โหลดสิทธิ/ราคาใหม่ให้เห็นก่อนกดซื้ออีกครั้ง
           // หน้าเว็บยังคิดว่าอยู่ในช่วงโปรแต่ราคาจริงแพงกว่า = โปรจบแล้วฝั่งเซิร์ฟเวอร์ → วาดราคาปกติแทน (ดู promoEndedByServer)

@@ -7434,8 +7434,9 @@
 
   // ---------- เติมแพ็กเกจ ----------
   // ราคาใช้แสดงผลเท่านั้น — ต้องตรงกับตารางราคาใน buy_plan (ฐานข้อมูล) เสมอ
-  // ทุกแพ็กมีรายปี (= รายเดือน × 10) · ช่วงโปร (ถึง PROMO_END_AT) ลด 50% ปัดเศษลง ทุกแพ็กทั้งรายเดือน/รายปี
+  // ทุกแพ็กมีรายปี (= รายเดือน × 10) · ช่วงโปร (ถึง PROMO_END_AT) ลด 50% ปัดเศษลง เฉพาะรายเดือน — รายปีราคาเต็ม (promoYearly = yearly)
   // ราคาชุด 29 ก.ย. 2569 (ผู้ใช้สั่ง): 1 in 1 99 · 2 in 1 99 · 3 in 1 179 · จับเวลาบอส 199 · 4 in 1 299 — plan_price ใน 20260929000700
+  // ยกเลิกโปรรายปี (ผู้ใช้สั่ง 29 ก.ย. 2569) — plan_price + ตัวจำกัดซื้อรายเดือนล่วงหน้าใน buy_plan ที่ 20260929000800
   var PRICING_PLANS = [
     { key:'free', name:'<span class="pricing-card-name-main">— ฟรี —</span><span class="pricing-card-name-sub">ทดลองใช้ทุกระบบ</span>', monthly:0, yearly:0, free:true,
       modules:['investor','items','farm','timers'],
@@ -7462,7 +7463,7 @@
         'ติดตามดูรายการส่วนแบ่งได้ในประวัติปาร์ตี้',
         'ปักหมุดจุดบอสตายบนแผนที่'
       ] },
-    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาร์ม</span>', monthly:99, yearly:990, promoMonthly:49, promoYearly:495, badge:'สายฟาร์ม',
+    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาร์ม</span>', monthly:99, yearly:990, promoMonthly:49, promoYearly:990, badge:'สายฟาร์ม',
       modules:['farm'],
       tagline:'สายฟาร์มห้ามพลาด', features:[
         // เรียงเป็นกลุ่ม บันทึก → คำนวณ → กราฟ/ประวัติ (ผู้ใช้ขอ 28 ก.ย. 2569)
@@ -7476,7 +7477,7 @@
         'ประวัติย้อนหลังไม่จำกัด',
         {divider:'หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรีทั้งหมด'}
       ] },
-    { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:99, yearly:990, promoMonthly:49, promoYearly:495, badge:'จัดการซื้อขาย',
+    { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:99, yearly:990, promoMonthly:49, promoYearly:990, badge:'จัดการซื้อขาย',
       modules:['investor','items'],
       tagline:'พ่อค้า-แม่ค้าหัวเครดิตและคนทั่วไป', features:[
         // เรียงเป็นกลุ่ม บัญชีซื้อ–ขาย → คลังไอเทม → เซิร์ฟเวอร์ (ผู้ใช้ขอ 28 ก.ย. 2569 · ตัด "จัดการไอเทมคงเหลือได้แบบเป็นสัดส่วน" ที่ซ้ำกับ 6 คลังแยกสัดส่วน)
@@ -7492,12 +7493,12 @@
         'แบ่งคลังแยกได้ไม่จำกัดจำนวนเซิร์ฟเวอร์โดยไม่ซ้ำคลังกัน',
         {divider:'หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรีทั้งหมด'}
       ] },
-    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:179, yearly:1790, promoMonthly:89, promoYearly:895, badge:'ยอดนิยม',
+    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:179, yearly:1790, promoMonthly:89, promoYearly:1790, badge:'ยอดนิยม',
       // แพ็กรวม: บอกว่าได้ระบบไหนบ้างด้วยแถวระบบ (modules) แทนรายการฟีเจอร์ยาว — ระบบที่ไม่ได้แสดงเป็นสีเทา
       modules:['investor','items','farm'],
       // รายละเอียด (ส่วนที่กดดูได้) = รวมรายการของแพ็กย่อยที่อยู่ในแพ็กนี้ แบ่งหัวข้อตามระบบ
       detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems']] },
-    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:995, badge:'สายล่าบอส',
+    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:1990, badge:'สายล่าบอส',
       modules:['timers'],
       tagline:'ระบบล่าบอสครบในทีเดียว',
       features:[
@@ -7515,7 +7516,7 @@
         'ประวัติปาร์ตี้ มีรายชื่อใช้หารของกับเพื่อนร่วมทีมได้เลย',
         'แสดงยอดเงินที่หารแบบเป็นสัดส่วน ทั้งแบบส่วนตัว/ปาร์ตี้'
       ] },
-    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม/จับเวลาบอส</span>', monthly:299, yearly:2990, promoMonthly:149, promoYearly:1495, best:true, badge:'แนะนำ · คุ้มที่สุด',
+    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม/จับเวลาบอส</span>', monthly:299, yearly:2990, promoMonthly:149, promoYearly:2990, best:true, badge:'แนะนำ · คุ้มที่สุด',
       modules:['investor','items','farm','timers'],
       detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems'],['จับเวลาบอส','timers']] }
   ];
@@ -7608,6 +7609,36 @@
       default: return 0;
     }
   }
+  // วันหมดอายุที่การซื้อครั้งถัดไปจะต่อจาก — คิดแบบเดียวกับ buy_plan (ฐานข้อมูล)
+  // 1 in 1 / 2 in 1 = ของแพ็กนั้นหรือ 3 in 1 ที่ครอบคลุมอยู่ (อันที่นานกว่า) · 4 in 1 = 3 in 1 กับจับเวลาบอส อันที่หมดก่อน
+  function planRenewBase(key){
+    var p = App.profile || {};
+    var scoped = p.feature_expiries || {};
+    var bundle = new Date(p.plan_bundle_expires_at||0).getTime() || 0;
+    var timers = new Date(p.plan_timers_expires_at||0).getTime() || 0;
+    switch(key){
+      case 'bundle': return bundle;
+      case 'timers': return timers;
+      case 'all': return Math.min(bundle, timers);
+      case 'farm': return Math.max(bundle, new Date(scoped.farm||0).getTime() || 0);
+      case 'accountItems': return Math.max(bundle, new Date(scoped.accountItems||0).getTime() || 0);
+      default: return 0;
+    }
+  }
+  // ช่วงโปร รายเดือนซื้อล่วงหน้าได้สูงสุดราว 2 เดือน (ผู้ใช้สั่ง 29 ก.ย. 2569 ตอนยกเลิกโปรรายปี — กันกดรายเดือนราคาโปรซ้อนแทนรายปี)
+  // แพ็กนั้นเหลือเกิน 30 วัน = ยังซื้อรายเดือนเพิ่มไม่ได้ → คืนเวลาที่ซื้อได้อีกครั้ง · ซื้อได้ / รายปี / หลังจบโปร = 0
+  // ต้องตรงกับตัวจำกัดใน buy_plan (migration 20260929000800)
+  var PROMO_MONTHLY_AHEAD_MS = 30*24*3600*1000;
+  function promoMonthlyLockedUntil(key, cycle){
+    if(cycle!=='monthly' || !isPromoActive()) return 0;
+    var base = planRenewBase(key);
+    return base > Date.now() + PROMO_MONTHLY_AHEAD_MS ? base - PROMO_MONTHLY_AHEAD_MS : 0;
+  }
+  // วันที่ซื้อเพิ่มได้ — ล็อกยาวเกินวันจบโปร = ซื้อได้ทันทีที่โปรจบ (ราคาปกติ ไม่จำกัดแล้ว) ไม่ใช่วันที่แพ็กเหลือ 30 วัน
+  function promoMonthlyLockText(until){
+    var end = PROMO_END_AT ? Date.parse(PROMO_END_AT) : NaN;
+    return Number.isFinite(end) && until > end ? 'ซื้อเพิ่มได้หลังโปรจบ '+fmtDate(end)+' (ราคาปกติ)' : 'ซื้อเพิ่มได้ตั้งแต่ '+fmtDate(until);
+  }
   function renderPricingPage(){
     // หัวหน้าแพ็กเกจ "เริ่มต้นเพียง X บาท/เดือน" = ราคารายเดือนที่ถูกที่สุดตอนนี้ (ช่วงโปร 49 · หลังจบโปร 99)
     var startPriceEl = document.getElementById('pricingStartPrice');
@@ -7654,8 +7685,12 @@
         // p.name อาจมี <span> ฝังไว้กันตัดคำกลางคำ (การ์ด 4 in 1) — ตัด tag ออกก่อนใส่ใน attribute
         // เพราะ data-plan-name ใช้เป็นข้อความล้วนในกล่องยืนยัน/toast ไม่ใช่ HTML ที่ต้อง render
         var planNamePlain = p.name.replace(/<[^>]*>/g, '');
+        // ช่วงโปร ซื้อรายเดือนล่วงหน้าครบ 2 เดือนแล้ว = ปิดปุ่ม บอกวันที่ซื้อเพิ่มได้ (ฐานข้อมูลก็ปฏิเสธ — ดู promoMonthlyLockedUntil)
+        var lockedUntil = promoMonthlyLockedUntil(p.key, pricingCycle);
         ctaHtml = p.yearly==null && pricingCycle==='yearly'
           ? (p.displayYearly != null ? '<small class="pricing-pending-note">รอเปิดใช้งานการซื้อรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ยังไม่เปิดซื้อรายปี</button>' : '<small class="pricing-pending-note">แสดงราคาต่อเดือน · ยังไม่มีแพ็กรายปี</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>รองรับเฉพาะรายเดือน</button>')
+          : lockedUntil
+          ? '<small class="pricing-pending-note">ช่วงโปรซื้อรายเดือนล่วงหน้าได้สูงสุด 2 เดือน · '+promoMonthlyLockText(lockedUntil)+'</small><button type="button" class="btn btn-ghost btn-block pricing-cta" disabled>ซื้อล่วงหน้าครบ 2 เดือนแล้ว</button>'
           : '<button type="button" class="btn btn-ghost btn-block pricing-cta" data-price="'+price+'" data-plan-name="'+escapeHtml(planNamePlain)+'" data-plan-key="'+p.key+'" data-cycle="'+pricingCycle+'">'+ctaLabel+'</button>';
       }
       // มีแพ็กนี้อยู่แล้ว: ป้ายสีเขียวบอกวันหมดอายุ (ไม่บล็อกปุ่ม — กดซื้อซ้ำ = ต่ออายุเพิ่ม)
@@ -7711,6 +7746,13 @@
     if(selectedPlan.yearly==null && btn.dataset.cycle!=='monthly') return;
     var price = parseInt(btn.dataset.price, 10) || 0;
     var planKey = btn.dataset.planKey, cycle = btn.dataset.cycle;
+    // การ์ดวาดไว้ก่อนสิทธิ์เปลี่ยน (เช่น ซื้อจากอีกเครื่อง) — เช็คตัวจำกัดซื้อรายเดือนล่วงหน้าช่วงโปรอีกรอบก่อนเปิดกล่องยืนยัน
+    var lockedUntil = promoMonthlyLockedUntil(planKey, cycle);
+    if(lockedUntil){
+      toast('ช่วงโปรโมชันซื้อรายเดือนล่วงหน้าได้สูงสุด 2 เดือน — '+promoMonthlyLockText(lockedUntil), 6000);
+      renderPricingPage();
+      return;
+    }
     var days = cycle === 'yearly' ? 365 : 30;
     var have = App.profile ? (App.profile.points||0) : 0;
     Track.push('buy_click', 'pricing', price, planKey+':'+cycle);

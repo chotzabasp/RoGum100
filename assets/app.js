@@ -7435,6 +7435,7 @@
   // ---------- เติมแพ็กเกจ ----------
   // ราคาใช้แสดงผลเท่านั้น — ต้องตรงกับตารางราคาใน buy_plan (ฐานข้อมูล) เสมอ
   // ทุกแพ็กมีรายปี (= รายเดือน × 10) · ช่วงโปร (ถึง PROMO_END_AT) ลด 50% ปัดเศษลง ทุกแพ็กทั้งรายเดือน/รายปี
+  // ราคาชุด 29 ก.ย. 2569 (ผู้ใช้สั่ง): 1 in 1 99 · 2 in 1 99 · 3 in 1 179 · จับเวลาบอส 199 · 4 in 1 299 — plan_price ใน 20260929000700
   var PRICING_PLANS = [
     { key:'free', name:'<span class="pricing-card-name-main">— ฟรี —</span><span class="pricing-card-name-sub">ทดลองใช้ทุกระบบ</span>', monthly:0, yearly:0, free:true,
       modules:['investor','items','farm','timers'],
@@ -7461,7 +7462,7 @@
         'ติดตามดูรายการส่วนแบ่งได้ในประวัติปาร์ตี้',
         'ปักหมุดจุดบอสตายบนแผนที่'
       ] },
-    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาร์ม</span>', monthly:199, yearly:1990, promoMonthly:99, promoYearly:990, badge:'สายฟาร์ม',
+    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาร์ม</span>', monthly:99, yearly:990, promoMonthly:49, promoYearly:495, badge:'สายฟาร์ม',
       modules:['farm'],
       tagline:'สายฟาร์มห้ามพลาด', features:[
         // เรียงเป็นกลุ่ม บันทึก → คำนวณ → กราฟ/ประวัติ (ผู้ใช้ขอ 28 ก.ย. 2569)
@@ -7475,7 +7476,7 @@
         'ประวัติย้อนหลังไม่จำกัด',
         {divider:'หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรีทั้งหมด'}
       ] },
-    { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:299, yearly:2990, promoMonthly:149, promoYearly:1490, badge:'จัดการซื้อขาย',
+    { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:99, yearly:990, promoMonthly:49, promoYearly:495, badge:'จัดการซื้อขาย',
       modules:['investor','items'],
       tagline:'พ่อค้า-แม่ค้าหัวเครดิตและคนทั่วไป', features:[
         // เรียงเป็นกลุ่ม บัญชีซื้อ–ขาย → คลังไอเทม → เซิร์ฟเวอร์ (ผู้ใช้ขอ 28 ก.ย. 2569 · ตัด "จัดการไอเทมคงเหลือได้แบบเป็นสัดส่วน" ที่ซ้ำกับ 6 คลังแยกสัดส่วน)
@@ -7491,12 +7492,12 @@
         'แบ่งคลังแยกได้ไม่จำกัดจำนวนเซิร์ฟเวอร์โดยไม่ซ้ำคลังกัน',
         {divider:'หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรีทั้งหมด'}
       ] },
-    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:399, yearly:3990, promoMonthly:199, promoYearly:1990, badge:'ยอดนิยม',
+    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:179, yearly:1790, promoMonthly:89, promoYearly:895, badge:'ยอดนิยม',
       // แพ็กรวม: บอกว่าได้ระบบไหนบ้างด้วยแถวระบบ (modules) แทนรายการฟีเจอร์ยาว — ระบบที่ไม่ได้แสดงเป็นสีเทา
       modules:['investor','items','farm'],
       // รายละเอียด (ส่วนที่กดดูได้) = รวมรายการของแพ็กย่อยที่อยู่ในแพ็กนี้ แบ่งหัวข้อตามระบบ
       detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems']] },
-    { key:'timers', name:'จับเวลาบอส', monthly:249, yearly:2490, promoMonthly:124, promoYearly:1240, badge:'สายล่าบอส',
+    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:995, badge:'สายล่าบอส',
       modules:['timers'],
       tagline:'ระบบล่าบอสครบในทีเดียว',
       features:[
@@ -7514,10 +7515,12 @@
         'ประวัติปาร์ตี้ มีรายชื่อใช้หารของกับเพื่อนร่วมทีมได้เลย',
         'แสดงยอดเงินที่หารแบบเป็นสัดส่วน ทั้งแบบส่วนตัว/ปาร์ตี้'
       ] },
-    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม/จับเวลาบอส</span>', monthly:499, yearly:4990, promoMonthly:249, promoYearly:2490, best:true, badge:'แนะนำ · คุ้มที่สุด',
+    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม/จับเวลาบอส</span>', monthly:299, yearly:2990, promoMonthly:149, promoYearly:1495, best:true, badge:'แนะนำ · คุ้มที่สุด',
       modules:['investor','items','farm','timers'],
       detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems'],['จับเวลาบอส','timers']] }
   ];
+  // ลำดับการ์ดในหน้าเติมแพ็กเกจ (อ้างด้วย key ไม่ใช่ตำแหน่งใน PRICING_PLANS — เพิ่ม/ย้ายแพ็กแล้วลำดับไม่เพี้ยน)
+  var PRICING_ORDER = ['timers','farm','accountItems','bundle','all','free'];
   // แถวระบบในการ์ดแพ็กรวม — ไอคอนชุดเดียวกับเมนูด้านซ้าย (ยอดนักฟาร์ม = ธนู, จับเวลาบอส = นาฬิกา)
   var PRICING_MODULES = [
     { key:'investor', name:'บัญชีนักลงทุน',
@@ -7606,11 +7609,14 @@
     }
   }
   function renderPricingPage(){
-    // หัวหน้าแพ็กเกจ "เริ่มต้นเพียง X บาท/เดือน" = ราคารายเดือนที่ถูกที่สุดตอนนี้ (ช่วงโปร 99 · หลังจบโปร 199)
+    // หัวหน้าแพ็กเกจ "เริ่มต้นเพียง X บาท/เดือน" = ราคารายเดือนที่ถูกที่สุดตอนนี้ (ช่วงโปร 49 · หลังจบโปร 99)
     var startPriceEl = document.getElementById('pricingStartPrice');
     if(startPriceEl) startPriceEl.textContent = fmtNum(Math.min.apply(null, PRICING_PLANS.filter(function(p){ return !p.free; }).map(function(p){ return isPromoActive() ? p.promoMonthly : p.monthly; })));
     var grid = document.getElementById('pricingGrid');
-    grid.innerHTML = [PRICING_PLANS[4],PRICING_PLANS[3],PRICING_PLANS[5]].concat(PRICING_PLANS.slice(0,3)).map(function(p){
+    // ลำดับการ์ด (ผู้ใช้กำหนด 29 ก.ย. 2569): จับเวลาบอส → 1 in 1 → 2 in 1 → 3 in 1 → 4 in 1 → ฟรี
+    grid.innerHTML = PRICING_ORDER.map(function(key){
+      return PRICING_PLANS.find(function(x){ return x.key===key; });
+    }).map(function(p){
       var monthly = pricingCycle==='monthly' || (p.yearly == null && p.displayYearly == null);
       var unit = monthly ? '/ เดือน' : '/ ปี';
       // แพ็กรวม (3 in 1 / 4 in 1) ไม่มีรายการของตัวเอง — ดึงรายการของแพ็กย่อยมารวม ใส่หัวข้อระบบคั่น

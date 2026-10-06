@@ -8,12 +8,86 @@
   //  1) ลิงก์เก่าที่มี #หน้า (/#timers, /#accounting ฯลฯ) หรือ ?auth= หรือพารามิเตอร์ล็อกอินจาก Supabase
   //  2) มีการล็อกอินค้างไว้ในเครื่อง (ผู้ใช้เดิมเปิดเว็บแล้วเข้าเครื่องมือเลย ไม่ต้องผ่านหน้าแรก)
   (function(){
+    // แหล่งที่มาของการเข้าเว็บรอบนี้ (แดชบอร์ดแอดมิน → รายงานรายวัน) — ต้องตรงกับ trafficSource() ใน assets/app.js
+    //  tag:<ป้าย> = ?src= หรือ utm_source(+utm_campaign) ในลิงก์โฆษณา · facebook / line / google ฯลฯ = จากเว็บ/แอปต้นทาง, fbclid ฯลฯ
+    //  หรือเบราว์เซอร์ในแอป · email = ลิงก์ในอีเมล · ref:<เว็บ> = เว็บอื่น · direct = เข้าตรง/ไม่ทราบ
+    //  จำไว้ทั้งแท็บ (sessionStorage gum100_src) ส่งไปกับ landing_view / visit
+    //  แล้วลบพารามิเตอร์เหล่านี้ออกจาก URL ไม่ให้ติดไปตอนคัดลอกลิงก์แชร์ต่อ (ไม่เก็บข้อมูลส่วนตัว)
+    var TRACK_PARAM = /^(src|fbclid|gclid|gbraid|wbraid|gad_source|ttclid|msclkid|igshid|igsh|utm_[a-z]+)$/i;
+    function queryPairs(){
+      return location.search.replace(/^\?/, '').split('&').filter(Boolean).map(function(kv){
+        var i = kv.indexOf('='), k = i < 0 ? kv : kv.slice(0, i), v = i < 0 ? '' : kv.slice(i + 1);
+        try{ k = decodeURIComponent(k); v = decodeURIComponent(v.replace(/\+/g, ' ')); }catch(e){}
+        return { raw: kv, key: k, value: v };
+      });
+    }
+    function cleanSearch(){
+      var kept = queryPairs().filter(function(p){ return !TRACK_PARAM.test(p.key); }).map(function(p){ return p.raw; });
+      return kept.length ? '?' + kept.join('&') : '';
+    }
+    // search / hash = ที่อยู่หน้าตอนเปิดเข้ามา (แอปส่งค่าที่เก็บไว้ก่อน supabase-js ล้างรหัสลิงก์อีเมลออก) · ไม่ส่ง = ที่อยู่ปัจจุบัน
+    function trafficSource(search, hash){
+      if(search == null) search = location.search;
+      if(hash == null) hash = location.hash;
+      var q = {};
+      try{ new URLSearchParams(search).forEach(function(v, k){ q[k.toLowerCase()] = v; }); }catch(e){}
+      var clean = function(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 40); };
+      var tag = clean(q.src), camp = '';
+      if(!tag){ tag = clean(q.utm_source); camp = clean(q.utm_campaign); }
+      if(tag) return 'tag:' + tag + (camp ? '/' + camp : '');
+      // เปิดจากลิงก์ในอีเมล (ยืนยันอีเมล / ตั้งรหัสผ่านใหม่ รวมลิงก์ที่หมดอายุแล้ว) — ไม่นับเป็น Google/Gmail
+      if(q.code || q.token_hash || q.error_code || /^(signup|recovery|magiclink|invite|email_change|email)$/.test(q.type || '') ||
+         /(^|[#&])(access_token|token_hash|error_code)=|type=(signup|recovery|magiclink|invite|email_change)/.test(hash)) return 'email';
+      if(q.fbclid) return 'facebook';
+      if(q.gclid || q.gbraid || q.wbraid || q.gad_source) return 'google';
+      if(q.ttclid) return 'tiktok';
+      if(q.msclkid) return 'bing';
+      if(q.igshid || q.igsh) return 'instagram';
+      var host = '';
+      try{ host = document.referrer ? new URL(document.referrer).hostname.toLowerCase().replace(/^www\./, '') : ''; }catch(e){}
+      if(host && !/(^|\.)gum100\.com$/.test(host) && host !== location.hostname.replace(/^www\./, '')){
+        // เว็บ/แอปต้นทาง (แอปบน Android ส่งมาเป็นชื่อแพ็กเกจ เช่น com.facebook.katana)
+        var known = [
+          ['messenger', /(^|\.)(messenger\.com|m\.me)$|^com\.facebook\.(orca|mlite)$/],
+          ['facebook', /(^|\.)(facebook\.com|fb\.com|fb\.me)$|^com\.facebook\./],
+          ['instagram', /(^|\.)instagram\.com$|^com\.instagram\./],
+          ['line', /(^|\.)(line\.me|line-apps\.com|naver\.jp)$|^jp\.naver\.line\./],
+          ['email', /^(mail\.google\.com|outlook\.(live|office|office365)\.com|mail\.yahoo\.com)$|^com\.google\.android\.gm(\.lite)?$|^com\.microsoft\.office\.outlook$/],
+          ['youtube', /(^|\.)(youtube\.com|youtu\.be)$|^com\.google\.android\.youtube$/],
+          // เว็บ Google (google.com / google.co.th ฯลฯ) — ไม่จับแอปอื่นของ Google บน Android (com.google.android.*)
+          ['google', /(^|\.)google\.(com|co\.[a-z]{2}|[a-z]{2})(\.[a-z]{2})?$|^com\.google\.android\.googlequicksearchbox$/],
+          ['tiktok', /(^|\.)tiktok\.com$|^com\.(zhiliaoapp\.musically|ss\.android\.ugc\.trill)$/],
+          ['discord', /(^|\.)(discord\.com|discordapp\.com|discord\.gg)$|^com\.discord$/],
+          ['x', /(^|\.)(twitter\.com|x\.com|t\.co)$|^com\.twitter\.android$/],
+          ['bing', /(^|\.)bing\.com$/],
+          ['pantip', /(^|\.)pantip\.com$/]
+        ];
+        for(var i = 0; i < known.length; i++) if(known[i][1].test(host)) return known[i][0];
+        return 'ref:' + host.replace(/[^a-z0-9.-]/g, '').slice(0, 50);
+      }
+      // ไม่มีเว็บต้นทาง: เบราว์เซอร์ในแอป (LINE / Facebook / Messenger / IG / TikTok) มักไม่ส่ง referrer — ดูชื่อแอปใน user agent
+      var ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+      if(/FB_IAB\/MESSENGER|MessengerForiOS|MessengerLite/i.test(ua)) return 'messenger';
+      if(/FBAN|FBAV|FB_IAB|FBIOS/i.test(ua)) return 'facebook';
+      if(/Instagram/i.test(ua)) return 'instagram';
+      if(/\bLine\//i.test(ua)) return 'line';
+      if(/musical_ly|BytedanceWebview|TikTok/i.test(ua)) return 'tiktok';
+      return 'direct';
+    }
+    try{
+      // ลิงก์ที่มีป้าย/fbclid มาใหม่ในแท็บเดิม = ใช้ที่มาใหม่ · ไม่มี = คงที่มาแรกของแท็บนี้
+      var explicitSource = /[?&](src|utm_source|fbclid|gclid|gbraid|wbraid|gad_source|ttclid|msclkid|igshid|igsh)=/i.test(location.search);
+      var source = sessionStorage.getItem('gum100_src');
+      if(!source || explicitSource){ source = trafficSource(); sessionStorage.setItem('gum100_src', source); }
+      window.__gum100Src = source;
+    }catch(e){ try{ window.__gum100Src = trafficSource(); }catch(e2){} }
     function isAppHash(){
       var h = location.hash.replace(/^#/, '').toLowerCase();
       return /^(accounting|home|farm|timers|items|pricing|settings|admin)$/.test(h) ||
              /access_token|refresh_token|type=recovery|type=signup|error=/.test(h);
     }
-    function goApp(){ location.replace('app.html' + location.search + location.hash); }
+    var leaving = false;
+    function goApp(){ leaving = true; location.replace('app.html' + cleanSearch() + location.hash); }
     try{
       var appQuery = /[?&](auth|code|token_hash|type)=/.test(location.search);
       var signedIn = false;
@@ -21,6 +95,12 @@
       if(isAppHash() || appQuery || signedIn) goApp();
       // เปลี่ยนแค่ # โดยไม่โหลดหน้าใหม่ (เช่นวางลิงก์ /#timers ในแท็บเดิม) ก็ต้องส่งต่อเหมือนกัน
       window.addEventListener('hashchange', function(){ if(isAppHash()) goApp(); });
+    }catch(e){}
+    // อยู่หน้าแรกต่อ: ลบพารามิเตอร์ติดตามออกจาก URL เฉพาะเมื่อมีจริง — แยก try ไว้ พังก็ไม่กระทบการส่งต่อไปแอปด้านบน
+    try{
+      if(!leaving && queryPairs().some(function(p){ return TRACK_PARAM.test(p.key); })){
+        history.replaceState(history.state, '', location.pathname + cleanSearch() + location.hash);
+      }
     }catch(e){}
   })();
   </script>
@@ -51,7 +131,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preload" href="assets/landing/midgard.jpg" as="image">
   <link rel="stylesheet" href="assets/landing.css?v=13">
-  <script src="assets/landing.js?v=4" defer></script>
+  <script src="assets/landing.js?v=5" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">ข้ามไปเนื้อหา</a>

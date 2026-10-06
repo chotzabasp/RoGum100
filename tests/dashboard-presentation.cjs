@@ -132,7 +132,9 @@ function withoutPresentation(h) {
 // 2026-09-28 live strip ("ตอนนี้", admin_live) + usage cards (admin_usage) are purely additive: their
 // self-contained functions/state, the exact hook lines that call them, and new explanatory comment lines are
 // removed before comparing. Every other line (including every existing comment) must still match the baseline.
-const addedFunctions = ['rpcMissing', 'fmt1', 'hourRange', 'blockRange', 'minutesHtml', 'renderLive', 'loadLive', 'fetchUsage', 'showUsage', 'renderUsage'];
+const addedFunctions = ['rpcMissing', 'fmt1', 'hourRange', 'blockRange', 'minutesHtml', 'renderLive', 'loadLive', 'fetchUsage', 'showUsage', 'renderUsage',
+  // 2026-10-06 รายงานรายวัน (admin_day_report): การ์ดใหม่แยกจากช่วง 7/30/90 วัน — ฟังก์ชัน/บรรทัดเรียกของมันตัดออกก่อนเทียบเหมือนกัน
+  'bkkDateIso', 'shiftIso', 'fmtTimeBkk', 'fmtDayBkk', 'sourceLabel', 'deltaHtml', 'syncDayControls', 'loadDay', 'renderDay', 'initDayControls', 'dayTodayIso', 'dayTick'];
 const addedCode = [
   'var live = { busy:false, off:false, shown:false };',
   'var usage = { seq:0, off:false };',
@@ -140,7 +142,12 @@ const addedCode = [
   'showUsage(usageJob);',
   "$('refreshBtn').addEventListener('click', loadLive);",
   'setInterval(function(){ if(!document.hidden && state.data) loadLive(); }, 60000);',
-  'loadLive();'
+  'loadLive();',
+  'var day = { pick:null, seq:0, off:false, shown:undefined, offset:0 };',
+  'initDayControls();',
+  "$('refreshBtn').addEventListener('click', loadDay);",
+  'setInterval(function(){ if(!document.hidden && state.data) dayTick(); }, 300000);',
+  'loadDay();'
 ];
 // 2026-09-29 audit fixes (intentional; behavior asserted at the end): expiring plans count Bangkok calendar days,
 // a lost session (42501) gets its own state, and "not installed" needs PGRST202 and no longer names the old SQL files.
@@ -197,7 +204,7 @@ function snapshot(h, ids = originalIds.filter(id => !['plans', 'plansNote'].incl
   }));
 }
 // The two analytics RPCs added 2026-09-28 are asserted separately below; the existing RPC contract must not change.
-const NEW_RPCS = ['admin_live', 'admin_usage'];
+const NEW_RPCS = ['admin_live', 'admin_usage', 'admin_day_report'];
 const existingCalls = h => h.rpc.filter(call => !NEW_RPCS.includes(call.name)).map(({ name, args }) => ({ name, args }));
 function compare(a, b, label) {
   assert.deepEqual(snapshot(b), snapshot(a), label);
@@ -288,10 +295,10 @@ checks++;
     if (scenario === 'guest') { assert.equal(b.rpc.length, 0, 'Guest never fetches dashboard data'); continue; }
     assert.deepEqual(existingCalls(b).map(c => c.name), ['admin_traffic', 'admin_dashboard'], 'Existing summary RPCs unchanged');
     assert.deepEqual(b.rpc.filter(c => NEW_RPCS.includes(c.name)).map(({ name, args }) => ({ name, args })),
-      [{ name: 'admin_usage', args: { p_days: 30 } }, { name: 'admin_live', args: {} }], 'Only the two new analytics RPCs are added');
+      [{ name: 'admin_usage', args: { p_days: 30 } }, { name: 'admin_live', args: {} }, { name: 'admin_day_report', args: {} }], 'Only the new analytics RPCs are added');
     a.api.load(); b.api.load();
     assert.equal(existingCalls(b).length, 2, 'Repeated refresh is ignored while loading');
-    assert.equal(b.rpc.length, 4, 'Repeated refresh adds no analytics calls while loading');
+    assert.equal(b.rpc.length, 5, 'Repeated refresh adds no analytics calls while loading');
     const dashboard = scenario === 'forbidden' ? { error: { message: 'สำหรับแอดมินเท่านั้น' } }
       // 2026-09-29 audit: PostgREST's real missing-function error (PGRST202) — "not installed" now requires that code
       : scenario === 'missing-function' ? { error: { code: 'PGRST202', message: 'Could not find the function public.admin_dashboard(p_days) in the schema cache' } }
@@ -333,6 +340,7 @@ checks++;
       assert.deepEqual(existingCalls(b).slice(2).map(c => c.args), [{ p_days: 7 }, { p_days: 7 }]);
       assert.deepEqual(b.rpc.filter(c => c.name === 'admin_usage').map(c => c.args), [{ p_days: 30 }, { p_days: 7 }], 'Usage follows the selected period');
       assert.equal(b.rpc.filter(c => c.name === 'admin_live').length, 1, 'Changing period does not re-fetch the live strip');
+      assert.equal(b.rpc.filter(c => c.name === 'admin_day_report').length, 1, 'Changing period does not re-fetch the daily report');
     }
     if (scenario === 'traffic-reject') {
       assert.equal(b.nodes.dash.hidden, false, 'Traffic failure leaves the main dashboard visible');
@@ -473,6 +481,128 @@ checks++;
     assert.deepEqual(rows.map(r => r.match(/<b>([^<]*)<\/b>/)[1]), ['วันนี้', 'อีก 1 วัน', 'อีก 1 วัน', 'อีก 3 วัน'], 'Days left by Bangkok date');
     assert.ok(rows[1].includes('27 ก.ย.'), 'Date label uses the Bangkok date');
     assert.deepEqual(rows.map(r => r.includes('var(--danger)')), [true, true, true, false], 'Red stripe for today to 2 days');
+    checks++;
+  }
+  // 2026-10-06 รายงานรายวัน (admin_day_report): ตัวเลขวันที่เลือกเทียบวันก่อนหน้า + รายชั่วโมง + แหล่งที่มา · เลือกวัน · ไม่มีฟังก์ชัน = ซ่อน
+  {
+    const b = harness(current);
+    await b.auth({ user: { id: 'local-test' } });
+    assert.equal(b.nodes.dayReport.hidden, true, 'Daily report hidden until data arrives');
+    await b.respond('admin_traffic', { data: traffic });
+    await b.respond('admin_dashboard', { data: { generated_at: '2026-09-26T05:00:00Z', kpi: {}, revenue: {} } });
+    assert.deepEqual(b.rpc.filter(c => c.name === 'admin_day_report').map(c => c.args), [{}], 'Today = no p_day');
+    assert.equal(b.nodes.dayPicker.value, '2026-09-26', 'Picker shows the Bangkok date');
+    assert.equal(b.nodes.dayPicker.max, '2026-09-26', 'Picker cannot pick the future');
+    assert.equal(b.nodes.dayPicker.min, '2026-04-01', 'Picker limited to 178 days (the comparison day stays complete)');
+    const dayData = {
+      generated_at: '2026-09-26T06:00:00Z', day: '2026-09-26', is_today: true, window_end: '2026-09-26T06:00:00Z',
+      prev_day: '2026-09-25', prev_end: '2026-09-25T06:00:00Z', tracking_since: '2026-09-24T00:00:00Z', sources_since: '2026-09-26T01:00:00Z',
+      cur: { visitors: 12, landing_visitors: 8, app_visitors: 7, new_visitors: 5, signup_clicks: 3, signups: 3, signups_confirmed: 2, signups_new: 2,
+             active_members: 4, pricing_visitors: 3, buy_clicks: 2, purchases: 1, purchase_points: 149, revenue: 300, topups: 2 },
+      prev: { visitors: 9, landing_visitors: 6, app_visitors: 5, new_visitors: 4, signup_clicks: 1, signups: 1, signups_confirmed: 1, signups_new: 1,
+              active_members: 4, pricing_visitors: 1, buy_clicks: 0, purchases: 0, purchase_points: 0, revenue: 0, topups: 0 },
+      hours: Array.from({ length: 24 }, (_, hour) => ({ hour, future: hour > 13, visitors: hour === 10 ? 5 : hour === 13 ? 2 : 0,
+                                                        prev_visitors: hour === 10 ? 3 : 1, signups: hour === 10 ? 2 : 0 })),
+      sources: [{ source: 'tag:fb0610', visitors: 6, signup_clicks: 2, buyers: 1 }, { source: 'direct', visitors: 4, signup_clicks: 1, buyers: 0 },
+                { source: '?', visitors: 1, signup_clicks: 0, buyers: 0 }, { source: 'ref:example.com', visitors: 1, signup_clicks: 0, buyers: 0 },
+                { source: '*', visitors: 1, signup_clicks: 0, buyers: 0 }, { source: 'email', visitors: 1, signup_clicks: 0, buyers: 0 }]
+    };
+    await b.respond('admin_day_report', { data: dayData });
+    assert.equal(b.nodes.dayReport.hidden, false, 'Daily report shows once admin_day_report answers');
+    const stats = b.nodes.dayStats.innerHTML;
+    for (const text of [
+      '<b>12</b><span>ผู้เข้าชม</span><small><span class="delta up">▲ +3</span>เมื่อวานช่วงเดียวกัน 9<br>หน้าแรก 8 · ในแอป 7</small>',
+      'class="stat hot"><b>3</b><span>สมัครสมาชิก</span><small><span class="delta up">▲ +2</span>เมื่อวานช่วงเดียวกัน 1<br>ยืนยันอีเมลแล้ว 2 · ยังไม่ยืนยัน 1</small>',
+      '<b>4</b><span>สมาชิกที่ใช้งาน</span><small><span class="delta flat">± 0</span>',
+      '<b>300<small>บาท</small></b><span>รายได้</span>', 'เติมเงิน 2 ครั้ง', '<b>1<small>ครั้ง</small></b><span>ซื้อแพ็กเกจ</span>', 'ใช้ 149 แต้ม',
+      '<b>40.0%</b><span>สมัครต่อผู้เข้าชมใหม่</span><small>เมื่อวานช่วงเดียวกัน 25.0%</small>'
+    ]) assert.ok(stats.includes(text), `Daily tiles show ${text}`);
+    assert.equal((stats.match(/class="stat/g) || []).length, 8, 'Eight daily tiles');
+    assert.ok(b.nodes.dayCompare.textContent.includes('ถึง 13:00 น.') && b.nodes.dayCompare.textContent.includes('เทียบเมื่อวาน 00:00–13:00 น.'),
+      'Today compares with yesterday up to the same time');
+    const dayChart = b.charts.filter(c => c.id === 'chartDayHours').pop();
+    assert.ok(dayChart, 'Hourly chart drawn');
+    assert.equal(dayChart.config.data.labels.length, 24, '24 hourly labels');
+    assert.equal(dayChart.config.data.labels[9], '09:00', 'Hour labels 00:00-23:00');
+    assert.equal(dayChart.config.data.datasets[0].data[10], 5, 'Visitors bar per hour');
+    assert.equal(dayChart.config.data.datasets[0].data[14], null, 'Hours still to come stay empty');
+    assert.equal(dayChart.config.data.datasets[1].data[10], 2, 'Sign-ups bar per hour');
+    assert.equal(dayChart.config.data.datasets[2].type, 'line', 'Previous day is a line');
+    assert.deepEqual(plain(dayChart.config.data.datasets[2].borderDash), [5, 4], 'Previous day line is dashed');
+    assert.equal(dayChart.config.data.datasets[2].data[14], 1, 'Previous day line covers the whole day');
+    const sources = b.nodes.daySources.innerHTML;
+    for (const text of ['<td>ป้ายลิงก์ fb0610</td><td class="num">6<span class="day-share">43%</span></td><td class="num">2</td><td class="num">1</td>',
+      '<td>เข้าตรง / ไม่ทราบที่มา</td>', '<td>ไม่ทราบที่มา (เปิดเว็บก่อนเริ่มเก็บ)</td>', '<td>เว็บ example.com</td>',
+      '<td>อื่นๆ (รวมแหล่งที่เหลือ)</td>', '<td>ลิงก์ในอีเมล (ยืนยันอีเมล / ตั้งรหัสใหม่)</td>']) {
+      assert.ok(sources.includes(text), `Sources show ${text}`);
+    }
+    assert.ok(b.nodes.daySourceHint.innerHTML.startsWith('เริ่มเก็บแหล่งที่มา ') && b.nodes.daySourceHint.innerHTML.includes('?src=fb0610'), 'Source hint');
+    assert.ok(!/NaN|undefined|Infinity/.test(stats + sources + b.nodes.dayCompare.textContent), 'Daily report never shows NaN/undefined');
+    b.api.renderDay({ ...dayData, cur: { ...dayData.cur, signups_new: undefined, signups: 9, new_visitors: 3 } });
+    assert.ok(b.nodes.dayStats.innerHTML.includes('<b>100.0%</b><span>สมัครต่อผู้เข้าชมใหม่</span>'), 'Sign-up rate never above 100%');
+    // ชื่อจากข้อมูลที่ผู้ใช้ส่งมาต้องถูก escape
+    b.api.renderDay({ ...dayData, sources: [{ source: 'tag:<b>x', visitors: 1, signup_clicks: 0, buyers: 0 }] });
+    assert.ok(b.nodes.daySources.innerHTML.includes('ป้ายลิงก์ &lt;b&gt;x') && !b.nodes.daySources.innerHTML.includes('<b>x'), 'Source names are escaped');
+    b.api.renderDay({ ...dayData, cur: {}, prev: {}, hours: [], sources: [], sources_since: null });
+    assert.ok(b.nodes.daySources.innerHTML.includes('ยังไม่มีผู้เข้าชมในวันนี้') &&
+      b.nodes.daySourceHint.innerHTML.startsWith('แหล่งที่มาจะเริ่มนับหลังอัปเดตนี้'), 'Empty day');
+    assert.ok(!/NaN|undefined|Infinity/.test(b.nodes.dayStats.innerHTML), 'Empty day shows zeros');
+
+    // เลือก "เมื่อวาน" → p_day เมื่อวาน · เทียบวันก่อนหน้าทั้งวัน · ปุ่มที่เลือกเปลี่ยนตาม · ปุ่มช่วง 7/30/90 ไม่โดนแตะ
+    b.nodes.daySeg.handlers.click.call(b.nodes.daySeg, { target: { closest: () => ({ dataset: { day: 'yesterday' } }) } });
+    assert.deepEqual(b.rpc.filter(c => c.name === 'admin_day_report').map(c => c.args).pop(), { p_day: '2026-09-25' }, 'Yesterday sends p_day');
+    assert.ok(b.nodes.dayYesterday.className.includes('active') && !b.nodes.dayToday.className.includes('active'), 'Yesterday button active');
+    assert.deepEqual(b.buttons.map(x => x.className.includes('active')), [false, true, false], 'Range buttons untouched by the day controls');
+    await b.respond('admin_day_report', { data: { ...dayData, day: '2026-09-25', is_today: false, window_end: '2026-09-25T17:00:00Z',
+                                                  prev_day: '2026-09-24', prev_end: '2026-09-24T17:00:00Z' } });
+    assert.ok(b.nodes.dayCompare.textContent.includes('ทั้งวัน') && b.nodes.dayCompare.textContent.includes('เทียบ '), 'Past day compares whole days');
+    assert.ok(b.nodes.dayStats.innerHTML.includes('วันก่อน 9'), 'Past day tiles name the previous day');
+    // ดูวันที่ผ่านมาแล้ว: ตัวจับเวลา 5 นาทีไม่ดึงซ้ำ · เลือกวันนี้จากปฏิทิน = กลับไปไม่ส่ง p_day
+    const dayCalls = () => b.rpc.filter(c => c.name === 'admin_day_report').length;
+    const dayPoll = b.intervals.filter(i => i.delay === 300000).pop();
+    let n = dayCalls(); dayPoll.callback();
+    assert.equal(dayCalls(), n, 'Past day is not polled');
+    b.nodes.dayPicker.value = '2026-09-26';
+    b.nodes.dayPicker.handlers.change.call(b.nodes.dayPicker);
+    assert.deepEqual(b.rpc.filter(c => c.name === 'admin_day_report').map(c => c.args).pop(), {}, 'Picking today drops p_day');
+    await b.respond('admin_day_report', { data: dayData });
+    n = dayCalls(); dayPoll.callback();
+    assert.equal(dayCalls(), n + 1, 'Today is polled every five minutes');
+    b.context.document.hidden = true; dayPoll.callback(); b.context.document.hidden = false;
+    assert.equal(dayCalls(), n + 1, 'Hidden document does not poll the daily report');
+    await b.respond('admin_day_report', { data: dayData });
+    // ผลของรอบเก่าที่มาช้าถูกทิ้ง
+    b.nodes.daySeg.handlers.click.call(b.nodes.daySeg, { target: { closest: () => ({ dataset: { day: 'yesterday' } }) } });
+    b.nodes.daySeg.handlers.click.call(b.nodes.daySeg, { target: { closest: () => ({ dataset: { day: 'today' } }) } });
+    await b.respond('admin_day_report', { data: { ...dayData, cur: { ...dayData.cur, visitors: 77 } } });
+    assert.ok(!b.nodes.dayStats.innerHTML.includes('<b>77</b>'), 'Late answer of an older request is ignored');
+    await b.respond('admin_day_report', { error: { message: 'เลือกวันในอนาคตไม่ได้' } });
+    assert.equal(b.nodes.dayStatus.textContent, ' · โหลดวันที่เลือกไม่สำเร็จ: เลือกวันในอนาคตไม่ได้ (ยังแสดงวันเดิม)', 'Errors are shown on the card');
+    // เลือก "เมื่อวาน" แล้วโหลดไม่สำเร็จ → ปุ่ม/ปฏิทินย้อนกลับไปวันที่แสดงอยู่ (วันนี้)
+    b.nodes.daySeg.handlers.click.call(b.nodes.daySeg, { target: { closest: () => ({ dataset: { day: 'yesterday' } }) } });
+    await b.respond('admin_day_report', { error: { message: 'network down' } });
+    assert.ok(b.nodes.dayToday.className.includes('active') && !b.nodes.dayYesterday.className.includes('active') && b.nodes.dayPicker.value === '2026-09-26',
+      'Failed pick reverts the controls to the day on screen');
+    // พิมพ์วันที่นอกช่วงเอง = ไม่ถาม
+    n = dayCalls(); b.nodes.dayPicker.value = '2026-09-30'; b.nodes.dayPicker.handlers.change.call(b.nodes.dayPicker);
+    assert.equal(dayCalls(), n, 'Out-of-range typed date is not requested');
+    b.nodes.dayPicker.value = '2026-09-26';
+    // นาฬิกาเครื่องช้ากว่าเซิร์ฟเวอร์ข้ามเที่ยงคืน: "วันนี้/เมื่อวาน" ใช้วันตามเซิร์ฟเวอร์
+    b.api.loadDay();
+    await b.respond('admin_day_report', { data: { ...dayData, generated_at: '2026-09-26T17:30:00Z', day: '2026-09-27' } });
+    assert.equal(b.nodes.dayPicker.max, '2026-09-27', 'Picker max follows the server date');
+    b.nodes.daySeg.handlers.click.call(b.nodes.daySeg, { target: { closest: () => ({ dataset: { day: 'yesterday' } }) } });
+    assert.deepEqual(b.rpc.filter(c => c.name === 'admin_day_report').map(c => c.args).pop(), { p_day: '2026-09-26' }, 'Yesterday = server yesterday');
+    await b.respond('admin_day_report', { data: { ...dayData, generated_at: '2026-09-26T17:31:00Z', day: '2026-09-26', is_today: false } });
+    n = dayCalls(); dayPoll.callback();
+    assert.equal(dayCalls(), n, 'Past day: the 5-minute tick only re-syncs the controls');
+    assert.ok(b.nodes.dayYesterday.className.includes('active'), 'Tick keeps yesterday highlighted');
+    // ยังไม่ได้รัน SQL: ซ่อนการ์ด เลิกดึง
+    b.api.loadDay();
+    await b.respond('admin_day_report', { error: { code: 'PGRST202', message: 'Could not find the function public.admin_day_report in the schema cache' } });
+    assert.equal(b.nodes.dayReport.hidden, true, 'Missing admin_day_report hides the card');
+    n = dayCalls(); b.api.loadDay();
+    assert.equal(dayCalls(), n, 'Missing admin_day_report stops fetching');
     checks++;
   }
   console.log(`PASS dashboard presentation: ${checks} checks; ${originalIds.length} existing IDs and range hooks preserved; source and mocked data/auth/loading/error behavior match baseline`);

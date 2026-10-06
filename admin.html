@@ -236,6 +236,26 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 .landing-head h3{font-size:.86rem}
 .landing-block .stat-grid-4{margin-bottom:0}
 
+/* ---------- รายงานรายวัน (วันที่เลือกเทียบวันก่อนหน้า + รายชั่วโมง + แหล่งที่มา) ---------- */
+.day-controls{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem .75rem}
+.day-pick{display:inline-flex;align-items:center;gap:.45rem;font-size:.8rem;color:var(--text-dim)}
+.day-pick input{min-height:44px;padding:.35rem .6rem;border:1px solid var(--border);border-radius:10px;background:var(--surface-3);color:var(--text);font-family:var(--font-ui);font-size:.85rem;color-scheme:dark}
+.day-compare{margin:-.35rem 0 .8rem}
+#dayStatus{color:var(--warn)}
+.day-stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:1.1rem}
+.day-stats .stat b small{display:inline;font-family:var(--font-ui);font-size:.76rem;font-weight:500;color:var(--text-dim);margin-left:.25rem}
+.day-stats .stat>small{display:block;font-size:.76rem;color:var(--text-mute);margin-top:.3rem;line-height:1.7}
+/* ป้าย ▲/▼ อยู่ในบรรทัดเดียวกับตัวเลขวันก่อนหน้า (กฎ .stat span ทั่วไปทำให้เป็นแถบเต็มความกว้าง) */
+.day-stats .stat>small .delta{display:inline-flex;margin:0 .35rem 0 0;font-size:.72rem;line-height:1.4}
+.day-detail{align-items:start}
+.day-sub{font-size:.86rem;margin-bottom:.6rem}
+.legend i.legend-line{width:14px;height:0;border-radius:0;border-top:2px dashed var(--text-mute);vertical-align:middle}
+.day-share{color:var(--text-mute);font-size:.72rem;margin-left:.3rem}
+.day-source-hint{margin-top:.65rem}
+.day-source-hint code{font-family:var(--font-mono);font-size:.76rem;color:var(--text);background:var(--surface-3);border:1px solid var(--border-soft);border-radius:5px;padding:.05rem .35rem}
+@media (max-width:1100px){ .day-stats{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:480px){ .day-stats{grid-template-columns:minmax(0,1fr)} }
+
 /* อุปกรณ์ (การ์ดแคบ) + error (การ์ดกว้าง) */
 .grid-side{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:1.1rem;align-items:start}
 .device-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface-2);margin-bottom:.9rem;gap:2px}
@@ -309,6 +329,39 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     </div>
     <p class="card-note live-since" id="liveSince" hidden>เริ่มนับออนไลน์หลังอัปเดตนี้ — ตัวเลขจะเริ่มขึ้นเมื่อมีคนเข้าใช้งาน</p>
     <div class="live-grid" id="liveTiles"></div>
+  </section>
+
+  <!-- รายงานรายวัน: RPC admin_day_report (SQL 20261006000100) — ไม่ขึ้นกับปุ่มช่วง 7/30/90 วัน · ยังไม่มีฟังก์ชัน = ซ่อนทั้งการ์ด -->
+  <section class="card" id="dayReport" aria-label="รายงานรายวัน" hidden>
+    <div class="card-head">
+      <div class="card-title">รายงานรายวัน</div>
+      <div class="day-controls">
+        <div class="seg" id="daySeg" role="group" aria-label="เลือกวันของรายงาน">
+          <button type="button" id="dayToday" data-day="today" class="active">วันนี้</button>
+          <button type="button" id="dayYesterday" data-day="yesterday">เมื่อวาน</button>
+        </div>
+        <label class="day-pick">เลือกวันที่<input type="date" id="dayPicker"></label>
+      </div>
+    </div>
+    <p class="card-note day-compare"><span id="dayCompare">กำลังโหลด...</span><span id="dayStatus"></span></p>
+    <div class="stat-grid day-stats" id="dayStats"></div>
+    <div class="grid-2 day-detail">
+      <div>
+        <h3 class="day-sub">ผู้เข้าชมรายชั่วโมง</h3>
+        <div class="chart-box sm"><canvas id="chartDayHours" role="img" aria-label="กราฟผู้เข้าชมและสมัครสมาชิกรายชั่วโมงของวันที่เลือก เทียบผู้เข้าชมวันก่อนหน้า"></canvas></div>
+        <div class="legend"><span><i style="background:var(--c1)"></i>ผู้เข้าชม</span><span><i style="background:var(--c2)"></i>สมัครสมาชิก</span><span><i class="legend-line"></i>ผู้เข้าชมวันก่อนหน้า</span></div>
+      </div>
+      <div>
+        <h3 class="day-sub">มาจากไหน</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>แหล่งที่มา</th><th class="num">ผู้เข้าชม</th><th class="num">สมัคร (ส่งฟอร์ม)</th><th class="num">ซื้อแพ็กเกจ</th></tr></thead>
+            <tbody id="daySources"></tbody>
+          </table>
+        </div>
+        <p class="card-note day-source-hint" id="daySourceHint"></p>
+      </div>
+    </div>
   </section>
 
   <!-- A. ตัวเลขหลัก -->
@@ -1061,6 +1114,129 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     }).join('');
   }
 
+  // ---------- รายงานรายวัน (RPC admin_day_report · SQL 20261006000100) ----------
+  // วันที่เลือก (เวลาไทย) เทียบวันก่อนหน้า: ดูวันนี้ = เมื่อวานถึงเวลาเดียวกัน · ดูวันที่ผ่านมาแล้ว = วันก่อนหน้าทั้งวัน
+  // ไม่ผูกกับปุ่มช่วง 7/30/90 วัน · ผลของรอบเก่าที่มาช้าถูกทิ้ง (seq) · ยังไม่มีฟังก์ชันในฐานข้อมูล = ซ่อนทั้งการ์ด
+  // pick = วันที่เลือก (null = วันนี้) · shown = วันที่ของรายงานที่แสดงอยู่ · offset = นาฬิกาเซิร์ฟเวอร์ − นาฬิกาเครื่องนี้ (มิลลิวินาที)
+  var day = { pick:null, seq:0, off:false, shown:undefined, offset:0 };
+  // วันที่แบบ YYYY-MM-DD ตามปฏิทินไทย (UTC+7 ไม่มีเวลาออมแสง)
+  function bkkDateIso(ms){ return new Date(ms + 7 * 3600000).toISOString().slice(0, 10); }
+  // "วันนี้" ตามนาฬิกาเซิร์ฟเวอร์ (เครื่องที่นาฬิกาเพี้ยนตอนใกล้เที่ยงคืนจะไม่ได้ "เมื่อวาน" ผิดวัน)
+  function dayTodayIso(){ return bkkDateIso(Date.now() + day.offset); }
+  function shiftIso(iso, n){ var d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function fmtTimeBkk(ts){ return new Date(ts).toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Bangkok' }); }
+  function fmtDayBkk(iso){ return new Date(iso + 'T00:00:00+07:00').toLocaleDateString('th-TH', { weekday:'short', day:'numeric', month:'short', timeZone:'Asia/Bangkok' }); }
+  // ชื่อแหล่งที่มา (ค่าที่หน้าเว็บส่งมา: direct / facebook ฯลฯ / tag:<ป้ายในลิงก์> / ref:<เว็บอื่น> · '?' = ยังไม่มีข้อมูล)
+  function sourceLabel(s){
+    var names = { direct:'เข้าตรง / ไม่ทราบที่มา', facebook:'Facebook', messenger:'Messenger', instagram:'Instagram', line:'LINE',
+      google:'Google', youtube:'YouTube', tiktok:'TikTok', discord:'Discord', x:'X (Twitter)', bing:'Bing', pantip:'Pantip',
+      email:'ลิงก์ในอีเมล (ยืนยันอีเมล / ตั้งรหัสใหม่)', '?':'ไม่ทราบที่มา (เปิดเว็บก่อนเริ่มเก็บ)', '*':'อื่นๆ (รวมแหล่งที่เหลือ)' };
+    s = String(s == null ? '?' : s);
+    if(Object.prototype.hasOwnProperty.call(names, s)) return names[s];
+    if(s.indexOf('tag:') === 0) return 'ป้ายลิงก์ ' + s.slice(4);
+    if(s.indexOf('ref:') === 0) return 'เว็บ ' + s.slice(4);
+    return s;
+  }
+  function deltaHtml(now, prev){
+    now = Number(now || 0); prev = Number(prev || 0);
+    var d = now - prev;
+    return '<span class="delta ' + (d > 0 ? 'up' : d < 0 ? 'down' : 'flat') + '">' + (d > 0 ? '▲ +' : d < 0 ? '▼ ' : '± ') + fmt(d) + '</span>';
+  }
+  // ตั้งค่าเฉพาะที่เปลี่ยน: ตั้ง min/max ซ้ำระหว่างพิมพ์วันที่ทำให้เบราว์เซอร์ล้างตัวเลขที่พิมพ์ค้าง (พิมพ์ 15 ได้ 5)
+  function syncDayControls(){
+    var today = dayTodayIso(), sel = day.pick || today, picker = $('dayPicker'), min = shiftIso(today, -178);
+    if(picker.max !== today) picker.max = today;
+    if(picker.min !== min) picker.min = min;
+    if(picker.value !== sel) picker.value = sel;
+    $('dayToday').classList.toggle('active', sel === today);
+    $('dayYesterday').classList.toggle('active', sel === shiftIso(today, -1));
+  }
+  function loadDay(){
+    if(day.off) return;
+    var seq = ++day.seq;
+    syncDayControls();
+    supa.rpc('admin_day_report', day.pick ? { p_day: day.pick } : {}).then(function(r){ return r; }, function(e){ return { error:e }; }).then(function(r){
+      if(seq !== day.seq) return;
+      if(r && !r.error && r.data){
+        var serverNow = Date.parse(r.data.generated_at);
+        if(isFinite(serverNow)) day.offset = serverNow - Date.now();
+        day.shown = day.pick;
+        $('dayStatus').textContent = ''; $('dayReport').hidden = false; renderDay(r.data); syncDayControls();
+        return;
+      }
+      // ยังไม่ได้รัน SQL: ซ่อนการ์ดและเลิกดึง (รีเฟรชหน้าหลังรัน SQL แล้วจะกลับมาเอง)
+      if(rpcMissing(r && r.error)){ day.off = true; $('dayReport').hidden = true; return; }
+      // โหลดไม่สำเร็จ: มีรายงานแสดงอยู่แล้ว = ย้อนตัวเลือกกลับไปวันที่แสดงอยู่ (ตัวเลขบนการ์ดยังเป็นของวันนั้น)
+      var why = String((r && r.error && (r.error.message || r.error)) || 'ลองกดรีเฟรช');
+      $('dayReport').hidden = false;
+      if(day.shown !== undefined){ day.pick = day.shown; syncDayControls(); $('dayStatus').textContent = ' · โหลดวันที่เลือกไม่สำเร็จ: ' + why + ' (ยังแสดงวันเดิม)'; }
+      else { $('dayCompare').textContent = ''; $('dayStatus').textContent = 'โหลดรายงานไม่สำเร็จ: ' + why; }
+    });
+  }
+  function renderDay(d){
+    var c = d.cur || {}, p = d.prev || {}, today = !!d.is_today;
+    var prevWord = today ? 'เมื่อวานช่วงเดียวกัน' : 'วันก่อน';
+    $('dayCompare').textContent = fmtDayBkk(d.day) + (today ? ' ถึง ' + fmtTimeBkk(d.window_end) + ' น.' : ' ทั้งวัน') +
+      ' · เทียบ' + (today ? 'เมื่อวาน 00:00–' + fmtTimeBkk(d.prev_end) + ' น.' : ' ' + fmtDayBkk(d.prev_day) + ' ทั้งวัน') + ' · ไม่นับบัญชีและเครื่องของแอดมิน';
+    var unconfirmed = Math.max(0, Number(c.signups || 0) - Number(c.signups_confirmed || 0));
+    // ตัวตั้ง = ผู้เข้าชมใหม่ที่สมัคร (signups_new) — ไม่เกิน 100% · ฟังก์ชันรุ่นที่ยังไม่มีค่านี้ใช้ยอดสมัครทั้งหมดแทน
+    var rate = function(o){
+      var su = o.signups_new != null ? Number(o.signups_new) : Number(o.signups || 0);
+      return Number(o.new_visitors || 0) ? Math.min(100, su / Number(o.new_visitors) * 100) : 0;
+    };
+    var tile = function(label, now, prev, sub, unit, hot){
+      return '<div class="stat' + (hot ? ' hot' : '') + '"><b>' + fmt(now) + (unit ? '<small>' + unit + '</small>' : '') + '</b><span>' + label + '</span>' +
+        '<small>' + deltaHtml(now, prev) + prevWord + ' ' + fmt(prev) + (sub ? '<br>' + sub : '') + '</small></div>';
+    };
+    $('dayStats').innerHTML = [
+      tile('ผู้เข้าชม', c.visitors, p.visitors, 'หน้าแรก ' + fmt(c.landing_visitors) + ' · ในแอป ' + fmt(c.app_visitors)),
+      tile('ผู้เข้าชมใหม่', c.new_visitors, p.new_visitors, 'เข้าเว็บครั้งแรก'),
+      tile('สมัครสมาชิก', c.signups, p.signups, 'ยืนยันอีเมลแล้ว ' + fmt(c.signups_confirmed) + (unconfirmed ? ' · ยังไม่ยืนยัน ' + fmt(unconfirmed) : ''), '', Number(c.signups || 0) > 0),
+      tile('สมาชิกที่ใช้งาน', c.active_members, p.active_members, 'ล็อกอินแล้วเปิดเว็บ'),
+      tile('เปิดหน้าแพ็กเกจ', c.pricing_visitors, p.pricing_visitors, 'กดซื้อ ' + fmt(c.buy_clicks) + ' คน'),
+      tile('ซื้อแพ็กเกจ', c.purchases, p.purchases, 'ใช้ ' + fmt(c.purchase_points) + ' แต้ม', 'ครั้ง', Number(c.purchases || 0) > 0),
+      tile('รายได้', c.revenue, p.revenue, 'เติมเงิน ' + fmt(c.topups) + ' ครั้ง', 'บาท', Number(c.revenue || 0) > 0),
+      '<div class="stat"><b>' + rate(c).toFixed(1) + '%</b><span>สมัครต่อผู้เข้าชมใหม่</span><small>' + prevWord + ' ' + rate(p).toFixed(1) + '%</small></div>'
+    ].join('');
+
+    // รายชั่วโมง: แท่ง = ผู้เข้าชม / สมัครสมาชิก ของวันที่เลือก (ชั่วโมงที่ยังมาไม่ถึงเว้นว่าง) · เส้นประ = ผู้เข้าชมวันก่อนหน้าทั้งวัน
+    var hours = d.hours || [];
+    var c1 = css('--c1'), c2 = css('--c2'), mute = css('--text-mute');
+    var bar = function(label, key, color){
+      return { label:label, data:hours.map(function(h){ return h.future ? null : Number(h[key] || 0); }), backgroundColor:alpha(color, .85), hoverBackgroundColor:color,
+               borderRadius:{ topLeft:3, topRight:3 }, borderSkipped:'bottom', maxBarThickness:16, order:2 };
+    };
+    drawChart('chartDayHours', { type:'bar', data:{ labels:hours.map(function(h){ return (h.hour < 10 ? '0' : '') + h.hour + ':00'; }), datasets:[
+      bar('ผู้เข้าชม', 'visitors', c1), bar('สมัครสมาชิก', 'signups', c2),
+      { type:'line', label:'ผู้เข้าชมวันก่อนหน้า', data:hours.map(function(h){ return Number(h.prev_visitors || 0); }), borderColor:mute, backgroundColor:mute,
+        borderDash:[5, 4], borderWidth:2, pointRadius:0, pointHoverRadius:4, fill:false, tension:0, order:1 }
+    ] }, options:baseOptions() });
+
+    var src = d.sources || [];
+    var total = src.reduce(function(a, s){ return a + Number(s.visitors || 0); }, 0);
+    $('daySources').innerHTML = src.length ? src.map(function(s){
+      return '<tr><td>' + esc(sourceLabel(s.source)) + '</td>' +
+        '<td class="num">' + fmt(s.visitors) + (total ? '<span class="day-share">' + Math.round(Number(s.visitors || 0) / total * 100) + '%</span>' : '') + '</td>' +
+        '<td class="num">' + fmt(s.signup_clicks) + '</td><td class="num">' + fmt(s.buyers) + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="empty">ยังไม่มีผู้เข้าชมในวันนี้</td></tr>';
+    $('daySourceHint').innerHTML = (d.sources_since ? 'เริ่มเก็บแหล่งที่มา ' + esc(fmtDateTime(d.sources_since)) : 'แหล่งที่มาจะเริ่มนับหลังอัปเดตนี้') +
+      ' · ใส่ป้ายท้ายลิงก์โฆษณา (ตัวอังกฤษหรือตัวเลข) เช่น <code>gum100.com/?src=fb0610</code> จะขึ้นเป็น "ป้ายลิงก์ fb0610" แยกได้ว่าโพสต์ไหนพาคนมากี่คน';
+  }
+  function initDayControls(){
+    $('daySeg').addEventListener('click', function(e){
+      var b = e.target.closest('[data-day]');
+      if(b){ day.pick = b.dataset.day === 'yesterday' ? shiftIso(dayTodayIso(), -1) : null; loadDay(); }
+    });
+    $('dayPicker').addEventListener('change', function(){
+      var v = this.value;
+      // วันที่นอกช่วง (พิมพ์เอง) ไม่ต้องถาม — เบราว์เซอร์แสดงว่าไม่ถูกต้องอยู่แล้ว
+      if(/^\d{4}-\d{2}-\d{2}$/.test(v) && v >= this.min && v <= this.max){ day.pick = v === dayTodayIso() ? null : v; loadDay(); }
+    });
+  }
+  // ทุก 5 นาที: ดูวันนี้ = ดึงใหม่ · ดูวันอื่น = แค่ขยับปุ่ม "วันนี้/เมื่อวาน" ให้ตรงวันจริง (เปิดค้างข้ามเที่ยงคืน)
+  function dayTick(){ if(day.pick) syncDayControls(); else loadDay(); }
+  initDayControls();
+
   function render(d){
     state.data = d;
     renderKpis(d.kpi || {});
@@ -1127,16 +1303,20 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   });
   $('refreshBtn').addEventListener('click', load);
   $('refreshBtn').addEventListener('click', loadLive);
+  $('refreshBtn').addEventListener('click', loadDay);
   // เปิดค้างไว้: ดึงข้อมูลใหม่ทุก 5 นาที เฉพาะตอนแท็บนี้เปิดดูอยู่
   setInterval(function(){ if(!document.hidden && state.data) load(); }, 300000);
   // แถบ "ตอนนี้" ดึงแยกทุก 1 นาที (เปลี่ยนช่วงวันไม่ต้องดึงใหม่) · ถ้ายังไม่มีฟังก์ชัน loadLive จะหยุดเอง
   setInterval(function(){ if(!document.hidden && state.data) loadLive(); }, 60000);
+  // รายงานรายวัน: ดูวันนี้อยู่ = ดึงใหม่ทุก 5 นาที (วันที่ผ่านมาแล้วตัวเลขไม่เปลี่ยน ไม่ต้องดึง — ขยับแค่ปุ่มเลือกวัน)
+  setInterval(function(){ if(!document.hidden && state.data) dayTick(); }, 300000);
 
   supa.auth.getSession().then(function(res){
     var session = res && res.data && res.data.session;
     if(!session){ showState('ยังไม่ได้ล็อกอิน', 'ล็อกอินด้วยบัญชีแอดมินที่หน้าเว็บก่อน แล้วกลับมาเปิดหน้านี้อีกครั้ง', 'ไปหน้าเว็บเพื่อล็อกอิน'); return; }
     load();
     loadLive();
+    loadDay();
   });
 })();
 </script>

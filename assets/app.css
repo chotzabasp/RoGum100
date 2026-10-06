@@ -1413,6 +1413,17 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .admin-table td.at-idx{color:var(--text-dim);font-variant-numeric:tabular-nums;width:2.5rem}
 .admin-table td.at-points{font-variant-numeric:tabular-nums;text-align:right}
 .admin-table td.at-plan{white-space:normal;min-width:220px}
+/* สมาชิก: ป้ายสถานะบัญชี + ปุ่มลบบัญชีขยะ + ประวัติการลบ (SQL 20261006000200) */
+.admin-table td.at-actions{width:1%;text-align:right}
+.admin-table td .membership-pill{display:inline-block;margin-left:.35rem;vertical-align:1px}
+.admin-danger-btn{color:var(--danger);border-color:color-mix(in srgb, var(--danger) 45%, var(--border))}
+.admin-danger-btn:hover{background:color-mix(in srgb, var(--danger) 14%, transparent)}
+.admin-members-note{margin-top:.6rem}
+.admin-deletions{margin-top:.8rem;border:1px solid var(--border);border-radius:var(--radius-m);padding:.45rem .8rem;background:var(--surface)}
+.admin-deletions summary{cursor:pointer;font-size:.82rem;font-weight:600;color:var(--text-dim);padding:.45rem 0;line-height:1.6}
+.admin-deletions ul{list-style:none;margin:.4rem 0 .3rem;padding:0;display:flex;flex-direction:column;gap:.35rem;font-size:.8rem}
+.admin-delete-confirm{display:block;margin-top:.8rem;font-size:.82rem}
+.admin-delete-confirm input{display:block;width:100%;margin-top:.4rem;padding:.55rem .7rem;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit}
 .admin-qr-tools input{flex:1;min-width:220px}
 .admin-qr-tools input,.admin-qr-tools select{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);color:var(--text);padding:.55rem .75rem;font-size:.85rem}
 .admin-qr-filter{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}

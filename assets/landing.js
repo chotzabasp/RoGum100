@@ -169,12 +169,16 @@
       }).catch(() => {});
     } catch (e) { /* นับไม่ได้ไม่เป็นไร หน้าเว็บทำงานต่อปกติ */ }
   }
+  // แหล่งที่มาของการเข้าเว็บรอบนี้ — สคริปต์ส่วนหัวของ index.html หาไว้ให้แล้ว (window.__gum100Src / sessionStorage gum100_src)
+  function trafficSource() {
+    try { return window.__gum100Src || sessionStorage.getItem('gum100_src') || null; } catch (e) { return window.__gum100Src || null; }
+  }
   try {
     if (!sessionStorage.getItem('gum100_landing')) {
       sessionStorage.setItem('gum100_landing', '1');
-      sendEvents([{ e: 'landing_view', p: 'landing', m: deviceType() }]);
+      sendEvents([{ e: 'landing_view', p: 'landing', m: deviceType(), s: trafficSource() }]);
     }
-  } catch (e) { sendEvents([{ e: 'landing_view', p: 'landing', m: deviceType() }]); }
+  } catch (e) { sendEvents([{ e: 'landing_view', p: 'landing', m: deviceType(), s: trafficSource() }]); }
   document.addEventListener('click', event => {
     const link = event.target.closest && event.target.closest('a[href^="app.html"]');
     if (!link) return;

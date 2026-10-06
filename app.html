@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20260929-promolimit">
+<link rel="stylesheet" href="assets/app.css?v=20261006-admin">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -845,7 +845,7 @@
           <p class="sub">ดูรายการเติมเงินของสมาชิกทุกสถานะ ยืนยันรับเงินเมื่อตรวจยอดโอนเข้าจริง ปิดรายการที่ไม่ได้จ่าย หรือเติมแต้มให้สมาชิกโดยตรง</p>
         </div>
         <!-- แดชบอร์ดสรุปภาพรวมแยกไฟล์ (admin.html) ผู้ใช้ทั่วไปจะได้ไม่ต้องโหลดโค้ด/กราฟของแอดมิน — ใช้ล็อกอินเดียวกัน -->
-        <a class="btn btn-gradient btn-sm" href="admin.html?v=20260926-dashboard-polish1" target="_blank" rel="noopener">เปิดแดชบอร์ดภาพรวม ↗</a>
+        <a class="btn btn-gradient btn-sm" href="admin.html?v=20261006-dayreport" target="_blank" rel="noopener">เปิดแดชบอร์ดภาพรวม ↗</a>
       </div>
       <div class="h-tabs admin-tabs" id="adminTabs">
         <button type="button" class="active" data-admin-tab="qr">รายการเติมเงิน</button>
@@ -963,7 +963,7 @@
       </div>
       <div id="adminMembersPanel" hidden>
         <div class="admin-qr-tools">
-          <input id="adminMembersSearch" type="text" maxlength="60" autocomplete="off" placeholder="กรองด้วยชื่อ หรือ username">
+          <input id="adminMembersSearch" type="text" maxlength="60" autocomplete="off" placeholder="กรองด้วยชื่อ username หรืออีเมล">
         </div>
         <p class="sub" id="adminMembersSummary"></p>
         <div class="admin-table-wrap">
@@ -976,11 +976,17 @@
                 <th>อีเมล</th>
                 <th>แต้ม</th>
                 <th>แพ็กเกจ</th>
+                <th>จัดการ</th>
               </tr>
             </thead>
             <tbody id="adminMembersList"></tbody>
           </table>
         </div>
+        <p class="sub admin-members-note">ปุ่ม "ลบบัญชี" ขึ้นเฉพาะบัญชีขยะ: สมัครแล้วไม่เคยยืนยันอีเมลและไม่เคยเข้าสู่ระบบ ไม่มีแต้มหรือแพ็กเกจ (เช่น ใส่อีเมลผิดตอนสมัคร) และสมัครมาเกิน 24 ชั่วโมงแล้ว · บัญชีอื่นลบด้วยขั้นตอนเต็มกับผู้ดูแลระบบ</p>
+        <details class="admin-deletions" id="adminDeletions" hidden>
+          <summary>ประวัติการลบบัญชี (20 รายการล่าสุด · เก็บ 180 วัน)</summary>
+          <ul id="adminDeletionsList"></ul>
+        </details>
       </div>
       <div id="adminSlipPanel" hidden>
         <p class="sub admin-slip-note">ระบบสลิปปิดรับคำขอใหม่แล้ว รายการนี้เป็นคำขอเก่าที่ยังค้างอยู่</p>
@@ -1265,4 +1271,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20260929-promolimit"></script>
+<script src="assets/app.js?v=20261006-admin"></script>

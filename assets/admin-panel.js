@@ -520,15 +520,30 @@ export function initAdminPanel(ctx){
 
   // ---------- แอดมิน: รายชื่อสมาชิกทั้งหมด + แพ็กเกจ/วันหมดอายุ (ไล่ดูได้โดยไม่ต้องรู้ username ก่อน) ----------
   var adminMembersCache = [];
+  // บัญชีขยะที่ปุ่ม "ลบบัญชี" ลบได้ (SQL 20261006000200 · ผู้ใช้เลือก "เฉพาะบัญชีขยะ" + "รอ 24 ชม." 6 ต.ค. 2569):
+  // ไม่เคยยืนยันอีเมล + ไม่เคยเข้าสู่ระบบ (เช่น ใส่อีเมลผิดตอนสมัคร) + ไม่มีแต้ม/แพ็กเกจ + สมัครเกิน 24 ชม. (คนจริงอาจกำลังยืนยันอีเมล)
+  // ฐานข้อมูลตรวจซ้ำละเอียดกว่านี้ตอนกด · ยังไม่ได้รัน SQL (ผลลัพธ์ไม่มี email_confirmed_at) = ไม่มีป้าย ไม่มีปุ่ม
+  // (ไม่ใส่ป้าย "แอดมิน" ในรายชื่อ — ผู้ใช้ไม่เอา 25 ก.ย. 2569 · role ใช้แค่ซ่อนปุ่มลบ)
+  var ADMIN_DELETE_MIN_AGE_MS = 24 * 3600 * 1000;
+  function adminMemberHasAuthInfo(m){ return Object.prototype.hasOwnProperty.call(m, 'email_confirmed_at'); }
+  function adminMemberIsJunk(m){
+    var created = Date.parse(m.created_at);
+    return adminMemberHasAuthInfo(m) && m.role !== 'admin' && !m.email_confirmed_at && !m.last_sign_in_at &&
+      !Number(m.points || 0) && !m.legacy_unlimited && !m.plan_bundle_expires_at && !m.plan_timers_expires_at &&
+      !Object.keys(m.feature_expiries || {}).length && isFinite(created) && Date.now() - created >= ADMIN_DELETE_MIN_AGE_MS;
+  }
   function adminMemberRowHtml(m, idx){
     var plan = describeMemberPlans(m).replace(/<br>/g, ' · ');
-    return '<tr>'+
+    var tag = '';
+    if(m.role !== 'admin' && adminMemberHasAuthInfo(m) && !m.email_confirmed_at) tag = ' <span class="membership-pill soon">ยังไม่ยืนยันอีเมล'+(m.last_sign_in_at ? '' : ' · ไม่เคยเข้าใช้')+'</span>';
+    return '<tr data-member-id="'+escapeHtml(m.id)+'">'+
       '<td class="at-idx">'+(idx+1)+'</td>'+
-      '<td><b>'+escapeHtml(m.display_name||'-')+'</b></td>'+
+      '<td><b>'+escapeHtml(m.display_name||'-')+'</b>'+tag+'</td>'+
       '<td class="sub">@'+escapeHtml(m.username||'-')+'</td>'+
       '<td class="sub">'+escapeHtml(m.email||'-')+'</td>'+
       '<td class="at-points">'+fmtNum(m.points||0)+'</td>'+
       '<td class="at-plan sub">'+plan+'</td>'+
+      '<td class="at-actions">'+(adminMemberIsJunk(m) ? '<button type="button" class="btn btn-ghost btn-sm admin-danger-btn" data-member-delete>ลบบัญชี</button>' : '')+'</td>'+
     '</tr>';
   }
   function renderAdminMembers(){
@@ -536,21 +551,96 @@ export function initAdminPanel(ctx){
     var q = (document.getElementById('adminMembersSearch').value||'').trim().toLowerCase();
     var rows = adminMembersCache.filter(function(m){
       if(!q) return true;
-      return (m.display_name||'').toLowerCase().indexOf(q)>=0 || (m.username||'').toLowerCase().indexOf(q)>=0;
+      return (m.display_name||'').toLowerCase().indexOf(q)>=0 || (m.username||'').toLowerCase().indexOf(q)>=0 ||
+             (m.email||'').toLowerCase().indexOf(q)>=0;
     });
-    document.getElementById('adminMembersSummary').textContent = 'ทั้งหมด '+fmtNum(adminMembersCache.length)+' คน'+(q ? ' · กรองเหลือ '+fmtNum(rows.length)+' คน' : '');
-    root.innerHTML = rows.length ? rows.map(adminMemberRowHtml).join('') : '<tr><td colspan="6" class="admin-topup-empty">ไม่พบสมาชิก</td></tr>';
+    var junk = adminMembersCache.filter(adminMemberIsJunk).length;
+    document.getElementById('adminMembersSummary').textContent = 'ทั้งหมด '+fmtNum(adminMembersCache.length)+' คน'+
+      (junk ? ' · บัญชีขยะที่ลบได้ '+fmtNum(junk)+' คน' : '')+(q ? ' · กรองเหลือ '+fmtNum(rows.length)+' คน' : '');
+    root.innerHTML = rows.length ? rows.map(adminMemberRowHtml).join('') : '<tr><td colspan="7" class="admin-topup-empty">ไม่พบสมาชิก</td></tr>';
   }
   function loadAdminMembers(){
     var root = document.getElementById('adminMembersList');
-    root.innerHTML = '<tr><td colspan="6" class="admin-topup-empty">กำลังโหลด...</td></tr>';
+    root.innerHTML = '<tr><td colspan="7" class="admin-topup-empty">กำลังโหลด...</td></tr>';
+    loadAdminDeletions();
     return supa.rpc('admin_list_members').then(function(res){
-      if(res.error){ root.innerHTML = '<tr><td colspan="6" class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</td></tr>'; return; }
+      if(res.error){ root.innerHTML = '<tr><td colspan="7" class="admin-topup-empty">โหลดไม่สำเร็จ: '+escapeHtml(res.error.message)+'</td></tr>'; return; }
       adminMembersCache = res.data || [];
       renderAdminMembers();
     });
   }
   document.getElementById('adminMembersSearch').addEventListener('input', renderAdminMembers);
+
+  // ---------- ลบบัญชีขยะ: ตรวจกับฐานข้อมูลก่อน → พิมพ์ยูเซอยืนยัน → ลบ (ลบแล้วกู้คืนไม่ได้) ----------
+  var adminDeleteBusy = false;
+  document.getElementById('adminMembersList').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-member-delete]');
+    if(!btn || adminDeleteBusy) return;
+    var row = btn.closest('tr');
+    var id = row && row.dataset.memberId;
+    if(!id) return;
+    adminDeleteBusy = true;
+    btn.disabled = true;
+    supa.rpc('admin_delete_member_check', { p_user_id: id }).then(function(res){
+      adminDeleteBusy = false;
+      btn.disabled = false;
+      if(res.error){
+        toast(res.error.code === 'PGRST202' ? 'ยังไม่ได้ติดตั้งระบบลบบัญชี — รัน SQL ล่าสุดใน Supabase ก่อน' : 'ตรวจบัญชีไม่สำเร็จ: '+res.error.message, 5000);
+        return;
+      }
+      var d = res.data || {};
+      var blockers = d.blockers || [];
+      if(blockers.length){
+        // ข้อมูลในตารางเก่ากว่าฐานข้อมูล (เช่น เพิ่งยืนยันอีเมล/ถูกเพิ่มเข้าปาร์ตี้) → บอกเหตุผล แล้วโหลดรายชื่อใหม่
+        showConfirm('<b>ลบบัญชีนี้จากปุ่มไม่ได้</b><br>'+escapeHtml(d.display_name||'-')+' (@'+escapeHtml(d.username||'-')+')<br>'+
+          '<small>เหตุผล: '+blockers.map(escapeHtml).join(' · ')+'<br>บัญชีที่ไม่ใช่บัญชีขยะต้องลบด้วยขั้นตอนเต็มกับผู้ดูแลระบบ</small>',
+          loadAdminMembers, null, { ok:'โหลดรายชื่อใหม่', cancel:'ปิด' });
+        return;
+      }
+      adminDeleteConfirm(d);
+    }).catch(function(err){ adminDeleteBusy = false; btn.disabled = false; toast('ตรวจบัญชีไม่สำเร็จ: '+(err && err.message || err)); });
+  });
+  function adminDeleteConfirm(d){
+    var byUsername = !!String(d.username || '').trim();
+    var expect = String(byUsername ? d.username : (d.email || '')).trim();
+    showConfirm('<b>ลบบัญชีขยะ</b> — ลบแล้วกู้คืนไม่ได้<br>'+
+      '<b>'+escapeHtml(d.display_name||'-')+'</b> (@'+escapeHtml(d.username||'-')+')<br>'+escapeHtml(d.email||'-')+'<br>'+
+      '<small>สมัครเมื่อ '+escapeHtml(d.created_at ? fmtDateTime(new Date(d.created_at).getTime()) : '-')+' · ยังไม่ยืนยันอีเมล · ไม่เคยเข้าสู่ระบบ<br>'+
+      'ลบแล้วอีเมลและยูเซอนี้ว่าง เจ้าของตัวจริงสมัครใหม่ด้วยอีเมลที่ถูกได้</small>'+
+      '<label class="admin-delete-confirm">พิมพ์'+(byUsername ? 'ยูเซอ' : 'อีเมล')+' <b>'+escapeHtml(expect)+'</b> เพื่อยืนยัน'+
+      '<input type="text" id="adminDeleteConfirmInput" maxlength="120" autocomplete="off" spellcheck="false" autocapitalize="off"></label>', function(){
+      var typed = ((document.getElementById('adminDeleteConfirmInput') || {}).value || '').trim();
+      if(adminDeleteBusy) return;
+      adminDeleteBusy = true;
+      supa.rpc('admin_delete_member', { p_user_id: d.id, p_confirm: typed }).then(function(res){
+        adminDeleteBusy = false;
+        if(res.error){ toast('ลบไม่สำเร็จ: '+res.error.message, 6000); loadAdminMembers(); return; }
+        toast('ลบบัญชี @'+((res.data && res.data.username) || d.username || '-')+' แล้ว');
+        loadAdminMembers();
+      }).catch(function(err){ adminDeleteBusy = false; toast('ลบไม่สำเร็จ: '+(err && err.message || err)); });
+    }, null, { ok:'ลบบัญชี' });
+    // ปุ่มยืนยันกดได้เมื่อพิมพ์ตรงเท่านั้น (ฐานข้อมูลตรวจซ้ำ) · showConfirm คืนสถานะปุ่มเองตอนกล่องปิด
+    var okBtn = document.getElementById('confirmOkBtn');
+    var input = document.getElementById('adminDeleteConfirmInput');
+    okBtn.disabled = true;
+    input.addEventListener('input', function(){ okBtn.disabled = input.value.trim().toLowerCase() !== expect.toLowerCase(); });
+    try{ input.focus({ preventScroll:true }); }catch(err){}
+  }
+  // ประวัติการลบ 20 รายการล่าสุด (ตาราง admin_user_deletions อ่านได้เฉพาะแอดมิน) — ยังไม่ได้รัน SQL = ซ่อนส่วนนี้
+  function loadAdminDeletions(){
+    var box = document.getElementById('adminDeletions');
+    var list = document.getElementById('adminDeletionsList');
+    supa.from('admin_user_deletions').select('username, email, display_name, deleted_at')
+      .order('deleted_at', { ascending:false }).limit(20).then(function(res){
+        if(res.error){ box.hidden = true; return; }
+        var rows = res.data || [];
+        box.hidden = false;
+        list.innerHTML = rows.length ? rows.map(function(r){
+          return '<li><b>@'+escapeHtml(r.username||'-')+'</b> '+escapeHtml(r.display_name||'')+' <span class="sub">'+escapeHtml(r.email||'')+
+            ' · ลบเมื่อ '+escapeHtml(fmtDateTime(new Date(r.deleted_at).getTime()))+'</span></li>';
+        }).join('') : '<li class="sub">ยังไม่เคยลบบัญชี</li>';
+      }, function(){ box.hidden = true; });
+  }
 
   document.getElementById('adminTabs').addEventListener('click', function(e){
     var btn = e.target.closest('[data-admin-tab]');

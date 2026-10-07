@@ -188,6 +188,9 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 .stat.hot{border-color:rgba(227,185,94,.45)}
 .stat.hot b{color:var(--gold)}
 .feature-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.7rem}
+/* บรรทัด "จาก N คน" ชิดล่างทุกการ์ด — ชื่อช่องยาวไม่เท่ากัน บรรทัดล่างยังตรงกัน */
+.feature-grid .stat{display:flex;flex-direction:column}
+.feature-grid .stat>small{display:block;margin-top:auto;padding-top:.3rem;font-size:.76rem;color:var(--text-mute);line-height:1.6}
 .traffic-stats .stat small{display:block;font-size:.76rem;color:var(--text-mute);margin-top:.2rem;line-height:1.6}
 
 /* เส้นทางการซื้อ: ขั้นละแถว ความกว้างแท่ง = สัดส่วนเทียบขั้นแรก */
@@ -811,12 +814,20 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     }).join('') : '<tr><td colspan="4" class="empty">ยังไม่มีโค้ดโปรโมชัน</td></tr>';
   }
   function renderFeatures(f){
+    // ตัวเลขใหญ่ = จำนวนรายการรวมทุกบัญชี · บรรทัดเล็ก = มาจากกี่คน (SQL 20261007000100 — ยังไม่รันก็แค่ไม่มีบรรทัดนี้)
     var items = [
-      [f.merchant_total, 'รายการซื้อ–ขาย'], [f.farm_total, 'รายการยอดฟาร์ม'], [f.kills_total, 'บันทึกฆ่าบอส'],
-      [f.bosses_tracked, 'บอสที่จับเวลาอยู่'], [f.parties_active, 'ปาร์ตี้ที่มีสมาชิก'], [f.custom_bosses, 'บอส Custom'],
-      [f.announcements_active, 'ประกาศรับ M ที่ยังไม่หมดอายุ']
+      [f.merchant_total, 'รายการซื้อ–ขาย', 'จาก', f.merchant_users],
+      [f.farm_total, 'รายการยอดฟาร์ม', 'จาก', f.farm_users],
+      [f.kills_total, 'บันทึกฆ่าบอส (รวม Custom)', 'จาก', f.kills_users],
+      [f.bosses_tracked, 'บอสในรายการจับเวลา (ไม่รวม Custom)', 'ในรายการของ', f.bosses_users],
+      [f.parties_active, 'ปาร์ตี้ที่มีสมาชิก', 'สมาชิกรวม', f.party_members],
+      [f.custom_bosses, 'บอส Custom ที่สร้างไว้', 'จาก', f.custom_bosses_users],
+      [f.announcements_active, 'ประกาศรับ M ที่ยังไม่หมดอายุ', 'จาก', f.announcements_users]
     ];
-    $('features').innerHTML = items.map(function(i){ return '<div class="stat"><b>' + fmt(i[0]) + '</b><span>' + i[1] + '</span></div>'; }).join('');
+    $('features').innerHTML = items.map(function(i){
+      return '<div class="stat"><b>' + fmt(i[0]) + '</b><span>' + i[1] + '</span>' +
+        (i[3] == null ? '' : '<small>' + i[2] + ' ' + fmt(i[3]) + ' คน</small>') + '</div>';
+    }).join('');
   }
 
   // ---------- กลุ่ม 2: การเข้าชมเว็บ ----------

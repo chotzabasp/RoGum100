@@ -118,7 +118,8 @@ function harness(html) {
 }
 const reference = harness(baseline);
 const modified = harness(current);
-const presentationFunctions = ['renderPlans', 'renderDevicesErrors', 'renderTraffic'];
+// 2026-10-07: renderFeatures (ยอดรวมการใช้งาน) เพิ่มบรรทัด "จาก N คน" + ชื่อช่องบอกตรงๆ ว่านับอะไร — ตรวจผลแยกท้ายไฟล์
+const presentationFunctions = ['renderPlans', 'renderDevicesErrors', 'renderTraffic', 'renderFeatures'];
 function withoutPresentation(h) {
   let script = h.script;
   for (const name of presentationFunctions) {
@@ -197,7 +198,8 @@ const plain = value => JSON.parse(JSON.stringify(value));
 // below; once they are in the baseline, later intentional edits to them must not fail the unchanged-cards comparison.
 const ANALYTICS_IDS = ['liveStrip', 'liveTiles', 'liveSince', 'liveStatus', 'usageRow', 'usagePeak', 'usageNote', 'usageStats',
   'chartHours', 'landingBlock', 'landingSince', 'landingStats', 'usageLegend'];
-function snapshot(h, ids = originalIds.filter(id => !['plans', 'plansNote'].includes(id) && !ANALYTICS_IDS.includes(id))) {
+// 'features' (ยอดรวมการใช้งาน) เปลี่ยนการแสดงผลตั้งใจ 2026-10-07 — ตรวจแยกท้ายไฟล์ (ตัวเลขหลักต้องเท่าฉบับเดิม)
+function snapshot(h, ids = originalIds.filter(id => !['plans', 'plansNote', 'features'].includes(id) && !ANALYTICS_IDS.includes(id))) {
   return Object.fromEntries(ids.map(id => {
     const n = h.nodes[id];
     return [id, { text: n.textContent, html: n.innerHTML, hidden: n.hidden, disabled: n.disabled, classes: n.className }];
@@ -603,6 +605,37 @@ checks++;
     assert.equal(b.nodes.dayReport.hidden, true, 'Missing admin_day_report hides the card');
     n = dayCalls(); b.api.loadDay();
     assert.equal(dayCalls(), n, 'Missing admin_day_report stops fetching');
+    checks++;
+  }
+  // 2026-10-07 ยอดรวมการใช้งานทั้งหมด: ตัวเลขใหญ่ = จำนวนรายการเหมือนเดิม · บรรทัดเล็ก = มาจากกี่คน (SQL 20261007000100)
+  // ชื่อช่องบอกตรงๆ ว่านับอะไร · SQL ยังไม่รัน/ย้อนกลับ (ไม่มีค่าคน) = ไม่มีบรรทัดเล็ก ไม่ขึ้น undefined/NaN
+  {
+    const a = harness(baseline), b = harness(current);
+    b.api.renderFeatures({ merchant_total: 0, farm_total: 12, kills_total: 0, bosses_tracked: 13, parties_active: 0, custom_bosses: 1, announcements_active: 0,
+      merchant_users: 0, farm_users: 3, kills_users: 0, bosses_users: 4, party_members: 0, custom_bosses_users: 1, announcements_users: 0 });
+    assert.equal(b.nodes.features.innerHTML, [
+      '<div class="stat"><b>0</b><span>รายการซื้อ–ขาย</span><small>จาก 0 คน</small></div>',
+      '<div class="stat"><b>12</b><span>รายการยอดฟาร์ม</span><small>จาก 3 คน</small></div>',
+      '<div class="stat"><b>0</b><span>บันทึกฆ่าบอส (รวม Custom)</span><small>จาก 0 คน</small></div>',
+      '<div class="stat"><b>13</b><span>บอสในรายการจับเวลา (ไม่รวม Custom)</span><small>ในรายการของ 4 คน</small></div>',
+      '<div class="stat"><b>0</b><span>ปาร์ตี้ที่มีสมาชิก</span><small>สมาชิกรวม 0 คน</small></div>',
+      '<div class="stat"><b>1</b><span>บอส Custom ที่สร้างไว้</span><small>จาก 1 คน</small></div>',
+      '<div class="stat"><b>0</b><span>ประกาศรับ M ที่ยังไม่หมดอายุ</span><small>จาก 0 คน</small></div>'
+    ].join(''), 'Feature tiles: record count, label naming what is counted, people line');
+    // ตัวเลขใหญ่ทุกช่องเท่าฉบับเดิม ลำดับเดิม
+    const big = h => [...h.nodes.features.innerHTML.matchAll(/<b>([^<]*)<\/b>/g)].map(m => m[1]);
+    const sample = { merchant_total: 1234, farm_total: 12, kills_total: 7, bosses_tracked: 13, parties_active: 2, custom_bosses: 1, announcements_active: 5 };
+    a.api.renderFeatures(sample);
+    b.api.renderFeatures({ ...sample, merchant_users: 3, farm_users: 2, kills_users: 2, bosses_users: 4, party_members: 6, custom_bosses_users: 1, announcements_users: 5 });
+    assert.deepEqual(big(b), big(a), 'Main numbers unchanged (same values, same order)');
+    assert.equal(big(b).length, 7, 'Seven feature tiles');
+    assert.ok(b.nodes.features.innerHTML.includes('<b>1,234</b>') && b.nodes.features.innerHTML.includes('<small>สมาชิกรวม 6 คน</small>'), 'Thousands separator · party members line');
+    // SQL ยังไม่รัน: ไม่มีค่าคน → ไม่มีบรรทัดเล็ก · ไม่มีข้อมูลเลย → 0 ทุกช่อง
+    b.api.renderFeatures(sample);
+    assert.ok(!b.nodes.features.innerHTML.includes('<small>'), 'Old SQL (no people values) shows no people line');
+    assert.deepEqual(big(b), big(a), 'Old SQL keeps the main numbers');
+    b.api.renderFeatures({});
+    assert.ok(!/NaN|undefined|null/.test(b.nodes.features.innerHTML) && big(b).every(v => v === '0') && big(b).length === 7, 'Empty features render zeros');
     checks++;
   }
   console.log(`PASS dashboard presentation: ${checks} checks; ${originalIds.length} existing IDs and range hooks preserved; source and mocked data/auth/loading/error behavior match baseline`);

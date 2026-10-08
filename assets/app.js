@@ -464,7 +464,7 @@
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
       merchantZenyPrice:'mvpwatch_merchantzenyprice_'+email,
-      historyServerPick:'mvpwatch_historyserverpick_'+email,
+      historyServerPick:'mvpwatch_historyserverpick_'+email, tfPick:'mvpwatch_tfpick_'+email,
       itemWarehouseStock:'mvpwatch_itemwarehousestock_'+email, itemsServer:'mvpwatch_itemsserver_'+email,
       itemLineClaimedQty:'mvpwatch_itemlineclaimedqty_'+email,
       currentServer:'mvpwatch_currentserver_'+email,
@@ -545,6 +545,7 @@
     // ราคา M ที่จำไว้ต่อเซิร์ฟ แยกซื้อ/ขาย: { serverId: { buy:'450', sell:'480' } }
     App.merchantZenyPrices = read('merchantZenyPrice', null) || {};
     restoreServerPick(keys);
+    restoreTfPick(keys);
     App.itemWarehouseStock = read('itemWarehouseStock', null) || {};
     // Tracks, per server+purchase-line, how much has EVER been dropped into a
     // warehouse tier (increases on drop, decreases only on explicit "undo → back to
@@ -3911,15 +3912,6 @@
   // รายการที่เพิ่งกดบันทึกล่าสุด — ติดป้าย "ล่าสุด" (แดง) จนกว่าจะบันทึกรายการถัดไป (ป้ายย้ายไปใบใหม่) หรือรีเฟรชหน้า
   // เก็บในหน่วยความจำอย่างเดียว ไม่บันทึกลงเครื่อง/คลาวด์ · การแก้ไขรายการเดิม (✎) ไม่ติดป้าย
   var farmNewEntryId = null;
-  function resetFarmTimeframes(){
-    farmHistoryRange = 'today';
-    farmTimeframe = 'today';
-    farmHistoryPage = 0;
-    var historyRangeEl = document.getElementById('farmHistoryRange');
-    var timeframeEl = document.getElementById('farmTimeframeSelect');
-    if(historyRangeEl) historyRangeEl.value = 'today';
-    if(timeframeEl) timeframeEl.value = 'today';
-  }
   var editingFarmId = null;
   // ค่าในฟอร์มตอนเริ่มแก้ (JSON) — เทียบตอนคลิกนอกกล่อง: เปลี่ยนไปแล้ว = ถามก่อนยกเลิก (ดู farmEditFormState)
   var farmEditBaseline = null;
@@ -5117,11 +5109,6 @@
   // ดัชนี id ของ tx ที่อยู่ในแต่ละกลุ่มวันที่ — สร้างใหม่ทุกครั้งที่ render เพื่อรู้ว่า
   // ตอนกดเปิดกลุ่มวันที่ไหน ควรเคลียร์ป้าย New ของ id ไหนบ้าง (ไม่ใช่เคลียร์รวมทุกกลุ่ม)
   var historyDayTxIds = {};
-  function resetMerchantHistoryRange(){
-    historyState.range = 'today';
-    var rangeEl = document.getElementById('mrHistoryRange');
-    if(rangeEl) rangeEl.value = 'today';
-  }
   // ค่าเริ่มต้นของตัวกรองเซิร์ฟเวอร์ (ประวัติ+กราฟ) = เซิร์ฟแรกที่ตั้งค่าไว้ในบัญชี ถ้ามีข้อมูล/เลือกได้จริง
   // ไม่งั้น fallback ไปตัวแรกในลิสต์ที่มีให้เลือก กันกรณีเซิร์ฟแรกของบัญชียังไม่เคยมีประวัติเลย
   // (userChangedServer กันไว้ไม่ให้ค่าเริ่มต้นทับสิ่งที่ผู้ใช้เลือกเองไปแล้ว เช่นกด "ทั้งหมด")
@@ -5169,6 +5156,33 @@
       history: historyState.userChangedServer ? historyState.serverId : null,
       chart: mrChartServerUserChanged ? mrChartServerId : null
     });
+  }
+  // ช่วงเวลา (TF) ที่เลือกค้างไว้ — ประวัติ/กราฟ บัญชีนักลงทุน + ประวัติ/กราฟ ยอดนักฟาร์ม จำแยกกัน ในเครื่องนี้ต่อบัญชี
+  // (ผู้ใช้ขอ 9 ต.ค. 2569: ค้างค่าจนกว่าจะเปลี่ยนเอง — สลับหน้า / เปลี่ยนเซิร์ฟ / รีเฟรช ไม่รีเซ็ตกลับ "วันนี้" · ไม่ซิงก์คลาวด์)
+  // ยังไม่เคยเลือก หรือค่าที่จำไว้ไม่มีในตัวเลือกแล้ว = "วันนี้" · บัญชีฟรีถูกบังคับเป็น "วันนี้" ตอนวาด (ค่าที่จำไว้ไม่ถูกทับ
+  // เพราะบันทึกเฉพาะตอนผู้ใช้เปลี่ยนเอง ทีละช่อง) · ผู้เยี่ยมชมไม่บันทึก
+  var TF_PICK_SELECTS = { mrHistory:'mrHistoryRange', mrChart:'mrChartTimeframeSelect', farmHistory:'farmHistoryRange', farmChart:'farmTimeframeSelect' };
+  function restoreTfPick(keys){
+    if(!historyState || !keys) return;
+    var pick = store(keys.tfPick, null) || {};
+    var val = {};
+    Object.keys(TF_PICK_SELECTS).forEach(function(name){
+      var sel = document.getElementById(TF_PICK_SELECTS[name]);
+      var v = pick[name];
+      var ok = sel && typeof v === 'string' && Array.prototype.some.call(sel.options, function(o){ return o.value === v; });
+      val[name] = ok ? v : 'today';
+      if(sel) sel.value = val[name];
+    });
+    historyState.range = val.mrHistory;
+    mrChartTimeframe = val.mrChart;
+    farmHistoryRange = val.farmHistory;
+    farmTimeframe = val.farmChart;
+  }
+  function saveTfPick(name, value){
+    if(!App.keys || App.isGuest) return;
+    var pick = store(App.keys.tfPick, null) || {};
+    pick[name] = value;
+    persist(App.keys.tfPick, pick);
   }
 
   var lastHistoryServerIdsKey = null;
@@ -7067,7 +7081,6 @@
       historyState.serverId = e.target.value;
       historyState.userChangedServer = true;
       saveServerPick();
-      resetMerchantHistoryRange();
       renderMerchantHistory();
     }catch(err){
       console.error('historyServerFilter change failed', err);
@@ -7094,6 +7107,7 @@
 
   document.getElementById('mrHistoryRange').addEventListener('change', function(e){
     historyState.range = e.target.value;
+    saveTfPick('mrHistory', historyState.range);
     renderMerchantHistory();
   });
 
@@ -7635,8 +7649,7 @@
   }
   // เข้าหน้าแรก: ย้าย util-bar (นาฬิกา/แต้ม/เมนูผู้ใช้) เข้าไปในกรอบ banner ให้เป็นพื้นหลังเดียวกับแถบต้อนรับ
   // ออกจากหน้าแรก: ย้ายกลับตำแหน่งเดิม (หน้า #view-home เองที่เป็นจุดอ้างอิงตำแหน่งเดิม อยู่คงที่เสมอ)
-  var merchantTfPage = null, merchantTfUser = null;
-  var farmTfPage = null, farmTfUser = null;
+  var merchantPrevPage = null, merchantPrevUser = null;
   // หน้าที่ผู้เยี่ยมชม (ยังไม่ล็อกอิน) เดินดูได้ — ตั้งค่า/แอดมินต้องล็อกอิน (ถูกพากลับหน้าแรก)
   var GUEST_PAGES = ['home','farm','timers','items','pricing'];
   // มือถือ: เมนูด้านบนเป็นแถบเลื่อนแนวนอน — เลื่อนปุ่มของหน้าที่เปิดอยู่มาไว้กลางจอ ไม่ให้ถูกตัดหรือหลุดจอ
@@ -7661,15 +7674,12 @@
   function switchPage(page){
     if((!App.session || !App.session.id) && GUEST_PAGES.indexOf(page)===-1) page = 'home';
     Track.page(page);
-    var tfUser = App.session ? App.session.id : null;
-    var resetMerchantTf = page==='home' && (merchantTfPage!=='home' || merchantTfUser!==tfUser);
-    merchantTfPage = page;
-    merchantTfUser = tfUser;
-    if(resetMerchantTf){
-      resetMerchantHistoryRange();
-      mrChartTimeframe = 'today';
-      document.getElementById('mrChartTimeframeSelect').value = 'today';
-    }
+    // เข้าหน้าบัญชีนักลงทุนจากหน้าอื่น (หรือเปลี่ยนบัญชี) = วาดประวัติ/กราฟใหม่เหมือนเดิม
+    // แต่ช่วงเวลา (TF) ไม่รีเซ็ตกลับ "วันนี้" แล้ว — ค้างค่าที่ผู้ใช้เลือกไว้ (restoreTfPick / saveTfPick)
+    var curUser = App.session ? App.session.id : null;
+    var enterMerchantPage = page==='home' && (merchantPrevPage!=='home' || merchantPrevUser!==curUser);
+    merchantPrevPage = page;
+    merchantPrevUser = curUser;
     // Share the existing announcement element without copying its IDs or handlers.
     var announcementPanel = document.getElementById('tickerTrack').closest('.panel-ticker');
     var announcementTarget = document.querySelector(page==='farm' ? '#view-farm .page-scroll' : '#view-home .page-scroll');
@@ -7686,13 +7696,7 @@
     document.getElementById('view-settings').hidden = page !== 'settings';
     if(App.session && App.profile) renderExpiryState();
     if(page==='home' || page==='farm') refreshAnnouncementsIfChanged(); // สองหน้าที่มีกระดาน — เช็คทันทีที่เปิด (หน้าอื่นรอรอบ 60 วิ)
-    if(resetMerchantTf){ renderMerchantHistory(); renderMrChart(); }
-    var resetFarmTf = page==='farm' && (farmTfPage!=='farm' || farmTfUser!==tfUser);
-    farmTfPage = page;
-    farmTfUser = tfUser;
-    if(resetFarmTf){
-      resetFarmTimeframes();
-    }
+    if(enterMerchantPage){ renderMerchantHistory(); renderMrChart(); }
     bossLiveSync();
     if(App.session && App.session.id){
       if(page==='farm') renderFarmPage();
@@ -10072,7 +10076,7 @@
     }
     App.farmServerId = e.target.value;
     saveFarmServer();
-    resetFarmTimeframes();
+    farmHistoryPage = 0; // ช่วงเวลา (TF) ที่เลือกไว้คงเดิม — เปลี่ยนเซิร์ฟแค่กลับไปหน้าแรกของประวัติ
     renderFarmExchangeRate();
     renderFarmMapName();
     renderFarmCostItems();
@@ -10099,6 +10103,7 @@
 
   document.getElementById('farmTimeframeSelect').addEventListener('change', function(e){
     farmTimeframe = e.target.value;
+    saveTfPick('farmChart', farmTimeframe);
     renderFarmChart();
   });
 
@@ -10119,6 +10124,7 @@
 
   document.getElementById('farmHistoryRange').addEventListener('change', function(e){
     farmHistoryRange = e.target.value;
+    saveTfPick('farmHistory', farmHistoryRange);
     farmHistoryPage = 0;
     renderFarmHistory();
   });
@@ -10917,6 +10923,7 @@
   // ---------- merchant รับ/ขาย chart controls ----------
   document.getElementById('mrChartTimeframeSelect').addEventListener('change', function(e){
     mrChartTimeframe = e.target.value;
+    saveTfPick('mrChart', mrChartTimeframe);
     renderMrChart();
   });
   document.getElementById('mrChartServerSelect').addEventListener('change', function(e){

@@ -3190,7 +3190,8 @@
         ? '<a class="poster" href="'+escapeHtml(/^https?:\/\//i.test(a.facebookUrl) ? a.facebookUrl : 'https://'+a.facebookUrl)+'" target="_blank" rel="noopener noreferrer">('+escapeHtml(a.userName)+')</a>'
         : '<span class="poster">('+escapeHtml(a.userName)+')</span>';
       return '<span class="ticker-item" data-announce-id="'+a.id+'">'+
-        '<span class="ticker-item-main">'+(sv?sv.name:a.serverId)+' '+posterHtml+'</span>'+
+        // ชื่อเซิร์ฟเป็นป้ายกรอบทองแบบชิปเซิร์ฟบนหัวแผง (ผู้ใช้ขอ 8 ต.ค. 2569 — เดิมตัวเล็กสีจางกลืนกับชื่อคนประกาศ)
+        '<span class="ticker-item-main"><span class="ticker-server">'+escapeHtml(sv?sv.name:a.serverId)+'</span> '+posterHtml+'</span>'+
         '<span class="ticker-item-sub">'+parts.join(' / ')+'</span>'+
       '</span>';
     }).join('');

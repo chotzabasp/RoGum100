@@ -3228,6 +3228,65 @@
   var mrChartCategoryFilter = 'all';
   var mrChartGeom = null; // recomputed on each render; used by the hover handler
 
+  // ---------- กราฟแท่ง/เส้น (ใช้ร่วมกันทั้งกราฟซื้อ–ขาย และยอดนักฟาร์ม) ----------
+  // เส้นหยักขึ้นลง (ลูกค้าขอ 8 ต.ค. 2569 "แบบสัญลักษณ์ไฟฟ้า") — เลือกแยกต่อกราฟ จำไว้ในเครื่องนี้
+  var CHART_TYPE_KEY = 'mvpwatch_charttype';
+  var chartTypePref = store(CHART_TYPE_KEY, null) || {};
+  function chartTypeOf(name){ return (chartTypePref || {})[name]==='line' ? 'line' : 'bar'; }
+  function setChartType(name, type){
+    chartTypePref = chartTypePref || {};
+    chartTypePref[name] = type==='line' ? 'line' : 'bar';
+    persist(CHART_TYPE_KEY, chartTypePref);
+  }
+  function syncChartTypeToggle(id, type){
+    document.querySelectorAll('#'+id+' .seg-btn').forEach(function(b){
+      var on = b.dataset.charttype===type;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  // โหมดเส้น + ช่วงที่มีแค่วันเดียว (วันนี้ / ทั้งหมดที่เพิ่งเริ่มบันทึกวันนี้) → แบ่ง 24 ชั่วโมงของวันนี้ ไม่งั้นเส้นเหลือจุดเดียว
+  function chartHourly(cfg, type){ return type==='line' && cfg.unit==='day' && cfg.count===1; }
+  function todayHourBuckets(){
+    var now = new Date(), out = [];
+    for(var h=0; h<24; h++){
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h);
+      var hh = (h<10?'0':'')+h, nx = (h+1<10?'0':'')+(h+1);
+      // future = ชั่วโมงที่ยังมาไม่ถึง — ไม่วาดจุด/เส้น (ไม่ใช่ 0)
+      out.push({ key:farmBucketKey(d.getTime(), 'hour'), label:hh+':00', tooltipLabel:'วันนี้ '+hh+':00–'+nx+':00 น.', future:h>now.getHours() });
+    }
+    return out;
+  }
+  // จุดกลมขนาดคงที่บนจอ: เส้นยาวศูนย์หัวมน + non-scaling-stroke — กราฟยืดตามกล่องไม่เท่ากันสองแกน (preserveAspectRatio none)
+  // ถ้าใช้ <circle> จะกลายเป็นวงรี · ขอบสีพื้นการ์ดกันจุดที่ซ้อนกันกลืนเป็นก้อนเดียว
+  function chartDot(x, y, color, size){
+    var d = 'M'+x.toFixed(1)+' '+y.toFixed(1)+'h0';
+    return '<path d="'+d+'" style="stroke:var(--surface)" stroke-width="'+(size+3)+'" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'+
+      '<path d="'+d+'" stroke="'+color+'" stroke-width="'+size+'" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
+  }
+  // เส้นละสี ผ่านทุกช่วงที่ผ่านมาแล้ว (ช่วงที่ไม่มีรายการ = 0) · จุดเฉพาะช่วงที่มียอด จะได้ไม่รกตรงเส้นศูนย์
+  function chartLineParts(buckets, series, valueOf, colorOf, xCenter, yAt){
+    var parts = [];
+    series.forEach(function(s){
+      var pts = [];
+      buckets.forEach(function(b, i){ if(!b.future) pts.push({ x:xCenter(i), y:yAt(valueOf(b, s)), v:valueOf(b, s) }); });
+      if(!pts.length) return;
+      var color = colorOf(s);
+      if(pts.length>1){
+        parts.push('<polyline points="'+pts.map(function(p){ return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' ')+
+          '" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>');
+      }
+      pts.forEach(function(p){ if(p.v!==0 || pts.length===1) parts.push(chartDot(p.x, p.y, color, 7)); });
+    });
+    return parts;
+  }
+  // ชี้ในโหมดเส้น: เส้นแนวตั้ง + จุดใหญ่ของทุกเส้นที่ช่วงนั้น
+  function chartHoverLineParts(b, series, valueOf, colorOf, cx, yAt, top, bottom){
+    var bits = ['<line x1="'+cx.toFixed(1)+'" y1="'+top+'" x2="'+cx.toFixed(1)+'" y2="'+bottom+'" stroke="rgba(255,255,255,0.28)" stroke-width="1" vector-effect="non-scaling-stroke"/>'];
+    if(!b.future) series.forEach(function(s){ bits.push(chartDot(cx, yAt(valueOf(b, s)), colorOf(s), 10)); });
+    return bits;
+  }
+
   // Bucket unit/count come from CHART_TIMEFRAME_CONFIG (shared with the farm chart) so both
   // pages tier day → week → month at the same breakpoints instead of always bucketing by day
   // (which used to render 365 unreadable slivers at "1 ปี").
@@ -3237,15 +3296,17 @@
     return buckets;
   }
 
-  function mrChartBuckets(tf, serverId, endOffsetUnits, categoryFilter){
+  function mrChartBuckets(tf, serverId, endOffsetUnits, categoryFilter, hourly){
     var cfg = mrChartCfg(tf, serverId, categoryFilter);
-    var buckets = mrChartGenerateBuckets(cfg, endOffsetUnits);
+    var unit = hourly ? 'hour' : cfg.unit;
+    var buckets = hourly ? todayHourBuckets() : mrChartGenerateBuckets(cfg, endOffsetUnits);
+    if(hourly) buckets.forEach(function(b){ b.sell = 0; b.buy = 0; });
     var byKey = {};
     buckets.forEach(function(b){ byKey[b.key] = b; });
     App.merchantLog.forEach(function(e){
       if(serverId!=='all' && e.serverId!==serverId) return;
       if(categoryFilter && categoryFilter!=='all' && (e.category||'zeny')!==categoryFilter) return;
-      var b = byKey[farmBucketKey(e.ts, cfg.unit)];
+      var b = byKey[farmBucketKey(e.ts, unit)];
       if(!b) return;
       var t = entryTotals(e);
       var amount = t.baht + (t.zeny>0 && e.exchangeRate>0 ? farmZenyToBaht(t.zeny, e.exchangeRate) : 0);
@@ -3512,6 +3573,7 @@
   }
   function farmBucketKey(ts, unit){
     var d = new Date(ts);
+    if(unit==='hour') return d.toDateString()+' '+d.getHours();
     if(unit==='week') return 'w'+farmWeekIndex(ts);
     if(unit==='month') return d.getFullYear()+'-'+d.getMonth();
     return d.toDateString();
@@ -3545,7 +3607,7 @@
   }
 
   function farmGenerateBuckets(unit, count, endOffsetUnits){
-    var buckets = generateTimeBuckets(unit, count, endOffsetUnits);
+    var buckets = unit==='hour' ? todayHourBuckets() : generateTimeBuckets(unit, count, endOffsetUnits);
     buckets.forEach(function(b){
       b.earned=0; b.cost=0; b.profit=0; b.count=0; b.earnedBaht=0; b.costBaht=0; b.profitBaht=0;
     });
@@ -3586,7 +3648,10 @@
     serverTagEl.textContent = curServer ? curServer.name : '';
     var svg = document.getElementById('farmChartSvg');
     var cfg = farmChartCfg();
-    var buckets = farmBuckets(App.farmServerId, cfg.unit, cfg.count, 0);
+    var chartType = chartTypeOf('farm');
+    syncChartTypeToggle('farmChartTypeToggle', chartType);
+    var hourly = chartHourly(cfg, chartType);
+    var buckets = farmBuckets(App.farmServerId, hourly ? 'hour' : cfg.unit, hourly ? 24 : cfg.count, 0);
     var series = FARM_SERIES_KEYS.filter(function(s){ return !hiddenFarmSeries[s]; });
     var W=640, H=220, padL=52, padR=8, padT=10, padB=22;
     var plotW = W-padL-padR, plotH = H-padT-padB;
@@ -3605,7 +3670,7 @@
     function yAt(v){ return padT + plotH - ((v-yMin)/(yMax-yMin))*plotH; }
     var y0 = yAt(0);
 
-    var parts = [];
+    var parts = [], lineParts = null;
     var gridCount = (yMax-yMin)/step;
     for(var g=0; g<=gridCount; g++){
       var gv = yMin + g*step, gy = yAt(gv);
@@ -3618,6 +3683,10 @@
     }
     if(!App.farmLog.some(function(e){ return e.serverId===App.farmServerId; })){
       parts.push('<text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" font-size="11" fill="#8b8d98">ยังไม่มีข้อมูลการฟาร์ม — บันทึกกั้มแรกทางด้านขวา</text>');
+    } else if(chartType==='line'){
+      // วาดหลังเส้นศูนย์ (ด้านล่าง) ให้เส้นอยู่บนสุด
+      lineParts = chartLineParts(buckets, series, farmBucketVal, function(s){ return FARM_SERIES_COLOR[s]; },
+        function(i){ return xSlot(i)+slotW/2; }, yAt);
     } else {
       var groupPad = n<=1 ? 0.32 : 0.16;
       var groupW = slotW*(1-groupPad*2);
@@ -3637,11 +3706,13 @@
     if(yMin<0){
       parts.push('<line x1="'+padL+'" y1="'+y0.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+y0.toFixed(1)+'" stroke="#3a3c48" stroke-width="1"/>');
     }
+    if(lineParts) parts = parts.concat(lineParts);
     parts.push('<g id="farmChartHoverLayer"></g>');
     svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.setAttribute('aria-label', chartType==='line' ? 'กราฟเส้นยอดฟาร์ม' : 'กราฟยอดฟาร์มรายวัน');
     svg.innerHTML = parts.join('');
 
-    farmChartGeom = { W:W, H:H, padL:padL, plotW:plotW, padT:padT, n:n, slotW:slotW, xSlot:xSlot, yAt:yAt, buckets:buckets };
+    farmChartGeom = { W:W, H:H, padL:padL, plotW:plotW, padT:padT, n:n, slotW:slotW, xSlot:xSlot, yAt:yAt, buckets:buckets, type:chartType };
     renderFarmChartLegend(buckets);
     renderFarmSeriesFilter();
     renderFarmKpi();
@@ -3725,17 +3796,23 @@
 
   function handleFarmChartHover(evt){
     if(!farmChartGeom) return;
+    var g = farmChartGeom;
     var svg = document.getElementById('farmChartSvg');
     var rect = svg.getBoundingClientRect();
-    var relX = ((evt.clientX-rect.left)/rect.width)*farmChartGeom.W;
-    var idx = Math.floor((relX-farmChartGeom.padL)/farmChartGeom.slotW);
-    idx = Math.max(0, Math.min(farmChartGeom.n-1, idx));
+    var relX = ((evt.clientX-rect.left)/rect.width)*g.W;
+    var idx = Math.floor((relX-g.padL)/g.slotW);
+    idx = Math.max(0, Math.min(g.n-1, idx));
+    // เส้นรายชั่วโมง: ชั่วโมงที่ยังมาไม่ถึงไม่มีจุด → ชี้ได้ถึงชั่วโมงปัจจุบัน
+    while(idx>0 && g.buckets[idx].future) idx--;
 
     var layer = document.getElementById('farmChartHoverLayer');
-    var slotX = farmChartGeom.xSlot(idx);
-    var b = farmChartGeom.buckets[idx];
+    var slotX = g.xSlot(idx);
+    var centerX = slotX + g.slotW/2;
+    var b = g.buckets[idx];
     var series = FARM_SERIES_KEYS.filter(function(s){ return !hiddenFarmSeries[s]; });
-    var svgBits = ['<rect x="'+slotX.toFixed(1)+'" y="'+farmChartGeom.padT+'" width="'+farmChartGeom.slotW.toFixed(1)+'" height="'+(farmChartGeom.H-22-farmChartGeom.padT)+'" fill="rgba(255,255,255,0.05)"/>'];
+    var svgBits = g.type==='line'
+      ? chartHoverLineParts(b, series, farmBucketVal, function(s){ return FARM_SERIES_COLOR[s]; }, centerX, g.yAt, g.padT, g.H-22)
+      : ['<rect x="'+slotX.toFixed(1)+'" y="'+g.padT+'" width="'+g.slotW.toFixed(1)+'" height="'+(g.H-22-g.padT)+'" fill="rgba(255,255,255,0.05)"/>'];
     var rows = [];
     var hoverUnit = farmUnitSuffix();
     series.forEach(function(s){
@@ -3751,12 +3828,12 @@
     var tip = document.getElementById('farmChartTooltip');
     tip.innerHTML = '<span class="ct-time">'+(b.tooltipLabel||b.label)+'</span>'+rows.join('');
     var wrapW = document.getElementById('farmChartWrap').clientWidth;
-    var centerX = slotX + farmChartGeom.slotW/2;
-    var tipLeft = (centerX/farmChartGeom.W)*wrapW + 10;
-    if(tipLeft+150>wrapW) tipLeft = (centerX/farmChartGeom.W)*wrapW - 150;
+    var tipLeft = (centerX/g.W)*wrapW + 10;
+    if(tipLeft+150>wrapW) tipLeft = (centerX/g.W)*wrapW - 150;
     tip.style.left = Math.max(4, tipLeft)+'px';
     tip.hidden = false;
   }
+
   function hideFarmChartHover(){
     document.getElementById('farmChartTooltip').hidden = true;
     var layer = document.getElementById('farmChartHoverLayer');
@@ -4165,7 +4242,10 @@
     lockHistoryRangeSelect(document.getElementById('mrChartTimeframeSelect'), mrChartAllowed, CHART_RANGE_LOCK_TITLE);
     populateMrChartServerSelect();
     var svg = document.getElementById('mrChartSvg');
-    var buckets = mrChartBuckets(mrChartTimeframe, mrChartServerId, 0, mrChartCategoryFilter);
+    var chartType = chartTypeOf('mr');
+    syncChartTypeToggle('mrChartTypeToggle', chartType);
+    var hourly = chartHourly(mrChartCfg(mrChartTimeframe, mrChartServerId, mrChartCategoryFilter), chartType);
+    var buckets = mrChartBuckets(mrChartTimeframe, mrChartServerId, 0, mrChartCategoryFilter, hourly);
     var series = MR_CHART_SERIES_KEYS.filter(function(s){ return !hiddenMrChartSeries[s]; });
     var W=640, H=220, padL=52, padR=8, padT=10, padB=22;
     var plotW = W-padL-padR, plotH = H-padT-padB;
@@ -4184,7 +4264,7 @@
     function yAt(v){ return padT + plotH - ((v-yMin)/(yMax-yMin))*plotH; }
     var y0 = yAt(0);
 
-    var parts = [];
+    var parts = [], lineParts = null;
     var gridCount = (yMax-yMin)/step;
     for(var g=0; g<=gridCount; g++){
       var gv = yMin + g*step, gy = yAt(gv);
@@ -4201,29 +4281,37 @@
       chartEmpty.innerHTML = '<strong>'+(App.isGuest ? 'เข้าสู่ระบบเพื่อดูกราฟของคุณ' : 'ยังไม่มีข้อมูลสำหรับกราฟนี้')+'</strong><span>'+(App.isGuest ? 'กราฟจะแสดงจากรายการซื้อ–ขายที่บันทึกไว้ในบัญชี' : 'ตรวจสอบเซิร์ฟเวอร์และหมวดหมู่ หรือเริ่มบันทึกในฟอร์มซื้อ–ขาย')+'</span>';
     } else {
       document.querySelector('#view-home .dashboard-chart-empty').hidden = true;
-      var groupPad = n<=1 ? 0.32 : 0.16;
-      var groupW = slotW*(1-groupPad*2);
-      var barGap = groupW*0.08;
-      var barW = (groupW - barGap*(series.length-1))/Math.max(series.length,1);
-      buckets.forEach(function(b,i){
-        var groupX = xSlot(i) + slotW*groupPad;
-        series.forEach(function(s, si){
-          var bx = groupX + si*(barW+barGap);
-          var v = b[s];
-          var y1 = yAt(v), y2 = y0;
-          var top = Math.min(y1,y2), h = Math.max(Math.abs(y1-y2), 1);
-          parts.push('<rect x="'+bx.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+MR_CHART_SERIES_COLOR[s]+'"/>');
+      if(chartType==='line'){
+        // วาดหลังเส้นศูนย์ (ด้านล่าง) ให้เส้นอยู่บนสุด
+        lineParts = chartLineParts(buckets, series, function(b, s){ return b[s]; }, function(s){ return MR_CHART_SERIES_COLOR[s]; },
+          function(i){ return xSlot(i)+slotW/2; }, yAt);
+      } else {
+        var groupPad = n<=1 ? 0.32 : 0.16;
+        var groupW = slotW*(1-groupPad*2);
+        var barGap = groupW*0.08;
+        var barW = (groupW - barGap*(series.length-1))/Math.max(series.length,1);
+        buckets.forEach(function(b,i){
+          var groupX = xSlot(i) + slotW*groupPad;
+          series.forEach(function(s, si){
+            var bx = groupX + si*(barW+barGap);
+            var v = b[s];
+            var y1 = yAt(v), y2 = y0;
+            var top = Math.min(y1,y2), h = Math.max(Math.abs(y1-y2), 1);
+            parts.push('<rect x="'+bx.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+MR_CHART_SERIES_COLOR[s]+'"/>');
+          });
         });
-      });
+      }
     }
     if(yMin<0){
       parts.push('<line x1="'+padL+'" y1="'+y0.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+y0.toFixed(1)+'" stroke="#3a3c48" stroke-width="1"/>');
     }
+    if(lineParts) parts = parts.concat(lineParts);
     parts.push('<g id="mrChartHoverLayer"></g>');
     svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.setAttribute('aria-label', chartType==='line' ? 'กราฟเส้นยอดขาย ยอดซื้อ และเงินสุทธิ' : 'กราฟแท่งรายรับ-ขายจากการซื้อขาย');
     svg.innerHTML = parts.join('');
 
-    mrChartGeom = { W:W, H:H, padL:padL, plotW:plotW, padT:padT, n:n, slotW:slotW, xSlot:xSlot, yAt:yAt, buckets:buckets };
+    mrChartGeom = { W:W, H:H, padL:padL, plotW:plotW, padT:padT, n:n, slotW:slotW, xSlot:xSlot, yAt:yAt, buckets:buckets, type:chartType };
     renderMrChartLegend(buckets);
     renderMrSeriesFilter();
     renderMrKpi();
@@ -4284,19 +4372,25 @@
 
   function handleMrChartHover(evt){
     if(!mrChartGeom) return;
+    var g = mrChartGeom;
     var svg = document.getElementById('mrChartSvg');
     var rect = svg.getBoundingClientRect();
-    var relX = ((evt.clientX-rect.left)/rect.width)*mrChartGeom.W;
-    var idx = Math.floor((relX-mrChartGeom.padL)/mrChartGeom.slotW);
-    idx = Math.max(0, Math.min(mrChartGeom.n-1, idx));
+    var relX = ((evt.clientX-rect.left)/rect.width)*g.W;
+    var idx = Math.floor((relX-g.padL)/g.slotW);
+    idx = Math.max(0, Math.min(g.n-1, idx));
+    // เส้นรายชั่วโมง: ชั่วโมงที่ยังมาไม่ถึงไม่มีจุด → ชี้ได้ถึงชั่วโมงปัจจุบัน
+    while(idx>0 && g.buckets[idx].future) idx--;
 
     var layer = document.getElementById('mrChartHoverLayer');
-    var slotX = mrChartGeom.xSlot(idx);
-    var b = mrChartGeom.buckets[idx];
-    var svgBits = ['<rect x="'+slotX.toFixed(1)+'" y="'+mrChartGeom.padT+'" width="'+mrChartGeom.slotW.toFixed(1)+'" height="'+(mrChartGeom.H-22-mrChartGeom.padT)+'" fill="rgba(255,255,255,0.05)"/>'];
+    var slotX = g.xSlot(idx);
+    var centerX = slotX + g.slotW/2;
+    var b = g.buckets[idx];
+    var series = MR_CHART_SERIES_KEYS.filter(function(s){ return !hiddenMrChartSeries[s]; });
+    var svgBits = g.type==='line'
+      ? chartHoverLineParts(b, series, function(bb, s){ return bb[s]; }, function(s){ return MR_CHART_SERIES_COLOR[s]; }, centerX, g.yAt, g.padT, g.H-22)
+      : ['<rect x="'+slotX.toFixed(1)+'" y="'+g.padT+'" width="'+g.slotW.toFixed(1)+'" height="'+(g.H-22-g.padT)+'" fill="rgba(255,255,255,0.05)"/>'];
     if(layer) layer.innerHTML = svgBits.join('');
 
-    var series = MR_CHART_SERIES_KEYS.filter(function(s){ return !hiddenMrChartSeries[s]; });
     var rows = series.map(function(s){
       var color = MR_CHART_SERIES_COLOR[s];
       var v = b[s];
@@ -4305,12 +4399,12 @@
     var tip = document.getElementById('mrChartTooltip');
     tip.innerHTML = '<span class="ct-time">'+(b.tooltipLabel||b.label)+'</span>'+rows.join('');
     var wrapW = document.getElementById('mrChartWrap').clientWidth;
-    var centerX = slotX + mrChartGeom.slotW/2;
-    var tipLeft = (centerX/mrChartGeom.W)*wrapW + 10;
-    if(tipLeft+150>wrapW) tipLeft = (centerX/mrChartGeom.W)*wrapW - 150;
+    var tipLeft = (centerX/g.W)*wrapW + 10;
+    if(tipLeft+150>wrapW) tipLeft = (centerX/g.W)*wrapW - 150;
     tip.style.left = Math.max(4, tipLeft)+'px';
     tip.hidden = false;
   }
+
   function hideMrChartHover(){
     document.getElementById('mrChartTooltip').hidden = true;
     var layer = document.getElementById('mrChartHoverLayer');
@@ -8658,13 +8752,13 @@
     // ประวัติการล่า: เปลี่ยนแท็บ/ตัวกรอง/ปิดได้ แต่ลบ/หาร/ขาย/เก็บไว้ไม่ได้
     '.slideover-head', '[data-htab]', '.h-filter', '[data-close-history]', '[data-loot-filter]', '[data-boss-killer]', '[data-history-more]',
     // บัญชีนักลงทุน: กราฟ/ตัวกรอง/ค้นหา/กางการ์ดประวัติ (ไม่รวมฟอร์มรับ-ขาย, ลงประกาศ, แก้/ลบรายการ)
-    '#mrChartCategoryToggle', '#mrChartServerSelect', '#mrChartTimeframeSelect', '#mrSeriesDropdownBtn', '#mrSeriesDropdown', '#mrSeriesChips', '#mrChartLegend',
+    '#mrChartCategoryToggle', '#mrChartTypeToggle', '#mrChartServerSelect', '#mrChartTimeframeSelect', '#mrSeriesDropdownBtn', '#mrSeriesDropdown', '#mrSeriesChips', '#mrChartLegend',
     '#historyCategoryToggle', '#historyServerFilter', '#mrHistorySearch', '#mrHistoryRange', '#mrItSoldToggle', '.mr-ic-head', '.mr-ic-day-head', '.mr-rate-hover', '.mr-edited-hover', '.mr-history-pager',
     '#tickerServerChips', '#rateChips',
     // รูปไอเทม: กดไอคอนดูรูปในประวัติ/คลังได้ (แนบ/เปลี่ยน/เอารูปออกในฟอร์ม = ทำรายการ → กัน)
     '.item-img-ico', '#itemImageLightbox',
     // ยอดนักฟาร์ม: เปลี่ยนเซิร์ฟเวอร์/หน่วย/ช่วงเวลา/กราฟ/หน้าประวัติ (ไม่รวมฟอร์มบันทึก, ต้นทุน, เรท, แก้/ลบ)
-    '#farmServerSelect', '#farmUnitToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
+    '#farmServerSelect', '#farmUnitToggle', '#farmChartTypeToggle', '#farmTimeframeSelect', '#farmSeriesDropdownBtn', '#farmSeriesDropdown', '#farmSeriesChips', '#farmChartLegend',
     '#farmHistoryRange', '#farmHistoryPagination', '[data-farm-day-toggle]', '.farm-cost-hover', '.farm-profit-hover', '.farm-income-hover',
     // จับเวลาบอส: เปิดปาร์ตี้ดู/เปิดประวัติ/พิมพ์ค้นหาได้ (เลือกผลค้นหา = เพิ่มบอส → กัน)
     '#partyPanelToggle', '[data-open-history]', '#searchInput', '#bossSoundControl', '#discordAlertToggle',
@@ -9920,6 +10014,13 @@
     document.querySelectorAll('#farmUnitToggle .seg-btn').forEach(function(b){ b.classList.toggle('active', b===btn); });
     renderFarmChart();
   });
+  // แท่ง/เส้น — จำไว้ในเครื่องนี้ · ปุ่มที่เลือกอัปเดตใน renderFarmChart
+  document.getElementById('farmChartTypeToggle').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-charttype]');
+    if(!btn) return;
+    setChartType('farm', btn.dataset.charttype);
+    renderFarmChart();
+  });
 
   document.getElementById('farmHistoryRange').addEventListener('change', function(e){
     farmHistoryRange = e.target.value;
@@ -10735,6 +10836,13 @@
     document.querySelectorAll('#mrChartCategoryToggle .seg-btn').forEach(function(b){
       b.classList.toggle('active', b===btn);
     });
+    renderMrChart();
+  });
+  // แท่ง/เส้น — จำไว้ในเครื่องนี้ · ปุ่มที่เลือกอัปเดตใน renderMrChart
+  document.getElementById('mrChartTypeToggle').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-charttype]');
+    if(!btn) return;
+    setChartType('mr', btn.dataset.charttype);
     renderMrChart();
   });
   document.getElementById('mrChartLegend').addEventListener('click', function(e){

@@ -305,6 +305,9 @@ svg.icon{width:18px;height:18px;display:block}
 .seg-toggle{display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.15rem}
 .seg-btn{background:none;border:none;color:var(--text-dim);font-size:.72rem;font-weight:600;padding:.3rem .65rem;border-radius:999px;cursor:pointer}
 .seg-btn.active{background:var(--accent);color:#fff}
+/* ปุ่มสลับกราฟแท่ง/เส้น: ไอคอนเล็กหน้าข้อความ (เส้น = หยักแบบสายฟ้า ตามที่ลูกค้าเรียก) */
+.chart-type-toggle .seg-btn{display:inline-flex;align-items:center;gap:.3rem}
+.chart-type-toggle .seg-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .chart-wrap{position:relative;height:190px}
 .chart-wrap svg{width:100%;height:100%;display:block;overflow:visible;cursor:crosshair}
 .chart-wrap svg text{font-family:"JetBrains Mono",monospace}
@@ -1972,11 +1975,15 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 #view-home .panel-hero #mrChartTimeframeSelect{width:76px}
 #view-home .panel-hero #mrChartCategoryToggle{flex:none;padding:.15rem;gap:.1rem}
 #view-home .panel-hero #mrChartCategoryToggle .seg-btn{min-height:30px;padding:.25rem .45rem;font-size:.76rem;white-space:nowrap}
+#view-home .panel-hero #mrChartTypeToggle{flex:none;padding:.15rem;gap:.1rem}
+#view-home .panel-hero #mrChartTypeToggle .seg-btn{min-height:30px;padding:.25rem .5rem;font-size:.76rem;white-space:nowrap}
 @media(max-width:640px){
   #view-home .panel-hero .chart-controls{display:grid;grid-template-columns:minmax(0,1fr) 76px}
   #view-home .panel-hero #mrChartServerSelect{grid-column:1/-1}
   #view-home .panel-hero #mrChartCategoryToggle{justify-self:start}
   #view-home .panel-hero #mrChartTimeframeSelect{justify-self:end}
+  /* ปุ่มแท่ง/เส้น ลงแถวของตัวเอง (ช่องขวา 76px เป็นของตัวเลือกช่วงเวลา) */
+  #view-home .panel-hero #mrChartTypeToggle{grid-column:1/-1;grid-row:3;justify-self:start}
 }
 /* Home announcements: compact ticker; native scrolling also allows touch swipes. */
 :is(#view-home,#view-farm) .panel-ticker{margin:0 0 1rem;padding:.65rem .9rem;gap:.45rem;min-height:0}

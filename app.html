@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20261006-admin">
+<link rel="stylesheet" href="assets/app.css?v=20261008-linechart">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -295,6 +295,10 @@
                   <button type="button" class="seg-btn" data-categoryfilter="item">ไอเทม</button>
                   <button type="button" class="seg-btn" data-categoryfilter="other">อื่นๆ</button>
                 </div>
+                <div class="seg-toggle chart-type-toggle" id="mrChartTypeToggle" role="group" aria-label="รูปแบบกราฟ">
+                  <button type="button" class="seg-btn active" data-charttype="bar" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13V8M8 13V3M13 13V6"/></svg>แท่ง</button>
+                  <button type="button" class="seg-btn" data-charttype="line" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12l4-5 3 3 5-7"/></svg>เส้น</button>
+                </div>
                 <select class="chart-tf-select" aria-label="ช่วงเวลาของกราฟ" id="mrChartTimeframeSelect">
                   <option value="today" selected>วันนี้</option>
                   <option value="7d">7วัน</option>
@@ -377,6 +381,10 @@
                 </div>
               </div>
               <div class="chart-controls">
+                <div class="seg-toggle chart-type-toggle" id="farmChartTypeToggle" role="group" aria-label="รูปแบบกราฟ">
+                  <button type="button" class="seg-btn active" data-charttype="bar" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13V8M8 13V3M13 13V6"/></svg>แท่ง</button>
+                  <button type="button" class="seg-btn" data-charttype="line" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12l4-5 3 3 5-7"/></svg>เส้น</button>
+                </div>
                 <select class="chart-tf-select" id="farmTimeframeSelect">
                   <option value="today" selected>วันนี้</option>
                   <option value="7d">7วัน</option>
@@ -1271,4 +1279,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20261008-zenyprice"></script>
+<script src="assets/app.js?v=20261008-linechart"></script>

@@ -617,7 +617,7 @@ checks++;
       '<div class="stat"><b>0</b><span>รายการซื้อ–ขาย</span><small>จาก 0 คน</small></div>',
       '<div class="stat"><b>12</b><span>รายการยอดฟาร์ม</span><small>จาก 3 คน</small></div>',
       '<div class="stat"><b>0</b><span>บันทึกฆ่าบอส (รวม Custom)</span><small>จาก 0 คน</small></div>',
-      '<div class="stat"><b>13</b><span>บอสในรายการจับเวลา (ไม่รวม Custom)</span><small>ในรายการของ 4 คน</small></div>',
+      '<div class="stat"><b>13</b><span>บอสที่ตั้งเวลาอยู่ (ไม่รวม Custom)</span><small>ในรายการของ 4 คน</small></div>',
       '<div class="stat"><b>0</b><span>ปาร์ตี้ที่มีสมาชิก</span><small>สมาชิกรวม 0 คน</small></div>',
       '<div class="stat"><b>1</b><span>บอส Custom ที่สร้างไว้</span><small>จาก 1 คน</small></div>',
       '<div class="stat"><b>0</b><span>ประกาศรับ M ที่ยังไม่หมดอายุ</span><small>จาก 0 คน</small></div>'

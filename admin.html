@@ -821,7 +821,8 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       [f.merchant_total, 'รายการซื้อ–ขาย', 'จาก', f.merchant_users],
       [f.farm_total, 'รายการยอดฟาร์ม', 'จาก', f.farm_users],
       [f.kills_total, 'บันทึกฆ่าบอส (รวม Custom)', 'จาก', f.kills_users],
-      [f.bosses_tracked, 'บอสในรายการจับเวลา (ไม่รวม Custom)', 'ในรายการของ', f.bosses_users],
+      // ตั้งเวลาอยู่ = มีคนเริ่มจับเวลา/ตั้งเวลา (บัญชีใหม่ได้ Baphomet ในรายการอัตโนมัติ — นับทุกตัวเลยไม่บอกการใช้งานจริง · SQL 20261008000100)
+      [f.bosses_tracked, 'บอสที่ตั้งเวลาอยู่ (ไม่รวม Custom)', 'ในรายการของ', f.bosses_users],
       [f.parties_active, 'ปาร์ตี้ที่มีสมาชิก', 'สมาชิกรวม', f.party_members],
       [f.custom_bosses, 'บอส Custom ที่สร้างไว้', 'จาก', f.custom_bosses_users],
       [f.announcements_active, 'ประกาศรับ M ที่ยังไม่หมดอายุ', 'จาก', f.announcements_users]

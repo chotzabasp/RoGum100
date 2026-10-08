@@ -1621,6 +1621,54 @@ h2{
   color:var(--muted);
   margin-top:10px
 }
+/* ความปลอดภัย: บอกชัดว่าไม่ขอไอดี/รหัสเกม — อยู่ใต้ขั้นตอนสมัคร จุดที่คนกำลังลังเล */
+.safety-note{
+  display:flex;
+  align-items:flex-start;
+  gap:16px;
+  margin-top:36px;
+  padding:20px 22px;
+  background:#16261f;
+  border:1px solid #3e7e68;
+  border-radius:14px
+}
+
+.safety-note svg{
+  width:28px;
+  height:28px;
+  margin-top:2px;
+  color:var(--green)
+}
+
+.safety-note h3{
+  font-size:16px;
+  font-weight:600;
+  line-height:1.6;
+  color:#d8f5e7
+}
+
+.safety-note ul{
+  list-style:none;
+  padding:0;
+  margin:8px 0 0;
+  display:grid;
+  gap:4px
+}
+
+.safety-note li{
+  position:relative;
+  padding-left:22px;
+  font-size:14px;
+  line-height:1.8;
+  color:var(--muted)
+}
+
+.safety-note li::before{
+  content:"✓";
+  position:absolute;
+  left:0;
+  color:var(--green)
+}
 
 .closing-section{
   position:relative;

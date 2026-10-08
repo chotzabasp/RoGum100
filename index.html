@@ -88,11 +88,15 @@
     }
     var leaving = false;
     function goApp(){ leaving = true; location.replace('app.html' + cleanSearch() + location.hash); }
+    // ปิดหน้าแรก (ผู้ใช้สั่ง 9 ต.ค. 2569 — ทดลอง 7 วัน เทียบ "สมัครต่อผู้เข้าชมใหม่" ในรายงานรายวัน): ทุกคนเข้าแอปทันที
+    //   ไฟล์หน้านี้ยังอยู่ครบ (ลิงก์เก่า / การ์ดตอนแชร์ลิงก์ยังใช้ได้) · เปิดหน้าแรกกลับ = เปลี่ยนเป็น false
+    //   ที่มาของการเข้าเว็บ (gum100_src) จำไว้ด้านบนก่อนส่งต่อแล้ว แอปอ่านต่อจาก sessionStorage
+    var LANDING_OFF = true;
     try{
       var appQuery = /[?&](auth|code|token_hash|type)=/.test(location.search);
       var signedIn = false;
       try{ signedIn = !!localStorage.getItem('sb-jnwckkcjurchnppekhpc-auth-token'); }catch(e){}
-      if(isAppHash() || appQuery || signedIn) goApp();
+      if(LANDING_OFF || isAppHash() || appQuery || signedIn) goApp();
       // เปลี่ยนแค่ # โดยไม่โหลดหน้าใหม่ (เช่นวางลิงก์ /#timers ในแท็บเดิม) ก็ต้องส่งต่อเหมือนกัน
       window.addEventListener('hashchange', function(){ if(isAppHash()) goApp(); });
     }catch(e){}

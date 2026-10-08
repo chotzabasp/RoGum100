@@ -4412,20 +4412,30 @@
     }).join('') || '<span class="farm-series-dropdown-empty">แสดงครบทุกรายการแล้ว</span>';
   }
 
+  // เลขใหญ่หัวกราฟ = ยอดรวมของเส้นที่เปิดอยู่ พร้อมชื่อกำกับ (ผู้ใช้ขอ 8 ต.ค. 2569 — เดิมโชว์เงินสุทธิเสมอแบบไม่มีชื่อ
+  // พอซ่อนเงินสุทธิเหลือเส้นกำไรจากที่ขาย เลขแดงด้านบนเลยขัดกับเส้นในกราฟ) · เปิดหลายเส้น: เงินสุทธิ → กำไรจากที่ขาย → ขาย → ซื้อ
+  var MR_KPI_ORDER = ['profit','realized','sell','buy'];
+  function mrKpiSeries(){
+    for(var i=0;i<MR_KPI_ORDER.length;i++){ if(!hiddenMrChartSeries[MR_KPI_ORDER[i]]) return MR_KPI_ORDER[i]; }
+    return 'profit';
+  }
   function renderMrKpi(){
     var cfg = mrChartCfg(mrChartTimeframe, mrChartServerId, mrChartCategoryFilter);
     var cur = mrChartBuckets(mrChartTimeframe, mrChartServerId, 0, mrChartCategoryFilter);
     var prev = mrChartBuckets(mrChartTimeframe, mrChartServerId, 1, mrChartCategoryFilter);
-    function sum(arr,k){ return arr.reduce(function(s,b){ return s+b[k]; }, 0); }
-    var curProfit = sum(cur,'profit');
-    var prevProfit = sum(prev,'profit');
+    function sum(arr,k){ return arr.reduce(function(s,b){ return s+(b[k]||0); }, 0); }
+    var key = mrKpiSeries();
+    var signed = key==='profit' || key==='realized';                    // ขาย/ซื้อ เป็นยอดเงินล้วน ไม่ใส่ +
+    var curVal = sum(cur,key);
+    var prevVal = sum(prev,key);
+    document.getElementById('mrKpiLabel').innerHTML = '<span class="cl-dot" style="background:'+MR_CHART_SERIES_COLOR[key]+'"></span>'+MR_CHART_SERIES_LABEL[key];
     var valueEl = document.getElementById('mrKpiValue');
-    valueEl.textContent = (curProfit<0?'-':'')+fmtNum(Math.abs(curProfit))+' บ';
-    valueEl.style.color = curProfit>=0 ? MR_CHART_SERIES_COLOR.profit : MR_LOSS_COLOR;
+    valueEl.textContent = (curVal<0?'-':(signed&&curVal>0?'+':''))+fmtNum(Math.abs(curVal))+' บ';
+    valueEl.style.color = signed && curVal<0 ? MR_LOSS_COLOR : MR_CHART_SERIES_COLOR[key];
     document.getElementById('mrKpiPeriod').textContent = '('+cfg.label+')';
     var deltaEl = document.getElementById('mrKpiDelta');
-    if(prevProfit!==0){
-      var deltaPct = (curProfit-prevProfit)/Math.abs(prevProfit)*100;
+    if(prevVal!==0){
+      var deltaPct = (curVal-prevVal)/Math.abs(prevVal)*100;
       deltaEl.hidden = false;
       deltaEl.className = 'farm-kpi-delta '+(deltaPct>=0?'up':'down');
       deltaEl.textContent = (deltaPct>=0?'▲ ':'▼ ')+Math.abs(deltaPct).toFixed(1)+'%';

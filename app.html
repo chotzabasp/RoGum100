@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20261008-realized2">
+<link rel="stylesheet" href="assets/app.css?v=20261008-compact">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -314,6 +314,7 @@
             <p class="dashboard-help">กราฟใช้เซิร์ฟเวอร์ หมวดหมู่ และช่วงเวลาที่เลือกในส่วนนี้ แยกจากตัวกรองสรุปและประวัติ</p>
             <div class="farm-kpi-row">
               <div class="farm-kpi-main">
+                <span class="mr-kpi-label" id="mrKpiLabel">เงินสุทธิ</span>
                 <span class="farm-kpi-value" id="mrKpiValue">0 บ</span>
                 <span class="farm-kpi-period" id="mrKpiPeriod"></span>
                 <span class="farm-kpi-delta" id="mrKpiDelta" hidden></span>
@@ -1279,4 +1280,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20261008-realized"></script>
+<script src="assets/app.js?v=20261008-kpi"></script>

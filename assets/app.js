@@ -464,6 +464,7 @@
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
       merchantZenyPrice:'mvpwatch_merchantzenyprice_'+email,
+      historyServerPick:'mvpwatch_historyserverpick_'+email,
       itemWarehouseStock:'mvpwatch_itemwarehousestock_'+email, itemsServer:'mvpwatch_itemsserver_'+email,
       itemLineClaimedQty:'mvpwatch_itemlineclaimedqty_'+email,
       currentServer:'mvpwatch_currentserver_'+email,
@@ -543,6 +544,7 @@
     App.merchantExchangeRates = read('merchantExRate', null) || {};
     // ราคา M ที่จำไว้ต่อเซิร์ฟ แยกซื้อ/ขาย: { serverId: { buy:'450', sell:'480' } }
     App.merchantZenyPrices = read('merchantZenyPrice', null) || {};
+    restoreServerPick(keys);
     App.itemWarehouseStock = read('itemWarehouseStock', null) || {};
     // Tracks, per server+purchase-line, how much has EVER been dropped into a
     // warehouse tier (increases on drop, decreases only on explicit "undo → back to
@@ -4438,20 +4440,13 @@
     });
     applyRememberedZenyPrice();
     renderItemRows();
-    // เลือกเซิร์ฟที่กล่องซื้อ-ขาย = ให้ "ประวัติ" กับกราฟกำไรเปลี่ยนตามไปด้วย
-    // จะได้ดูตัวเลขของเซิร์ฟที่กำลังบันทึกอยู่ ไม่ต้องไปไล่เปลี่ยน dropdown ทีละอัน
-    historyState.serverId = id;
-    historyState.userChangedServer = true;
-    resetMerchantHistoryRange();
-    mrChartServerId = id;
-    mrChartServerUserChanged = true;
-    renderMerchantHistory();
-    renderMrChart();
+    // ประวัติ / การ์ดสรุป / กราฟ ไม่เปลี่ยนตามเซิร์ฟของฟอร์มแล้ว (ผู้ใช้ขอ 8 ต.ค. 2569) — แต่ละอันเลือกเซิร์ฟเองที่ dropdown ของตัวเอง
+    // และจำไว้ในเครื่องนี้ (restoreServerPick / saveServerPick)
   }
 
   // เปลี่ยน/ลบการ์ดราคาแล้วเซิร์ฟของกล่องซื้อ-ขายถูกสลับให้เอง (syncMerchantServersWithRateSlots) → อัปเดตเรทที่โชว์
   // + ล้างของที่เลือกจากคลังของเซิร์ฟเดิม (เดิมช่องยังโชว์เรทของเซิร์ฟเดิม แต่บันทึกด้วยเรทของเซิร์ฟใหม่
-  // และขายของจากคลังเซิร์ฟเดิมโดยไม่ตัดสต็อก) · ไม่ใช้ selectMerchantServer เพราะตัวนั้นล็อกตัวกรองประวัติ/กราฟไว้ที่เซิร์ฟนั้นด้วย
+  // และขายของจากคลังเซิร์ฟเดิมโดยไม่ตัดสต็อก) · ไม่ใช้ selectMerchantServer (ตัวนั้นสำหรับกดเลือกเองในฟอร์ม — บันทึกเซิร์ฟ + วาดชิปใหม่)
   function refreshMerchantFormAfterServerSwitch(prevServer){
     if(App.currentServerId === prevServer) return;
     renderMrExchangeRate();
@@ -5077,12 +5072,31 @@
     return rawHistoryServerIds().filter(isHistoryServerShown);
   }
   // รายชื่อเซิร์ฟใน dropdown ของ "ประวัติ" กับกราฟกำไร = เซิร์ฟที่มีข้อมูลบันทึกไว้
-  // บวกเซิร์ฟที่กำลังเลือกอยู่ในกล่องซื้อ-ขาย ถึงเซิร์ฟนั้นจะยังไม่มีข้อมูลก็ต้องเลือกดูได้
-  // ไม่งั้นพอสลับเซิร์ฟที่กล่องซื้อ-ขาย ตัวกรองจะเด้งกลับไปเซิร์ฟอื่นทันที
+  // บวกทุกเซิร์ฟในกล่องซื้อ-ขาย (ยังไม่มีข้อมูลก็เลือกดูได้) — ไม่ขึ้นกับว่าฟอร์มกำลังเลือกเซิร์ฟไหน
+  // ไม่งั้นเซิร์ฟที่เลือกค้างไว้ (ยังไม่มีข้อมูล) จะหลุดจากรายชื่อแล้วเด้งไปเซิร์ฟแรกตอนสลับเซิร์ฟในฟอร์ม
   function historyPickerServerIds(){
     var ids = historyServerIds();
-    if(App.currentServerId && ids.indexOf(App.currentServerId)===-1) ids = ids.concat([App.currentServerId]);
+    (App.merchantServers || []).concat(App.currentServerId ? [App.currentServerId] : []).forEach(function(id){
+      if(id && ids.indexOf(id)===-1) ids.push(id);
+    });
     return ids;
+  }
+  // เซิร์ฟที่เลือกค้างไว้ใน dropdown ประวัติ / กราฟ — จำแยกกัน ในเครื่องนี้ต่อบัญชี (ผู้ใช้เลือก 8 ต.ค. 2569 · ไม่ซิงก์คลาวด์)
+  // ยังไม่เคยเลือก = null → ใช้ค่าเริ่มต้นเดิม (เซิร์ฟแรกของบัญชี) · เซิร์ฟที่จำไว้หายจากรายชื่อ → populate* กลับไปเซิร์ฟแรกเอง
+  function restoreServerPick(keys){
+    if(!historyState || !keys) return;
+    var pick = store(keys.historyServerPick, null) || {};
+    historyState.serverId = pick.history || 'all';
+    historyState.userChangedServer = !!pick.history;
+    mrChartServerId = pick.chart || null;
+    mrChartServerUserChanged = !!pick.chart;
+  }
+  function saveServerPick(){
+    if(!App.keys) return;
+    persist(App.keys.historyServerPick, {
+      history: historyState.userChangedServer ? historyState.serverId : null,
+      chart: mrChartServerUserChanged ? mrChartServerId : null
+    });
   }
 
   var lastHistoryServerIdsKey = null;
@@ -6973,6 +6987,7 @@
     try{
       historyState.serverId = e.target.value;
       historyState.userChangedServer = true;
+      saveServerPick();
       resetMerchantHistoryRange();
       renderMerchantHistory();
     }catch(err){
@@ -10828,6 +10843,7 @@
   document.getElementById('mrChartServerSelect').addEventListener('change', function(e){
     mrChartServerId = e.target.value;
     mrChartServerUserChanged = true;
+    saveServerPick();
     renderMrChart();
   });
   document.getElementById('mrChartCategoryToggle').addEventListener('click', function(e){

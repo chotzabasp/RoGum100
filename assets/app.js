@@ -443,11 +443,13 @@
   // ลงประกาศใหม่เสียแต้มตามระยะเวลา (แก้ไขประกาศเดิมยังฟรีเหมือนเดิม — ดู postAnnounceSubmitBtn)
   // ค่า cost ต้องตรงกับที่ฟังก์ชัน post_announcement() ฝั่ง DB คำนวณเป๊ะๆ (เทียบจาก value เป็น ms)
   // ราคาชุด 27 ก.ย. 2569 (migration 20260927000800_announcement_prices_hours.sql) — 5/15/30 นาทีเลิกใช้แล้ว
+  // 8 ต.ค. 2569: 12 ชม. ฟรี (migration 20261008000200_announcement_12h_free.sql) cost:0 → ปุ่มขึ้น "(ฟรี)"
+  //   ลงฟรีได้ 1 ประกาศต่อเซิร์ฟเวอร์ — ฐานข้อมูลตรวจเอง ลงซ้ำ/ย้ายเซิร์ฟมาซ้อนจะถูกปฏิเสธพร้อมเหตุผลภาษาไทย
   var ANNOUNCE_DURATION_OPTIONS = [
     { value:3600000,  label:'1 ชม.',  cost:3 },
     { value:10800000, label:'3 ชม.',  cost:5 },
     { value:21600000, label:'6 ชม.',  cost:8 },
-    { value:43200000, label:'12 ชม.', cost:12 }
+    { value:43200000, label:'12 ชม.', cost:0 }
   ];
   var ANNOUNCE_DEFAULT_DURATION = 3600000; // ค่าเริ่มต้นตอนลงประกาศใหม่ = 1 ชม.
   function serverRateById(id){
@@ -9850,7 +9852,7 @@
     var durSel = document.getElementById('postAnnounceDuration');
     // แก้ไขประกาศเดิมไม่เสียแต้ม (ระยะเวลาถูกล็อกไว้ไม่ให้แก้อยู่แล้ว) เลยไม่ต้องโชว์ราคาต่อท้าย
     durSel.innerHTML = ANNOUNCE_DURATION_OPTIONS.map(function(o){
-      return '<button type="button" class="announce-duration-btn" data-value="'+o.value+'">'+o.label+(entry ? '' : '<span class="announce-duration-cost">('+o.cost+' แต้ม)</span>')+'</button>';
+      return '<button type="button" class="announce-duration-btn" data-value="'+o.value+'">'+o.label+(entry ? '' : '<span class="announce-duration-cost">('+(o.cost ? o.cost+' แต้ม' : 'ฟรี')+')</span>')+'</button>';
     }).join('');
 
     if(entry){

@@ -463,6 +463,7 @@
       rateSlots:'mvpwatch_rateslots_'+email, rateSlotsVer:'mvpwatch_rateslotsver_'+email, merchantLog:'mvpwatch_merchantlog_'+email,
       merchantServers:'mvpwatch_merchantservers_'+email, merchantItems:'mvpwatch_merchantitems_'+email,
       merchantExRate:'mvpwatch_merchantexrate_'+email,
+      merchantZenyPrice:'mvpwatch_merchantzenyprice_'+email,
       itemWarehouseStock:'mvpwatch_itemwarehousestock_'+email, itemsServer:'mvpwatch_itemsserver_'+email,
       itemLineClaimedQty:'mvpwatch_itemlineclaimedqty_'+email,
       currentServer:'mvpwatch_currentserver_'+email,
@@ -540,6 +541,8 @@
       if(!App.merchantItems.other) App.merchantItems.other = [];
     }
     App.merchantExchangeRates = read('merchantExRate', null) || {};
+    // ราคา M ที่จำไว้ต่อเซิร์ฟ แยกซื้อ/ขาย: { serverId: { buy:'450', sell:'480' } }
+    App.merchantZenyPrices = read('merchantZenyPrice', null) || {};
     App.itemWarehouseStock = read('itemWarehouseStock', null) || {};
     // Tracks, per server+purchase-line, how much has EVER been dropped into a
     // warehouse tier (increases on drop, decreases only on explicit "undo → back to
@@ -603,6 +606,7 @@
     merchantServers:       function(){ return App.merchantServers; },
     merchantItems:         function(){ return App.merchantItems; },
     merchantExRate:        function(){ return App.merchantExchangeRates; },
+    merchantZenyPrice:     function(){ return App.merchantZenyPrices; },
     itemWarehouseStock:    function(){ return App.itemWarehouseStock; },
     itemLineClaimedQty:    function(){ return App.itemLineClaimedQty; },
     itemsServer:           function(){ return App.itemsServerId; },
@@ -1206,6 +1210,8 @@
     renderTicker();
     renderMerchantServers();
     if(serverChanged || !typingIn('#mrExRateInput')) renderMrExchangeRate();
+    // ราคา M ที่จำไว้ (อาจมาจากเครื่องอื่น): เซิร์ฟเปลี่ยน = ใช้ราคาของเซิร์ฟใหม่ · ช่องราคายังว่าง = เติมให้
+    if(serverChanged || (!typingIn('#mrItemRows') && App.zenyRows && App.zenyRows[0] && !App.zenyRows[0].price)) applyRememberedZenyPrice();
     if(serverChanged || !typingIn('#mrItemRows')) renderItemRows();
     renderMerchantHistory();
     renderMerchantSummary();
@@ -4336,6 +4342,7 @@
     [App.zenyRows, App.itemRows, App.otherRows].forEach(function(rows){
       (rows||[]).forEach(function(row){ if(row.stockGroupKey){ row.stockGroupKey = null; row.stockGroup = null; } });
     });
+    applyRememberedZenyPrice();
     renderItemRows();
     // เลือกเซิร์ฟที่กล่องซื้อ-ขาย = ให้ "ประวัติ" กับกราฟกำไรเปลี่ยนตามไปด้วย
     // จะได้ดูตัวเลขของเซิร์ฟที่กำลังบันทึกอยู่ ไม่ต้องไปไล่เปลี่ยน dropdown ทีละอัน
@@ -4357,6 +4364,7 @@
     [App.zenyRows, App.itemRows, App.otherRows].forEach(function(rows){
       (rows||[]).forEach(function(row){ if(row.stockGroupKey){ row.stockGroupKey = null; row.stockGroup = null; } });
     });
+    applyRememberedZenyPrice();
     renderItemRows();
   }
   function renderMrExchangeRate(){
@@ -4399,6 +4407,27 @@
   // A fresh M row always carries the fixed, locked name — never blank, never user-typed.
   // `price` is optional — passed in when carrying the last-used ราคา (เรท) forward after a save.
   function newZenyRow(price){ return newItemRow(ZENY_LABEL, price!=null&&price!=='' ? price : null, null, 'baht'); }
+  // ราคา M จำแยกต่อเซิร์ฟ + ซื้อ/ขาย (พิมพ์แล้วจำทันที · ซิงก์ข้ามเครื่อง) — สลับเซิร์ฟ/ซื้อ-ขายแล้วช่องราคาเปลี่ยนตาม
+  function rememberedZenyPrice(serverId, type){
+    var m = serverId && App.merchantZenyPrices ? App.merchantZenyPrices[serverId] : null;
+    var v = m ? m[type==='sell' ? 'sell' : 'buy'] : null;
+    return v!=null && v!=='' ? String(v) : '';
+  }
+  function rememberZenyPrice(serverId, type, price){
+    if(!serverId) return;
+    var key = type==='sell' ? 'sell' : 'buy';
+    var v = price!=null ? String(price) : '';
+    var m = App.merchantZenyPrices[serverId] || {};
+    if((m[key] || '') === v) return;
+    if(v) m[key] = v; else delete m[key];
+    if(Object.keys(m).length) App.merchantZenyPrices[serverId] = m; else delete App.merchantZenyPrices[serverId];
+    persist(App.keys.merchantZenyPrice, App.merchantZenyPrices);
+    cloudQueueKV('merchantZenyPrice');
+  }
+  function applyRememberedZenyPrice(){
+    var row = App.zenyRows && App.zenyRows[0];
+    if(row) row.price = rememberedZenyPrice(App.currentServerId, App.merchantType);
+  }
 
   // How much M is currently on hand for this server — ซื้อมาทั้งหมด minus ขายไปทั้งหมด,
   // across every M entry ever logged (not just what's on screen in ประวัติ). Shown right
@@ -5425,6 +5454,8 @@
       [App.zenyRows, App.itemRows, App.otherRows].forEach(function(rows){
         (rows||[]).forEach(function(row){ if(row.stockGroupKey){ row.stockGroupKey = null; row.stockGroup = null; } });
       });
+      // ราคา M ซื้อกับขายจำแยกกัน → สลับซื้อ/ขายแล้วช่องราคาเป็นราคาที่จำไว้ของฝั่งนั้น
+      applyRememberedZenyPrice();
       renderItemRows();
     }
   }
@@ -5438,6 +5469,7 @@
     App.itemRows = [newItemRow(null, null, null, 'baht')];
     App.otherRows = [newItemRow(null, null, null, 'baht')];
     setMerchantType('buy');
+    applyRememberedZenyPrice();
     setMerchantCategory('zeny');
     renderMerchantHistory();
     renderMerchantSummary();
@@ -6433,6 +6465,7 @@
       var priceRaw = cleanDecimalInput(e.target.value);
       e.target.value = formatDecimalDisplay(priceRaw);
       row.price = priceRaw;
+      if(App.merchantCategory==='zeny') rememberZenyPrice(App.currentServerId, App.merchantType, priceRaw);
     }
     if(e.target.classList.contains('mr-row-qty')){
       var qtyRaw = cleanDecimalInput(e.target.value);

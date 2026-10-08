@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20261008-compact">
+<link rel="stylesheet" href="assets/app.css?v=20261009-board">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -154,6 +154,7 @@
         <div class="ticker-wrap">
           <div class="ticker-track" id="tickerTrack"></div>
         </div>
+        <p class="ticker-disclaimer">เว็บไม่ได้เป็นตัวกลาง ตรวจสอบคู่ค้าก่อนซื้อขาย</p>
       </div>
         <header class="dashboard-heading" hidden>
           <div><h2>ภาพรวมบัญชีนักลงทุน</h2><p class="dashboard-help">ดูสรุป ติดตามรายการ และบันทึกซื้อ–ขายในที่เดียว</p></div>
@@ -1187,6 +1188,7 @@
     </div>
     <ul class="post-announce-note" id="postAnnounceNote">
       <li>กรุณา! ใส่ลิงก์หน้า FB ที่ "ตั้งค่า" ไว้ก่อนลงประกาศ เพื่อสะดวกในการติดต่อกัน</li>
+      <li>ประกาศจะแสดงให้ทุกคนเห็น รวมถึงคนที่ยังไม่ล็อกอิน</li>
       <li>สามารถกดแก้ไขราคา M ได้ตลอด (ก่อนเวลาหมด)</li>
       <li>เลือกดูประกาศได้มากกว่า 1 เซิร์ฟเวอร์ (+เพิ่มเซิร์ฟเวอร์)</li>
     </ul>
@@ -1200,7 +1202,7 @@
 <div id="myAnnouncementsOverlay" hidden>
   <div class="confirm-backdrop"></div>
   <div class="confirm-box my-announce-box">
-    <h3 class="post-announce-title">ประกาศของฉัน</h3>
+    <h3 class="post-announce-title" id="myAnnouncementsTitle">ประกาศของฉัน</h3>
     <div id="myAnnouncementsList"></div>
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" id="myAnnouncementsCloseBtn">ปิด</button>
@@ -1280,4 +1282,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20261009-free12h"></script>
+<script src="assets/app.js?v=20261009-board"></script>

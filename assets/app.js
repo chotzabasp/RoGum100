@@ -440,11 +440,15 @@
   // ราคารับ M: รับแพงขึ้นไม่จำกัด · รับถูกลงได้ไม่เกิน 50% ของราคาอ้างอิง (ผู้ใช้กำหนด 29 ก.ย. 2569)
   // ต้องตรงกับ announcements_guard (migration 20260929000600) — ข้อความแจ้งเตือนก็ต้องตรงกัน
   var RATE_MAX_DROP = 0.50;
+  // รับแพงขึ้นได้ไม่เกิน 2 เท่าของราคาอ้างอิง (ผู้ใช้กำหนด 9 ต.ค. 2569 — เดิมไม่จำกัด ลงราคามั่วสูงๆ แล้วคนอื่นลงราคาปกติไม่ได้)
+  // ต้องตรงกับ announcements_guard (migration 20261009000100) — ข้อความแจ้งเตือนก็ต้องตรงกัน
+  var RATE_MAX_RISE = 2;
   // ลงประกาศใหม่เสียแต้มตามระยะเวลา (แก้ไขประกาศเดิมยังฟรีเหมือนเดิม — ดู postAnnounceSubmitBtn)
   // ค่า cost ต้องตรงกับที่ฟังก์ชัน post_announcement() ฝั่ง DB คำนวณเป๊ะๆ (เทียบจาก value เป็น ms)
   // ราคาชุด 27 ก.ย. 2569 (migration 20260927000800_announcement_prices_hours.sql) — 5/15/30 นาทีเลิกใช้แล้ว
   // 8 ต.ค. 2569: 12 ชม. ฟรี (migration 20261008000200_announcement_12h_free.sql) cost:0 → ปุ่มขึ้น "(ฟรี)"
   //   ลงฟรีได้ 1 ประกาศต่อเซิร์ฟเวอร์ — ฐานข้อมูลตรวจเอง ลงซ้ำ/ย้ายเซิร์ฟมาซ้อนจะถูกปฏิเสธพร้อมเหตุผลภาษาไทย
+  // 9 ต.ค. 2569: ลงฟรีเฉพาะคนที่มีแพ็กเกจ (migration 20261009000100) — ไม่มีแพ็ก = ปุ่ม "(ฟรี 🔒)" กดแล้วขึ้น "คุณไม่มีแพ็กเกจ"
   var ANNOUNCE_DURATION_OPTIONS = [
     { value:3600000,  label:'1 ชม.',  cost:3 },
     { value:10800000, label:'3 ชม.',  cost:5 },
@@ -1281,10 +1285,15 @@
 
   function saveTickerServers(){ persist(App.keys.tickerServers, App.tickerServers); cloudQueueKV('tickerServers'); }
   function saveTickerSelectedServers(){ persist(App.keys.tickerSelectedServers, App.tickerSelectedServers); cloudQueueKV('tickerSelectedServers'); }
-  function saveLastRateUpdateTs(){ persist(App.keys.lastRateUpdateTs, App.lastRateUpdateTs); }
+  function saveLastRateUpdateTs(){ if(App.keys && !App.isGuest) persist(App.keys.lastRateUpdateTs, App.lastRateUpdateTs); }
 
   // ---------- ประกาศ "รับ M" : กระดานร่วม เก็บใน Supabase ตาราง announcements ----------
-  // RLS: สมาชิกที่ล็อกอินอ่านได้ทุกแถว แต่เขียน/แก้/ลบได้เฉพาะของตัวเอง
+  // RLS: สมาชิกที่ล็อกอินอ่านได้ทุกแถว แต่เขียน/แก้/ลบได้เฉพาะของตัวเอง (แอดมินลบได้ทุกอัน)
+  // ผู้เยี่ยมชม (ยังไม่ล็อกอิน) อ่านตารางตรงไม่ได้ → อ่านผ่าน public_announcements() ที่ส่งเฉพาะประกาศที่ยังไม่หมดเวลา
+  // และเฉพาะช่องที่กระดานโชว์ (ไม่มี user_id / ref_buy) · ผู้ใช้ขอ 9 ต.ค. 2569 (migration 20261009000100)
+  // โชว์ประกาศของทุกเซิร์ฟบนกระดาน (ผู้ใช้ขอ 9 ต.ค. 2569 — ช่วงแรกคนยังลงน้อย) เซิร์ฟที่เลือกไว้ขึ้นก่อน
+  // false = กลับไปแบบเดิม: เห็นเฉพาะเซิร์ฟที่เลือก (ชิปบนหัวแผงเป็นตัวกรอง)
+  var ANNOUNCE_SHOW_ALL_SERVERS = true;
   // แปลงเป็นรูปทรงเดิมที่ทั้งไฟล์ใช้อยู่ ({serverId, buy, userName, userId, ts, expiresAt})
   // เพื่อไม่ต้องรื้อโค้ด render ทั้งหมด
   function mapAnnouncement(r){
@@ -1303,10 +1312,13 @@
     };
   }
   function loadAnnouncements(){
-    if(!App.session){ App.rateAnnouncements = []; return Promise.resolve(); }
-    return supa.from('announcements').select('*')
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending:false })
+    if(!App.session && !App.isGuest){ App.rateAnnouncements = []; return Promise.resolve(); }
+    var query = App.session
+      ? supa.from('announcements').select('*')
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending:false })
+      : supa.rpc('public_announcements'); // ผู้เยี่ยมชม: ได้เป็นอาร์เรย์ใหม่สุดก่อน ช่องเดียวกับตาราง (ยกเว้น user_id / ref_buy)
+    return query
       .then(function(res){
         // ตารางยังไม่ถูกสร้าง / เน็ตหลุด → ปล่อยกระดานว่างไว้ ไม่ทำให้หน้าพัง
         if(res.error){ console.warn('loadAnnouncements', res.error); return false; }
@@ -1330,12 +1342,12 @@
   var announcementsKnownState = null;
   var announcementsCheckRun = null;
   function refreshAnnouncementsIfChanged(force){
-    if(!App.session) return Promise.resolve();
+    if(!App.session && !App.isGuest) return Promise.resolve();
     if(announcementsCheckRun){
       // กำลังเช็คอยู่: ปกติใช้ผลรอบนั้นเลย / แบบ force ต้องรอให้จบแล้วเช็คใหม่ (รอบเดิมอาจอ่านก่อนเราลงประกาศ)
       return force ? announcementsCheckRun.then(function(){ return refreshAnnouncementsIfChanged(true); }) : announcementsCheckRun;
     }
-    var run = supa.rpc('announcements_state').then(function(res){
+    var run = supa.rpc(App.session ? 'announcements_state' : 'public_announcements_state').then(function(res){
       if(res.error) return refreshAnnouncements(); // ยังไม่มีตัวเช็คบนคลาวด์ → ดึงทั้งกระดานแบบเดิม
       var state = JSON.stringify(res.data);
       if(!force && state === announcementsKnownState) return;
@@ -3174,11 +3186,19 @@
     // ตอน select อยู่แล้ว ตรงนี้ไว้กันอันที่หมดอายุระหว่างที่ยังไม่ได้ poll รอบใหม่)
     App.rateAnnouncements = App.rateAnnouncements.filter(function(a){ return a.expiresAt==null || a.expiresAt>now; });
 
-    var posts = App.rateAnnouncements.filter(function(a){ return App.tickerSelectedServers.indexOf(a.serverId)!==-1; })
-                                      .slice().sort(function(a,b){ return b.ts-a.ts; });
+    // โชว์ทุกเซิร์ฟ (ANNOUNCE_SHOW_ALL_SERVERS): เซิร์ฟที่เลือกไว้ (ชิปบนหัวแผง) ขึ้นก่อน ที่เหลือต่อท้าย · ใหม่สุดก่อนในแต่ละกลุ่ม
+    var picked = App.tickerSelectedServers;
+    var posts = App.rateAnnouncements.filter(function(a){ return ANNOUNCE_SHOW_ALL_SERVERS || picked.indexOf(a.serverId)!==-1; })
+                                      .slice().sort(function(a,b){
+                                        var pa = picked.indexOf(a.serverId)!==-1 ? 0 : 1, pb = picked.indexOf(b.serverId)!==-1 ? 0 : 1;
+                                        return pa-pb || b.ts-a.ts;
+                                      });
     if(!posts.length){
       track.style.animation = 'none';
-      track.innerHTML = '<span class="ticker-item"><span class="dashboard-empty-title">ยังไม่มีประกาศจากเซิร์ฟเวอร์ที่เลือก</span><span class="dashboard-empty-detail">'+(App.isGuest ? 'เข้าสู่ระบบเพื่อเลือกเซิร์ฟเวอร์และลงประกาศรับ M' : 'เลือกเซิร์ฟเวอร์ที่ต้องการดู หรือกด "ลงประกาศ" เพื่อเริ่มประกาศรับ M')+'</span></span>';
+      track.innerHTML = '<span class="ticker-item"><span class="dashboard-empty-title">'+(ANNOUNCE_SHOW_ALL_SERVERS ? 'ยังไม่มีประกาศ' : 'ยังไม่มีประกาศจากเซิร์ฟเวอร์ที่เลือก')+'</span><span class="dashboard-empty-detail">'+
+        (ANNOUNCE_SHOW_ALL_SERVERS
+          ? (App.isGuest ? 'เข้าสู่ระบบเพื่อลงประกาศรับ M' : 'กด "ลงประกาศ" เพื่อเริ่มประกาศรับ M')
+          : (App.isGuest ? 'เข้าสู่ระบบเพื่อเลือกเซิร์ฟเวอร์และลงประกาศรับ M' : 'เลือกเซิร์ฟเวอร์ที่ต้องการดู หรือกด "ลงประกาศ" เพื่อเริ่มประกาศรับ M'))+'</span></span>';
       rebuildTickerLoop();
       return;
     }
@@ -6386,6 +6406,9 @@
     var hashPage = pageFromHash();
     var page = (NAV_PAGES.indexOf(hashPage) !== -1 && hashPage !== 'admin') ? hashPage : 'home';
     switchPage(page);
+    // กระดานประกาศ + ราคารับ M บนแถบด้านบน (ทุกหน้า) ของผู้เยี่ยมชม — ผ่าน public_announcements (ซ้ำกับที่ switchPage
+    // เพิ่งเรียก = ใช้รอบเดียวกัน ไม่ดึงซ้ำ)
+    refreshAnnouncementsIfChanged();
     updateClock();
     updatePartyPanelSummary();
   }
@@ -9851,8 +9874,11 @@
     }).join('');
     var durSel = document.getElementById('postAnnounceDuration');
     // แก้ไขประกาศเดิมไม่เสียแต้ม (ระยะเวลาถูกล็อกไว้ไม่ให้แก้อยู่แล้ว) เลยไม่ต้องโชว์ราคาต่อท้าย
+    // ตัวเลือกฟรี (cost 0) ของคนที่ไม่มีแพ็กเกจ = ขึ้น 🔒 กดแล้วบอกว่าไม่มีแพ็กเกจ (ดู showNoPackagePopup)
+    var freeLocked = !entry && !hasAnyPaidPlan();
     durSel.innerHTML = ANNOUNCE_DURATION_OPTIONS.map(function(o){
-      return '<button type="button" class="announce-duration-btn" data-value="'+o.value+'">'+o.label+(entry ? '' : '<span class="announce-duration-cost">('+(o.cost ? o.cost+' แต้ม' : 'ฟรี')+')</span>')+'</button>';
+      var locked = freeLocked && !o.cost;
+      return '<button type="button" class="announce-duration-btn" data-value="'+o.value+'"'+(locked ? ' data-locked="1"' : '')+'>'+o.label+(entry ? '' : '<span class="announce-duration-cost">('+(o.cost ? o.cost+' แต้ม' : 'ฟรี'+(locked ? ' 🔒' : ''))+')</span>')+'</button>';
     }).join('');
 
     if(entry){
@@ -9885,8 +9911,18 @@
   document.getElementById('postAnnounceDuration').addEventListener('click', function(e){
     var btn = e.target.closest('.announce-duration-btn');
     if(!btn || btn.disabled) return;
+    if(btn.dataset.locked){ showNoPackagePopup(); return; }
     setAnnounceDuration(this, btn.dataset.value, false);
   });
+  // ประกาศฟรี 12 ชม. เฉพาะคนที่มีแพ็กเกจที่ยังไม่หมดอายุ — แพ็กไหนก็ได้ (ผู้ใช้กำหนด 9 ต.ค. 2569)
+  // ต้องตรงกับ post_announcement() ฝั่ง DB (has_bundle/timers/trade/farm_plan · แอดมิน / บัญชีเก่าไม่จำกัด นับว่ามี)
+  function hasAnyPaidPlan(){ return hasBundlePlan() || hasTimersPlan() || hasTradePlan() || hasFarmPlan(); }
+  function showNoPackagePopup(){
+    showConfirm('<b>คุณไม่มีแพ็กเกจ</b><br>ประกาศฟรี 12 ชม. สำหรับสมาชิกที่มีแพ็กเกจ', function(){
+      closePostAnnouncement();
+      switchPage('pricing');
+    }, null, { ok:'ดูแพ็กเกจ', cancel:'ปิด' });
+  }
   function closePostAnnouncement(){
     editingAnnouncementId = null;
     document.getElementById('postAnnouncementOverlay').hidden = true;
@@ -9947,6 +9983,12 @@
   }
   document.getElementById('postAnnounceSubmitBtn').addEventListener('click', function(){
     if(!editingAnnouncementId && !hasFacebookUrl()){ showFacebookRequiredPopup(); return; }
+    // เลือกแบบฟรีไว้แต่ไม่มีแพ็กเกจแล้ว (แพ็กหมดระหว่างเปิดหน้าต่าง) — ฐานข้อมูลก็ปฏิเสธเหมือนกัน
+    if(!editingAnnouncementId){
+      var pickedMs = parseInt(document.getElementById('postAnnounceDuration').dataset.value, 10);
+      var picked = ANNOUNCE_DURATION_OPTIONS.filter(function(o){ return o.value===pickedMs; })[0];
+      if(picked && !picked.cost && !hasAnyPaidPlan()){ showNoPackagePopup(); return; }
+    }
     var serverId = document.getElementById('postAnnounceServer').value;
     if(!serverId){ toast('กรุณาเลือกเซิร์ฟเวอร์'); return; }
     var buyVal = parseFloat(document.getElementById('postAnnounceBuyPrice').value.replace(/,/g,''));
@@ -9966,6 +10008,12 @@
       if(refBuy>0 && buyVal < minBuy){
         btn.disabled = false;
         toast('ราคารับต่ำกว่าราคาปัจจุบัน ('+fmtNum(refBuy)+'บ) เกิน '+Math.round(RATE_MAX_DROP*100)+'% — ต้องไม่ต่ำกว่า '+fmtNum(minBuy)+'บ', 5000);
+        return;
+      }
+      var maxBuy = refBuy>0 ? refBuy*RATE_MAX_RISE : 0;
+      if(refBuy>0 && buyVal > maxBuy){
+        btn.disabled = false;
+        toast('ราคารับสูงกว่าราคาปัจจุบัน ('+fmtNum(refBuy)+'บ) เกิน '+RATE_MAX_RISE+' เท่า — ต้องไม่เกิน '+fmtNum(maxBuy)+'บ', 5000);
         return;
       }
       saveAnnouncement(btn, serverId, buyVal, editId);
@@ -10016,21 +10064,26 @@
     var list = document.getElementById('myAnnouncementsList');
     var mine = App.session ? App.session.id : null;
     var now = Date.now();
-    var posts = App.rateAnnouncements.filter(function(a){ return a.userId===mine && (a.expiresAt==null || a.expiresAt>now); })
+    // แอดมินเห็นประกาศของทุกคน ลบได้ทุกอัน (RLS announcements_delete ให้ is_admin ลบได้อยู่แล้ว) — ของคนอื่นแก้ไม่ได้
+    // (RLS แก้ได้เฉพาะเจ้าของ) จึงมีแค่ปุ่มลบ · ผู้ใช้ขอ 9 ต.ค. 2569 ไว้ลบประกาศป่วน/ไม่เหมาะสม
+    var isAdmin = !!(App.profile && App.profile.role === 'admin');
+    document.getElementById('myAnnouncementsTitle').textContent = isAdmin ? 'ประกาศทั้งหมด (แอดมิน)' : 'ประกาศของฉัน';
+    var posts = App.rateAnnouncements.filter(function(a){ return (isAdmin || a.userId===mine) && (a.expiresAt==null || a.expiresAt>now); })
                                       .slice().sort(function(a,b){ return b.ts-a.ts; });
     if(!posts.length){
-      list.innerHTML = '<p class="my-announce-empty">คุณยังไม่มีประกาศที่ใช้งานอยู่</p>';
+      list.innerHTML = '<p class="my-announce-empty">'+(isAdmin ? 'ยังไม่มีประกาศที่ใช้งานอยู่' : 'คุณยังไม่มีประกาศที่ใช้งานอยู่')+'</p>';
       return;
     }
     list.innerHTML = posts.map(function(a){
       var sv = serverRateById(a.serverId);
       var parts = [];
       if(a.buy!=null) parts.push('<span class="buy">รับ '+fmtNum(a.buy)+'บ</span>');
+      var own = a.userId===mine;
       return '<div class="my-announce-row" data-my-announce-id="'+a.id+'">'+
-        '<div class="my-announce-row-top"><span>'+(sv?sv.name:a.serverId)+' '+parts.join(' / ')+'</span>'+
+        '<div class="my-announce-row-top"><span>'+(sv?sv.name:a.serverId)+' '+parts.join(' / ')+(own ? '' : ' <span class="my-announce-owner">('+escapeHtml(a.userName||'สมาชิก')+')</span>')+'</span>'+
           '<span class="mr-entry-actions">'+
-            '<button type="button" class="mr-edit" data-my-announce-edit="'+a.id+'" title="แก้ไข">✎</button>'+
-            '<button type="button" class="mr-del" data-my-announce-del="'+a.id+'" title="ยกเลิกประกาศ">🗑</button>'+
+            (own ? '<button type="button" class="mr-edit" data-my-announce-edit="'+a.id+'" title="แก้ไข">✎</button>' : '')+
+            '<button type="button" class="mr-del" data-my-announce-del="'+a.id+'" title="'+(own ? 'ยกเลิกประกาศ' : 'ลบประกาศนี้ (แอดมิน)')+'">🗑</button>'+
           '</span>'+
         '</div>'+
         // data-expires-at → tickTickerCountdowns เดินเวลานี้ทุกวินาทีระหว่างเปิดหน้าต่าง
@@ -10058,11 +10111,14 @@
     var delBtn = e.target.closest('[data-my-announce-del]');
     if(delBtn){
       var id = delBtn.dataset.myAnnounceDel;
-      showConfirm('ยืนยันยกเลิกประกาศนี้?', function(){
+      // แอดมินลบประกาศของคนอื่น → บอกชื่อเจ้าของในกล่องยืนยัน (ชื่อผ่าน escapeHtml — กล่องยืนยันแสดงเป็น HTML)
+      var target = App.rateAnnouncements.filter(function(a){ return a.id===id; })[0];
+      var othersPost = !!(target && App.session && target.userId!==App.session.id);
+      showConfirm(othersPost ? 'ยืนยันลบประกาศของ <b>'+escapeHtml(target.userName||'สมาชิก')+'</b>? (แอดมิน)' : 'ยืนยันยกเลิกประกาศนี้?', function(){
         supa.from('announcements').delete().eq('id', id).then(function(res){
           if(res.error){ console.warn('announcement delete', res.error); toast('ยกเลิกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง'); return; }
           refreshAnnouncementsIfChanged(true).then(renderMyAnnouncements);
-          toast('ยกเลิกประกาศแล้ว');
+          toast(othersPost ? 'ลบประกาศแล้ว' : 'ยกเลิกประกาศแล้ว');
         }, function(err){ console.warn('announcement delete', err); toast('ยกเลิกประกาศไม่สำเร็จ ลองใหม่อีกครั้ง'); });
       });
     }
@@ -11044,12 +11100,12 @@
   });
   setInterval(function(){ tickTimers(); updateSoundLockHint(); updateClock(); tickTickerCountdowns(); }, 1000);
   // กระดานประกาศเป็นของร่วม — เช็คทุก 60 วิ เพื่อให้เห็นประกาศที่คนอื่นเพิ่งลง (โหลดจริงเฉพาะตอนมีอะไรเปลี่ยน)
-  // ข้ามตอนซ่อนแท็บ · เช็คทุกหน้า เพราะการ์ดราคารับ M อยู่บนแถบด้านบนทุกหน้า
+  // ข้ามตอนซ่อนแท็บ · เช็คทุกหน้า เพราะการ์ดราคารับ M อยู่บนแถบด้านบนทุกหน้า · ผู้เยี่ยมชมก็เช็คด้วย (public_announcements_state)
   setInterval(function(){
-    if(App.session && !document.hidden) refreshAnnouncementsIfChanged();
+    if((App.session || App.isGuest) && !document.hidden) refreshAnnouncementsIfChanged();
   }, 60000);
   document.addEventListener('visibilitychange', function(){
-    if(App.session && !document.hidden) refreshAnnouncementsIfChanged();
+    if((App.session || App.isGuest) && !document.hidden) refreshAnnouncementsIfChanged();
   });
 
   window.addEventListener('pageshow', function(){

@@ -3186,13 +3186,13 @@
     // ตอน select อยู่แล้ว ตรงนี้ไว้กันอันที่หมดอายุระหว่างที่ยังไม่ได้ poll รอบใหม่)
     App.rateAnnouncements = App.rateAnnouncements.filter(function(a){ return a.expiresAt==null || a.expiresAt>now; });
 
-    // โชว์ทุกเซิร์ฟ (ANNOUNCE_SHOW_ALL_SERVERS): เซิร์ฟที่เลือกไว้ (ชิปบนหัวแผง) ขึ้นก่อน ที่เหลือต่อท้าย · ใหม่สุดก่อนในแต่ละกลุ่ม
+    // เรียงตามลำดับชิปเซิร์ฟที่เลือกไว้บนหัวแผง (ผู้ใช้ขอ 9 ต.ค. 2569): ชิปแรกทั้งหมดก่อน → ชิปถัดไป → … → เซิร์ฟที่ไม่ได้เลือก
+    // (โชว์ทุกเซิร์ฟ = ANNOUNCE_SHOW_ALL_SERVERS) · ในแต่ละเซิร์ฟใหม่สุดก่อน · ลำดับชิป = ลำดับใน App.tickerServers
     var picked = App.tickerSelectedServers;
+    var chipOrder = App.tickerServers.filter(function(id){ return picked.indexOf(id)!==-1; });
+    var chipRank = function(a){ var i = chipOrder.indexOf(a.serverId); return i===-1 ? chipOrder.length : i; };
     var posts = App.rateAnnouncements.filter(function(a){ return ANNOUNCE_SHOW_ALL_SERVERS || picked.indexOf(a.serverId)!==-1; })
-                                      .slice().sort(function(a,b){
-                                        var pa = picked.indexOf(a.serverId)!==-1 ? 0 : 1, pb = picked.indexOf(b.serverId)!==-1 ? 0 : 1;
-                                        return pa-pb || b.ts-a.ts;
-                                      });
+                                      .slice().sort(function(a,b){ return chipRank(a)-chipRank(b) || b.ts-a.ts; });
     if(!posts.length){
       track.style.animation = 'none';
       track.innerHTML = '<span class="ticker-item"><span class="dashboard-empty-title">'+(ANNOUNCE_SHOW_ALL_SERVERS ? 'ยังไม่มีประกาศ' : 'ยังไม่มีประกาศจากเซิร์ฟเวอร์ที่เลือก')+'</span><span class="dashboard-empty-detail">'+

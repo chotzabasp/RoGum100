@@ -271,17 +271,21 @@ export function initAdminPanel(ctx){
     var sell = Number(document.getElementById('adminServerNewSell').value.replace(/,/g,'')) || 0;
     if(!id || !name){ errEl.textContent = 'กรอกรหัสและชื่อให้ครบ'; return; }
     if(ctx.SERVER_RATES.some(function(s){ return s.id===id; })){ errEl.textContent = 'รหัสนี้มีอยู่แล้ว ตั้งรหัสใหม่'; return; }
-    var nextSort = ctx.SERVER_RATES.reduce(function(m,s){ return Math.max(m, s.sortOrder||0); }, 0) + 1;
+    // เซิร์ฟเวอร์ใหม่อยู่บนสุดเสมอ (ลำดับ 0) แล้วขยับตัวเดิมลง 1 ช่องตามลำดับเดิม — เขียนแบบเดียวกับตอนลากสลับ
+    var existing = ctx.SERVER_RATES.slice();
     btn.disabled = true;
-    supa.from('servers').insert({ id:id, name:name, buy:buy, sell:sell, sort_order:nextSort, active:true }).then(function(res){
-      btn.disabled = false;
-      if(res.error){ errEl.textContent = 'เพิ่มไม่สำเร็จ: '+res.error.message; return; }
+    supa.from('servers').insert({ id:id, name:name, buy:buy, sell:sell, sort_order:0, active:true }).then(function(res){
+      if(res.error){ btn.disabled = false; errEl.textContent = 'เพิ่มไม่สำเร็จ: '+res.error.message; return; }
       document.getElementById('adminServerNewId').value = '';
       document.getElementById('adminServerNewName').value = '';
       document.getElementById('adminServerNewBuy').value = '';
       document.getElementById('adminServerNewSell').value = '';
-      toast('เพิ่มเซิร์ฟเวอร์แล้ว');
-      loadServers().then(renderAdminServers);
+      return Promise.all(existing.map(function(s, i){ return supa.from('servers').update({ sort_order: i + 1 }).eq('id', s.id); })).then(function(results){
+        btn.disabled = false;
+        var err = results.filter(function(r){ return r.error; })[0];
+        toast(err ? 'เพิ่มเซิร์ฟเวอร์แล้ว แต่จัดลำดับไม่สำเร็จ: '+err.error.message+' — ลากจัดลำดับเองได้' : 'เพิ่มเซิร์ฟเวอร์แล้ว (อยู่บนสุด)');
+        return loadServers().then(renderAdminServers);
+      });
     });
   });
   // ลากสลับลำดับเซิร์ฟเวอร์ (HTML5 drag-and-drop ธรรมดา ไม่ใช้ไลบรารีเพิ่ม) — ลากแล้วปล่อย

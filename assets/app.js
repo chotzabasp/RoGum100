@@ -9280,7 +9280,7 @@
   function openAdminPage(){
     if(adminPanel){ adminPanel.openAdminPage(); return; }
     if(!adminPanelLoading){
-      adminPanelLoading = import('./admin-panel.js?v=20261006-delete').then(function(mod){
+      adminPanelLoading = import('./admin-panel.js?v=20261008-servertop').then(function(mod){
         adminPanel = mod.initAdminPanel({
           supa:supa, escapeHtml:escapeHtml, fmtNum:fmtNum, fmtDate:fmtDate, fmtDateTime:fmtDateTime,
           toast:toast, showConfirm:showConfirm, loadServers:loadServers,

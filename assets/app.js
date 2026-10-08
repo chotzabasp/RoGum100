@@ -3220,11 +3220,12 @@
 
   // ---------- merchant รับ/ขาย bar chart (real data from App.merchantLog) ----------
   // Hand-rolled inline SVG — no charting library, so nothing depends on a CDN script executing.
-  var MR_CHART_SERIES_KEYS = ['sell','buy','profit'];
-  var MR_CHART_SERIES_LABEL = { sell:'ขาย', buy:'ซื้อ', profit:'เงินสุทธิ' };
-  var MR_CHART_SERIES_COLOR = { sell:'#3fbd75', buy:'#ef5a56', profit:'#5b8ef4' };
+  // realized = กำไรจากที่ขาย (ยอดขาย − ต้นทุนของชิ้นที่ขาย) ต่างจาก profit (เงินสุทธิ = ขาย − ซื้อ ที่นับของที่ยังถืออยู่เป็นเงินออก)
+  var MR_CHART_SERIES_KEYS = ['sell','buy','profit','realized'];
+  var MR_CHART_SERIES_LABEL = { sell:'ขาย', buy:'ซื้อ', profit:'เงินสุทธิ', realized:'กำไรจากที่ขาย' };
+  var MR_CHART_SERIES_COLOR = { sell:'#3fbd75', buy:'#ef5a56', profit:'#5b8ef4', realized:'#e9b949' };
   var MR_LOSS_COLOR = '#ef5a56';
-  var hiddenMrChartSeries = { sell:false, buy:false, profit:false };
+  var hiddenMrChartSeries = { sell:false, buy:false, profit:false, realized:false };
   var mrChartTimeframe = 'today';
   var mrChartServerId = null;
   var mrChartServerUserChanged = false;
@@ -3299,6 +3300,62 @@
     return buckets;
   }
 
+  // กำไรจากที่ขายแล้ว ต่อการขายแต่ละบรรทัด = ยอดขาย − ต้นทุนของชิ้นที่ขาย (ซื้อก่อน-ขายก่อน แบบเดียวกับการ์ดในประวัติ
+  // computeHistoryItemGroups — ลำดับรายการเหมือนกันทุกอย่าง ยอดรวมต่อไอเทมจึงเท่ากับ "กำไร" บนการ์ด) แล้วผูกกำไรไว้กับเวลาที่ขาย
+  // → รวมเป็นรายวัน/รายเดือนได้ · ไม่หักเงินที่ซื้อของมาถือไว้ · ขายก่อนบันทึกซื้อ = ต้นทุนมาจากรายการซื้อที่บันทึกตามมา
+  // (คิดให้การขายครั้งนั้น) · ชิ้นที่ยังไม่มีรายการซื้อเลย = ยังไม่หักต้นทุน (การ์ดก็คิดแบบเดียวกัน)
+  // lines = [{entry, line, type}] ใหม่สุดก่อน (แบบ historyScopedLines) — ต้องครอบคลุมประวัติทั้งหมดของไอเทม ไม่ใช่แค่ช่วงที่เลือก
+  function realizedSales(lines){
+    var groups = {}, order = [], out = [];
+    lines.forEach(function(t){
+      var key = t.entry.serverId+'|'+(t.entry.category||'zeny')+'|'+t.line.name+'|'+JSON.stringify(t.line.slots||[]);
+      if(!groups[key]){ groups[key] = []; order.push(key); }
+      groups[key].push(t);
+    });
+    order.forEach(function(key){
+      var lots = [], owed = [];
+      groups[key].slice().reverse().forEach(function(t){          // เก่าสุดก่อน
+        var qty = parseFloat(t.line.qty)||0, baht = lineBahtValue(t.entry, t.line);
+        if(t.type==='buy'){
+          if(qty<=0) return;
+          var unitCost = baht/qty;
+          while(qty>0 && owed.length){
+            var o = owed[0], cover = Math.min(qty, o.qty);
+            o.sale.cost += cover*unitCost; o.qty -= cover; qty -= cover;
+            if(o.qty<=0) owed.shift();
+          }
+          if(qty>0) lots.push({ qty:qty, unitCost:unitCost });
+          return;
+        }
+        var sale = { ts:t.entry.ts, sell:baht, cost:0 };
+        out.push(sale);
+        var need = qty;
+        while(need>0 && lots.length){
+          var lot = lots[0], take = Math.min(need, lot.qty);
+          sale.cost += take*lot.unitCost; lot.qty -= take; need -= take;
+          if(lot.qty<=0) lots.shift();
+        }
+        if(need>0) owed.push({ sale:sale, qty:need });
+      });
+    });
+    out.forEach(function(x){ x.profit = x.sell - x.cost; });
+    return out;
+  }
+  // บรรทัดซื้อ-ขายของกราฟ (เซิร์ฟ + หมวดของกราฟ ทุกช่วงเวลา) — เพดานแพ็กฟรี (ดูได้แค่วันนี้) เหมือนประวัติ
+  function mrChartLines(serverId, categoryFilter){
+    var cap = App.profile ? capStartTsForPlan(null, hasTradePlan()) : null;
+    var out = [];
+    App.merchantLog.forEach(function(e){
+      if(serverId!=='all' && e.serverId!==serverId) return;
+      if(categoryFilter && categoryFilter!=='all' && (e.category||'zeny')!==categoryFilter) return;
+      if(cap!=null && e.ts<cap) return;
+      var t = entryType(e);
+      (e.lines||[]).forEach(function(l){ out.push({ entry:e, line:l, type:t }); });
+    });
+    out.sort(function(a,b){ return b.entry.ts-a.entry.ts; });
+    return out;
+  }
+
   function mrChartBuckets(tf, serverId, endOffsetUnits, categoryFilter, hourly){
     var cfg = mrChartCfg(tf, serverId, categoryFilter);
     var unit = hourly ? 'hour' : cfg.unit;
@@ -3316,7 +3373,11 @@
       if(entryType(e)==='sell'){ b.sell += amount; }
       else { b.buy += amount; }
     });
-    buckets.forEach(function(b){ b.profit = b.sell-b.buy; });
+    buckets.forEach(function(b){ b.profit = b.sell-b.buy; b.realized = 0; });
+    realizedSales(mrChartLines(serverId, categoryFilter)).forEach(function(x){
+      var b = byKey[farmBucketKey(x.ts, unit)];
+      if(b) b.realized += x.profit;
+    });
     return buckets;
   }
 
@@ -4322,8 +4383,8 @@
 
   function renderMrChartLegend(buckets){
     var el = document.getElementById('mrChartLegend');
-    var totals = { sell:0, buy:0, profit:0 };
-    buckets.forEach(function(b){ totals.sell+=b.sell; totals.buy+=b.buy; totals.profit+=b.profit; });
+    var totals = { sell:0, buy:0, profit:0, realized:0 };
+    buckets.forEach(function(b){ totals.sell+=b.sell; totals.buy+=b.buy; totals.profit+=b.profit; totals.realized+=b.realized||0; });
     var row = MR_CHART_SERIES_KEYS.map(function(s){
       var off = hiddenMrChartSeries[s];
       return '<button type="button" class="chart-legend-item chart-legend-dir'+(off?' off':'')+'" data-mr-chart-legend="'+s+'">'+
@@ -5465,12 +5526,16 @@
     renderHistoryItemView(list);
   }
 
-  function summaryTilesHtml(buyTotal, sellTotal, unit){
+  function summaryTilesHtml(buyTotal, sellTotal, unit, realized){
     var profit = sellTotal - buyTotal;
     return '<div class="mr-summary-row">'+
       '<div class="mr-summary-item"><span class="mr-summary-label">ขายทั้งหมด</span><span class="mr-summary-value sell">'+fmtNum(sellTotal)+' '+unit+'</span></div>'+
       '<div class="mr-summary-item"><span class="mr-summary-label">ซื้อทั้งหมด</span><span class="mr-summary-value buy">'+(buyTotal ? '-'+fmtNum(Math.abs(buyTotal)) : fmtNum(0))+' '+unit+'</span></div>'+
       '<div class="mr-summary-item"><span class="mr-summary-label">เงินสุทธิ (ขาย − ซื้อ)</span><span class="mr-summary-value '+(profit>=0?'profit-pos':'profit-neg')+'">'+(profit>=0?'+':'')+fmtNum(profit)+' '+unit+'</span></div>'+
+      // กำไรจริงของช่วงที่เลือก (ลูกค้าขอ 8 ต.ค. 2569 — เงินสุทธินับของที่ซื้อมาถือไว้เป็นเงินออก เลยติดลบทั้งที่ขายได้กำไร)
+      (realized==null ? '' : '<div class="mr-summary-item mr-summary-realized" title="กำไรจากที่ขายแล้ว = ยอดขาย − ต้นทุนของชิ้นที่ขาย (ซื้อก่อน-ขายก่อน) · ไม่นับต้นทุนค้างของที่ยังไม่ขาย"><span class="mr-summary-label">กำไรจากที่ขายแล้ว</span>'+
+        '<span class="mr-summary-value '+(realized>=0?'realized':'realized-neg')+'">'+(realized>=0?'+':'-')+fmtNum(Math.abs(realized))+' '+unit+'</span>'+
+        '<span class="mr-summary-note">ไม่นับต้นทุนค้างที่ยังถืออยู่</span></div>')+
     '</div>';
   }
 
@@ -5482,7 +5547,10 @@
       var v = lineBahtValue(t.entry, t.line);
       if(t.type==='buy') buyBaht += v; else sellBaht += v;
     });
-    document.getElementById('mrSummary').innerHTML = summaryTilesHtml(buyBaht, sellBaht, 'บ');
+    // กำไรจากที่ขาย: ต้นทุนต้องดูประวัติทั้งหมดของไอเทม (ซื้อเมื่อวาน ขายวันนี้) แล้วนับเฉพาะการขายในช่วงที่เลือก
+    var startTs = historyRangeStartTs(), realized = 0;
+    realizedSales(historyScopedLines({ ignoreRange:true })).forEach(function(x){ if(startTs==null || x.ts>=startTs) realized += x.profit; });
+    document.getElementById('mrSummary').innerHTML = summaryTilesHtml(buyBaht, sellBaht, 'บ', realized);
   }
 
   function mrEntrySummaryHtml(entry){

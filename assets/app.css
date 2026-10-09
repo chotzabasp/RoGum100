@@ -865,6 +865,10 @@ svg.icon{width:18px;height:18px;display:block}
 .bc-kill-btn.bc-kill-btn-img:hover{transform:scale(1.08)}
 .bc-kill-btn.bc-kill-btn-img:active{transform:scale(.95)}
 .bc-kill-btn.bc-kill-btn-img.is-saving,.bc-kill-btn.bc-kill-btn-img:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.35)}
+/* บอกว่ากด MVP = จับเวลาจากตอนนี้ (ผู้ใช้แจ้ง 9 ต.ค. 2569 — คนไม่รู้ เลยพิมพ์เวลาเอง): "กดเมื่อตาย" ในปุ่มใต้รูป */
+.bc-kill-btn.bc-kill-btn-img.has-caption{height:auto;flex-direction:column;gap:.15rem}
+.bc-kill-btn.bc-kill-btn-img.has-caption img{width:70px;height:63px}
+.bc-kill-caption{font-size:.66rem;font-weight:700;line-height:1.1;color:#f4c95d;white-space:nowrap}
 
 .bc-items{margin-top:.75rem;padding-top:.7rem;border-top:1px dashed var(--border);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
 .bc-items-label{font-size:.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin-right:.2rem}

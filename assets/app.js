@@ -4502,6 +4502,15 @@
   function fmtNum(n){
     return Number(n||0).toLocaleString('th-TH', { maximumFractionDigits:2 });
   }
+  // จำนวน M ใส่/โชว์ทศนิยมได้ 4 ตำแหน่ง (0.0001 M = 100 zeny) — ลูกค้าขอ 9 ต.ค. 2569: เซิร์ฟที่ M แพง รับนิดเดียวก็หลายบาท
+  // ที่เหลือ (ราคา / ยอดเงิน / จำนวนไอเทมและอื่นๆ) คง 2 ตำแหน่ง · ข้อมูลเก็บเป็น JSON บนคลาวด์ ไม่มีการปัดที่ฐานข้อมูล
+  var ZENY_QTY_DECIMALS = 4;
+  function qtyDecimals(category){ return category==='zeny' ? ZENY_QTY_DECIMALS : 2; }
+  function fmtQty(n, category){
+    return Number(n||0).toLocaleString('th-TH', { maximumFractionDigits:qtyDecimals(category) });
+  }
+  // ตัดเศษทศนิยมลอยของการบวกลบ (เช่น 0.1+0.2 = 0.30000000000000004) ก่อนเทียบ "เหลือ / ขายหมด / ขายเกิน"
+  function roundQty(n){ return Math.round(n*1e6)/1e6; }
 
   function renderMerchantServers(){
     var chips = document.getElementById('mrServerChips');
@@ -4559,21 +4568,22 @@
       fromStock:true, stockGroupKey:null, stockGroup:null };
   }
 
-  function cleanDecimalInput(value){
+  // maxDec = ทศนิยมสูงสุด (ไม่ส่ง = 2) — จำนวน M ส่ง ZENY_QTY_DECIMALS
+  function cleanDecimalInput(value, maxDec){
     var cleaned = value.replace(/[^\d.]/g,'');
     var firstDot = cleaned.indexOf('.');
     if(firstDot!==-1){
-      cleaned = cleaned.slice(0,firstDot+1) + cleaned.slice(firstDot+1).replace(/\./g,'').slice(0,2);
+      cleaned = cleaned.slice(0,firstDot+1) + cleaned.slice(firstDot+1).replace(/\./g,'').slice(0,maxDec==null?2:maxDec);
     }
     return cleaned;
   }
-  function formatDecimalDisplay(raw){
+  function formatDecimalDisplay(raw, maxDec){
     raw = String(raw==null?'':raw);
     if(!raw) return '';
     var hasDot = raw.indexOf('.') !== -1;
     var parts = raw.split('.');
     var intPart = parts[0] || '';
-    var decPart = hasDot ? (parts[1]||'').slice(0,2) : '';
+    var decPart = hasDot ? (parts[1]||'').slice(0,maxDec==null?2:maxDec) : '';
     var intFormatted = intPart ? Number(intPart).toLocaleString('th-TH') : (hasDot ? '0' : '');
     return intFormatted + (hasDot ? '.'+decPart : '');
   }
@@ -4616,7 +4626,7 @@
       var qty = (e.lines||[]).reduce(function(s,l){ return s+(parseFloat(l.qty)||0); }, 0);
       if(entryType(e)==='buy') buyQty += qty; else sellQty += qty;
     });
-    return buyQty - sellQty;
+    return roundQty(buyQty - sellQty);
   }
   function activeRows(){
     if(App.merchantCategory==='zeny') return App.zenyRows;
@@ -4744,8 +4754,8 @@
       if(isZenyTab && App.currentServerId){
         var remaining = computeZenyRemaining(App.currentServerId);
         zenyRemainingHtml = remaining>=0
-          ? '<div class="mr-stock-info">คงเหลือตอนนี้: <strong>'+fmtNum(remaining)+' M</strong></div>'
-          : '<div class="mr-stock-info mr-stock-info-warn">ขายเกินที่มี: '+fmtNum(-remaining)+' M</div>';
+          ? '<div class="mr-stock-info">คงเหลือตอนนี้: <strong>'+fmtQty(remaining, 'zeny')+' M</strong></div>'
+          : '<div class="mr-stock-info mr-stock-info-warn">ขายเกินที่มี: '+fmtQty(-remaining, 'zeny')+' M</div>';
       }
       return '<div class="mr-item-row" data-row-id="'+row.rid+'">'+
         sellSourceHtml+
@@ -4758,7 +4768,7 @@
                 '<div class="mr-item-suggest" hidden></div>')+
           '</div></label>'+
           '<label class="mr-entry-field mr-entry-qty">'+(isZenyTab?'จำนวน M':showSlots?'จำนวน (ชิ้น)':'จำนวน')+
-            '<input type="text" inputmode="decimal" class="mr-row-qty" placeholder="จำนวน" value="'+formatDecimalDisplay(row.qty)+'"></label>'+
+            '<input type="text" inputmode="decimal" class="mr-row-qty" placeholder="จำนวน" value="'+formatDecimalDisplay(row.qty, isZenyTab ? ZENY_QTY_DECIMALS : 2)+'"></label>'+
           '<label class="mr-entry-field mr-entry-price">'+(isZenyTab?'ราคา / 1 M (บาท)':showSlots?'ราคาต่อชิ้น':'ราคาต่อหน่วย')+
             '<input type="text" inputmode="decimal" class="mr-row-price" placeholder="ราคา" value="'+formatDecimalDisplay(row.price)+'"></label>'+
           // สกุลเงินตอนขาย "ไม่ล็อก" ตามล็อตในคลังอีกต่อไป (เดิมล็อกตามตอนซื้อ) เพราะขายได้จริง
@@ -5365,7 +5375,7 @@
           deficit += need;
         }
       });
-      g.remaining = g.buyQtyAll - g.sellQtyAll;
+      g.remaining = roundQty(g.buyQtyAll - g.sellQtyAll);
       g.leftCost = lots.reduce(function(s,lot){ return s+lot.qty*lot.unitCost; }, 0);
       g.profit = realizedSales(g.allTx).reduce(function(s,x){ return inRange(x.ts) ? s+x.profit : s; }, 0);
       return g;
@@ -5396,7 +5406,7 @@
     return '<div class="mr-tx type-'+t.type+'" data-entry-id="'+e.id+'">'+
       '<span class="mr-type-badge '+t.type+'">'+MR_TYPE_LABEL[t.type]+'</span>'+
       '<span class="mr-tx-main'+(hasNoStockWarning?' has-warn':'')+'">'+main+'</span>'+
-      '<span class="mr-tx-calc">'+fmtNum(l.qty)+' × '+fmtNum(l.rate)+'</span>'+
+      '<span class="mr-tx-calc">'+fmtQty(l.qty, cat)+' × '+fmtNum(l.rate)+'</span>'+
       '<span class="mr-tx-total">'+totalHtml+'</span>'+
       (opts.showTime ? '<span class="mr-tx-time'+edited+'">'+fmtTimeShort(e.ts)+newBadge+'</span>' : '')+
       '<button type="button" class="mr-del" data-del="'+e.id+'" title="ลบรายการนี้">🗑</button>'+
@@ -5454,7 +5464,7 @@
     var over = g.remaining<0 ? -g.remaining : 0;        // ขายเกินกว่าที่บันทึกซื้อไว้
     var left = g.remaining>0 ? g.remaining : 0;
     var open = !!historyState.expanded[g.key];
-    var leftSub = over>0 ? 'ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit
+    var leftSub = over>0 ? 'ขายเกินที่ซื้อ '+fmtQty(over, g.category)+' '+unit
                 : (left>0 ? 'ทุนค้าง ~'+fmtNum(Math.round(g.leftCost))+' บ' : (g.buyQtyAll>0 ? 'ขายหมดแล้ว' : '—'));
     // "เฉลี่ย X บ/หน่วย" under a cell — lets ซื้อมา vs ขายไป price-per-unit be compared at a glance.
     var avgLine = function(baht, qty, u){
@@ -5468,7 +5478,7 @@
     var profitCell = g.sellQty<=0
       ? '<span class="mr-it-cell profit none"><i>กำไร</i><b>—</b><small>'+(g.sellQtyAll>0 ? 'ไม่มีขายในช่วงนี้' : 'ยังไม่ได้ขาย')+'</small></span>'
       : '<span class="mr-it-cell profit"><i>กำไร</i><b class="'+(g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</b>'+
-        '<small class="mr-profit-sale-note">ขายไป '+fmtNum(g.sellQty)+' '+unit+'</small></span>';
+        '<small class="mr-profit-sale-note">ขายไป '+fmtQty(g.sellQty, g.category)+' '+unit+'</small></span>';
     var category = g.category==='zeny' ? 'zeny' : (g.category==='item' ? 'item' : 'other');
     var imagePath = historyGroupImagePath(g);
     var nameHtml = itemImageNameHtml(category==='zeny'?'':imagePath, itemNameWithSlots(g.name, g.slots), g.name);
@@ -5485,9 +5495,9 @@
         '</span>'+
         (category!=='zeny' ? '<span class="mr-compact-metrics"><span class="mr-compact-remaining"><span>คงเหลือ</span> <b>'+fmtNum(left)+' '+unit+'</b></span><span class="mr-compact-profit"><span>กำไร</span> <b class="'+(g.sellQty<=0?'':g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.sellQty<=0?'—':(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ')+'</b></span>'+(over>0?'<span class="mr-compact-warning">ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit+'</span>':'')+'</span>' : '')+
       '</button>'+
-      '<span class="mr-it-cell buy"><i>ซื้อมา</i><b>'+fmtNum(g.buyQty)+' '+unit+'</b><small>'+buyDisplay(g.buyBaht)+' บ</small>'+buyAvgLine+'</span>'+
-      '<span class="mr-it-cell sell"><i>ขายไป</i><b>'+fmtNum(g.sellQty)+' '+unit+'</b><small>'+fmtNum(g.sellBaht)+' บ</small>'+avgLine(g.sellBaht, g.sellQty, unit)+'</span>'+
-      '<span class="mr-it-cell left'+(left>0?'':' zero')+'"><i>เหลือ</i><b>'+fmtNum(left)+' '+unit+'</b><small>'+leftSub+'</small>'+(left>0?avgLine(g.leftCost, left, unit):'')+'</span>'+
+      '<span class="mr-it-cell buy"><i>ซื้อมา</i><b>'+fmtQty(g.buyQty, g.category)+' '+unit+'</b><small>'+buyDisplay(g.buyBaht)+' บ</small>'+buyAvgLine+'</span>'+
+      '<span class="mr-it-cell sell"><i>ขายไป</i><b>'+fmtQty(g.sellQty, g.category)+' '+unit+'</b><small>'+fmtNum(g.sellBaht)+' บ</small>'+avgLine(g.sellBaht, g.sellQty, unit)+'</span>'+
+      '<span class="mr-it-cell left'+(left>0?'':' zero')+'"><i>เหลือ</i><b>'+fmtQty(left, g.category)+' '+unit+'</b><small>'+leftSub+'</small>'+(left>0?avgLine(g.leftCost, left, unit):'')+'</span>'+
       profitCell+
       '<div class="mr-ic-body"'+(open?'':' hidden')+'>'+historyTxGroupedByDayHtml(g)+'</div>'+
     '</div>';
@@ -6700,7 +6710,8 @@
       if(App.merchantCategory==='zeny') rememberZenyPrice(App.currentServerId, App.merchantType, priceRaw);
     }
     if(e.target.classList.contains('mr-row-qty')){
-      var qtyRaw = cleanDecimalInput(e.target.value);
+      var qtyDec = qtyDecimals(App.merchantCategory);
+      var qtyRaw = cleanDecimalInput(e.target.value, qtyDec);
       if(row.fromStock && row.stockGroupKey){
         // Stock can change from elsewhere (drops/undo/delete-restore on another page),
         // so read it fresh here instead of the row's own stale snapshot.
@@ -6711,7 +6722,7 @@
           showFieldTip(e.target, 'มีในคลังแค่ '+fmtNum(maxAllowed)+' ชิ้น');
         }
       }
-      e.target.value = formatDecimalDisplay(qtyRaw);
+      e.target.value = formatDecimalDisplay(qtyRaw, qtyDec);
       row.qty = qtyRaw;
     }
     if(e.target.classList.contains('mr-row-currency')) row.currency = e.target.value;

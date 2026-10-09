@@ -4509,6 +4509,8 @@
   function fmtQty(n, category){
     return Number(n||0).toLocaleString('th-TH', { maximumFractionDigits:qtyDecimals(category) });
   }
+  // จำนวน M เป็น zeny เต็ม คั่นหลักพัน (1 M = 1,000,000 zeny) — "คงเหลือตอนนี้: 1.05 M = 1,050,000 zeny" (ลูกค้าขอ 9 ต.ค. 2569)
+  function mToZenyText(m){ return Math.round((Number(m)||0)*1000000).toLocaleString('th-TH'); }
   // ตัดเศษทศนิยมลอยของการบวกลบ (เช่น 0.1+0.2 = 0.30000000000000004) ก่อนเทียบ "เหลือ / ขายหมด / ขายเกิน"
   function roundQty(n){ return Math.round(n*1e6)/1e6; }
 
@@ -4754,8 +4756,8 @@
       if(isZenyTab && App.currentServerId){
         var remaining = computeZenyRemaining(App.currentServerId);
         zenyRemainingHtml = remaining>=0
-          ? '<div class="mr-stock-info">คงเหลือตอนนี้: <strong>'+fmtQty(remaining, 'zeny')+' M</strong></div>'
-          : '<div class="mr-stock-info mr-stock-info-warn">ขายเกินที่มี: '+fmtQty(-remaining, 'zeny')+' M</div>';
+          ? '<div class="mr-stock-info">คงเหลือตอนนี้: <strong>'+fmtQty(remaining, 'zeny')+' M</strong> = '+mToZenyText(remaining)+' zeny</div>'
+          : '<div class="mr-stock-info mr-stock-info-warn">ขายเกินที่มี: '+fmtQty(-remaining, 'zeny')+' M = '+mToZenyText(-remaining)+' zeny</div>';
       }
       return '<div class="mr-item-row" data-row-id="'+row.rid+'">'+
         sellSourceHtml+

@@ -4890,7 +4890,9 @@
     return found ? lineImagePath(found.line) : null;
   }
   function historyGroupImagePath(g){
-    for(var i=0;i<g.tx.length;i++){ var p = lineImagePath(g.tx[i].line); if(p) return p; } // tx เรียงใหม่สุดก่อน
+    // ดูทั้งประวัติ (allTx) — tx มีแค่รายการในช่วงที่เลือก รูปอาจอยู่ในรายการเก่ากว่านั้น · เรียงใหม่สุดก่อน
+    var all = g.allTx || g.tx;
+    for(var i=0;i<all.length;i++){ var p = lineImagePath(all[i].line); if(p) return p; }
     return null;
   }
   // ล็อตในคลังที่จะถูกขายออกก่อน (เก่าสุด) มีรูปตอนซื้อไหม
@@ -5301,17 +5303,23 @@
   // profit reflects only what was actually sold — unsold stock is never counted as a
   // "loss". Each group also carries its own transaction rows (tx).
   //
-  // The ช่วงเวลา filter only decides which items are LISTED (touched at all within the
-  // range) — once an item qualifies, its numbers and tx list are built from its whole
-  // history, ignoring the range. Otherwise an item bought last week and sold today under
-  // "วันนี้" would show as bought-from-nowhere (0 ซื้อมา, "ขายเกินที่ซื้อ") and overstate
-  // profit, because the purchase itself falls outside the window.
+  // The ช่วงเวลา filter decides which items are LISTED (touched at all within the range)
+  // AND, since 9 ต.ค. 2569 (ลูกค้าขอ — เลือก "วันนี้" แล้วกำไรบนการ์ดยังเป็นยอดสะสมทั้งหมด), the card's
+  // ซื้อมา / ขายไป / กำไร and its tx list cover only the range:
+  //   กำไร = sales in the range − FIFO cost of the units sold, where the cost comes from the item's
+  //   WHOLE history (bought last week, sold today = real cost, not "bought from nowhere") — the same
+  //   realizedSales() the summary tile "กำไรจากที่ขายแล้ว" uses, so the two always add up.
+  //   เหลือ / ทุนค้าง / ขายเกินที่ซื้อ / ขายหมดแล้ว = stock on hand NOW, always from the whole history
+  //   (a range-only count would show "ขายเกินที่ซื้อ" for stock bought before the range).
+  // ช่วง "ทั้งหมด" = ตัวเลขเหมือนเดิมทุกอย่าง
   function computeHistoryItemGroups(){
     var activeKeys = {};
     historyScopedLines().forEach(function(t){
       var e = t.entry, l = t.line;
       activeKeys[e.serverId+'|'+(e.category||'zeny')+'|'+l.name+'|'+JSON.stringify(l.slots||[])] = true;
     });
+    var startTs = historyRangeStartTs();
+    var inRange = function(ts){ return startTs==null || ts>=startTs; };
     var groups = {}, order = [];
     historyScopedLines({ ignoreRange:true }).forEach(function(t){
       var e = t.entry, l = t.line;
@@ -5320,11 +5328,14 @@
       if(!activeKeys[key]) return; // not touched within the selected range — don't list it
       if(!groups[key]){
         groups[key] = { key:key, name:l.name, slots:slots, category:e.category||'zeny', serverId:e.serverId,
-                        buyQty:0, buyBaht:0, sellQty:0, sellBaht:0, lastTs:0, tx:[] };
+                        buyQty:0, buyBaht:0, sellQty:0, sellBaht:0, buyQtyAll:0, sellQtyAll:0, lastTs:0, tx:[], allTx:[] };
         order.push(key);
       }
       var g = groups[key];
       var qty = parseFloat(l.qty)||0, baht = lineBahtValue(e, l);
+      if(t.type==='buy') g.buyQtyAll += qty; else g.sellQtyAll += qty;
+      g.allTx.push(t);
+      if(!inRange(e.ts)) return;   // นอกช่วง: นับแค่ยอดคงเหลือ/ต้นทุน ไม่โชว์ในการ์ด
       if(t.type==='buy'){ g.buyQty += qty; g.buyBaht += baht; }
       else { g.sellQty += qty; g.sellBaht += baht; }
       if(e.ts>g.lastTs) g.lastTs = e.ts;
@@ -5332,36 +5343,31 @@
     });
     return order.map(function(key){
       var g = groups[key];
-      // FIFO (ซื้อก่อน-ขายก่อน): each sale consumes the oldest unsold lots, so what's
-      // left on hand is the most recently bought stock at its own price — not an average
-      // blended with lots that were already sold. A sale made before its purchase was
-      // logged runs a deficit that the next purchase covers first, keeping เหลือ =
-      // ซื้อมา − ขายไป.
-      var lots = [], deficit = 0, cogs = 0;
-      g.tx.slice().reverse().forEach(function(t){            // g.tx is newest-first
+      // FIFO (ซื้อก่อน-ขายก่อน) over the whole history: each sale consumes the oldest unsold
+      // lots, so what's left on hand is the most recently bought stock at its own price — not an
+      // average blended with lots that were already sold. A sale made before its purchase was
+      // logged runs a deficit that the next purchase covers first, keeping เหลือ = ซื้อมา − ขายไป.
+      var lots = [], deficit = 0;
+      g.allTx.slice().reverse().forEach(function(t){          // allTx is newest-first
         var qty = parseFloat(t.line.qty)||0;
         if(qty<=0) return;
         if(t.type==='buy'){
-          var unitCost = lineBahtValue(t.entry, t.line)/qty;
-          if(deficit>0){
-            var cover = Math.min(qty, deficit);
-            cogs += cover*unitCost; deficit -= cover; qty -= cover;
-          }
-          if(qty>0) lots.push({ qty:qty, unitCost:unitCost });
+          if(deficit>0){ var cover = Math.min(qty, deficit); deficit -= cover; qty -= cover; }
+          if(qty>0) lots.push({ qty:qty, unitCost:lineBahtValue(t.entry, t.line)/(parseFloat(t.line.qty)||1) });
         } else {
           var need = qty;
           while(need>0 && lots.length){
             var lot = lots[0];
             var take = Math.min(need, lot.qty);
-            cogs += take*lot.unitCost; lot.qty -= take; need -= take;
+            lot.qty -= take; need -= take;
             if(lot.qty<=0) lots.shift();
           }
           deficit += need;
         }
       });
-      g.remaining = g.buyQty - g.sellQty;
+      g.remaining = g.buyQtyAll - g.sellQtyAll;
       g.leftCost = lots.reduce(function(s,lot){ return s+lot.qty*lot.unitCost; }, 0);
-      g.profit = g.sellBaht - cogs;
+      g.profit = realizedSales(g.allTx).reduce(function(s,x){ return inRange(x.ts) ? s+x.profit : s; }, 0);
       return g;
     }).sort(function(a,b){ return b.lastTs-a.lastTs; });
   }
@@ -5449,7 +5455,7 @@
     var left = g.remaining>0 ? g.remaining : 0;
     var open = !!historyState.expanded[g.key];
     var leftSub = over>0 ? 'ขายเกินที่ซื้อ '+fmtNum(over)+' '+unit
-                : (left>0 ? 'ทุนค้าง ~'+fmtNum(Math.round(g.leftCost))+' บ' : (g.buyQty>0 ? 'ขายหมดแล้ว' : '—'));
+                : (left>0 ? 'ทุนค้าง ~'+fmtNum(Math.round(g.leftCost))+' บ' : (g.buyQtyAll>0 ? 'ขายหมดแล้ว' : '—'));
     // "เฉลี่ย X บ/หน่วย" under a cell — lets ซื้อมา vs ขายไป price-per-unit be compared at a glance.
     var avgLine = function(baht, qty, u){
       return qty>0 ? '<small class="mr-it-avg" title="เฉลี่ย '+fmtNum(baht/qty)+' บ/'+u+'">เฉลี่ย '+fmtNum(Math.round(baht/qty))+'บ/'+u+'</small>' : '';
@@ -5460,7 +5466,7 @@
     var buyAvgLine = avgLine(g.buyBaht, g.buyQty, unit);
     var groupHasNew = !!recentNewGroupIds[g.key];
     var profitCell = g.sellQty<=0
-      ? '<span class="mr-it-cell profit none"><i>กำไร</i><b>—</b><small>ยังไม่ได้ขาย</small></span>'
+      ? '<span class="mr-it-cell profit none"><i>กำไร</i><b>—</b><small>'+(g.sellQtyAll>0 ? 'ไม่มีขายในช่วงนี้' : 'ยังไม่ได้ขาย')+'</small></span>'
       : '<span class="mr-it-cell profit"><i>กำไร</i><b class="'+(g.profit>=0?'profit-pos':'profit-neg')+'">'+(g.profit>=0?'+':'')+fmtNum(g.profit)+' บ</b>'+
         '<small class="mr-profit-sale-note">ขายไป '+fmtNum(g.sellQty)+' '+unit+'</small></span>';
     var category = g.category==='zeny' ? 'zeny' : (g.category==='item' ? 'item' : 'other');
@@ -5538,7 +5544,7 @@
     var showServer = historyState.serverId==='all';
     // Items still on hand (or never sold) come first; fully sold-out ones fold into a
     // group underneath so a long history doesn't bury what still needs selling.
-    var isSoldOut = function(g){ return g.sellQty>0 && g.remaining<=0; };
+    var isSoldOut = function(g){ return g.sellQtyAll>0 && g.remaining<=0; }; // ขายหมดของจริง (ทั้งประวัติ) ไม่ใช่แค่ในช่วง
     var active = groups.filter(function(g){ return !isSoldOut(g); });
     var soldOut = groups.filter(isSoldOut);
     var html = '<div class="mr-it">'+
@@ -7081,7 +7087,7 @@
       historyState.soldOutOpen = document.getElementById('mrItSoldList').hidden;
       if(historyState.soldOutOpen){
         computeHistoryItemGroups().forEach(function(g){
-          if(g.sellQty>0 && g.remaining<=0 && recentNewGroupIds[g.key]) soldNewSeen[g.key] = true;
+          if(g.sellQtyAll>0 && g.remaining<=0 && recentNewGroupIds[g.key]) soldNewSeen[g.key] = true;
         });
         saveSoldNewSeen();
       }

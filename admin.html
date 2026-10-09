@@ -120,14 +120,26 @@ main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;fle
 .plans-periods{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem .75rem}
 .period-tag{display:inline-flex;align-items:center;min-height:28px;padding:.15rem .55rem;border:1px solid var(--border);border-radius:6px;font-size:.78rem;color:var(--text-dim);background:var(--surface-3)}
 .plans-definition{margin:.65rem 0 0;font-size:.76rem;color:var(--text-mute)}
-.error-summary{display:flex;align-items:center;gap:.75rem 1rem;padding:.7rem 1rem;background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px}
-.error-summary-icon{width:20px;height:20px;color:var(--text-dim);flex:none}
-.error-summary-copy{flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:.25rem .7rem}
-.error-summary-copy strong{font-size:.85rem;font-weight:600}
-.error-summary-copy span{font-size:.78rem;color:var(--text-mute)}
-.error-summary .pill{font-size:.8rem}
-.error-summary-link{display:inline-flex;align-items:center;min-height:44px;font-size:.82rem;font-weight:600;text-underline-offset:3px}
-#dashboardErrors{scroll-margin-top:7rem}
+/* ---------- แท็บหมวด (จัดใหม่ 10 ต.ค. 2569 — เดิมกล่องเรื่องเดียวกันกระจายทั้งหน้า) ---------- */
+.dash-tabs{flex-basis:100%;display:flex;gap:.35rem;overflow-x:auto;scrollbar-width:none;margin:-.2rem -.25rem 0;padding:0 .25rem}
+.dash-tabs::-webkit-scrollbar{display:none}
+.dash-tabs button{flex:none;display:inline-flex;align-items:center;gap:.4rem;min-height:40px;padding:.4rem .95rem;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text-dim);font-size:.88rem;font-weight:700;cursor:pointer}
+.dash-tabs button:hover{color:var(--text);background:var(--surface-3)}
+.dash-tabs button.active{color:var(--text);background:var(--surface-2);border-color:var(--border)}
+.tab-badge{min-width:20px;height:20px;padding:0 .35rem;border-radius:999px;background:rgba(224,171,60,.18);color:var(--warn);font-size:.72rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.tab-panel{display:flex;flex-direction:column;gap:1.1rem}
+.tab-panel .card{scroll-margin-top:8.5rem}
+/* กล่องที่เปลี่ยนตามปุ่ม 7 / 30 / 90 วัน */
+.range-tag{display:inline-flex;align-items:center;margin-left:.5rem;padding:.06rem .45rem;border:1px solid var(--border);border-radius:6px;font-size:.7rem;font-weight:600;color:var(--text-dim);background:var(--surface-3);vertical-align:middle}
+/* สิ่งที่ต้องทำ (แท็บภาพรวม) — กดแล้วไปแท็บ/กล่องนั้น */
+.todo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem}
+.todo-item{display:flex;flex-direction:column;align-items:flex-start;gap:.1rem;width:100%;text-align:left;font:inherit;color:var(--text);background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px;padding:.65rem .8rem;cursor:pointer}
+.todo-item:hover{border-color:var(--border)}
+.todo-item b{font-family:var(--font-mono);font-size:1.4rem;line-height:1.2}
+.todo-item span{font-size:.82rem;font-weight:600}
+.todo-item small{font-size:.72rem;color:var(--text-mute)}
+.todo-item.alert{border-color:rgba(224,171,60,.45)}
+.todo-item.alert b{color:var(--warn)}
 
 /* ---------- เลย์เอาต์หลัก ---------- */
 .grid-main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:1.1rem;align-items:start}
@@ -289,9 +301,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   .queue-grid{grid-template-columns:minmax(0,1fr)}
   .card{padding:1rem}
   .plan{padding:.7rem .8rem}
-  .error-summary{flex-wrap:wrap;gap:.4rem .65rem}
-  .error-summary-copy{flex-basis:calc(100% - 32px)}
-  .error-summary-link{margin-left:auto}
+  .todo-grid{grid-template-columns:minmax(0,1fr)}
   .plans-periods{align-items:flex-start}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -316,6 +326,14 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   <button type="button" class="btn" id="refreshBtn">รีเฟรช</button>
   <span class="updated" id="updatedAt"></span>
   <a class="btn" href="app.html">← กลับหน้าเว็บ</a>
+  <!-- แท็บหมวด (จัดใหม่ 10 ต.ค. 2569) — แถวที่สองของแถบบน ติดบนจอไปด้วย · ขึ้นหลังโหลดข้อมูลแอดมินได้ -->
+  <nav class="dash-tabs" id="dashTabs" role="tablist" aria-label="หมวดของแดชบอร์ด" hidden>
+    <button type="button" role="tab" id="tab-overview" data-tab="overview" aria-controls="panel-overview" aria-selected="true" class="active">ภาพรวม</button>
+    <button type="button" role="tab" id="tab-traffic" data-tab="traffic" aria-controls="panel-traffic" aria-selected="false" tabindex="-1">ผู้เข้าชม</button>
+    <button type="button" role="tab" id="tab-usage" data-tab="usage" aria-controls="panel-usage" aria-selected="false" tabindex="-1">การใช้งาน</button>
+    <button type="button" role="tab" id="tab-money" data-tab="money" aria-controls="panel-money" aria-selected="false" tabindex="-1">รายได้และแพ็กเกจ</button>
+    <button type="button" role="tab" id="tab-ops" data-tab="ops" aria-controls="panel-ops" aria-selected="false" tabindex="-1">งานแอดมิน<span class="tab-badge" id="opsBadge" hidden></span></button>
+  </nav>
 </header>
 
 <div id="stateBox" class="state">
@@ -326,253 +344,240 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 
 <main id="dash" hidden>
 
-  <!-- ตอนนี้: ตัวเลขสดจาก RPC admin_live (ดึงใหม่ทุก 1 นาที) — ฐานข้อมูลยังไม่มีฟังก์ชันนี้ = ซ่อนทั้งแถบ -->
-  <section class="card" id="liveStrip" aria-label="ตัวเลขตอนนี้" hidden>
-    <div class="card-head">
-      <div class="card-title">ตอนนี้<span class="live-dot" aria-hidden="true"></span></div>
-      <span class="card-note">อัปเดตทุก 1 นาที · ไม่นับบัญชีแอดมิน<span id="liveStatus"></span></span>
-    </div>
-    <p class="card-note live-since" id="liveSince" hidden>เริ่มนับออนไลน์หลังอัปเดตนี้ — ตัวเลขจะเริ่มขึ้นเมื่อมีคนเข้าใช้งาน</p>
-    <div class="live-grid" id="liveTiles"></div>
-  </section>
+  <!-- จัดใหม่ 10 ต.ค. 2569 (ผู้ใช้ขอ — เดิมกล่องเรื่องเดียวกันกระจายทั้งหน้า ดูยาก): 5 แท็บ ตามปุ่มใน #dashTabs
+       ภาพรวม = เช็กทุกวัน ไม่ขึ้นกับปุ่ม 7/30/90 วัน · แท็บอื่น กล่องที่เปลี่ยนตามปุ่มมีป้าย "N วัน" (data-range-tag)
+       data-needs-traffic = ซ่อนเมื่อโหลดข้อมูลการเข้าชม (admin_traffic) ไม่ได้ -->
+  <!-- แท็บ ภาพรวม: ตัวเลขสด · ตัวเลขหลัก · สิ่งที่ต้องทำ · รายงานรายวัน -->
+  <div class="tab-panel" id="panel-overview" data-panel="overview" role="tabpanel" aria-labelledby="tab-overview">
+    <section class="card" id="liveStrip" aria-label="ตัวเลขตอนนี้" hidden>
+      <div class="card-head">
+        <div class="card-title">ตอนนี้<span class="live-dot" aria-hidden="true"></span></div>
+        <span class="card-note">อัปเดตทุก 1 นาที · ไม่นับบัญชีแอดมิน<span id="liveStatus"></span></span>
+      </div>
+      <p class="card-note live-since" id="liveSince" hidden>เริ่มนับออนไลน์หลังอัปเดตนี้ — ตัวเลขจะเริ่มขึ้นเมื่อมีคนเข้าใช้งาน</p>
+      <div class="live-grid" id="liveTiles"></div>
+    </section>
 
-  <!-- รายงานรายวัน: RPC admin_day_report (SQL 20261006000100) — ไม่ขึ้นกับปุ่มช่วง 7/30/90 วัน · ยังไม่มีฟังก์ชัน = ซ่อนทั้งการ์ด -->
-  <section class="card" id="dayReport" aria-label="รายงานรายวัน" hidden>
-    <div class="card-head">
-      <div class="card-title">รายงานรายวัน</div>
-      <div class="day-controls">
-        <div class="seg" id="daySeg" role="group" aria-label="เลือกวันของรายงาน">
-          <button type="button" id="dayToday" data-day="today" class="active">วันนี้</button>
-          <button type="button" id="dayYesterday" data-day="yesterday">เมื่อวาน</button>
+    <section class="kpis" aria-label="ตัวเลขหลัก">
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+          <div><div class="kpi-label">สมาชิกทั้งหมด</div><div class="kpi-value" id="kMembers">-</div></div>
         </div>
-        <label class="day-pick">เลือกวันที่<input type="date" id="dayPicker"></label>
+        <div class="kpi-foot"><span class="delta" id="kNewDelta">-</span><span id="kNewText">สมัครใหม่วันนี้</span></div>
       </div>
-    </div>
-    <p class="card-note day-compare"><span id="dayCompare">กำลังโหลด...</span><span id="dayStatus"></span></p>
-    <div class="stat-grid day-stats" id="dayStats"></div>
-    <div class="grid-2 day-detail">
-      <div>
-        <h3 class="day-sub">ผู้เข้าชมรายชั่วโมง</h3>
-        <div class="chart-box sm"><canvas id="chartDayHours" role="img" aria-label="กราฟผู้เข้าชมและสมัครสมาชิกรายชั่วโมงของวันที่เลือก เทียบผู้เข้าชมวันก่อนหน้า"></canvas></div>
-        <div class="legend"><span><i style="background:var(--c1)"></i>ผู้เข้าชม</span><span><i style="background:var(--c2)"></i>สมัครสมาชิก</span><span><i class="legend-line"></i>ผู้เข้าชมวันก่อนหน้า</span></div>
-      </div>
-      <div>
-        <h3 class="day-sub">มาจากไหน</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>แหล่งที่มา</th><th class="num">ผู้เข้าชม</th><th class="num">สมัคร (ส่งฟอร์ม)</th><th class="num">ซื้อแพ็กเกจ</th></tr></thead>
-            <tbody id="daySources"></tbody>
-          </table>
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+          <div><div class="kpi-label">ใช้งานจริง 7 วัน</div><div class="kpi-value" id="kActive">-</div></div>
         </div>
-        <p class="card-note day-source-hint" id="daySourceHint"></p>
+        <div class="kpi-foot"><span class="delta" id="kActiveDelta">-</span><span>เทียบ 7 วันก่อนหน้า</span></div>
       </div>
-    </div>
-  </section>
-
-  <!-- A. ตัวเลขหลัก -->
-  <section class="kpis" aria-label="ตัวเลขหลัก">
-    <div class="card kpi">
-      <div class="kpi-top">
-        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
-        <div><div class="kpi-label">สมาชิกทั้งหมด</div><div class="kpi-value" id="kMembers">-</div></div>
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></div>
+          <div><div class="kpi-label">รายได้เดือนนี้</div><div class="kpi-value" id="kRevenue">-</div></div>
+        </div>
+        <div class="kpi-foot"><span class="delta" id="kRevenueDelta">-</span><span id="kRevenueText">เทียบเดือนก่อน</span></div>
       </div>
-      <div class="kpi-foot"><span class="delta" id="kNewDelta">-</span><span id="kNewText">สมัครใหม่วันนี้</span></div>
-    </div>
-    <div class="card kpi">
-      <div class="kpi-top">
-        <div class="kpi-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-        <div><div class="kpi-label">ใช้งานจริง 7 วัน</div><div class="kpi-value" id="kActive">-</div></div>
-      </div>
-      <div class="kpi-foot"><span class="delta" id="kActiveDelta">-</span><span>เทียบ 7 วันก่อนหน้า</span></div>
-    </div>
-    <div class="card kpi">
-      <div class="kpi-top">
-        <div class="kpi-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></div>
-        <div><div class="kpi-label">รายได้เดือนนี้</div><div class="kpi-value" id="kRevenue">-</div></div>
-      </div>
-      <div class="kpi-foot"><span class="delta" id="kRevenueDelta">-</span><span id="kRevenueText">เทียบเดือนก่อน</span></div>
-    </div>
-    <div class="card kpi">
-      <div class="kpi-top">
-        <div class="kpi-icon pink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg></div>
-        <div><div class="kpi-label">ลูกค้าที่จ่ายเงิน</div><div class="kpi-value" id="kPaid">-</div></div>
-      </div>
-      <div class="kpi-foot"><span class="delta flat" id="kPaidRate">-</span><span id="kPaidText">ของสมาชิกทั้งหมด</span></div>
-    </div>
-  </section>
-
-  <aside class="error-summary" id="errorSummary" aria-label="สรุปข้อผิดพลาด" hidden>
-    <svg class="error-summary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 9v5M12 18h.01"/></svg>
-    <div class="error-summary-copy"><strong>ข้อผิดพลาดที่ผู้ใช้พบ</strong><span id="errorSummaryPeriod"></span></div>
-    <span class="pill pill-mute" id="errorSummaryCount">—</span>
-    <a class="error-summary-link" href="#dashboardErrors">ดูรายละเอียด ↓</a>
-  </aside>
-
-  <!-- B. สถานะแพ็กเกจ -->
-  <section class="card" aria-label="แพ็กเกจที่ใช้งานอยู่">
-    <div class="card-head">
-      <div class="card-title">ภาพรวมแพ็กเกจ</div>
-      <div class="plans-periods"><span class="period-tag">ผู้ใช้งาน · ตอนนี้</span><span class="card-note period-tag" id="plansNote"></span></div>
-    </div>
-    <div class="plans" id="plans"></div>
-    <p class="plans-definition">4 in 1 นับจากคนที่มีทั้งแพ็กรวมและจับเวลาบอส · ยอดขายและแต้มอ้างอิงช่วงเวลาที่เลือก</p>
-  </section>
-
-  <!-- กลุ่ม 2: การเข้าชมเว็บ (จากตาราง app_events — มีข้อมูลตั้งแต่วันที่ติดตั้ง) -->
-  <section class="card" aria-label="การเข้าชมเว็บ">
-    <div class="card-head">
-      <div class="card-title">การเข้าชมเว็บ</div>
-      <span class="card-note" id="trafficSince"></span>
-    </div>
-    <p class="empty" id="trafficEmpty" hidden></p>
-    <div id="trafficBody">
-      <div class="traffic-top">
-        <div class="stat-grid stat-grid-4 traffic-stats" id="trafficStats"></div>
-      </div>
-      <div class="chart-box sm"><canvas id="chartVisitors" aria-label="กราฟจำนวนผู้เข้าชมเว็บรายวัน" role="img"></canvas></div>
-      <div class="legend"><span><i style="background:var(--c1)"></i>ผู้เข้าชมทั้งหมด</span><span><i style="background:var(--c2)"></i>ล็อกอินแล้ว</span></div>
-      <!-- หน้าแรก (index.html) — ฟังก์ชัน admin_traffic รุ่นเก่ายังไม่มีข้อมูลนี้ = ซ่อนส่วนนี้ -->
-      <div class="landing-block" id="landingBlock" hidden>
-        <div class="landing-head"><h3>หน้าแรก (landing)</h3><span class="card-note" id="landingSince"></span></div>
-        <div class="stat-grid stat-grid-4 traffic-stats" id="landingStats"></div>
-      </div>
-    </div>
-  </section>
-
-  <div class="grid-2" id="trafficDetail">
-    <section class="card">
-      <div class="card-head"><div class="card-title">หน้าที่คนเปิด</div><span class="card-note">เวลาเฉลี่ย = ต่อครั้งที่เปิดดู</span></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>หน้า</th><th class="num">ครั้งที่เปิด</th><th class="num">คน</th><th class="num">เวลาเฉลี่ย</th><th class="num">เวลารวม</th></tr></thead>
-          <tbody id="pagesTable"></tbody>
-        </table>
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon pink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg></div>
+          <div><div class="kpi-label">ลูกค้าที่จ่ายเงิน</div><div class="kpi-value" id="kPaid">-</div></div>
+        </div>
+        <div class="kpi-foot"><span class="delta flat" id="kPaidRate">-</span><span id="kPaidText">ของสมาชิกทั้งหมด</span></div>
       </div>
     </section>
-    <section class="card">
-      <div class="card-head"><div class="card-title">เส้นทางการซื้อแพ็กเกจ</div><span class="card-note">นับเป็นจำนวนคน</span></div>
-      <div class="funnel" id="funnel"></div>
-      <div class="table-wrap" style="margin-top:1rem">
-        <table>
-          <thead><tr><th>แพ็ก</th><th class="num">กดซื้อ</th><th class="num">แต้มไม่พอ</th><th class="num">ซื้อสำเร็จ</th></tr></thead>
-          <tbody id="funnelPlans"></tbody>
-        </table>
+
+    <section class="card" id="todoCard" aria-label="สิ่งที่ต้องทำ">
+      <div class="card-head"><div class="card-title">สิ่งที่ต้องทำ</div><span class="card-note">กดเพื่อไปดูรายละเอียด</span></div>
+      <div class="todo-grid">
+        <button type="button" class="todo-item" id="todoQueue" data-goto-tab="ops" data-goto-card="queueCard"><b id="todoQueueN">—</b><span>รายการเติมเงินรอตรวจ</span><small>QR รอตรวจ / ยอดไม่ตรง · สลิปรออนุมัติ</small></button>
+        <button type="button" class="todo-item" id="todoErrors" data-goto-tab="ops" data-goto-card="dashboardErrors"><b id="todoErrorsN">—</b><span>ข้อผิดพลาดที่ผู้ใช้พบ</span><small id="todoErrorsSub">—</small></button>
+        <button type="button" class="todo-item" id="todoExpiring" data-goto-tab="money" data-goto-card="expiringCard"><b id="todoExpiringN">—</b><span>แพ็กที่จะหมดอายุใน 7 วัน</span><small>ดูรายชื่อ</small></button>
+      </div>
+    </section>
+
+    <section class="card" id="dayReport" aria-label="รายงานรายวัน" hidden>
+      <div class="card-head">
+        <div class="card-title">รายงานรายวัน</div>
+        <div class="day-controls">
+          <div class="seg" id="daySeg" role="group" aria-label="เลือกวันของรายงาน">
+            <button type="button" id="dayToday" data-day="today" class="active">วันนี้</button>
+            <button type="button" id="dayYesterday" data-day="yesterday">เมื่อวาน</button>
+          </div>
+          <label class="day-pick">เลือกวันที่<input type="date" id="dayPicker"></label>
+        </div>
+      </div>
+      <p class="card-note day-compare"><span id="dayCompare">กำลังโหลด...</span><span id="dayStatus"></span></p>
+      <div class="stat-grid day-stats" id="dayStats"></div>
+      <div class="grid-2 day-detail">
+        <div>
+          <h3 class="day-sub">ผู้เข้าชมรายชั่วโมง</h3>
+          <div class="chart-box sm"><canvas id="chartDayHours" role="img" aria-label="กราฟผู้เข้าชมและสมัครสมาชิกรายชั่วโมงของวันที่เลือก เทียบผู้เข้าชมวันก่อนหน้า"></canvas></div>
+          <div class="legend"><span><i style="background:var(--c1)"></i>ผู้เข้าชม</span><span><i style="background:var(--c2)"></i>สมัครสมาชิก</span><span><i class="legend-line"></i>ผู้เข้าชมวันก่อนหน้า</span></div>
+        </div>
+        <div>
+          <h3 class="day-sub">มาจากไหน</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>แหล่งที่มา</th><th class="num">ผู้เข้าชม</th><th class="num">สมัคร (ส่งฟอร์ม)</th><th class="num">ซื้อแพ็กเกจ</th></tr></thead>
+              <tbody id="daySources"></tbody>
+            </table>
+          </div>
+          <p class="card-note day-source-hint" id="daySourceHint"></p>
+        </div>
       </div>
     </section>
   </div>
 
-  <div class="grid-side" id="trafficDetail2">
-    <section class="card">
-      <div class="card-head"><div class="card-title">อุปกรณ์ที่ใช้เข้าเว็บ</div><span class="card-note">จำนวนคน</span></div>
-      <div class="device-bar" id="deviceBar" aria-hidden="true"></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>อุปกรณ์</th><th class="num">ผู้เข้าชม</th><th class="num">สัดส่วน</th><th class="num">สมัคร</th></tr></thead>
-          <tbody id="devicesTable"></tbody>
-        </table>
+  <!-- แท็บ ผู้เข้าชม: การเข้าชมเว็บ (+หน้าแรก) · หน้าที่คนเปิด · อุปกรณ์ -->
+  <div class="tab-panel" id="panel-traffic" data-panel="traffic" role="tabpanel" aria-labelledby="tab-traffic" hidden>
+    <section class="card" aria-label="การเข้าชมเว็บ">
+      <div class="card-head">
+        <div class="card-title">การเข้าชมเว็บ<span class="range-tag" data-range-tag></span></div>
+        <span class="card-note" id="trafficSince"></span>
+      </div>
+      <p class="empty" id="trafficEmpty" hidden></p>
+      <div id="trafficBody">
+        <div class="traffic-top">
+          <div class="stat-grid stat-grid-4 traffic-stats" id="trafficStats"></div>
+        </div>
+        <div class="chart-box sm"><canvas id="chartVisitors" aria-label="กราฟจำนวนผู้เข้าชมเว็บรายวัน" role="img"></canvas></div>
+        <div class="legend"><span><i style="background:var(--c1)"></i>ผู้เข้าชมทั้งหมด</span><span><i style="background:var(--c2)"></i>ล็อกอินแล้ว</span></div>
+        <!-- หน้าแรก (index.html) — ฟังก์ชัน admin_traffic รุ่นเก่ายังไม่มีข้อมูลนี้ = ซ่อนส่วนนี้ -->
+        <div class="landing-block" id="landingBlock" hidden>
+          <div class="landing-head"><h3>หน้าแรก (landing)</h3><span class="card-note" id="landingSince"></span></div>
+          <div class="stat-grid stat-grid-4 traffic-stats" id="landingStats"></div>
+        </div>
       </div>
     </section>
-    <section class="card" id="dashboardErrors" tabindex="-1">
-      <div class="card-head"><div class="card-title">ข้อผิดพลาดที่ผู้ใช้พบ</div><span class="pill pill-mute" id="errorsTotal">0 ครั้ง</span></div>
-      <div class="table-wrap">
-        <table class="errors-table">
-          <thead><tr><th>ประเภท</th><th>ข้อความ</th><th class="num">ครั้ง</th><th class="num">คน</th><th>หน้า</th><th class="num">ล่าสุด</th></tr></thead>
-          <tbody id="errorsTable"></tbody>
-        </table>
-      </div>
-    </section>
-  </div>
 
-  <div class="grid-main">
-    <div class="col">
-      <!-- D. กราฟ -->
-      <section class="card">
-        <div class="card-head">
-          <div class="card-title">ผู้ใช้งานรายวัน</div>
-          <span class="card-note">นับจากการบันทึก/แก้ไขข้อมูล หรือล็อกอิน</span>
-        </div>
-        <div class="chart-hero"><b id="avgActive">-</b><span>คนต่อวันโดยเฉลี่ย · สมัครใหม่ในช่วงนี้ <span id="newPeriod">-</span> คน</span></div>
-        <div class="chart-box"><canvas id="chartUsers" aria-label="กราฟผู้ใช้งานและสมัครใหม่รายวัน" role="img"></canvas></div>
-        <div class="legend"><span><i style="background:var(--c1)"></i>ผู้ใช้งาน</span><span><i style="background:var(--c2)"></i>สมัครใหม่</span></div>
-      </section>
-
-      <!-- ช่วงเวลาที่คนใช้งาน + การกลับมาใช้ซ้ำ (RPC admin_usage) — ยังไม่มีฟังก์ชัน/โหลดไม่ได้ = ซ่อนทั้งแถว -->
-      <div class="grid-2" id="usageRow" hidden>
-        <section class="card">
-          <div class="card-head"><div class="card-title">ช่วงเวลาที่คนใช้งาน</div><span class="card-note" id="usageNote"></span></div>
-          <div class="chart-hero usage-hero" id="usagePeak"></div>
-          <div class="chart-box"><canvas id="chartHours" aria-label="กราฟจำนวนผู้ใช้งานเฉลี่ยต่อวันแยกตามช่วงเวลา" role="img"></canvas></div>
-          <div class="legend"><span><i style="background:var(--c1)"></i><span id="usageLegend">ผู้ใช้งานเฉลี่ยต่อวัน</span></span><span><i style="background:var(--c3)"></i>ช่วงพีค</span></div>
-        </section>
-        <section class="card">
-          <div class="card-head"><div class="card-title">การกลับมาใช้ซ้ำ &amp; เวลาใช้งาน</div><span class="card-note">นับการใช้งานเฉพาะที่ล็อกอิน (ไม่นับบัญชีแอดมิน)</span></div>
-          <div class="stat-grid usage-stats" id="usageStats"></div>
-        </section>
-      </div>
-
-      <div class="grid-2">
-        <section class="card">
-          <div class="card-head"><div class="card-title">การใช้งานฟีเจอร์รายวัน</div></div>
-          <div class="chart-box sm"><canvas id="chartFeatures" aria-label="กราฟจำนวนรายการที่บันทึกต่อวันแยกตามฟีเจอร์" role="img"></canvas></div>
-          <div class="legend"><span><i style="background:var(--c1)"></i>ซื้อ–ขาย</span><span><i style="background:var(--c3)"></i>ยอดฟาร์ม</span><span><i style="background:var(--c4)"></i>ฆ่าบอส</span></div>
-        </section>
-        <section class="card">
-          <div class="card-head"><div class="card-title">รายได้รายวัน (บาท)</div><span class="card-note" id="periodRevenue"></span></div>
-          <div class="chart-box sm"><canvas id="chartRevenue" aria-label="กราฟรายได้รายวันเป็นบาท" role="img"></canvas></div>
-          <div class="legend"><span><i style="background:var(--c3)"></i>รายได้จากการเติมเงิน</span></div>
-        </section>
-      </div>
-
-      <!-- C. สัญญาณอยากอัปเกรด -->
-      <section class="card">
-        <div class="card-head">
-          <div class="card-title">สัญญาณอยากอัปเกรด</div>
-          <span class="card-note">บัญชีฟรีที่ใช้ครบลิมิต หรือใช้งานต่อเนื่องแต่ยังไม่ซื้อ</span>
-        </div>
-        <div class="stat-grid stat-grid-4" id="upgradeStats"></div>
+    <div class="grid-2">
+      <section class="card" data-needs-traffic>
+        <div class="card-head"><div class="card-title">หน้าที่คนเปิด<span class="range-tag" data-range-tag></span></div><span class="card-note">เวลาเฉลี่ย = ต่อครั้งที่เปิดดู</span></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>ผู้ใช้</th><th class="num">วันที่ครบลิมิตซื้อ–ขาย</th><th class="num">วันที่ครบลิมิตฟาร์ม</th><th class="num">วันที่เข้าใช้งาน</th></tr></thead>
-            <tbody id="candidates"></tbody>
+            <thead><tr><th>หน้า</th><th class="num">ครั้งที่เปิด</th><th class="num">คน</th><th class="num">เวลาเฉลี่ย</th><th class="num">เวลารวม</th></tr></thead>
+            <tbody id="pagesTable"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card" data-needs-traffic>
+        <div class="card-head"><div class="card-title">อุปกรณ์ที่ใช้เข้าเว็บ<span class="range-tag" data-range-tag></span></div><span class="card-note">จำนวนคน</span></div>
+        <div class="device-bar" id="deviceBar" aria-hidden="true"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>อุปกรณ์</th><th class="num">ผู้เข้าชม</th><th class="num">สัดส่วน</th><th class="num">สมัคร</th></tr></thead>
+            <tbody id="devicesTable"></tbody>
           </table>
         </div>
       </section>
     </div>
+  </div>
 
-    <div class="col">
-      <!-- F. คิวงาน + ความเคลื่อนไหว -->
+  <!-- แท็บ การใช้งาน: ผู้ใช้งานรายวัน · ช่วงเวลา / กลับมาใช้ซ้ำ · ฟีเจอร์รายวัน · เซิร์ฟเวอร์ · ยอดรวม -->
+  <div class="tab-panel" id="panel-usage" data-panel="usage" role="tabpanel" aria-labelledby="tab-usage" hidden>
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">ผู้ใช้งานรายวัน<span class="range-tag" data-range-tag></span></div>
+        <span class="card-note">นับจากการบันทึก/แก้ไขข้อมูล หรือล็อกอิน</span>
+      </div>
+      <div class="chart-hero"><b id="avgActive">-</b><span>คนต่อวันโดยเฉลี่ย · สมัครใหม่ในช่วงนี้ <span id="newPeriod">-</span> คน</span></div>
+      <div class="chart-box"><canvas id="chartUsers" aria-label="กราฟผู้ใช้งานและสมัครใหม่รายวัน" role="img"></canvas></div>
+      <div class="legend"><span><i style="background:var(--c1)"></i>ผู้ใช้งาน</span><span><i style="background:var(--c2)"></i>สมัครใหม่</span></div>
+    </section>
+
+    <div class="grid-2" id="usageRow" hidden>
       <section class="card">
-        <div class="card-head"><div class="card-title">คิวงานแอดมิน</div><a class="card-note" href="./#admin">ไปหน้าจัดการ ↗</a></div>
-        <div class="queue-grid" id="queue"></div>
+        <div class="card-head"><div class="card-title">ช่วงเวลาที่คนใช้งาน<span class="range-tag" data-range-tag></span></div><span class="card-note" id="usageNote"></span></div>
+        <div class="chart-hero usage-hero" id="usagePeak"></div>
+        <div class="chart-box"><canvas id="chartHours" aria-label="กราฟจำนวนผู้ใช้งานเฉลี่ยต่อวันแยกตามช่วงเวลา" role="img"></canvas></div>
+        <div class="legend"><span><i style="background:var(--c1)"></i><span id="usageLegend">ผู้ใช้งานเฉลี่ยต่อวัน</span></span><span><i style="background:var(--c3)"></i>ช่วงพีค</span></div>
       </section>
       <section class="card">
+        <div class="card-head"><div class="card-title">การกลับมาใช้ซ้ำ &amp; เวลาใช้งาน<span class="range-tag" data-range-tag></span></div><span class="card-note">นับการใช้งานเฉพาะที่ล็อกอิน (ไม่นับบัญชีแอดมิน)</span></div>
+        <div class="stat-grid usage-stats" id="usageStats"></div>
+      </section>
+    </div>
+
+    <div class="grid-2">
+      <section class="card">
+        <div class="card-head"><div class="card-title">การใช้งานฟีเจอร์รายวัน<span class="range-tag" data-range-tag></span></div></div>
+        <div class="chart-box sm"><canvas id="chartFeatures" aria-label="กราฟจำนวนรายการที่บันทึกต่อวันแยกตามฟีเจอร์" role="img"></canvas></div>
+        <div class="legend"><span><i style="background:var(--c1)"></i>ซื้อ–ขาย</span><span><i style="background:var(--c3)"></i>ยอดฟาร์ม</span><span><i style="background:var(--c4)"></i>ฆ่าบอส</span></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div class="card-title">เซิร์ฟเวอร์ยอดนิยม</div><span class="card-note">จำนวนผู้ใช้ที่เลือกเล่น</span></div>
+        <div class="hbars" id="servers"></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-head"><div class="card-title">ยอดรวมการใช้งานทั้งหมด</div><span class="card-note">ไม่นับบัญชีแอดมิน</span></div>
+      <div class="feature-grid" id="features"></div>
+    </section>
+  </div>
+
+  <!-- แท็บ รายได้และแพ็กเกจ: รายได้ · แต้ม · แพ็กเกจ · เส้นทางการซื้อ · แพ็กใกล้หมด · อยากอัปเกรด · โค้ด -->
+  <div class="tab-panel" id="panel-money" data-panel="money" role="tabpanel" aria-labelledby="tab-money" hidden>
+    <div class="grid-2">
+      <section class="card">
+        <div class="card-head"><div class="card-title">รายได้รายวัน (บาท)<span class="range-tag" data-range-tag></span></div><span class="card-note" id="periodRevenue"></span></div>
+        <div class="chart-box sm"><canvas id="chartRevenue" aria-label="กราฟรายได้รายวันเป็นบาท" role="img"></canvas></div>
+        <div class="legend"><span><i style="background:var(--c3)"></i>รายได้จากการเติมเงิน</span></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div class="card-title">แต้มเข้า–ออก<span class="range-tag" data-range-tag></span></div><span class="card-note" id="pointsOutstanding"></span></div>
+        <h3 style="font-size:.78rem;color:var(--text-dim);margin-bottom:.5rem">แต้มเข้า</h3>
+        <div class="hbars" id="pointsIn"></div>
+        <h3 style="font-size:.78rem;color:var(--text-dim);margin:1rem 0 .5rem">แต้มที่ใช้ไป</h3>
+        <div class="hbars" id="pointsOut"></div>
+      </section>
+    </div>
+
+    <section class="card" aria-label="แพ็กเกจที่ใช้งานอยู่">
+      <div class="card-head">
+        <div class="card-title">ภาพรวมแพ็กเกจ</div>
+        <div class="plans-periods"><span class="period-tag">ผู้ใช้งาน · ตอนนี้</span><span class="card-note period-tag" id="plansNote"></span></div>
+      </div>
+      <div class="plans" id="plans"></div>
+      <p class="plans-definition">4 in 1 นับจากคนที่มีทั้งแพ็กรวมและจับเวลาบอส · ยอดขายและแต้มอ้างอิงช่วงเวลาที่เลือก</p>
+    </section>
+
+    <div class="grid-2">
+      <section class="card" data-needs-traffic>
+        <div class="card-head"><div class="card-title">เส้นทางการซื้อแพ็กเกจ<span class="range-tag" data-range-tag></span></div><span class="card-note">นับเป็นจำนวนคน</span></div>
+        <div class="funnel" id="funnel"></div>
+        <div class="table-wrap" style="margin-top:1rem">
+          <table>
+            <thead><tr><th>แพ็ก</th><th class="num">กดซื้อ</th><th class="num">แต้มไม่พอ</th><th class="num">ซื้อสำเร็จ</th></tr></thead>
+            <tbody id="funnelPlans"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card" id="expiringCard">
         <div class="card-head"><div class="card-title">แพ็กที่จะหมดอายุใน 7 วัน</div><span class="pill pill-warn" id="expiringCount">0</span></div>
         <div class="list" id="expiring"></div>
       </section>
-      <section class="card">
-        <div class="card-head"><div class="card-title">ความเคลื่อนไหวล่าสุด</div></div>
-        <div class="list" id="feed"></div>
-      </section>
     </div>
-  </div>
 
-  <div class="grid-3">
-    <!-- B. แต้ม -->
     <section class="card">
-      <div class="card-head"><div class="card-title">แต้มเข้า–ออก</div><span class="card-note" id="pointsOutstanding"></span></div>
-      <h3 style="font-size:.78rem;color:var(--text-dim);margin-bottom:.5rem">แต้มเข้า</h3>
-      <div class="hbars" id="pointsIn"></div>
-      <h3 style="font-size:.78rem;color:var(--text-dim);margin:1rem 0 .5rem">แต้มที่ใช้ไป</h3>
-      <div class="hbars" id="pointsOut"></div>
+      <div class="card-head">
+        <div class="card-title">สัญญาณอยากอัปเกรด<span class="range-tag" data-range-tag></span></div>
+        <span class="card-note">บัญชีฟรีที่ใช้ครบลิมิต หรือใช้งานต่อเนื่องแต่ยังไม่ซื้อ</span>
+      </div>
+      <div class="stat-grid stat-grid-4" id="upgradeStats"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ผู้ใช้</th><th class="num">วันที่ครบลิมิตซื้อ–ขาย</th><th class="num">วันที่ครบลิมิตฟาร์ม</th><th class="num">วันที่เข้าใช้งาน</th></tr></thead>
+          <tbody id="candidates"></tbody>
+        </table>
+      </div>
     </section>
-    <!-- E. เซิร์ฟเวอร์ -->
+
     <section class="card">
-      <div class="card-head"><div class="card-title">เซิร์ฟเวอร์ยอดนิยม</div><span class="card-note">จำนวนผู้ใช้ที่เลือกเล่น</span></div>
-      <div class="hbars" id="servers"></div>
-    </section>
-    <!-- B. โค้ดโปรโมชัน -->
-    <section class="card">
-      <div class="card-head"><div class="card-title">โค้ดโปรโมชัน</div><span class="card-note">10 โค้ดล่าสุด</span></div>
+      <div class="card-head"><div class="card-title">โค้ดโปรโมชัน<span class="range-tag" data-range-tag></span></div><span class="card-note">10 โค้ดล่าสุด</span></div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>โค้ด</th><th>รางวัล</th><th class="num">ใช้แล้ว</th><th class="num">ช่วงนี้</th></tr></thead>
@@ -582,11 +587,29 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     </section>
   </div>
 
-  <!-- D. ยอดรวมการใช้งาน -->
-  <section class="card">
-    <div class="card-head"><div class="card-title">ยอดรวมการใช้งานทั้งหมด</div><span class="card-note">ไม่นับบัญชีแอดมิน</span></div>
-    <div class="feature-grid" id="features"></div>
-  </section>
+  <!-- แท็บ งานแอดมิน: คิวงาน · ความเคลื่อนไหว · ข้อผิดพลาด -->
+  <div class="tab-panel" id="panel-ops" data-panel="ops" role="tabpanel" aria-labelledby="tab-ops" hidden>
+    <section class="card" id="queueCard">
+      <div class="card-head"><div class="card-title">คิวงานแอดมิน</div><a class="card-note" href="./#admin">ไปหน้าจัดการ ↗</a></div>
+      <div class="queue-grid" id="queue"></div>
+    </section>
+
+    <div class="grid-side">
+      <section class="card">
+        <div class="card-head"><div class="card-title">ความเคลื่อนไหวล่าสุด</div></div>
+        <div class="list" id="feed"></div>
+      </section>
+      <section class="card" id="dashboardErrors" data-needs-traffic tabindex="-1">
+        <div class="card-head"><div class="card-title">ข้อผิดพลาดที่ผู้ใช้พบ<span class="range-tag" data-range-tag></span></div><span class="pill pill-mute" id="errorsTotal">0 ครั้ง</span></div>
+        <div class="table-wrap">
+          <table class="errors-table">
+            <thead><tr><th>ประเภท</th><th>ข้อความ</th><th class="num">ครั้ง</th><th class="num">คน</th><th>หน้า</th><th class="num">ล่าสุด</th></tr></thead>
+            <tbody id="errorsTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
@@ -618,6 +641,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   // linkText: ข้อความปุ่มกลับหน้าเว็บ (ไม่ใส่ = ไม่มีปุ่ม) — ยังไม่ล็อกอินชวนไปล็อกอิน, ล็อกอินแล้วแค่ "กลับหน้าเว็บ"
   function showState(title, text, linkText){
     $('dash').hidden = true;
+    $('dashTabs').hidden = true;
     $('stateBox').hidden = false;
     $('stateTitle').textContent = title;
     $('stateText').textContent = text;
@@ -760,9 +784,14 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     $('queue').innerHTML = items.map(function(i){
       return '<div class="queue-item' + (i[2] ? ' alert' : '') + '"><b>' + fmt(i[0]) + '</b><span>' + i[1] + '</span></div>';
     }).join('');
+    var waiting = Number(q.qr_attention || 0) + Number(q.slip_pending || 0);
+    setTodo('todoQueue', waiting);
+    $('opsBadge').hidden = !waiting;
+    $('opsBadge').textContent = fmt(waiting);
   }
   function renderExpiring(list){
     $('expiringCount').textContent = fmt(list.length);
+    setTodo('todoExpiring', list.length);
     $('expiring').innerHTML = list.length ? list.map(function(x){
       // นับตามวันที่ (เวลาไทย): 0 = หมดวันนี้, 1 = พรุ่งนี้ … — ไม่ปัดเวลาที่เหลือขึ้น (เดิมไม่เคยขึ้น "วันนี้" และเกินจริง 1 วัน)
       var days = Math.max(0, bkkDay(new Date(x.expires_at).getTime()) - bkkDay(Date.now()));
@@ -859,9 +888,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     var errs = t.errors || [];
     $('errorsTotal').textContent = fmt(t.errors_total) + ' ครั้ง';
     $('errorsTotal').className = 'pill ' + (Number(t.errors_total) > 0 ? 'pill-warn' : 'pill-ok');
-    $('errorSummaryCount').textContent = $('errorsTotal').textContent;
-    $('errorSummaryCount').className = $('errorsTotal').className;
-    $('errorSummaryPeriod').textContent = 'ในช่วง ' + state.days + ' วันล่าสุด';
+    setTodo('todoErrors', t.errors_total, 'ใน ' + state.days + ' วันล่าสุด');
     $('errorsTable').innerHTML = errs.length ? errs.map(function(x){
       var k = ERROR_KIND[x.kind] || [x.kind, 'pill-mute'];
       var pages = String(x.pages || '').split(', ').map(function(p){ return PAGE_LABEL[p] || p; }).join(', ');
@@ -872,18 +899,19 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   }
 
   function renderTraffic(t, err){
-    var detail = $('trafficDetail');
-    $('errorSummary').hidden = !!(err || !t);
-    $('trafficDetail2').hidden = !!(err || !t);
-    if(!(err || !t)) renderDevicesErrors(t);
-    if(err || !t){
-      $('trafficBody').hidden = true; detail.hidden = true;
+    var noTraffic = !!(err || !t);
+    // กล่องที่ใช้ข้อมูลการเข้าชม (หน้าที่คนเปิด / อุปกรณ์ / เส้นทางการซื้อ / ข้อผิดพลาด) อยู่คนละแท็บ → ซ่อนทีละกล่อง
+    Array.prototype.forEach.call(document.querySelectorAll('[data-needs-traffic]'), function(el){ el.hidden = noTraffic; });
+    if(!noTraffic) renderDevicesErrors(t);
+    else setTodo('todoErrors', null, 'ยังไม่มีข้อมูลการเข้าชม');
+    if(noTraffic){
+      $('trafficBody').hidden = true;
       $('trafficEmpty').hidden = false;
       $('trafficEmpty').textContent = err || 'ยังไม่มีข้อมูล';
       $('trafficSince').textContent = '';
       return;
     }
-    $('trafficBody').hidden = false; detail.hidden = false; $('trafficEmpty').hidden = true;
+    $('trafficBody').hidden = false; $('trafficEmpty').hidden = true;
     $('trafficSince').textContent = t.since ? 'เริ่มเก็บข้อมูล ' + fmtDateTime(t.since) + ' · ไม่นับเครื่องของแอดมิน' : 'ยังไม่มีข้อมูล — จะเริ่มนับเมื่อมีคนเข้าเว็บ';
     // signups_new (SQL 20260929000100) = ผู้เข้าชมใหม่ในช่วงนี้ที่สมัคร — ไม่เกินจำนวนผู้เข้าชมใหม่ % จึงไม่เกิน 100 · ยังไม่มี = แบบเดิม
     var su = t.signups_new != null ? Number(t.signups_new) : t.signups;
@@ -1251,6 +1279,61 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
   function dayTick(){ if(day.pick) syncDayControls(); else loadDay(); }
   initDayControls();
 
+  // ---------- แท็บหมวด (จัดใหม่ 10 ต.ค. 2569 — ผู้ใช้ขอ: เดิมกล่องเรื่องเดียวกันกระจายทั้งหน้า ดูยาก) ----------
+  // ภาพรวม / ผู้เข้าชม / การใช้งาน / รายได้และแพ็กเกจ / งานแอดมิน · จำแท็บล่าสุดในเครื่องนี้
+  // ปุ่มช่วง 7/30/90 วัน ซ่อนในแท็บภาพรวม (ไม่มีกล่องไหนในแท็บนั้นเปลี่ยนตามปุ่ม) · กล่องที่เปลี่ยนตามปุ่มมีป้าย "N วัน"
+  var TAB_KEY = 'gum100_admin_tab';
+  var TABS = ['overview', 'traffic', 'usage', 'money', 'ops'];
+  function setTab(tab, cardId){
+    if(TABS.indexOf(tab) === -1) tab = 'overview';
+    Array.prototype.forEach.call(document.querySelectorAll('#dashTabs [data-tab]'), function(b){
+      var on = b.dataset.tab === tab;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-panel]'), function(p){ p.hidden = p.dataset.panel !== tab; });
+    $('rangeSeg').hidden = tab === 'overview';
+    try{ localStorage.setItem(TAB_KEY, tab); }catch(e){}
+    resizeVisibleCharts();
+    // มาจากกล่อง "สิ่งที่ต้องทำ" = เลื่อนไปกล่องนั้น
+    var card = cardId && $(cardId);
+    if(card && !card.hidden) card.scrollIntoView({ block:'start', behavior:'smooth' });
+  }
+  // กราฟที่ถูกวาดตอนกล่องถูกซ่อน (แท็บอื่น / ก่อนแดชบอร์ดโผล่) มีขนาด 0 → ปรับขนาดทันทีที่มองเห็น
+  // (อ่านขนาดกล่องตอนนี้เลย ไม่รอเฟรมถัดไป — requestAnimationFrame / ResizeObserver ไม่ทำงานถ้าหน้าไม่ได้วาดอยู่)
+  function resizeVisibleCharts(){
+    Object.keys(state.charts).forEach(function(k){ var c = state.charts[k]; if(c && c.canvas && c.canvas.offsetParent) c.resize(); });
+  }
+  $('dashTabs').addEventListener('click', function(e){ var b = e.target.closest('[data-tab]'); if(b) setTab(b.dataset.tab); });
+  // ลูกศรซ้าย/ขวาเลื่อนแท็บ (แป้นพิมพ์)
+  $('dashTabs').addEventListener('keydown', function(e){
+    if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    var cur = document.querySelector('#dashTabs [aria-selected="true"]');
+    var i = TABS.indexOf(cur ? cur.dataset.tab : 'overview') + (e.key === 'ArrowRight' ? 1 : -1);
+    var next = TABS[(i + TABS.length) % TABS.length];
+    setTab(next);
+    document.querySelector('#dashTabs [data-tab="' + next + '"]').focus();
+    e.preventDefault();
+  });
+  document.addEventListener('click', function(e){ var t = e.target.closest('[data-goto-tab]'); if(t) setTab(t.dataset.gotoTab, t.dataset.gotoCard); });
+  function updateRangeTags(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-range-tag]'), function(el){ el.textContent = state.days + ' วัน'; });
+  }
+  // กล่องสิ่งที่ต้องทำ: n = null → "—" · มากกว่า 0 → สีเหลือง
+  function setTodo(id, n, sub){
+    var v = n == null ? null : Number(n);
+    $(id + 'N').textContent = v == null ? '—' : fmt(v);
+    $(id).classList.toggle('alert', !!v);
+    if(sub != null) $(id + 'Sub').textContent = sub;
+  }
+  (function(){
+    var saved = 'overview';
+    try{ saved = localStorage.getItem(TAB_KEY) || 'overview'; }catch(e){}
+    setTab(saved);
+    updateRangeTags();
+  })();
+
   function render(d){
     state.data = d;
     renderKpis(d.kpi || {});
@@ -1269,6 +1352,8 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     $('updatedAt').textContent = 'อัปเดต ' + new Date(d.generated_at || Date.now()).toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
     $('stateBox').hidden = true;
     $('dash').hidden = false;
+    $('dashTabs').hidden = false;
+    resizeVisibleCharts(); // กราฟด้านบนถูกวาดตอนแดชบอร์ดยังซ่อนอยู่
   }
 
   var loading = false;
@@ -1313,6 +1398,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     if(!b || loading) return;
     state.days = Number(b.dataset.days);
     Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.classList.toggle('active', x === b); });
+    updateRangeTags();
     load();
   });
   $('refreshBtn').addEventListener('click', load);

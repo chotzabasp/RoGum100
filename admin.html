@@ -52,7 +52,8 @@ button{font-family:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 
 /* ---------- แถบบน ---------- */
-.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:.8rem 1.5rem;background:rgba(16,21,33,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border-soft)}
+/* เนื้อหาในแถบบนกว้างเท่า main (1440px กลางจอ) พื้นหลังยังเต็มจอ — จอกว้างมากโลโก้/ปุ่มไม่ไปอยู่สุดขอบ (ผู้ใช้ขอ 10 ต.ค. 2569) */
+.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:.8rem max(1.5rem, calc((100% - 1440px) / 2 + 1.5rem));background:rgba(16,21,33,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border-soft)}
 .brand{display:flex;align-items:center;gap:.65rem;min-width:0}
 .brand img{width:34px;height:34px;border-radius:9px}
 .brand-eyebrow{font-size:.72rem;letter-spacing:.04em;color:var(--text-mute)}
@@ -124,6 +125,9 @@ main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;fle
 .dash-tabs{flex-basis:100%;display:flex;gap:.35rem;overflow-x:auto;scrollbar-width:none;margin:-.2rem -.25rem 0;padding:0 .25rem}
 .dash-tabs::-webkit-scrollbar{display:none}
 .dash-tabs button{flex:none;display:inline-flex;align-items:center;gap:.4rem;min-height:40px;padding:.4rem .95rem;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text-dim);font-size:.88rem;font-weight:700;cursor:pointer}
+/* แท็บอยู่กลางแถว (ผู้ใช้ขอ 10 ต.ค. 2569) — margin auto ที่ปุ่มแรก/สุดท้าย: มีที่ว่าง = อยู่กลาง · แท็บยาวเกินจอ (มือถือ) = เริ่มชิดซ้ายและเลื่อนได้ ไม่โดนตัด */
+.dash-tabs button:first-child{margin-left:auto}
+.dash-tabs button:last-child{margin-right:auto}
 .dash-tabs button:hover{color:var(--text);background:var(--surface-3)}
 .dash-tabs button.active{color:var(--text);background:var(--surface-2);border-color:var(--border)}
 .tab-badge{min-width:20px;height:20px;padding:0 .35rem;border-radius:999px;background:rgba(224,171,60,.18);color:var(--warn);font-size:.72rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center}

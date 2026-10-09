@@ -248,6 +248,40 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
 .live-sub .pill{padding:.05rem .45rem;vertical-align:1px}
 .live-chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.35rem}
 .live-hosts{font-size:.76rem;color:var(--text-dim);line-height:1.6;margin-top:.3rem}
+/* ออนไลน์ตอนนี้: ตัวเลขและป้ายหน้ากดดูรายชื่อได้ (10 ต.ค. 2569) */
+.live-open{display:block;width:fit-content;max-width:100%;padding:0;border:0;background:none;color:var(--text);text-align:left;cursor:pointer}
+.live-open-hint{display:inline-block;margin-left:.6rem;font-family:var(--font-ui);font-size:.76rem;font-weight:600;color:var(--accent);letter-spacing:0;vertical-align:.15em}
+.live-open:hover .live-open-hint{text-decoration:underline}
+button.live-chip{min-height:28px;font-family:inherit;cursor:pointer;transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease}
+button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)}
+
+/* ---------- หน้าต่างรายชื่อคนที่ออนไลน์ ---------- */
+.dlg{width:min(560px, calc(100vw - 2rem));max-height:min(80vh, 720px);padding:0;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.dlg[open]{display:flex;flex-direction:column}
+.dlg::backdrop{background:rgba(5,8,14,.62)}
+.dlg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:1rem 1.1rem .75rem;border-bottom:1px solid var(--border-soft)}
+.dlg-head h2{font-size:1rem}
+.dlg-close{flex:none;width:44px;height:44px;margin:-.5rem -.5rem 0 0;border:0;border-radius:10px;background:transparent;color:var(--text-dim);font-size:1.15rem;cursor:pointer}
+.dlg-close:hover{background:var(--surface-2);color:var(--text)}
+.dlg-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:.85rem 1.1rem 1rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.dlg-foot{padding:.65rem 1.1rem .8rem;border-top:1px solid var(--border-soft);font-size:.76rem;color:var(--text-mute);line-height:1.6}
+.online-filter{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.85rem}
+.online-filter button{min-height:36px;padding:.3rem .75rem;border:1px solid var(--border);border-radius:999px;background:var(--surface-3);color:var(--text-dim);font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+.online-filter button:hover{color:var(--text);border-color:#46577a}
+.online-filter button[aria-pressed="true"]{background:var(--surface-2);color:var(--text);border-color:var(--accent)}
+.online-filter b{font-family:var(--font-mono);margin-left:.3rem;font-weight:700}
+.online-group+.online-group{margin-top:.9rem}
+.online-group h3{font-size:.8rem;font-weight:700;color:var(--text-dim);margin-bottom:.35rem}
+.online-row{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem 0;border-top:1px solid var(--border-soft)}
+.online-group h3+.online-row{border-top:0}
+.online-dot{flex:none;width:9px;height:9px;margin-top:.45rem;border-radius:50%;border:2px solid var(--text-mute)}
+.online-dot.on{background:var(--success);border-color:var(--success)}
+.online-name{font-size:.88rem;font-weight:700;overflow-wrap:anywhere}
+.online-name span{font-weight:500;color:var(--text-mute);margin-left:.35rem}
+.online-sub{font-size:.76rem;color:var(--text-mute)}
+.online-msg{padding:1.2rem 0;text-align:center;color:var(--text-mute);font-size:.85rem}
+.online-msg .btn{margin-top:.7rem}
+@media (max-width:600px){ .dlg{max-height:85vh} }
 @media (max-width:1100px){ .live-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media (max-width:560px){ .live-grid{grid-template-columns:minmax(0,1fr)} }
 
@@ -624,6 +658,22 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     </div>
   </div>
 </main>
+
+<!-- รายชื่อคนที่ออนไลน์ (10 ต.ค. 2569): เปิดจากตัวเลข/ป้ายหน้าในกล่อง "ออนไลน์ตอนนี้" · ข้อมูลจาก admin_online_users -->
+<dialog class="dlg" id="onlineDialog" aria-labelledby="onlineTitle">
+  <div class="dlg-head">
+    <div>
+      <h2 id="onlineTitle">ใครออนไลน์อยู่</h2>
+      <div class="card-note" id="onlineUpdated"></div>
+    </div>
+    <button type="button" class="dlg-close" id="onlineClose" aria-label="ปิด">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="online-filter" id="onlineFilter" role="group" aria-label="เลือกหน้า"></div>
+    <div id="onlineList"></div>
+  </div>
+  <div class="dlg-foot">● เปิดดูอยู่ · ○ เปิดทิ้งไว้ (แท็บอยู่เบื้องหลัง) · นับคนที่มีสัญญาณใน 5 นาทีล่าสุด ไม่นับบัญชีแอดมิน<span id="onlineMore"></span></div>
+</dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -1032,17 +1082,21 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
     };
     var big = function(n, unit){ return '<div class="live-value">' + fmt(n) + '<small>' + unit + '</small></div>'; };
     var now = Number(l.online_now || 0), seen = Number(l.online_visible || 0);
+    // ตัวเลขและป้ายหน้ากดได้ → หน้าต่างรายชื่อ (openOnline)
     var pages = (l.online_pages || []).map(function(p){
-      var name = PAGE_LABEL[p.page] || (!p.page || p.page === '-' ? 'ไม่ทราบหน้า' : p.page);
-      return '<span class="pill pill-mute">' + esc(name) + ' ' + fmt(p.count) + '</span>';
+      var key = !p.page || p.page === '-' ? '-' : p.page;
+      return '<button type="button" class="pill pill-mute live-chip" data-online-page="' + esc(key) + '">' + esc(pageName(key)) + ' ' + fmt(p.count) + '</button>';
     }).join('');
+    var nowValue = now > 0
+      ? '<button type="button" class="live-value live-open" data-online-page="all">' + fmt(now) + '<small>คน</small><span class="live-open-hint">ดูรายชื่อ ›</span></button>'
+      : big(now, 'คน');
     var legacy = Number(l.today_legacy || 0);
     var pa = l.parties || {}, locked = Number(pa.locked || 0);
     var hosts = (pa.locked_hosts || []).slice(0, 5);
     var more = Math.max(0, locked - hosts.length);
     $('liveSince').hidden = !!l.tracking_since;
     $('liveTiles').innerHTML = [
-      tile('ออนไลน์ตอนนี้', big(now, 'คน'), ['เปิดดูอยู่ ' + fmt(seen) + ' · เปิดทิ้งไว้ ' + fmt(Math.max(0, now - seen))],
+      tile('ออนไลน์ตอนนี้', nowValue, ['เปิดดูอยู่ ' + fmt(seen) + ' · เปิดทิ้งไว้ ' + fmt(Math.max(0, now - seen))],
         pages ? '<div class="live-chips">' + pages + '</div>' : ''),
       tile('ใช้งานวันนี้', big(l.today_users, 'คน'), ['เมื่อวาน ' + fmt(l.yesterday_users),
         'จ่ายเงิน ' + fmt(l.today_paid) + ' · ฟรี ' + fmt(l.today_free) + (legacy > 0 ? ' · สิทธิเดิม ' + fmt(legacy) : '')]),
@@ -1065,6 +1119,8 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
         $('liveStatus').textContent = '';
         renderLive(r.data);
         $('liveStrip').hidden = false;
+        // หน้าต่างรายชื่อเปิดค้างอยู่ = ดึงรายชื่อใหม่พร้อมตัวเลข (ทุก 1 นาที / ปุ่มรีเฟรช)
+        if($('onlineDialog').open) loadOnline();
         return;
       }
       // ยังไม่ได้ติดตั้งฟังก์ชัน: ซ่อนแถบและเลิกดึง (รีเฟรชหน้าหลังรัน SQL แล้วจะกลับมาเอง)
@@ -1073,6 +1129,105 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       if(live.shown) $('liveStatus').textContent = ' · รอบล่าสุดอัปเดตไม่สำเร็จ จะลองใหม่อัตโนมัติ';
     });
   }
+
+  // ---------- รายชื่อคนที่ออนไลน์ (ผู้ใช้ขอ 10 ต.ค. 2569) ----------
+  // กดตัวเลข "N คน" = ทุกคนแยกตามหน้า · กดป้ายหน้า = เฉพาะหน้านั้น (สลับหน้าในหน้าต่างได้)
+  // ดึงจาก admin_online_users เฉพาะตอนเปิดหน้าต่าง + ทุกครั้งที่ตัวเลขสดอัปเดตระหว่างเปิดอยู่ — ผลของรอบเก่าที่มาช้าจะถูกทิ้ง
+  var online = { seq:0, page:'all', data:null, error:null, stale:false };
+  var PAGE_ORDER = Object.keys(PAGE_LABEL);
+  function pageName(key){ return PAGE_LABEL[key] || (!key || key === '-' ? 'ไม่ทราบหน้า' : key); }
+  function openOnline(page){
+    online.page = page || 'all';
+    online.data = null; online.error = null; online.stale = false;
+    renderOnline();
+    if(!$('onlineDialog').open) $('onlineDialog').showModal();
+    loadOnline();
+  }
+  function loadOnline(){
+    var seq = ++online.seq;
+    supa.rpc('admin_online_users', {}).then(function(r){ return r; }, function(e){ return { error:e }; }).then(function(r){
+      if(seq !== online.seq || !$('onlineDialog').open) return;
+      if(r && !r.error && r.data){ online.data = r.data; online.error = null; online.stale = false; }
+      // มีรายชื่อแล้วแต่รอบนี้พลาด = คงรายชื่อเดิมไว้ บอกว่าอัปเดตไม่สำเร็จ
+      else if(online.data) online.stale = true;
+      else online.error = (r && r.error) || 'error';
+      renderOnline();
+    });
+  }
+  function onlineErrorText(err){
+    var msg = (err && err.message) || '';
+    if(err && err.code === 'PGRST202') return 'ยังไม่ได้ติดตั้งฟังก์ชันรายชื่อ — รันไฟล์ 20261010000100_admin_online_users.sql ใน Supabase ก่อน';
+    if((err && err.code === '42501') || /permission denied|JWT/i.test(msg)) return 'เซสชันหมดอายุ — ล็อกอินด้วยบัญชีแอดมินที่หน้าเว็บอีกครั้ง';
+    return 'โหลดรายชื่อไม่สำเร็จ' + (msg ? ': ' + msg : '');
+  }
+  // เห็นล่าสุดเมื่อไหร่ — เทียบเวลาของเซิร์ฟเวอร์ (generated_at) ไม่ใช่นาฬิกาเครื่องแอดมิน
+  function seenAgo(ts, base){
+    var s = Math.max(0, (base - new Date(ts).getTime()) / 1000);
+    return s < 60 ? 'เมื่อสักครู่' : Math.floor(s / 60) + ' นาทีที่แล้ว';
+  }
+  function onlineRow(u, base){
+    var name = u.name || (u.username ? '@' + u.username : '-');
+    var dev = DEVICE_META[u.device];
+    var sub = [u.visible ? 'เปิดดูอยู่' : 'เปิดทิ้งไว้'];
+    if(dev && u.device !== 'unknown') sub.push(dev[0]);
+    if(u.last_seen_at) sub.push(seenAgo(u.last_seen_at, base));
+    return '<div class="online-row"><span class="online-dot' + (u.visible ? ' on' : '') + '" aria-hidden="true"></span><div>' +
+      '<div class="online-name">' + esc(name) + (u.name && u.username ? '<span>@' + esc(u.username) + '</span>' : '') + '</div>' +
+      '<div class="online-sub">' + esc(sub.join(' · ')) + '</div></div></div>';
+  }
+  function renderOnline(){
+    var d = online.data;
+    if(!d){
+      $('onlineFilter').innerHTML = '';
+      $('onlineUpdated').textContent = '';
+      $('onlineMore').textContent = '';
+      $('onlineList').innerHTML = '<div class="online-msg">' + (online.error
+        ? esc(onlineErrorText(online.error)) + '<br><button type="button" class="btn" data-online-retry>ลองใหม่</button>'
+        : 'กำลังโหลดรายชื่อ...') + '</div>';
+      return;
+    }
+    var users = Array.isArray(d.users) ? d.users : [];
+    var total = Math.max(Number(d.total || 0), users.length);
+    var base = Date.parse(d.generated_at) || Date.now();
+    // จำนวนต่อหน้า เรียงมาก → น้อย (แบบป้ายในกล่อง) เท่ากันเรียงตามเมนู · หน้าที่เลือกไว้แต่ไม่มีใครแล้ว ยังแสดงป้าย (0)
+    var counts = {};
+    users.forEach(function(u){ var k = u.page || '-'; counts[k] = (counts[k] || 0) + 1; });
+    if(online.page !== 'all' && !counts[online.page]) counts[online.page] = 0;
+    var rank = function(k){ var i = PAGE_ORDER.indexOf(k); return i === -1 ? PAGE_ORDER.length : i; };
+    var order = Object.keys(counts).sort(function(a, b){ return counts[b] - counts[a] || rank(a) - rank(b); });
+    var chip = function(key, label, n){
+      return '<button type="button" data-online-filter="' + esc(key) + '" aria-pressed="' + (online.page === key) + '">' + esc(label) + '<b>' + fmt(n) + '</b></button>';
+    };
+    $('onlineFilter').innerHTML = chip('all', 'ทั้งหมด', total) + order.map(function(k){ return chip(k, pageName(k), counts[k]); }).join('');
+    var groups = (online.page === 'all' ? order : [online.page]).map(function(k){
+      var rows = users.filter(function(u){ return (u.page || '-') === k; });
+      return rows.length ? '<section class="online-group"><h3>' + esc(pageName(k)) + '</h3>' +
+        rows.map(function(u){ return onlineRow(u, base); }).join('') + '</section>' : '';
+    }).join('');
+    $('onlineList').innerHTML = groups || '<div class="online-msg">' +
+      (online.page === 'all' ? 'ตอนนี้ไม่มีใครออนไลน์' : 'ตอนนี้ไม่มีใครอยู่หน้า ' + esc(pageName(online.page)) + ' แล้ว') + '</div>';
+    $('onlineUpdated').textContent = 'อัปเดต ' + new Date(base).toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' }) +
+      (online.stale ? ' · รอบล่าสุดอัปเดตไม่สำเร็จ จะลองใหม่อัตโนมัติ' : '');
+    $('onlineMore').textContent = total > users.length ? ' · แสดง ' + fmt(users.length) + ' คนแรก จากทั้งหมด ' + fmt(total) + ' คน' : '';
+  }
+  $('liveTiles').addEventListener('click', function(e){
+    var b = e.target.closest('[data-online-page]');
+    if(b) openOnline(b.dataset.onlinePage);
+  });
+  $('onlineFilter').addEventListener('click', function(e){
+    var b = e.target.closest('[data-online-filter]');
+    if(b){ online.page = b.dataset.onlineFilter; renderOnline(); }
+  });
+  $('onlineList').addEventListener('click', function(e){
+    if(e.target.closest('[data-online-retry]')){ online.error = null; renderOnline(); loadOnline(); }
+  });
+  $('onlineClose').addEventListener('click', function(){ $('onlineDialog').close(); });
+  // กดพื้นมืดรอบหน้าต่าง = ปิด (เช็กตำแหน่งด้วย — ลากเลือกข้อความในหน้าต่างแล้วปล่อยเมาส์ข้างนอก ไม่ปิด) · ปิดแล้วผลที่ยังค้างอยู่ถูกทิ้ง
+  $('onlineDialog').addEventListener('click', function(e){
+    var r = this.getBoundingClientRect();
+    if(e.target === this && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) this.close();
+  });
+  $('onlineDialog').addEventListener('close', function(){ online.seq++; });
   // ดึงคู่กับ admin_dashboard / admin_traffic ตามช่วงที่เลือก — ผลลัพธ์ติดเลขรอบไว้ ผลของรอบเก่าที่มาช้าจะถูกทิ้ง
   function fetchUsage(){
     var seq = ++usage.seq;

@@ -130,6 +130,15 @@ main{max-width:1440px;margin:0 auto;padding:1.25rem 1.5rem 3rem;display:flex;fle
 .dash-tabs button:last-child{margin-right:auto}
 .dash-tabs button:hover{color:var(--text);background:var(--surface-3)}
 .dash-tabs button.active{color:var(--text);background:var(--surface-2);border-color:var(--border)}
+/* จอกว้าง ≥1360px: แท็บอยู่แถวเดียวกับโลโก้และปุ่ม [โลโก้] [แท็บ] [ปุ่ม] — แคบกว่านี้แท็บเป็นแถวที่ 2 (ผู้ใช้ขอ 10 ต.ค. 2569)
+   ปุ่มช่วง 7/30/90 วันในแท็บภาพรวม (.is-off): จอกว้าง = เว้นที่ไว้ มองไม่เห็น กดไม่ได้ แท็บจะได้ไม่กระโดดตอนสลับ · จอแคบ = ซ่อนไปเลย */
+.seg.is-off{display:none}
+@media (min-width:1360px){
+  .topbar:has(.dash-tabs:not([hidden])) .topbar-spacer{display:none}
+  .topbar > .dash-tabs{order:1;flex:1 1 0;min-width:0;margin:0}
+  .topbar > .seg,.topbar > .btn,.topbar > .updated{order:2}
+  .seg.is-off{display:inline-flex;visibility:hidden}
+}
 .tab-badge{min-width:20px;height:20px;padding:0 .35rem;border-radius:999px;background:rgba(224,171,60,.18);color:var(--warn);font-size:.72rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
 .tab-panel{display:flex;flex-direction:column;gap:1.1rem}
 .tab-panel .card{scroll-margin-top:8.5rem}
@@ -1297,7 +1306,7 @@ td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric
       b.tabIndex = on ? 0 : -1;
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-panel]'), function(p){ p.hidden = p.dataset.panel !== tab; });
-    $('rangeSeg').hidden = tab === 'overview';
+    $('rangeSeg').classList.toggle('is-off', tab === 'overview');
     try{ localStorage.setItem(TAB_KEY, tab); }catch(e){}
     resizeVisibleCharts();
     // มาจากกล่อง "สิ่งที่ต้องทำ" = เลื่อนไปกล่องนั้น

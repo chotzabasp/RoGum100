@@ -282,6 +282,59 @@ button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)
 .online-msg{padding:1.2rem 0;text-align:center;color:var(--text-mute);font-size:.85rem}
 .online-msg .btn{margin-top:.7rem}
 @media (max-width:600px){ .dlg{max-height:85vh} }
+
+/* ---------- การใช้งานรายคน (10 ต.ค. 2569 — คาดการณ์การใช้ต่อเนื่อง + แพ็กที่น่าจะซื้อ) ---------- */
+.uu-tools{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem .75rem;margin-bottom:.75rem}
+.uu-tools input[type=search]{min-height:40px;width:min(260px,100%);padding:.35rem .7rem;border:1px solid var(--border);border-radius:10px;background:var(--surface-3);color:var(--text);font-family:var(--font-ui);font-size:.85rem}
+.uu-sort{display:inline-flex;align-items:center;gap:.45rem;font-size:.8rem;color:var(--text-dim)}
+.uu-sort select{min-height:40px;padding:.3rem .6rem;border:1px solid var(--border);border-radius:10px;background:var(--surface-3);color:var(--text);font-family:var(--font-ui);font-size:.85rem;color-scheme:dark}
+#uuDayStatus{color:var(--warn)}
+/* ตารางยาว: เลื่อนในกล่อง หัวตารางติดอยู่ด้านบน — การ์ดอื่นในแท็บไม่ถูกดันลงไปไกล */
+.uu-scroll{max-height:640px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.uu-scroll thead th{position:sticky;top:0;z-index:1;background:var(--surface);padding-top:.25rem}
+.uu-table{min-width:1080px}
+.uu-table.uu-narrow{min-width:780px}
+.uu-table td{vertical-align:top;font-size:.8rem}
+.uu-table td b{font-weight:700;color:var(--text)}
+.uu-table td small{display:block;font-size:.74rem;color:var(--text-mute);line-height:1.55}
+/* ช่องตัวเลข: บรรทัดสั้นไม่ตัดกลางคำ (จอแคบ = ตารางเลื่อนแนวนอนในกล่องแทน) · ชื่อ/แพ็กที่ตรง ตัดบรรทัดได้ */
+.uu-table td:not(.uu-user):not(.uu-fit) b,.uu-table td:not(.uu-user):not(.uu-fit) small,.uu-table td:not(.uu-user):not(.uu-fit){white-space:nowrap}
+.uu-none{color:var(--text-mute)}
+.uu-of{color:var(--text-mute);font-size:.76rem}
+.uu-name{display:block;max-width:100%;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.uu-name b{font-size:.86rem}
+.uu-name span{margin-left:.35rem;font-size:.74rem;color:var(--text-mute)}
+.uu-name:hover b{color:var(--accent);text-decoration:underline}
+.uu-user{min-width:13rem}
+.uu-plan{display:flex;flex-wrap:wrap;gap:.25rem;margin:.3rem 0 .1rem}
+.uu-strip{display:inline-flex;gap:2px;padding-top:.2rem}
+.uu-cell{display:inline-block;width:10px;height:14px;border-radius:2px;background:var(--surface-2);border:1px solid var(--border-soft)}
+.uu-cell.l1{background:rgba(121,167,255,.32);border-color:rgba(121,167,255,.45)}
+.uu-cell.l2{background:var(--accent);border-color:var(--accent)}
+.uu-fit{min-width:15rem}
+.uu-fit .pill,.uu-det-fit .pill{white-space:normal;margin:.25rem 0 .1rem;line-height:1.45}
+.uu-fit-none{color:var(--text-mute);font-size:.76rem}
+.uu-table td small.uu-renew{color:var(--gold)}
+.uu-legend{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem .9rem;margin-top:.7rem}
+.uu-legend .uu-cell{vertical-align:-2px;margin-right:.3rem}
+.uu-day-stats{grid-template-columns:repeat(6,minmax(0,1fr));margin-bottom:.9rem}
+.uu-day-stats .stat b small{display:inline;font-family:var(--font-ui);font-size:.76rem;font-weight:500;color:var(--text-dim);margin:0 .35rem 0 .2rem}
+.uu-day-stats .stat>small{display:block;font-size:.74rem;color:var(--text-mute);margin-top:.2rem;line-height:1.6}
+@media (max-width:1100px){ .uu-day-stats{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:600px){ .uu-day-stats{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* หน้าต่างรายวันของคนเดียว */
+.dlg.dlg-wide{width:min(1000px, calc(100vw - 2rem))}
+.uu-det-meta{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem .6rem;font-size:.8rem;color:var(--text-dim);margin-bottom:.6rem}
+.uu-det-sum{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;margin:.2rem 0 .8rem}
+.uu-det-sum .stat{padding:.5rem .6rem}
+.uu-det-sum .stat b{font-size:1.05rem}
+.uu-det-sum .stat span{margin-top:.15rem;font-size:.74rem}
+.uu-det-fit{background:var(--surface-3);border:1px solid var(--border-soft);border-radius:10px;padding:.55rem .7rem;margin-bottom:.8rem;font-size:.8rem}
+.uu-det-fit small{display:block;font-size:.74rem;color:var(--text-mute);line-height:1.55}
+.uu-det-fit small.uu-renew{color:var(--gold)}
+.uu-cal{display:flex;flex-wrap:wrap;gap:3px;margin:.35rem 0 .85rem}
+.uu-det h3{font-size:.82rem;color:var(--text-dim);margin:.2rem 0 .3rem}
+@media (max-width:600px){ .uu-det-sum{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media (max-width:1100px){ .live-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media (max-width:560px){ .live-grid{grid-template-columns:minmax(0,1fr)} }
 
@@ -535,6 +588,62 @@ button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)
       <div class="legend"><span><i style="background:var(--c1)"></i>ผู้ใช้งาน</span><span><i style="background:var(--c2)"></i>สมัครใหม่</span></div>
     </section>
 
+    <!-- การใช้งานรายคน (10 ต.ค. 2569 — ผู้ใช้ขอ: รู้ว่าแต่ละคนใช้อะไร กี่รายการ ฟาร์มกี่กั้ม เพื่อคาดการณ์การใช้ต่อเนื่อง + แพ็กที่น่าจะซื้อ)
+         รายคน = ตามปุ่ม 7/30/90 วัน (admin_user_usage) · รายวัน = เลือกวันเอง (admin_user_usage_day) · กดชื่อ = หน้าต่างรายวันของคนนั้น
+         ไม่รีเฟรชเองทุก 5 นาที (ผู้ใช้เลือก) — ดึงใหม่ตอนเปิดแท็บ / สลับมุมมอง / กดรีเฟรช / เปลี่ยนช่วงหรือวัน
+         ยังไม่ได้รัน SQL 20261010000200 = ซ่อนการ์ดนี้ -->
+    <section class="card" id="uuCard" hidden>
+      <div class="card-head">
+        <div class="card-title">การใช้งานรายคน<span class="range-tag" id="uuRangeTag" data-range-tag></span></div>
+        <div class="seg" id="uuViewSeg" role="group" aria-label="มุมมองการใช้งานรายคน">
+          <button type="button" data-uu-view="people" class="active" aria-pressed="true">รายคน</button>
+          <button type="button" data-uu-view="day" aria-pressed="false">รายวัน</button>
+        </div>
+      </div>
+      <div id="uuPeople">
+        <div class="uu-tools">
+          <input type="search" id="uuSearch" placeholder="ค้นหาชื่อ หรือ @ยูเซอ" aria-label="ค้นหาผู้ใช้" autocomplete="off">
+          <label class="uu-sort">เรียง<select id="uuSort">
+            <option value="days">ใช้หลายวันก่อน</option>
+            <option value="recent">ใช้ล่าสุดก่อน</option>
+            <option value="sell">น่าซื้อ / น่าต่อแพ็กก่อน</option>
+          </select></label>
+          <span class="card-note" id="uuPeopleNote"></span>
+        </div>
+        <div class="table-wrap uu-scroll">
+          <table class="uu-table">
+            <thead><tr><th>ผู้ใช้ · แพ็กตอนนี้</th><th>ใช้งาน</th><th>14 วันล่าสุด</th><th>บัญชีนักลงทุน</th><th>ยอดนักฟาร์ม</th><th>จับเวลาบอส</th><th>คลังไอเทม</th><th>แพ็กที่ตรงกับการใช้งาน</th></tr></thead>
+            <tbody id="uuPeopleBody"></tbody>
+          </table>
+        </div>
+        <div class="card-note uu-legend">
+          <span><i class="uu-cell l2"></i>บันทึกรายการ / กดตาย / ประกาศ</span>
+          <span><i class="uu-cell l1"></i>เปิดเว็บ (ไม่ได้บันทึก)</span>
+          <span><i class="uu-cell"></i>ไม่ได้เข้า</span>
+          <span>กดชื่อ = ดูรายวันของคนนั้น</span>
+        </div>
+        <p class="card-note">ใช้ประจำ = ใช้อย่างน้อย 2 วันในช่วงที่เลือก (จับเวลาบอส = กดตาย หรือเปิดหน้าจับเวลา ≥ 1 นาที · คลังไอเทม = เปิดหน้าคลัง ≥ 1 นาที) → แพ็กที่ถูกที่สุดที่ครอบคลุม · ถึงลิมิตบัญชีฟรี = วันที่บันทึกซื้อขาย ≥ 5 / ฟาร์ม ≥ 3 · รายการนับตามวันที่ของรายการ (ที่ลบไปแล้วไม่นับ) · ไม่นับบัญชีแอดมิน · การ์ดนี้ไม่อัปเดตเอง — กด "รีเฟรช" ด้านบนเพื่อดึงข้อมูลล่าสุด</p>
+      </div>
+      <div id="uuDay" hidden>
+        <div class="uu-tools">
+          <div class="seg" id="uuDaySeg" role="group" aria-label="เลือกวัน">
+            <button type="button" id="uuDayToday" data-uu-day="today" class="active">วันนี้</button>
+            <button type="button" id="uuDayYesterday" data-uu-day="yesterday">เมื่อวาน</button>
+          </div>
+          <label class="day-pick">เลือกวันที่<input type="date" id="uuDayPicker"></label>
+          <span class="card-note"><span id="uuDayLabel"></span><span id="uuDayStatus"></span></span>
+        </div>
+        <div class="stat-grid uu-day-stats" id="uuDayStats"></div>
+        <div class="table-wrap uu-scroll">
+          <table class="uu-table uu-narrow">
+            <thead><tr><th>ผู้ใช้ · แพ็กตอนนี้</th><th class="num">เปิดดู</th><th class="num">บัญชีนักลงทุน</th><th class="num">ยอดนักฟาร์ม</th><th class="num">จับเวลาบอส</th><th class="num">คลังไอเทม</th><th class="num">ประกาศ</th></tr></thead>
+            <tbody id="uuDayBody"></tbody>
+          </table>
+        </div>
+        <p class="card-note">เปิดดู = นาทีที่เปิดหน้าเว็บดูอยู่ (ออนไลน์รวม = รวมแท็บที่เปิดทิ้งไว้) · เปิดหน้า = เวลาที่อยู่หน้านั้น · กดชื่อ = ดูรายวันของคนนั้น · ไม่นับบัญชีแอดมิน · การ์ดนี้ไม่อัปเดตเอง — กด "รีเฟรช" ด้านบนเพื่อดึงข้อมูลล่าสุด</p>
+      </div>
+    </section>
+
     <div class="grid-2" id="usageRow" hidden>
       <section class="card">
         <div class="card-head"><div class="card-title">ช่วงเวลาที่คนใช้งาน<span class="range-tag" data-range-tag></span></div><span class="card-note" id="usageNote"></span></div>
@@ -673,6 +782,18 @@ button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)
     <div id="onlineList"></div>
   </div>
   <div class="dlg-foot">● เปิดดูอยู่ · ○ เปิดทิ้งไว้ (แท็บอยู่เบื้องหลัง) · นับคนที่มีสัญญาณใน 5 นาทีล่าสุด ไม่นับบัญชีแอดมิน<span id="onlineMore"></span></div>
+</dialog>
+
+<!-- รายวันของคนเดียว (10 ต.ค. 2569): เปิดจากชื่อในการ์ด "การใช้งานรายคน" · ข้อมูลจาก admin_user_usage_detail ตามช่วง 7/30/90 วัน -->
+<dialog class="dlg dlg-wide" id="uuDialog" aria-labelledby="uuDlgTitle">
+  <div class="dlg-head">
+    <div>
+      <h2 id="uuDlgTitle">กำลังโหลด...</h2>
+      <div class="card-note" id="uuDlgSub"></div>
+    </div>
+    <button type="button" class="dlg-close" id="uuDlgClose" aria-label="ปิด">✕</button>
+  </div>
+  <div class="dlg-body uu-det" id="uuDlgBody"></div>
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
@@ -1222,12 +1343,13 @@ button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)
     if(e.target.closest('[data-online-retry]')){ online.error = null; renderOnline(); loadOnline(); }
   });
   $('onlineClose').addEventListener('click', function(){ $('onlineDialog').close(); });
-  // กดพื้นมืดรอบหน้าต่าง = ปิด (เช็กตำแหน่งด้วย — ลากเลือกข้อความในหน้าต่างแล้วปล่อยเมาส์ข้างนอก ไม่ปิด) · ปิดแล้วผลที่ยังค้างอยู่ถูกทิ้ง
+  // กดพื้นมืดรอบหน้าต่าง = ปิด (เช็กตำแหน่งด้วย — ลากเลือกข้อความในหน้าต่างแล้วปล่อยเมาส์ข้างนอก ไม่ปิด)
+  // ปิดแล้วผลที่ยังค้างอยู่ถูกทิ้งใน loadOnline (เช็ค open + เลขรอบ) — ไม่นับรอบเพิ่มตอน "close" เพราะ event นี้มาทีหลัง
+  // ถ้าปิดแล้วเปิดใหม่ทันที จะไปยกเลิกรอบที่เพิ่งเริ่ม หน้าต่างค้าง "กำลังโหลด"
   $('onlineDialog').addEventListener('click', function(e){
     var r = this.getBoundingClientRect();
     if(e.target === this && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) this.close();
   });
-  $('onlineDialog').addEventListener('close', function(){ online.seq++; });
   // ดึงคู่กับ admin_dashboard / admin_traffic ตามช่วงที่เลือก — ผลลัพธ์ติดเลขรอบไว้ ผลของรอบเก่าที่มาช้าจะถูกทิ้ง
   function fetchUsage(){
     var seq = ++usage.seq;
@@ -1447,6 +1569,363 @@ button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)
   function dayTick(){ if(day.pick) syncDayControls(); else loadDay(); }
   initDayControls();
 
+  // ---------- การใช้งานรายคน (ผู้ใช้ขอ 10 ต.ค. 2569 — คาดการณ์การใช้งานต่อเนื่องของแต่ละคน + แพ็กที่น่าจะซื้อต่อ) ----------
+  // รายคน = ตามปุ่ม 7/30/90 วัน (admin_user_usage) · รายวัน = เลือกวันเอง (admin_user_usage_day) · กดชื่อ = รายวันของคนนั้น (admin_user_usage_detail)
+  // การ์ดนี้ไม่รีเฟรชเองทุก 5 นาที (ผู้ใช้เลือก 10 ต.ค. 2569 — ข้อมูลย้อนหลังแทบไม่เปลี่ยน ลดภาระฐานข้อมูล/โควต้าส่งข้อมูล)
+  //   ดึงข้อมูลล่าสุดเมื่อ: เปิดแท็บ "การใช้งาน" · สลับมุมมองรายคน/รายวัน · กดรีเฟรช · เปลี่ยนช่วง 7/30/90 วัน · เปลี่ยนวัน · กดชื่อ
+  //   มี "ข้อมูล ณ HH:MM" กำกับ · ยังไม่ได้รัน SQL (PGRST202) = ซ่อนการ์ด
+  var uu = { view:'people', off:false, started:false, seq:0, data:null, error:null, failed:false, sort:'days', q:'',
+             daySeq:0, dayPick:null, dayData:null, dayError:null, detSeq:0, detUser:null };
+  var UU_FEATURE = { farm:'ยอดนักฟาร์ม', acct:'บัญชีนักลงทุน / คลังไอเทม', timers:'จับเวลาบอส' };
+  var UU_REGULAR_DAYS = 2;   // ใช้ฟีเจอร์นั้นอย่างน้อยกี่วันในช่วงที่เลือก ถึงนับว่า "ใช้ประจำ"
+  var UU_LEVEL = ['ไม่ได้เข้า', 'เปิดเว็บ (ไม่ได้บันทึก)', 'บันทึกรายการ / กดตาย / ประกาศ'];
+  function uuMin(s){ return Math.round(Number(s || 0) / 60); }
+  function uuDur(min){
+    min = Math.round(Number(min) || 0);
+    if(min < 60) return fmt(min) + ' นาที';
+    return fmt(Math.floor(min / 60)) + ' ชม.' + (min % 60 ? ' ' + (min % 60) + ' นาที' : '');
+  }
+  // hasRetry = มีปุ่ม "ลองใหม่" อยู่ข้างข้อความแล้ว (หน้าต่างรายวัน) ไม่ต้องบอกให้กดรีเฟรช
+  function uuErrorText(err, hasRetry){
+    var msg = (err && err.message) || '';
+    if((err && err.code === '42501') || /permission denied|JWT/i.test(msg)) return 'เซสชันหมดอายุ — ล็อกอินด้วยบัญชีแอดมินที่หน้าเว็บอีกครั้ง';
+    return 'โหลดไม่สำเร็จ' + (msg ? ': ' + msg : '') + (hasRetry ? '' : ' — กดรีเฟรชเพื่อลองใหม่');
+  }
+  // แพ็กตอนนี้จากวันหมดอายุ (เทียบเวลาเซิร์ฟเวอร์) — แพ็กรวม + จับเวลาบอสยังไม่หมดทั้งคู่ = 4 in 1 · สิทธิเดิม = ใช้ได้ทุกฟีเจอร์ (เหมือนหน้าเว็บ)
+  function uuPlan(plan, now){
+    plan = plan || {};
+    var t = function(v){ var x = v ? Date.parse(v) : NaN; return isFinite(x) ? x : null; };
+    var b = t(plan.bundle), ti = t(plan.timers), f = t(plan.farm), a = t(plan.accountItems);
+    var on = function(x){ return x != null && x > now; };
+    var legacy = !!plan.legacy, chips = [];
+    if(legacy) chips.push({ name:'สิทธิเดิม (ไม่จำกัด)', until:null });
+    else {
+      if(on(b) && on(ti)) chips.push({ name:'4 in 1', until:Math.min(b, ti) });
+      else {
+        if(on(b)) chips.push({ name:'3 in 1', until:b });
+        if(on(ti)) chips.push({ name:'จับเวลาบอส', until:ti });
+      }
+      if(!on(b) && on(f)) chips.push({ name:'1 in 1', until:f });
+      if(!on(b) && on(a)) chips.push({ name:'2 in 1', until:a });
+    }
+    var lapsed = null, soonest = null;
+    if(!chips.length){
+      [['3 in 1', b], ['จับเวลาบอส', ti], ['1 in 1', f], ['2 in 1', a]].forEach(function(p){
+        if(p[1] != null && (!lapsed || p[1] > lapsed.at)) lapsed = { name:p[0], at:p[1] };
+      });
+    }
+    chips.forEach(function(c){ if(c.until != null && (soonest == null || c.until < soonest)) soonest = c.until; });
+    return { legacy:legacy, chips:chips, lapsed:lapsed, soonest:soonest,
+      covers:{ farm: legacy || on(b) || on(f), acct: legacy || on(b) || on(a), timers: legacy || on(ti) } };
+  }
+  function uuPlanHtml(ps){
+    if(!ps.chips.length){
+      return '<span class="pill pill-mute">ฟรี</span>' +
+        (ps.lapsed ? '<small>เคยมี ' + esc(ps.lapsed.name) + ' · หมดเมื่อ ' + esc(fmtDateBkk(ps.lapsed.at)) + '</small>' : '');
+    }
+    return ps.chips.map(function(c){
+      // วันหมดอายุไกลมาก (ตั้งให้ไม่หมด) ไม่ต้องโชว์วันที่
+      var until = c.until != null && new Date(c.until).getUTCFullYear() < 2090 ? ' · ถึง ' + fmtDateBkk(c.until) : '';
+      return '<span class="pill pill-ok">' + esc(c.name + until) + '</span>';
+    }).join('');
+  }
+  // กี่วันก่อน (วันไทย) ที่ใช้ล่าสุด — ใช้เวลาออนไลน์ล่าสุดถ้ามี ไม่งั้นใช้วันสุดท้ายที่มีการใช้งาน
+  function uuDaysAgo(u, now){
+    var ref = u.last_seen_at ? Date.parse(u.last_seen_at) : (u.last_day ? Date.parse(u.last_day + 'T12:00:00+07:00') : NaN);
+    return isFinite(ref) ? Math.max(0, bkkDay(now) - bkkDay(ref)) : Infinity;
+  }
+  function uuAgoText(n){ return n === 0 ? 'วันนี้' : n === 1 ? 'เมื่อวาน' : isFinite(n) ? fmt(n) + ' วันก่อน' : '-'; }
+  // แพ็กที่ตรงกับการใช้งาน: ฟีเจอร์ที่ใช้ประจำ (≥ UU_REGULAR_DAYS วันในช่วงที่เลือก) → แพ็กที่ถูกที่สุดที่ครอบคลุม
+  //   ยอดนักฟาร์ม = 1 in 1 · บัญชีนักลงทุน/คลังไอเทม = 2 in 1 · สองอย่างนี้ = 3 in 1 · จับเวลาบอสอย่างเดียว = จับเวลาบอส · จับเวลา + อย่างอื่น = 4 in 1
+  //   gap = แพ็กตอนนี้ไม่ครอบคลุมฟีเจอร์ที่ใช้ประจำ (น่าขาย) · renew = แพ็กหมดใน 7 วันแต่ยังใช้ใน 3 วันล่าสุด (น่าต่ออายุ)
+  function uuFit(u, ps, now){
+    var du = u.days_used || {}, ld = u.limit_days || {};
+    var need = { farm:(du.farm || 0) >= UU_REGULAR_DAYS,
+                 acct:(du.merchant || 0) >= UU_REGULAR_DAYS || (du.items || 0) >= UU_REGULAR_DAYS,
+                 timers:(du.timers || 0) >= UU_REGULAR_DAYS };
+    var name = need.timers && (need.farm || need.acct) ? '4 in 1' : need.farm && need.acct ? '3 in 1'
+      : need.farm ? '1 in 1' : need.acct ? '2 in 1' : need.timers ? 'จับเวลาบอส' : null;
+    var gaps = ['farm', 'acct', 'timers'].filter(function(k){ return need[k] && !ps.covers[k]; });
+    // วันที่ถึงลิมิตบัญชีฟรี — นับเฉพาะฟีเจอร์ที่แพ็กตอนนี้ไม่ครอบคลุม (มีแพ็กแล้ว = ไม่มีลิมิต)
+    var tradeHit = ps.covers.acct ? 0 : (ld.trade || 0), farmHit = ps.covers.farm ? 0 : (ld.farm || 0);
+    var limits = [];
+    if(tradeHit) limits.push('ซื้อขาย ' + fmt(tradeHit) + ' วัน');
+    if(farmHit) limits.push('ฟาร์ม ' + fmt(farmHit) + ' วัน');
+    var left = ps.soonest != null ? Math.ceil((ps.soonest - now) / 86400000) : null;
+    var renew = left != null && left <= 7 && uuDaysAgo(u, now) <= 3;
+    var kind = !name ? 'none' : gaps.length ? 'gap' : 'ok';
+    return { name:name, gaps:gaps, limits:limits, renew:renew, left:left, kind:kind,
+      score:(kind === 'gap' ? 100000 : 0) + (renew ? 50000 : 0) + (tradeHit + farmHit) * 100 + (u.active_days || 0) };
+  }
+  function uuFitHtml(fit, ps, u){
+    var out = [];
+    if(!fit.name) out.push('<span class="uu-fit-none">ยังใช้ฟีเจอร์ไหนไม่ถึง ' + UU_REGULAR_DAYS + ' วัน — ยังประเมินไม่ได้</span>');
+    else {
+      out.push('<b>' + esc(fit.name) + '</b>');
+      if(fit.kind === 'gap') out.push('<span class="pill pill-warn">' + (ps.chips.length ? 'แพ็กตอนนี้ยังไม่ครอบคลุม: ' : 'ยังไม่มีแพ็ก — ใช้ประจำ: ') +
+        esc(fit.gaps.map(function(k){ return UU_FEATURE[k]; }).join(', ')) + '</span>');
+      else out.push('<span class="pill pill-ok">' + (ps.legacy ? 'สิทธิเดิมครอบคลุมทุกอย่าง' : 'แพ็กตอนนี้ครอบคลุมแล้ว') + '</span>');
+    }
+    if(fit.limits.length) out.push('<small>ถึงลิมิตบัญชีฟรี: ' + esc(fit.limits.join(' · ')) + '</small>');
+    if(fit.renew) out.push('<small class="uu-renew">แพ็ก' + (fit.left <= 0 ? 'หมดวันนี้' : 'หมดใน ' + fmt(fit.left) + ' วัน') + ' · ยังใช้อยู่ → น่าจะต่ออายุ</small>');
+    var lp = u.last_purchase;
+    if(lp && lp.at){
+      out.push('<small>ซื้อล่าสุด: ' + esc((PLAN_LABEL[lp.plan_key] || lp.plan_name || lp.plan_key || '-') + (lp.cycle === 'yearly' ? ' รายปี' : ' รายเดือน')) +
+        ' · ' + esc(fmtDateBkk(lp.at)) + (Number(u.purchases) > 1 ? ' (ซื้อแล้ว ' + fmt(u.purchases) + ' ครั้ง)' : '') + '</small>');
+    }
+    return out.join('');
+  }
+  function uuNameHtml(u){
+    return '<button type="button" class="uu-name" data-uu-user="' + esc(u.id) + '"><b>' + esc(u.name || ('@' + (u.username || '-'))) + '</b>' +
+      (u.name && u.username ? '<span>@' + esc(u.username) + '</span>' : '') + '</button>';
+  }
+  // แถบวัน: 0 ไม่ได้เข้า / 1 เปิดเว็บ / 2 บันทึกอะไรสักอย่าง · fromIso = วันแรกของแถบ
+  function uuCellsHtml(levels, fromIso){
+    return levels.map(function(v, i){
+      v = Number(v) || 0;
+      return '<i class="uu-cell l' + v + '" title="' + esc(fmtDayBkk(shiftIso(fromIso, i)) + ' — ' + UU_LEVEL[v]) + '"></i>';
+    }).join('');
+  }
+  function uuPeopleRow(r, d){
+    var u = r.u, ps = r.ps, t = u.totals || {}, du = u.days_used || {};
+    var inDays = function(n){ return Number(n) ? '<small>ใน ' + fmt(n) + ' วัน</small>' : ''; };
+    var dash = '<span class="uu-none">—</span>';
+    var strip = Array.isArray(u.strip) ? u.strip : [];
+    var used = strip.filter(function(v){ return Number(v) > 0; }).length;
+    var party = u.party_host ? 'ในปาร์ตี้ของ ' + u.party_host : Number(u.party_members) > 0 ? 'หัวปาร์ตี้ · สมาชิก ' + fmt(u.party_members) + ' คน' : '';
+    var timers = Number(t.kills) ? 'กดตาย ' + fmt(t.kills) + ' ครั้ง' : '';
+    var tmin = uuMin(t.timers_s);
+    return '<tr>' +
+      '<td class="uu-user">' + uuNameHtml(u) + '<div class="uu-plan">' + uuPlanHtml(ps) + '</div>' + (party ? '<small>' + esc(party) + '</small>' : '') + '</td>' +
+      '<td><b>' + fmt(u.active_days) + '</b><span class="uu-of"> / ' + fmt(d.days) + ' วัน</span>' +
+        '<small>ล่าสุด ' + esc(uuAgoText(r.ago)) + '</small>' + (Number(t.minutes) ? '<small>เปิดดูรวม ' + esc(uuDur(t.minutes)) + '</small>' : '') + '</td>' +
+      '<td><span class="uu-strip" role="img" aria-label="14 วันล่าสุด เข้าใช้ ' + used + ' วัน">' + uuCellsHtml(strip, d.strip_from) + '</span></td>' +
+      '<td>' + (Number(t.merchant) ? '<b>' + fmt(t.merchant) + ' รายการ</b>' + inDays(du.merchant) : dash) +
+        (Number(t.announcements) ? '<small>ประกาศรับ M ' + fmt(t.announcements) + ' ครั้ง</small>' : '') + '</td>' +
+      '<td>' + (Number(t.farm) ? '<b>' + fmt(t.farm) + ' ครั้ง · ' + fmt1(t.gums) + ' กั้ม</b>' + inDays(du.farm) : dash) + '</td>' +
+      '<td>' + (timers || tmin ? '<b>' + esc(timers || ('เปิดหน้า ' + uuDur(tmin))) + '</b>' + (timers && tmin ? '<small>เปิดหน้า ' + esc(uuDur(tmin)) + '</small>' : '') + inDays(du.timers) : dash) + '</td>' +
+      '<td>' + (uuMin(t.items_s) ? '<b>' + esc(uuDur(uuMin(t.items_s))) + '</b>' + inDays(du.items) : dash) + '</td>' +
+      '<td class="uu-fit">' + uuFitHtml(r.fit, ps, u) + '</td>' +
+    '</tr>';
+  }
+  function renderUuPeople(){
+    var d = uu.data;
+    if(!d){
+      $('uuPeopleNote').textContent = '';
+      $('uuPeopleBody').innerHTML = '<tr><td colspan="8" class="empty">' + (uu.error ? esc(uuErrorText(uu.error)) : 'กำลังโหลด...') + '</td></tr>';
+      return;
+    }
+    var now = Date.parse(d.generated_at) || Date.now();
+    var q = uu.q.trim().toLowerCase(), qu = q.replace(/^@/, '');
+    var rows = (Array.isArray(d.users) ? d.users : []).map(function(u){
+      var ps = uuPlan(u.plan, now);
+      return { u:u, ps:ps, fit:uuFit(u, ps, now), ago:uuDaysAgo(u, now) };
+    }).filter(function(r){
+      return !q || String(r.u.name || '').toLowerCase().indexOf(q) !== -1 || String(r.u.username || '').toLowerCase().indexOf(qu) !== -1;
+    });
+    var byDays = function(a, b){ return (b.u.active_days || 0) - (a.u.active_days || 0) || (a.ago - b.ago) || 0; };
+    rows.sort(uu.sort === 'recent' ? function(a, b){ return (a.ago - b.ago) || byDays(a, b); }
+      : uu.sort === 'sell' ? function(a, b){ return b.fit.score - a.fit.score || byDays(a, b); }
+      : byDays);
+    var total = Number(d.total || 0), shown = (d.users || []).length;
+    $('uuPeopleNote').textContent = 'ข้อมูล ณ ' + fmtTimeBkk(now) + ' · ใช้งาน ' + fmt(total) + ' คนในช่วง ' + fmt(d.days) + ' วัน' +
+      (total > shown ? ' · แสดง ' + fmt(shown) + ' คนที่ใช้หลายวันที่สุด' : '') + (q ? ' · ตรงกับคำค้น ' + fmt(rows.length) + ' คน' : '') +
+      (uu.failed ? ' · รอบล่าสุดโหลดไม่สำเร็จ — กดรีเฟรชเพื่อลองใหม่' : '');
+    $('uuPeopleBody').innerHTML = rows.length ? rows.map(function(r){ return uuPeopleRow(r, d); }).join('')
+      : '<tr><td colspan="8" class="empty">' + (q ? 'ไม่พบผู้ใช้ที่ตรงกับคำค้น' : 'ยังไม่มีคนใช้งานในช่วงนี้') + '</td></tr>';
+  }
+  // ช่องตัวเลขของ 1 วัน (มุมมองรายวัน + หน้าต่างรายวันของคนเดียว) — ตัวหนา = สิ่งที่บันทึก · บรรทัดเล็ก = เวลาที่เปิดหน้านั้น
+  function uuDayCells(x){
+    var dash = '<span class="uu-none">—</span>';
+    var page = function(s){ var m = uuMin(s); return m ? '<small>เปิดหน้า ' + esc(uuDur(m)) + '</small>' : ''; };
+    var mins = Number(x.minutes) || 0, pings = Number(x.pings) || 0;
+    return [
+      (mins ? '<b>' + esc(uuDur(mins)) + '</b>' : dash) + (pings > mins ? '<small>ออนไลน์รวม ' + esc(uuDur(pings)) + '</small>' : ''),
+      (Number(x.merchant) ? '<b>' + fmt(x.merchant) + ' รายการ</b>' : dash) + page(x.home_s),
+      (Number(x.farm) ? '<b>' + fmt(x.farm) + ' ครั้ง · ' + fmt1(x.gums) + ' กั้ม</b>' : dash) + page(x.farm_s),
+      (Number(x.kills) ? '<b>กดตาย ' + fmt(x.kills) + ' ครั้ง</b>' : dash) + page(x.timers_s),
+      uuMin(x.items_s) ? '<b>' + esc(uuDur(uuMin(x.items_s))) + '</b>' : dash,
+      Number(x.announcements) ? '<b>' + fmt(x.announcements) + ' ครั้ง</b>' : dash
+    ].map(function(c){ return '<td class="num">' + c + '</td>'; }).join('');
+  }
+  function syncUuDayControls(){
+    var today = dayTodayIso(), sel = uu.dayPick || today, picker = $('uuDayPicker'), min = shiftIso(today, -179);
+    if(picker.max !== today) picker.max = today;
+    if(picker.min !== min) picker.min = min;
+    if(picker.value !== sel) picker.value = sel;
+    $('uuDayToday').classList.toggle('active', sel === today);
+    $('uuDayYesterday').classList.toggle('active', sel === shiftIso(today, -1));
+  }
+  function renderUuDay(){
+    syncUuDayControls();
+    var d = uu.dayData;
+    $('uuDayStatus').textContent = d && uu.dayError ? ' · รอบล่าสุดโหลดไม่สำเร็จ — กดรีเฟรชเพื่อลองใหม่' : '';
+    if(!d){
+      $('uuDayLabel').textContent = '';
+      $('uuDayStats').innerHTML = '';
+      $('uuDayBody').innerHTML = '<tr><td colspan="7" class="empty">' + (uu.dayError ? esc(uuErrorText(uu.dayError)) : 'กำลังโหลด...') + '</td></tr>';
+      return;
+    }
+    var now = Date.parse(d.generated_at) || Date.now(), t = d.totals || {}, users = Array.isArray(d.users) ? d.users : [];
+    var total = Number(d.total || 0);
+    $('uuDayLabel').textContent = fmtDayBkk(d.day) + ' · ข้อมูล ณ ' + fmtTimeBkk(now) +
+      (total > users.length ? ' · แสดง ' + fmt(users.length) + ' จาก ' + fmt(total) + ' คน (บันทึกมากก่อน)' : '');
+    var stat = function(label, value, sub){ return '<div class="stat"><b>' + value + '</b><span>' + label + '</span><small>' + sub + '</small></div>'; };
+    $('uuDayStats').innerHTML = [
+      stat('ผู้ใช้งาน', fmt(total) + '<small>คน</small>', 'เปิดดูรวม ' + esc(uuDur(t.minutes))),
+      stat('บัญชีนักลงทุน', fmt(t.merchant) + '<small>รายการ</small>', 'จาก ' + fmt(t.merchant_users) + ' คน'),
+      stat('ยอดนักฟาร์ม', fmt(t.farm) + '<small>ครั้ง</small>' + fmt1(t.gums) + '<small>กั้ม</small>', 'จาก ' + fmt(t.farm_users) + ' คน'),
+      stat('จับเวลาบอส', fmt(t.kills) + '<small>กดตาย</small>', 'ใช้ ' + fmt(t.timers_users) + ' คน (กดตาย หรือเปิดหน้า ≥ 1 นาที)'),
+      stat('คลังไอเทม', fmt(t.items_users) + '<small>คน</small>', 'เปิดหน้าคลัง ≥ 1 นาที'),
+      stat('ประกาศรับ M', fmt(t.announcements) + '<small>ครั้ง</small>', 'จาก ' + fmt(t.announce_users) + ' คน')
+    ].join('');
+    $('uuDayBody').innerHTML = users.length ? users.map(function(x){
+      return '<tr><td class="uu-user">' + uuNameHtml(x) + '<div class="uu-plan">' + uuPlanHtml(uuPlan(x.plan, now)) + '</div></td>' + uuDayCells(x) + '</tr>';
+    }).join('') : '<tr><td colspan="7" class="empty">วันนี้ยังไม่มีใครใช้งาน</td></tr>';
+  }
+  function uuVisible(){ return !!state.data && !$('panel-usage').hidden; }
+  // ดึงเฉพาะตอนเห็นการ์ดอยู่ (แท็บ "การใช้งาน" เปิด + แดชบอร์ดโหลดแล้ว) — อยู่แท็บอื่นไม่ต้องดึง เปิดแท็บเมื่อไหร่ค่อยดึงใหม่
+  function loadUu(){
+    if(uu.off || !uuVisible()) return;
+    var seq = ++uu.seq;
+    supa.rpc('admin_user_usage', { p_days: state.days }).then(function(r){ return r; }, function(e){ return { error:e }; }).then(function(r){
+      if(seq !== uu.seq) return;
+      if(r && !r.error && r.data){ uu.data = r.data; uu.error = null; uu.failed = false; }
+      else if(rpcMissing(r && r.error)){ uu.off = true; $('uuCard').hidden = true; return; }
+      // พลาดแต่มีรายชื่อเดิม = คงไว้ บอกว่ารอบนี้ไม่สำเร็จ · ยังไม่มี = ขึ้นข้อความในตาราง
+      else if(uu.data) uu.failed = true;
+      else uu.error = (r && r.error) || 'error';
+      $('uuCard').hidden = false;
+      renderUuPeople();
+    });
+  }
+  function loadUuDay(){
+    if(uu.off || !uuVisible() || uu.view !== 'day') return;
+    var seq = ++uu.daySeq, want = uu.dayPick;
+    syncUuDayControls();
+    supa.rpc('admin_user_usage_day', want ? { p_day: want } : {}).then(function(r){ return r; }, function(e){ return { error:e }; }).then(function(r){
+      if(seq !== uu.daySeq) return;
+      if(r && !r.error && r.data){
+        var serverNow = Date.parse(r.data.generated_at);
+        if(isFinite(serverNow)) day.offset = serverNow - Date.now();
+        uu.dayData = r.data; uu.dayError = null;
+      }
+      else if(rpcMissing(r && r.error)){ uu.off = true; $('uuCard').hidden = true; return; }
+      else uu.dayError = (r && r.error) || 'error';
+      renderUuDay();
+    });
+  }
+  function setUuView(view){
+    uu.view = view === 'day' ? 'day' : 'people';
+    Array.prototype.forEach.call(document.querySelectorAll('#uuViewSeg [data-uu-view]'), function(b){
+      var on = b.dataset.uuView === uu.view;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    $('uuPeople').hidden = uu.view !== 'people';
+    $('uuDay').hidden = uu.view !== 'day';
+    $('uuRangeTag').hidden = uu.view === 'day';  // มุมมองรายวันไม่ขึ้นกับปุ่ม 7/30/90 วัน
+    // โชว์ข้อมูลรอบก่อนไปก่อน (ถ้ามี) แล้วดึงของล่าสุดทับ
+    if(uu.view === 'day') renderUuDay(); else renderUuPeople();
+    uuRefresh();
+  }
+  // ดึงข้อมูลล่าสุดของมุมมองที่เปิดอยู่ — เรียกตอนเปิดแท็บ "การใช้งาน" / สลับมุมมอง / กดรีเฟรช
+  function uuRefresh(){ if(uu.view === 'day') loadUuDay(); else loadUu(); }
+  // ---------- หน้าต่างรายวันของคนเดียว ----------
+  function openUuDetail(id){
+    if(!id) return;
+    uu.detUser = id;
+    var seq = ++uu.detSeq;
+    $('uuDlgTitle').textContent = 'กำลังโหลด...';
+    $('uuDlgSub').textContent = '';
+    $('uuDlgBody').innerHTML = '<div class="online-msg">กำลังโหลดรายวัน...</div>';
+    if(!$('uuDialog').open) $('uuDialog').showModal();
+    supa.rpc('admin_user_usage_detail', { p_user:id, p_days:state.days }).then(function(r){ return r; }, function(e){ return { error:e }; }).then(function(r){
+      if(seq !== uu.detSeq || !$('uuDialog').open) return;
+      if(r && !r.error && r.data){ renderUuDetail(r.data); return; }
+      $('uuDlgTitle').textContent = 'โหลดไม่สำเร็จ';
+      $('uuDlgBody').innerHTML = '<div class="online-msg">' + esc(rpcMissing(r && r.error)
+        ? 'ยังไม่ได้ติดตั้งฟังก์ชัน — รันไฟล์ 20261010000200_admin_user_usage.sql ใน Supabase ก่อน' : uuErrorText(r && r.error, true)) +
+        '<br><button type="button" class="btn" data-uu-retry>ลองใหม่</button></div>';
+    });
+  }
+  function renderUuDetail(d){
+    var u = d.user || {}, rows = Array.isArray(d.rows) ? d.rows : [];
+    var now = Date.parse(d.generated_at) || Date.now();
+    var ps = uuPlan(u.plan, now);
+    // สรุปช่วงจากแถวรายวัน — เกณฑ์เดียวกับรายการรายคน (ฝั่งฐานข้อมูล)
+    var sum = { minutes:0, merchant:0, farm:0, gums:0, kills:0, announcements:0, timers_s:0, items_s:0 };
+    var du = { merchant:0, farm:0, timers:0, items:0 }, ld = { trade:0, farm:0 }, byDay = {};
+    rows.forEach(function(x){
+      Object.keys(sum).forEach(function(k){ sum[k] += Number(x[k]) || 0; });
+      if(Number(x.merchant) > 0) du.merchant++;
+      if(Number(x.farm) > 0) du.farm++;
+      if(Number(x.kills) > 0 || Number(x.timers_s) >= 60) du.timers++;
+      if(Number(x.items_s) >= 60) du.items++;
+      if(Number(x.merchant) >= 5) ld.trade++;
+      if(Number(x.farm) >= 3) ld.farm++;
+      byDay[x.d] = Number(x.merchant) + Number(x.farm) + Number(x.kills) + Number(x.announcements) > 0 ? 2 : 1;
+    });
+    // ประวัติซื้อแพ็กแสดงเต็มด้านล่างแล้ว — ไม่ต้องมีบรรทัด "ซื้อล่าสุด" ซ้ำ
+    var fitU = { id:u.id, active_days:rows.length, days_used:du, limit_days:ld, last_seen_at:u.last_seen_at, last_day:rows.length ? rows[0].d : null };
+    var fit = uuFit(fitU, ps, now);
+    var levels = [], n = Number(d.days) || 0;
+    for(var i = 0; i < n; i++) levels.push(byDay[shiftIso(d.from, i)] || 0);
+    var party = u.party_host ? 'ในปาร์ตี้ของ ' + u.party_host : Number(u.party_members) > 0 ? 'หัวปาร์ตี้ · สมาชิก ' + fmt(u.party_members) + ' คน' : '';
+    $('uuDlgTitle').textContent = u.name || ('@' + (u.username || '-'));
+    $('uuDlgSub').textContent = (u.name && u.username ? '@' + u.username + ' · ' : '') + (u.created_at ? 'สมัคร ' + fmtDateBkk(u.created_at) + ' · ' : '') +
+      'ใช้ล่าสุด ' + uuAgoText(uuDaysAgo(fitU, now)) + ' · ช่วง ' + fmt(n) + ' วัน (' + fmtDayBkk(d.from) + ' – ' + fmtDayBkk(d.to) + ')';
+    var stat = function(value, label){ return '<div class="stat"><b>' + value + '</b><span>' + label + '</span></div>'; };
+    var purchases = (d.purchases || []).map(function(p){
+      return (PLAN_LABEL[p.plan_key] || p.plan_name || p.plan_key || '-') + (p.cycle === 'yearly' ? ' รายปี' : ' รายเดือน') + ' ' + fmtDateBkk(p.at);
+    });
+    $('uuDlgBody').innerHTML =
+      '<div class="uu-det-meta"><span class="uu-plan">' + uuPlanHtml(ps) + '</span>' + (party ? '<span>' + esc(party) + '</span>' : '') + '</div>' +
+      '<div class="uu-det-fit">' + uuFitHtml(fit, ps, fitU) +
+        (purchases.length ? '<small>ประวัติซื้อแพ็ก (' + fmt(d.purchases_total) + ' ครั้ง): ' + esc(purchases.join(' · ')) + (Number(d.purchases_total) > purchases.length ? ' …' : '') + '</small>'
+                          : '<small>ยังไม่เคยซื้อแพ็กเกจ</small>') + '</div>' +
+      '<div class="stat-grid uu-det-sum">' +
+        stat(fmt(rows.length) + '<small> / ' + fmt(n) + ' วัน</small>', 'วันที่ใช้งาน · เปิดดูรวม ' + esc(uuDur(sum.minutes))) +
+        stat(fmt(sum.merchant), 'รายการซื้อขาย · ใน ' + fmt(du.merchant) + ' วัน') +
+        stat(fmt(sum.farm) + '<small> ครั้ง · </small>' + fmt1(sum.gums) + '<small> กั้ม</small>', 'ยอดนักฟาร์ม · ใน ' + fmt(du.farm) + ' วัน') +
+        stat(fmt(sum.kills), 'กดตาย · จับเวลาบอสใน ' + fmt(du.timers) + ' วัน') +
+        stat(esc(uuDur(uuMin(sum.items_s))), 'คลังไอเทม · ใน ' + fmt(du.items) + ' วัน') +
+      '</div>' +
+      '<h3>ทุกวันในช่วง</h3><div class="uu-cal" role="img" aria-label="เข้าใช้ ' + fmt(rows.length) + ' จาก ' + fmt(n) + ' วัน">' + uuCellsHtml(levels, d.from) + '</div>' +
+      '<div class="table-wrap"><table class="uu-table uu-narrow"><thead><tr><th>วันที่</th><th class="num">เปิดดู</th><th class="num">บัญชีนักลงทุน</th><th class="num">ยอดนักฟาร์ม</th><th class="num">จับเวลาบอส</th><th class="num">คลังไอเทม</th><th class="num">ประกาศ</th></tr></thead><tbody>' +
+      (rows.length ? rows.map(function(x){ return '<tr><td>' + esc(fmtDayBkk(x.d)) + '</td>' + uuDayCells(x) + '</tr>'; }).join('')
+                   : '<tr><td colspan="7" class="empty">ไม่ได้ใช้งานในช่วงนี้</td></tr>') +
+      '</tbody></table></div>';
+  }
+  $('uuViewSeg').addEventListener('click', function(e){ var b = e.target.closest('[data-uu-view]'); if(b) setUuView(b.dataset.uuView); });
+  $('uuSearch').addEventListener('input', function(){ uu.q = this.value; renderUuPeople(); });
+  $('uuSort').addEventListener('change', function(){ uu.sort = this.value; renderUuPeople(); });
+  $('uuDaySeg').addEventListener('click', function(e){
+    var b = e.target.closest('[data-uu-day]');
+    if(!b) return;
+    var pick = b.dataset.uuDay === 'yesterday' ? shiftIso(dayTodayIso(), -1) : null;
+    if(pick !== uu.dayPick){ uu.dayPick = pick; uu.dayData = null; uu.dayError = null; renderUuDay(); }
+    loadUuDay();
+  });
+  $('uuDayPicker').addEventListener('change', function(){
+    var v = this.value;
+    // วันที่นอกช่วง (พิมพ์เอง) ไม่ต้องถาม — เบราว์เซอร์แสดงว่าไม่ถูกต้องอยู่แล้ว
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(v) || v < this.min || v > this.max) return;
+    var pick = v === dayTodayIso() ? null : v;
+    if(pick !== uu.dayPick){ uu.dayPick = pick; uu.dayData = null; uu.dayError = null; renderUuDay(); }
+    loadUuDay();
+  });
+  // กดชื่อ (รายคน / รายวัน) = หน้าต่างรายวันของคนนั้น
+  $('uuCard').addEventListener('click', function(e){ var b = e.target.closest('[data-uu-user]'); if(b) openUuDetail(b.dataset.uuUser); });
+  $('uuDlgBody').addEventListener('click', function(e){ if(e.target.closest('[data-uu-retry]')) openUuDetail(uu.detUser); });
+  $('uuDlgClose').addEventListener('click', function(){ $('uuDialog').close(); });
+  // ผลที่มาตอนหน้าต่างปิดแล้ว / มาช้ากว่าการเปิดครั้งใหม่ ถูกทิ้งในตัวโหลดเอง (เช็ค open + เลขรอบ)
+  // ไม่นับรอบเพิ่มตอน "close" — event นี้มาทีหลัง ถ้าปิดแล้วเปิดใหม่ทันทีจะไปยกเลิกรอบใหม่ ค้าง "กำลังโหลด"
+  $('uuDialog').addEventListener('click', function(e){
+    var r = this.getBoundingClientRect();
+    if(e.target === this && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) this.close();
+  });
+
   // ---------- แท็บหมวด (จัดใหม่ 10 ต.ค. 2569 — ผู้ใช้ขอ: เดิมกล่องเรื่องเดียวกันกระจายทั้งหน้า ดูยาก) ----------
   // ภาพรวม / ผู้เข้าชม / การใช้งาน / รายได้และแพ็กเกจ / งานแอดมิน · จำแท็บล่าสุดในเครื่องนี้
   // ปุ่มช่วง 7/30/90 วัน ซ่อนในแท็บภาพรวม (ไม่มีกล่องไหนในแท็บนั้นเปลี่ยนตามปุ่ม) · กล่องที่เปลี่ยนตามปุ่มมีป้าย "N วัน"
@@ -1464,6 +1943,7 @@ button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)
     $('rangeSeg').classList.toggle('is-off', tab === 'overview');
     try{ localStorage.setItem(TAB_KEY, tab); }catch(e){}
     resizeVisibleCharts();
+    if(tab === 'usage') uuRefresh();  // การใช้งานรายคน: เปิดแท็บ = ดึงข้อมูลล่าสุด
     // มาจากกล่อง "สิ่งที่ต้องทำ" = เลื่อนไปกล่องนั้น
     var card = cardId && $(cardId);
     if(card && !card.hidden) card.scrollIntoView({ block:'start', behavior:'smooth' });
@@ -1549,6 +2029,9 @@ button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)
         return;
       }
       render(res.data || {});
+      // การใช้งานรายคน: ไม่ดึงตามรอบ 5 นาทีของแดชบอร์ด — ดึงครั้งแรกตอนแดชบอร์ดโหลดเสร็จ (เปิดหน้ามาที่แท็บ "การใช้งาน")
+      //   หลังจากนั้นดึงตอนเปิดแท็บ / สลับมุมมอง / กดรีเฟรช / เปลี่ยนช่วง เท่านั้น
+      if(!uu.started){ uu.started = true; uuRefresh(); }
       var tmsg = tr && tr.error ? (tr.error.message || String(tr.error)) : '';
       renderTraffic(tr && tr.data, tmsg ? (tr.error.code === 'PGRST202'
         ? 'ยังไม่ได้ติดตั้งระบบเก็บการเข้าชม — รันไฟล์ migration ล่าสุดของ admin_traffic ใน Supabase ก่อน'
@@ -1568,10 +2051,13 @@ button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)
     Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.classList.toggle('active', x === b); });
     updateRangeTags();
     load();
+    if(uu.view === 'people') loadUu();  // การใช้งานรายคนตามช่วงใหม่ (มุมมองรายวันไม่ขึ้นกับช่วง)
   });
   $('refreshBtn').addEventListener('click', load);
   $('refreshBtn').addEventListener('click', loadLive);
   $('refreshBtn').addEventListener('click', loadDay);
+  // การใช้งานรายคน: กดรีเฟรช = ดึงข้อมูลล่าสุดของมุมมองที่เปิดอยู่ (การ์ดนี้ไม่รีเฟรชเองทุก 5 นาที)
+  $('refreshBtn').addEventListener('click', function(){ uuRefresh(); });
   // เปิดค้างไว้: ดึงข้อมูลใหม่ทุก 5 นาที เฉพาะตอนแท็บนี้เปิดดูอยู่
   setInterval(function(){ if(!document.hidden && state.data) load(); }, 300000);
   // แถบ "ตอนนี้" ดึงแยกทุก 1 นาที (เปลี่ยนช่วงวันไม่ต้องดึงใหม่) · ถ้ายังไม่มีฟังก์ชัน loadLive จะหยุดเอง

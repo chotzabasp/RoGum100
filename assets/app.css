@@ -2325,6 +2325,18 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
   #view-timers .bc-time-col > .bc-time-block{margin-right:0}
 }
 #view-timers .bc-time-block:has(> .state-normal){text-align:center}
+/* ด้านขวาของการ์ดบอส (ผู้ใช้ขอ 10 ต.ค. 2569 — 3 อย่างติดกันเกินไป): แยก 2 กลุ่ม
+   กรอบเวลา (ดูอย่างเดียว) | ช่องเวลาหลุม + MVP (ที่ต้องกด) · "— / ยังไม่ได้ฆ่า" อยู่กลางกรอบเหมือนตอนนับเวลา */
+#view-timers .bc-time-block:has(> .idle){text-align:center}
+#view-timers .bc-right > .bc-input{margin-left:.9rem}                  /* กรอบเวลา ↔ ช่องเวลาหลุม ≈ 23px (รวม gap) */
+#view-timers .bc-right > div:has(> .bc-kill-btn){margin-left:.3rem}    /* ช่องเวลาหลุม ↔ MVP ≈ 14px */
+@media(min-width:1101px){
+  #view-timers .bc-right > .bc-close{margin-left:.45rem}               /* MVP ↔ × (จอแคบกว่านี้ × ชิดขวาสุดของแถวอยู่แล้ว) */
+}
+@media(max-width:640px){
+  #view-timers .bc-right > .bc-input{margin-left:0}                    /* มือถือ: กรอบเวลาถูกดันไปซ้ายสุดอยู่แล้ว */
+  #view-timers .bc-right > div:has(> .bc-kill-btn){margin-left:.32rem} /* ช่องเวลาหลุม ↔ MVP ≈ 10px (เดิม ≈ 5px) */
+}
 
 /* Custom Boss additions only: existing card geometry and MVP artwork are untouched. */
 .custom-boss-badge{font-size:.62rem;font-weight:500;padding:.1rem .3rem;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);vertical-align:middle}

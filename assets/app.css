@@ -1445,6 +1445,15 @@ ul.post-announce-note li:last-child{margin-bottom:0}
 .admin-qr-summary{font-size:.78rem;color:var(--text-dim);margin-top:.7rem}
 .admin-qr-more{display:flex;justify-content:center;margin-top:.8rem}
 .admin-qr-more[hidden]{display:none}
+/* แอดมิน: โค้ดโปรโมชันแบ่งกลุ่มตามสถานะ — ใช้งานได้ / ใช้ครบแล้ว / หมดอายุ-ปิดแล้ว · กดหัวข้อเพื่อกาง/พับ (12 ต.ค. 2569) */
+.admin-promo-tools{margin-top:1rem}
+.admin-promo-group>summary{display:flex;align-items:center;gap:.5rem;padding:.55rem .2rem;cursor:pointer;font-weight:700;font-size:.92rem;list-style:none;user-select:none}
+.admin-promo-group>summary::-webkit-details-marker{display:none}
+.admin-promo-group>summary::before{content:"\25B8";width:1em;color:var(--text-dim)}
+.admin-promo-group[open]>summary::before{content:"\25BE"}
+.admin-promo-group>summary:hover{color:var(--accent)}
+.admin-promo-group-body{display:flex;flex-direction:column;gap:.7rem;margin-top:.3rem}
+.admin-promo-group-empty{margin:0;padding:.9rem 1rem;border:1px dashed var(--border);border-radius:var(--radius-m);color:var(--text-dim);font-size:.85rem}
 .admin-topup-user .membership-pill{display:inline-block;margin-left:.5rem;vertical-align:middle}
 .admin-topup-warn{color:var(--warn)}
 .admin-slip-note{margin-top:.6rem}

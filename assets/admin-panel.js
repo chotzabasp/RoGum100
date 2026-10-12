@@ -377,11 +377,16 @@ export function initAdminPanel(ctx){
     document.getElementById('adminPromoDiscountPercent').hidden = v !== 'discount';
     document.getElementById('adminPromoDiscountPlan').hidden = v !== 'discount';
   });
+  // สถานะโค้ด: หมดอายุ/ปิดใช้งานแล้ว (ปุ่ม "ปิดใช้งาน" ตั้ง expires_at = ตอนกด — ฐานข้อมูลไม่รับโค้ดนี้แล้ว) เช็กก่อน "ใช้ครบ" เหมือน admin.html
+  function adminPromoStatus(p){
+    if(p.expires_at && new Date(p.expires_at).getTime() < Date.now()) return 'expired';
+    return p.used_count >= p.max_uses ? 'full' : 'active';
+  }
   function adminPromoRowHtml(p){
     var expText = p.expires_at ? fmtDate(new Date(p.expires_at).getTime()) : 'ไม่หมดอายุ';
-    var full = p.used_count >= p.max_uses;
-    // หมดอายุ/ปิดใช้งานแล้ว (ปุ่ม "ปิดใช้งาน" ตั้ง expires_at = ตอนกด) — ฐานข้อมูลไม่รับโค้ดนี้แล้ว เช็กก่อน "ใช้ครบ" เหมือน admin.html
-    var expired = !!p.expires_at && new Date(p.expires_at).getTime() < Date.now();
+    var status = adminPromoStatus(p);
+    var full = status === 'full';
+    var expired = status === 'expired';
     var rewardText = p.reward_type==='plan_days' ? ('แพ็กเกจ '+(ADMIN_PROMO_PLAN_NAMES[p.plan_key||'all']||'4 in 1')+' '+fmtNum(p.plan_days)+' วัน/คน')
       : p.reward_type==='discount' ? ('ส่วนลด '+fmtNum(p.discount_percent)+'% ตอนซื้อ'+(p.plan_key ? 'เฉพาะ '+(ADMIN_PROMO_PLAN_NAMES[p.plan_key]||p.plan_key) : 'ทุกแพ็กเกจ'))
       : ('+'+fmtNum(p.points)+' แต้ม/คน');
@@ -401,11 +406,42 @@ export function initAdminPanel(ctx){
       '</div>'+
     '</div>';
   }
+  // แบ่งเป็นกลุ่มตามสถานะ (ผู้ใช้ขอ 12 ต.ค. 2569 — เดิมปนกันดูยาก): ใช้งานได้ (กางไว้) · ใช้ครบแล้ว · หมดอายุ / ปิดแล้ว (พับไว้ กดหัวข้อเพื่อกาง)
+  // จำว่ากลุ่มไหนกาง/พับไว้ระหว่างเปิดหน้านี้ (วาดใหม่หลังลบ/ปิดใช้งานแล้วไม่เด้งกลับ) · มีคำค้น = กางทุกกลุ่มที่เจอ จะได้ไม่ซ่อนผลไว้ในกลุ่มที่พับ
+  // ในแต่ละกลุ่มเรียงตามเดิม (สร้างล่าสุดก่อน)
+  var ADMIN_PROMO_GROUPS = [['active','ใช้งานได้','ok'], ['full','ใช้ครบแล้ว','neutral'], ['expired','หมดอายุ / ปิดแล้ว','neutral']];
+  var adminPromoOpen = { active:true, full:false, expired:false };
+  var adminPromoTerm = '';
   function renderAdminPromoCodes(){
     var root = document.getElementById('adminPromoList');
     if(!adminPromoCodes.length){ root.innerHTML = '<p class="admin-topup-empty">ยังไม่มีโค้ดโปรโมชัน</p>'; return; }
-    root.innerHTML = adminPromoCodes.map(adminPromoRowHtml).join('');
+    var term = adminPromoTerm.trim().toLowerCase();
+    var shown = !term ? adminPromoCodes : adminPromoCodes.filter(function(p){
+      return [p.code, p.group_key, p.note].some(function(v){ return v && String(v).toLowerCase().indexOf(term) !== -1; });
+    });
+    if(!shown.length){ root.innerHTML = '<p class="admin-topup-empty">ไม่พบโค้ดที่ตรงกับ "'+escapeHtml(adminPromoTerm.trim())+'"</p>'; return; }
+    root.innerHTML = ADMIN_PROMO_GROUPS.map(function(g){
+      var rows = shown.filter(function(p){ return adminPromoStatus(p) === g[0]; });
+      // กลุ่มว่าง: "ใช้งานได้" ยังแสดง (บอกว่าตอนนี้ไม่มีโค้ดที่ใช้ได้) · กลุ่มอื่นซ่อน · ตอนค้นหาซ่อนกลุ่มที่ไม่เจอ
+      if(!rows.length && (term || g[0] !== 'active')) return '';
+      var open = term ? rows.length > 0 : adminPromoOpen[g[0]];
+      return '<details class="admin-promo-group" data-promo-group="'+g[0]+'"'+(open ? ' open' : '')+'>'+
+        '<summary><span>'+g[1]+'</span><span class="membership-pill '+g[2]+'">'+fmtNum(rows.length)+'</span></summary>'+
+        '<div class="admin-promo-group-body">'+
+          (rows.length ? rows.map(adminPromoRowHtml).join('') : '<p class="admin-promo-group-empty">ตอนนี้ไม่มีโค้ดที่ใช้งานได้</p>')+
+        '</div>'+
+      '</details>';
+    }).join('');
   }
+  // จำกลุ่มที่กาง/พับ (event toggle ไม่ bubble → ฟังแบบ capture) — ตอนค้นหาอยู่ไม่จำ (กลุ่มกางเองตามผลค้นหา)
+  document.getElementById('adminPromoList').addEventListener('toggle', function(e){
+    var g = e.target && e.target.dataset && e.target.dataset.promoGroup;
+    if(g && !adminPromoTerm.trim()) adminPromoOpen[g] = e.target.open;
+  }, true);
+  document.getElementById('adminPromoSearch').addEventListener('input', function(){
+    adminPromoTerm = this.value;
+    renderAdminPromoCodes();
+  });
   function loadAdminPromoCodes(){
     var root = document.getElementById('adminPromoList');
     root.innerHTML = '<p class="admin-topup-empty">กำลังโหลด...</p>';

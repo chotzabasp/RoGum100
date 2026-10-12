@@ -1518,6 +1518,8 @@
     var imageCandidates=record?[record.image_path,record.map_image_path]:[];
     var dialog=customNode('dialog'),form=customNode('form');dialog.className='custom-boss-dialog';
     var title=customNode('h3',boss?'แก้ไขบอส':'เพิ่มบอส');form.append(title);
+    // หน้าต่างเพิ่มบอสใหม่: บอกว่าใช้กับบอสที่ไม่มีในรายการให้เลือก (ผู้ใช้ขอ 12 ต.ค. 2569 — วงเล็บสีแดง)
+    if(!boss){var titleNote=customNode('span','(สำหรับบอสที่ไม่มีให้เลือก)');titleNote.className='custom-boss-title-note';title.append(' ',titleNote);}
     function field(label,type,value){var wrap=customNode('label',label),input=customNode('input');input.type=type;input.value=value||'';wrap.append(input);form.append(wrap);return input;}
     var name=field('ชื่อบอส *','text',record&&record.name);name.required=true;name.maxLength=120;
     var minutes=field('Respawn (นาที) *','number',record?record.respawn_minutes:120);minutes.required=true;minutes.min=1;minutes.max=2147483647;minutes.step=1;

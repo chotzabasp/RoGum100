@@ -2344,6 +2344,7 @@ body:has(#guestAuthButtons:not([hidden])) #view-home .dashboard-guest-note{displ
 .custom-boss-actions .btn{padding:.2rem .45rem;font-size:.7rem}
 .custom-boss-dialog{width:min(440px,calc(100% - 24px));max-height:90dvh;overflow:auto;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);padding:1.2rem}
 .custom-boss-dialog::backdrop{background:#080c16bb}
+.custom-boss-dialog .custom-boss-title-note{color:var(--danger)}
 .custom-boss-dialog form{display:grid;gap:.7rem}.custom-boss-dialog label{display:grid;gap:.3rem;font-size:.82rem}
 .custom-boss-dialog input{width:100%;min-width:0;padding:.6rem;border:1px solid var(--border);border-radius:7px;background:var(--surface-2);color:var(--text);font:inherit}
 .custom-boss-dialog small{font-size:.7rem;color:var(--text-dim)}.custom-boss-dialog [role=alert]{color:#ffaaa6;overflow-wrap:anywhere}.custom-boss-dialog [role=alert]:empty{display:none}

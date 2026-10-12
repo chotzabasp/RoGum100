@@ -1510,7 +1510,8 @@
     }).catch(function(err){console.warn('custom boss image cleanup',err);});
   }
   function customNode(tag,text){var node=document.createElement(tag);if(text!=null)node.textContent=text;return node;}
-  function openCustomBossModal(boss){
+  // prefillName = ชื่อที่พิมพ์ค้นหาไว้ (เปิดจาก "สร้างบอสเอง" ท้ายรายการค้นหา) — ใช้เฉพาะตอนเพิ่มบอสใหม่
+  function openCustomBossModal(boss,prefillName){
     if(!CustomAPI || !App.session || App.isGuest){toast('กรุณาเข้าสู่ระบบ');return;}
     if(activeOwnerId()!==App.session.id){toast('เจ้าของปาร์ตี้เท่านั้นที่เพิ่มหรือแก้ไขบอสได้');return;}
     var record=boss?boss.record:null,uploads={},saving=false;
@@ -1521,7 +1522,7 @@
     // หน้าต่างเพิ่มบอสใหม่: บอกว่าใช้กับบอสที่ไม่มีในรายการให้เลือก (ผู้ใช้ขอ 12 ต.ค. 2569 — วงเล็บสีแดง)
     if(!boss){var titleNote=customNode('span','(สำหรับบอสที่ไม่มีให้เลือก)');titleNote.className='custom-boss-title-note';title.append(' ',titleNote);}
     function field(label,type,value){var wrap=customNode('label',label),input=customNode('input');input.type=type;input.value=value||'';wrap.append(input);form.append(wrap);return input;}
-    var name=field('ชื่อบอส *','text',record&&record.name);name.required=true;name.maxLength=120;
+    var name=field('ชื่อบอส *','text',record?record.name:String(prefillName||'').slice(0,120));name.required=true;name.maxLength=120;
     var minutes=field('Respawn (นาที) *','number',record?record.respawn_minutes:120);minutes.required=true;minutes.min=1;minutes.max=2147483647;minutes.step=1;
     var map=field('Map (ไม่บังคับ)','text',record&&record.map_location);map.maxLength=120;
     var bossImage=field('รูปบอส (ไม่บังคับ)','file'),mapImage=field('รูปแผนที่ (ไม่บังคับ)','file');
@@ -10566,10 +10567,18 @@
   // ---------- search & add from catalog ----------
   var searchInput = document.getElementById('searchInput');
   var searchResults = document.getElementById('searchResults');
+  // ปุ่มสร้างบอสเอง (Custom) เป็นทางสำรอง — ปุ่มขอบใสไม่เด่นเท่าช่องค้นหา (ผู้ใช้ขอ 12 ต.ค. 2569: เดิม "+ เพิ่มบอส" สีฟ้าเด่นสุด
+  // คนเข้าใจผิดว่าเป็นวิธีเพิ่มบอสปกติ แทนที่จะกดเลือกจากช่องค้นหา) · มีทางเดียวกันอยู่ท้ายรายการค้นหาด้วย (searchResultsFoot)
   if(CustomAPI){
-    var customAddButton=customNode('button','+ เพิ่มบอส');customAddButton.type='button';customAddButton.className='btn btn-primary';customAddButton.id='addCustomBoss';
+    var customAddButton=customNode('button','สร้างบอสเอง');customAddButton.type='button';customAddButton.className='btn btn-ghost';customAddButton.id='addCustomBoss';
+    customAddButton.title='สำหรับบอสที่ไม่มีให้เลือกในรายการ — บอสปกติกดเลือกจากช่องค้นหา';
     customAddButton.onclick=function(){openCustomBossModal(null);};searchInput.closest('.search-wrap').after(customAddButton);
-
+  }
+  // ท้ายรายการค้นหา (ติดล่างกล่องเสมอ): ไม่เจอบอส → สร้างบอสเอง (เอาชื่อที่พิมพ์ไปใส่ให้) · ข้อมูลบอสไม่ตรง → แจ้ง Admin (ย้ายมาจากช่องค้นหา)
+  function searchResultsFoot(){
+    return '<div class="search-results-foot">'+
+      (CustomAPI ? '<span>ไม่เจอบอสที่ต้องการ?</span><button type="button" class="btn btn-ghost" data-create-custom>+ สร้างบอสเอง</button>' : '')+
+      '<small>ข้อมูลบอสไม่ตรง แจ้ง Admin</small></div>';
   }
 
   function renderSearchResults(){
@@ -10585,7 +10594,7 @@
         return a.name.localeCompare(b.name, 'en', { numeric:true, sensitivity:'base' }) || String(a.id).localeCompare(String(b.id));
       });
     if(!matches.length){
-      searchResults.innerHTML = '<p class="search-results-empty">ไม่พบบอสที่ค้นหาในระบบ</p>';
+      searchResults.innerHTML = '<p class="search-results-empty">ไม่พบ "'+escapeHtml(searchInput.value.trim())+'" ในรายการบอส</p>' + searchResultsFoot();
       searchResults.hidden = false;
       return;
     }
@@ -10597,7 +10606,7 @@
         '<div class="search-result-main"><div class="search-result-title">'+escapeHtml(b.name)+(b.custom ? ' <span class="custom-boss-badge">Custom</span>' : '')+'</div><div class="search-result-sub">เกิดใหม่ทุก '+b.minutes+' นาที • '+escapeHtml(b.loc)+'</div></div>'+
         '<div class="search-result-action">'+(already?'เพิ่มแล้ว ✓':'+ เพิ่ม')+'</div>'+
       '</div>';
-    }).join('');
+    }).join('') + searchResultsFoot();
     searchResults.hidden = false;
   }
 
@@ -10619,6 +10628,12 @@
   });
 
   searchResults.addEventListener('click', function(e){
+    // "+ สร้างบอสเอง" ท้ายรายการ = ปุ่มสร้างบอสเองด้านบน (ตรวจสิทธิ์ใน openCustomBossModal) + ใส่ชื่อที่พิมพ์ค้นหาไว้ให้
+    if(e.target.closest('[data-create-custom]')){
+      searchResults.hidden = true;
+      openCustomBossModal(null, searchInput.value.trim());
+      return;
+    }
     if(isFreePartyMember()){ toast('แพ็กเกจฟรี เข้าร่วมปาร์ตี้ เยี่ยมชมเท่านั้น'); return; }
     var row = e.target.closest('.search-result-row');
     if(!row || row.classList.contains('added')) return;

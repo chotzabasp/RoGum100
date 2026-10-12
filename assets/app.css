@@ -804,6 +804,10 @@ svg.icon{width:18px;height:18px;display:block}
 .search-result-action{font-size:.72rem;font-weight:700;color:var(--accent);white-space:nowrap}
 .search-result-row.added .search-result-action{color:var(--success)}
 .search-results-empty{color:var(--text-dim);font-size:.82rem;text-align:center;padding:1rem}
+/* ท้ายรายการค้นหา: ไม่เจอบอส → สร้างบอสเอง · แจ้ง Admin — ติดล่างกล่องเสมอ ไม่ต้องเลื่อนหา (12 ต.ค. 2569) */
+.search-results-foot{position:sticky;bottom:-.4rem;z-index:1;display:flex;align-items:center;flex-wrap:wrap;gap:.35rem .6rem;margin:.3rem -.4rem -.4rem;padding:.55rem .7rem;background:var(--surface);border-top:1px solid var(--border);border-radius:0 0 var(--radius-m) var(--radius-m);font-size:.8rem;color:var(--text-dim)}
+.search-results-foot .btn{padding:.3rem .75rem;font-size:.78rem}
+.search-results-foot small{flex-basis:100%;font-size:.7rem;color:var(--text-dim)}
 
 .roster{display:flex;flex-direction:column;gap:.75rem}
 .boss-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:.9rem 1rem;position:relative;transition:box-shadow .3s ease}

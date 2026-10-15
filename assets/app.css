@@ -398,6 +398,8 @@ svg.icon{width:18px;height:18px;display:block}
 .farm-rare-row input[type="number"]::-webkit-outer-spin-button,
 .farm-rare-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .farm-rare-row input[type="number"]{-moz-appearance:textfield}
+/* ไอเทมหายากที่จำไว้ แต่จำนวน 0 (= รอบนี้ไม่ดรอป ไม่นับ) — ช่องอื่นจาง ช่องจำนวนชัดไว้ให้กรอก (15 ต.ค. 2569) */
+.farm-rare-row.farm-rare-off > :not(.farm-rare-qty):not(.mr-row-remove){opacity:.5}
 .farm-log-form{border-top:1px solid var(--border);padding-top:.8rem;display:flex;flex-direction:column;gap:.6rem}
 .farm-log-fields{display:grid;grid-template-columns:.45fr 1.55fr;gap:.5rem}
 .farm-log-fields-rare{grid-template-columns:1fr 1fr}

@@ -476,6 +476,7 @@
       currentServer:'mvpwatch_currentserver_'+email,
       farmCostItems:'mvpwatch_farmcost_'+email, farmLog:'mvpwatch_farmlog_'+email, farmServer:'mvpwatch_farmserver_'+email,
       farmOcHint:'mvpwatch_farmochint_'+email, farmExRate:'mvpwatch_farmexrate_'+email, farmMapNames:'mvpwatch_farmmapnames_'+email,
+      farmRareItems:'mvpwatch_farmrare_'+email,
       tickerServers:'mvpwatch_tickerservers_'+email, tickerSelectedServers:'mvpwatch_tickerselectedservers_'+email,
       lastRateUpdateTs:'mvpwatch_lastrateupdatets_'+email,
       retiredServerVisible:'mvpwatch_retiredserversvisible_'+email,
@@ -488,7 +489,7 @@
   // field that shows it is locked (readonly), so it can never end up mismatched, typo'd,
   // or accidentally entered in some other unit.
   var ZENY_LABEL = 'Zeny (หน่วย:M)';
-  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, partySeat:null, partyStatus:null, hostHasTimers:null, db:[], active:{}, markers:{}, kills:[], myLifetimeShare:{zeny:0,baht:0,count:0}, partyRoster:[], departedSharerNames:{}, keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
+  var App = { session:null, profile:null, isGuest:false, viewingHostId:null, viewingHostName:null, partySeat:null, partyStatus:null, hostHasTimers:null, db:[], active:{}, markers:{}, kills:[], myLifetimeShare:{zeny:0,baht:0,count:0}, partyRoster:[], departedSharerNames:{}, keys:null, historyTab:'kills', pendingItems:{}, rateSlots:[], merchantLog:[], merchantServers:[], merchantItems:{zeny:[],item:[],other:[]}, merchantExchangeRates:{}, itemWarehouseStock:{}, itemLineClaimedQty:{}, itemsServerId:null, itemsSelectedTier:null, currentServerId:null, itemRows:[], zenyRows:[], otherRows:[], merchantType:'buy', merchantCategory:'zeny', farmCostItems:{}, farmRareItems:{}, farmExchangeRates:{}, farmMapNames:{}, farmLog:[], farmServerId:null, tickerServers:[], tickerSelectedServers:[], rateAnnouncements:[], lastRateUpdateTs:null };
   var fired = { warn:{}, threeMin:{}, target:{} }; // target = targetTime ที่เตือนไปแล้ว — รอบใหม่ (เวลาเปลี่ยน) เริ่มเตือนใหม่
   var uid = function(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); };
 
@@ -580,6 +581,9 @@
     App.currentServerId = read('currentServer', null);
     if(App.merchantServers.indexOf(App.currentServerId)===-1) App.currentServerId = App.merchantServers[0] || null;
     App.farmCostItems = read('farmCostItems', {});
+    // ไอเทมหายากที่จำไว้ต่อเซิร์ฟ { serverId: [แถว] } — ค่าแปลก/เสีย = เริ่มว่าง (ฟอร์มสร้างแถวว่างให้เอง)
+    var rareLoaded = read('farmRareItems', null);
+    App.farmRareItems = rareLoaded && typeof rareLoaded === 'object' && !Array.isArray(rareLoaded) ? rareLoaded : {};
     App.farmExchangeRates = read('farmExRate', null) || {};
     App.farmMapNames = read('farmMapNames', null) || {};
     App.farmLog = read('farmLog', []);
@@ -622,6 +626,8 @@
     currentServer:         function(){ return App.currentServerId; },
     // สามตัวนี้: ระหว่างแก้รายการฟาร์ม ใช้ชุดปัจจุบัน (ตัวสำรอง) แทนค่าในฟอร์ม — ดู farmEditSavedMap
     farmCostItems:         function(){ return farmEditSavedMap(App.farmCostItems, 'rows'); },
+    // ระหว่างแก้รายการเก่า ฟอร์มไอเทมหายากเป็นของรายการนั้น แต่ไม่ได้เขียนลง App.farmRareItems (saveFarmRareItems ข้ามไป) — ส่งค่าตรงได้เลย
+    farmRareItems:         function(){ return App.farmRareItems; },
     farmServer:            function(){ return App.farmServerId; },
     farmExRate:            function(){ return farmEditSavedMap(App.farmExchangeRates, 'exchangeRate'); },
     farmMapNames:          function(){ return farmEditSavedMap(App.farmMapNames, 'mapName'); },
@@ -2152,6 +2158,29 @@
     return out;
   }
   function saveFarmCostItems(){ persist(App.keys.farmCostItems, CLOUD_KV.farmCostItems()); cloudQueueKV('farmCostItems'); }
+  // ไอเทมหายาก: จำชื่อ/ราคา/สกุลเงิน (+จำนวนที่กำลังกรอก) แยกตามเซิร์ฟ เหมือนรายการต้นทุน (ผู้ใช้ขอ 15 ต.ค. 2569 — เดิมล้างทุกรอบ ต้องพิมพ์ใหม่)
+  // ฟอร์ม (farmRareItemRows) = ของเซิร์ฟที่เลือกอยู่ · ระหว่างแก้รายการเก่า ฟอร์มเป็นของรายการนั้น → ไม่บันทึกทับรายการที่จำไว้
+  function saveFarmRareItems(){
+    if(editingFarmId || !App.farmServerId) return;
+    App.farmRareItems[App.farmServerId] = farmRareItemRows.map(function(r){
+      return { id:r.id, name:r.name||'', price:r.price==null ? '' : r.price, qty:r.qty==null ? '' : r.qty, currency:r.currency||'zeny' };
+    });
+    persist(App.keys.farmRareItems, App.farmRareItems);
+    cloudQueueKV('farmRareItems');
+  }
+  // ใส่รายการที่จำไว้ของเซิร์ฟนี้ลงฟอร์ม (ยังไม่มี = แถวว่าง 1 แถว)
+  function farmRareLoadForServer(sid){
+    var saved = (sid && App.farmRareItems && Array.isArray(App.farmRareItems[sid])) ? App.farmRareItems[sid] : [];
+    farmRareItemRows = saved.length
+      ? saved.map(function(r){ return { id:r.id||uid(), name:r.name||'', price:r.price==null ? '' : r.price, qty:r.qty==null ? '' : r.qty, currency:r.currency||'zeny' }; })
+      : [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
+  }
+  // จำนวนไอเทมหายากของแถว: ว่าง = 1 (เหมือนเดิม) · 0 = รอบนี้ไม่ดรอป ไม่นับ (หลังบันทึก ระบบตั้งเป็น 0 ให้)
+  function farmRareQty(r){
+    var raw = r && r.qty, q = parseFloat(raw);
+    if(raw === '' || raw == null || isNaN(q)) return 1;
+    return Math.max(0, q);
+  }
   function saveFarmLog(){ persist(App.keys.farmLog, App.farmLog); cloudQueueEntries('farm'); }
   function saveFarmServer(){ persist(App.keys.farmServer, App.farmServerId); cloudQueueKV('farmServer'); }
   function saveFarmExchangeRates(){ persist(App.keys.farmExRate, CLOUD_KV.farmExRate()); cloudQueueKV('farmExRate'); }
@@ -3630,7 +3659,7 @@
   }
 
   function farmRareItemsTotal(){
-    return farmRareItemRows.reduce(function(s,r){ return s + (parseFloat(r.price)||0)*(parseFloat(r.qty)||1); }, 0);
+    return farmRareItemRows.reduce(function(s,r){ return s + (parseFloat(r.price)||0)*farmRareQty(r); }, 0);
   }
 
   function renderFarmRareItems(){
@@ -3638,10 +3667,11 @@
     var removable = rows.length > 1;
     document.getElementById('farmRareItems').innerHTML = rows.map(function(r, rowIdx){
       var currency = r.currency || 'zeny';
-      return '<div class="farm-rare-row" data-row-id="'+r.id+'">'+
+      // จำนวน 0 = รอบนี้ไม่ดรอป (ไม่นับ) → แถวจางลง ให้เห็นว่าแถวไหนนับในรอบนี้
+      return '<div class="farm-rare-row'+(farmRareQty(r)===0 ? ' farm-rare-off' : '')+'" data-row-id="'+r.id+'">'+
         '<span class="mr-row-index">'+(rowIdx+1)+'.</span>'+
         '<input type="text" class="farm-rare-name" maxlength="120" placeholder="Elu, Ori, Card" value="'+(r.name||'').replace(/"/g,'&quot;')+'">'+
-        '<input type="number" class="farm-rare-qty" placeholder="จำนวน" value="'+(r.qty===''||r.qty==null?'':r.qty)+'" min="1">'+
+        '<input type="number" class="farm-rare-qty" placeholder="จำนวน" title="จำนวนที่ดรอปรอบนี้ — 0 = ไม่ดรอป ไม่นับ" value="'+(r.qty===''||r.qty==null?'':r.qty)+'" min="0">'+
         '<input type="text" inputmode="numeric" class="farm-rare-price" placeholder="ราคา" value="'+(r.price===''||r.price==null?'':fmtNum(r.price))+'">'+
         '<select class="farm-rare-currency">'+
           '<option value="zeny"'+(currency==='zeny'?' selected':'')+'>Zeny</option>'+
@@ -4184,7 +4214,8 @@
     document.getElementById('farmCountInput').value = '1';
     document.getElementById('farmEarnedInput').value = '';
     updateFarmEarnedHint();
-    farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
+    // จบการแก้รายการเก่า → ฟอร์มไอเทมหายากกลับเป็นรายการที่จำไว้ของเซิร์ฟนี้ (เดิมล้างเป็นแถวว่าง)
+    farmRareLoadForServer(App.farmServerId);
     renderFarmRareItems();
     farmOcActive = false;
     document.getElementById('farmOcToggle').classList.remove('active');
@@ -4290,6 +4321,8 @@
     renderFarmExchangeRate();
     renderFarmMapName();
     renderFarmCostItems();
+    // ไอเทมหายากที่จำไว้ของเซิร์ฟนี้ (รวมค่าที่เพิ่งมาจากเครื่องอื่น) — ระหว่างแก้รายการเก่า ฟอร์มเป็นของรายการนั้น ไม่ทับ
+    if(!editingFarmId) farmRareLoadForServer(App.farmServerId);
     renderFarmRareItems();
     renderFarmChart();
     document.getElementById('farmHistoryRange').value = farmHistoryRange;
@@ -10160,6 +10193,8 @@
     renderFarmExchangeRate();
     renderFarmMapName();
     renderFarmCostItems();
+    farmRareLoadForServer(App.farmServerId); // ไอเทมหายากที่จำไว้ของเซิร์ฟที่เลือกใหม่
+    renderFarmRareItems();
     renderFarmChart();
     renderFarmHistory();
     // สลับเซิร์ฟแล้วต้องคำนวณใหม่ว่าเซิร์ฟนี้ยังเล่นอยู่ไหม (เปิด/ปิดช่องกรอกตามนั้น)
@@ -10307,7 +10342,11 @@
       e.target.value = digits ? Number(digits).toLocaleString('th-TH') : '';
       r.price = digits;
     }
-    if(e.target.classList.contains('farm-rare-qty')) r.qty = e.target.value;
+    if(e.target.classList.contains('farm-rare-qty')){
+      r.qty = e.target.value;
+      row.classList.toggle('farm-rare-off', farmRareQty(r) === 0);
+    }
+    saveFarmRareItems();
   });
 
   document.getElementById('farmRareItems').addEventListener('change', function(e){
@@ -10317,6 +10356,7 @@
     var r = farmRareItemRows.filter(function(x){ return x.id===row.dataset.rowId; })[0];
     if(!r) return;
     r.currency = e.target.value;
+    saveFarmRareItems();
   });
 
   document.getElementById('farmRareItems').addEventListener('click', function(e){
@@ -10324,11 +10364,13 @@
     if(!btn || btn.disabled) return;
     farmRareItemRows = farmRareItemRows.filter(function(r){ return r.id!==btn.dataset.removeRareRow; });
     if(!farmRareItemRows.length) farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
+    saveFarmRareItems();
     renderFarmRareItems();
   });
 
   document.getElementById('farmAddRareItemBtn').addEventListener('click', function(){
     farmRareItemRows.push({ id:uid(), name:'', price:'', qty:'', currency:'zeny' });
+    saveFarmRareItems();
     renderFarmRareItems();
   });
 
@@ -10402,9 +10444,10 @@
     }
     if(count<1) count = 1;
     var cost = farmCostTotal(App.farmServerId) * count;
+    // แถวที่จำนวนเป็น 0 = รอบนี้ไม่ดรอป → ไม่ลงรายการ (ว่าง = 1 เหมือนเดิม)
     var rareItemsSnapshot = farmRareItemRows
-      .filter(function(r){ return (r.name||'').trim() || (parseFloat(r.price)||0)>0; })
-      .map(function(r){ return { id:r.id, name:(r.name||'').trim(), price: r.price===''||r.price==null?null:parseFloat(r.price), qty: parseFloat(r.qty)||1, currency: r.currency||'zeny' }; });
+      .filter(function(r){ return ((r.name||'').trim() || (parseFloat(r.price)||0)>0) && farmRareQty(r) > 0; })
+      .map(function(r){ return { id:r.id, name:(r.name||'').trim(), price: r.price===''||r.price==null?null:parseFloat(r.price), qty: farmRareQty(r), currency: r.currency||'zeny' }; });
     var rareTotal = rareItemsSnapshot.reduce(function(s,r){
       var lineTotal = (r.price||0)*r.qty;
       return s + (r.currency==='baht' ? farmBahtToZeny(lineTotal, costBd.rate) : lineTotal);
@@ -10457,7 +10500,12 @@
         earnedInput.value = '';
         countInput.value = '1';
         updateFarmEarnedHint();
-        farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
+        // ไอเทมหายาก: จำชื่อ/ราคาไว้รอบหน้า จำนวนกลับเป็น 0 (= ยังไม่ดรอป) · ตัดแถวว่างเปล่าทิ้ง (เหลืออย่างน้อย 1 แถว)
+        farmRareItemRows = farmRareItemRows
+          .filter(function(r){ return (r.name||'').trim() || String(r.price==null ? '' : r.price).trim(); })
+          .map(function(r){ return { id:r.id, name:(r.name||'').trim(), price:r.price==null ? '' : r.price, qty:'0', currency:r.currency||'zeny' }; });
+        if(!farmRareItemRows.length) farmRareItemRows = [{ id:uid(), name:'', price:'', qty:'', currency:'zeny' }];
+        saveFarmRareItems();
         renderFarmRareItems();
         renderFarmHistory();
         renderFarmChart();

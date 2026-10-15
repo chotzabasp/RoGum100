@@ -144,6 +144,15 @@ svg.icon{width:18px;height:18px;display:block}
   font-size:.82rem;font-weight:600;line-height:1.25;
   white-space:normal;overflow-wrap:break-word;
 }
+/* ป้าย "ลด X%" ข้างเมนูเติมแพ็กเกจ — โชว์เฉพาะช่วงโปร หายเองเมื่อโปรจบ (updatePricingPromoCountdown · 15 ต.ค. 2569) */
+/* ขนาดเล็กพอให้ "เติมแพ็กเกจ" ยังอยู่บรรทัดเดียว (ใหญ่กว่านี้ข้อความตัดเป็น 2 บรรทัด เมนูสูงกว่าอันอื่น) */
+.rail-promo-tag{
+  margin-left:auto;flex:none;padding:.05rem .32rem;border-radius:999px;
+  background:#3a1f27;border:1px solid #7a3340;color:#ff6b6b;
+  font-size:.6rem;font-weight:800;line-height:1.4;white-space:nowrap;pointer-events:none;
+}
+/* ผู้ใช้ขอ "อยู่บรรทัดเดียวกัน" — ล็อกไม่ให้ตัดบรรทัด เผื่อเครื่องที่ฟอนต์กว้างกว่า (ที่ว่างเหลือแค่ ~6px) */
+.rail-btn[data-page="pricing"] .tip{white-space:nowrap}
 .rail-badge{
   margin-left:auto;flex:none;min-width:16px;height:16px;padding:0 3px;
   border-radius:999px;background:var(--danger);color:#fff;font-size:.6rem;font-weight:700;
@@ -1696,6 +1705,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .rail-btn .tip{display:block;font-size:.72rem;line-height:1.5;white-space:nowrap}
   .rail-btn.active{box-shadow:inset 0 -3px var(--accent)}
   .rail-badge{position:absolute;top:.15rem;right:.15rem}
+  /* มุมขวาบน ยกขึ้นเหนือไอคอน (ไม่ทับไอคอน) — ยังอยู่ในขอบแถบเมนู */
+  .rail-promo-tag{position:absolute;top:-.3rem;right:-.1rem;margin:0;padding:0 .28rem;font-size:.56rem}
   .content{padding:1rem 1rem 2rem}
   .home-grid{grid-template-columns:1fr}
   .panel{padding:1rem}

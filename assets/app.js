@@ -7810,9 +7810,9 @@
 
   // ---------- เติมแพ็กเกจ ----------
   // ราคาใช้แสดงผลเท่านั้น — ต้องตรงกับตารางราคาใน buy_plan (ฐานข้อมูล) เสมอ
-  // ทุกแพ็กมีรายปี (= รายเดือน × 10) · ช่วงโปร (ถึง PROMO_END_AT) ลด 50% ปัดเศษลง เฉพาะรายเดือน — รายปีราคาเต็ม (promoYearly = yearly)
-  // ราคาชุด 29 ก.ย. 2569 (ผู้ใช้สั่ง): 1 in 1 99 · 2 in 1 99 · 3 in 1 179 · จับเวลาบอส 199 · 4 in 1 299 — plan_price ใน 20260929000700
-  // ยกเลิกโปรรายปี (ผู้ใช้สั่ง 29 ก.ย. 2569) — plan_price + ตัวจำกัดซื้อรายเดือนล่วงหน้าใน buy_plan ที่ 20260929000800
+  // ทุกแพ็กมีรายปี (= รายเดือน × 10) · ราคาชุด 29 ก.ย. 2569 (ผู้ใช้สั่ง): 1 in 1 99 · 2 in 1 99 · 3 in 1 179 · จับเวลาบอส 199 · 4 in 1 299
+  // โปรปัจจุบัน (ผู้ใช้สั่ง 15 ต.ค. 2569): ลด PROMO_PERCENT% ปัดเศษลง ทั้งรายเดือนและรายปี ถึง PROMO_END_AT — plan_price ใน 20261015000100
+  //   (โปรเปิดตัวเดิม ลด 50% เฉพาะรายเดือน จบ 11 ต.ค.) · ตัวจำกัดซื้อรายเดือนล่วงหน้าช่วงโปรใน buy_plan (20260929000800/000900) ใช้ต่อ
   var PRICING_PLANS = [
     { key:'free', name:'<span class="pricing-card-name-main">— ฟรี —</span><span class="pricing-card-name-sub">ทดลองใช้ทุกระบบ</span>', monthly:0, yearly:0, free:true,
       modules:['investor','items','farm','timers'],
@@ -7839,7 +7839,7 @@
         'ติดตามดูรายการส่วนแบ่งได้ในประวัติปาร์ตี้',
         'ปักหมุดจุดบอสตายบนแผนที่'
       ] },
-    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาร์ม</span>', monthly:99, yearly:990, promoMonthly:49, promoYearly:990, badge:'สายฟาร์ม',
+    { key:'farm', name:'<span class="pricing-card-name-main">— 1 in 1 —</span><span class="pricing-card-name-sub">บัญชียอดนักฟาร์ม</span>', monthly:99, yearly:990, promoMonthly:79, promoYearly:792, badge:'สายฟาร์ม',
       modules:['farm'],
       tagline:'สายฟาร์มห้ามพลาด', features:[
         // เรียงเป็นกลุ่ม บันทึก → คำนวณ → กราฟ/ประวัติ (ผู้ใช้ขอ 28 ก.ย. 2569)
@@ -7853,7 +7853,7 @@
         'ประวัติย้อนหลังไม่จำกัด',
         {divider:'หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรีทั้งหมด'}
       ] },
-    { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:99, yearly:990, promoMonthly:49, promoYearly:990, badge:'จัดการซื้อขาย',
+    { key:'accountItems', name:'<span class="pricing-card-name-main">— 2 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม</span>', monthly:99, yearly:990, promoMonthly:79, promoYearly:792, badge:'จัดการซื้อขาย',
       modules:['investor','items'],
       tagline:'พ่อค้า-แม่ค้าหัวเครดิตและคนทั่วไป', features:[
         // เรียงเป็นกลุ่ม บัญชีซื้อ–ขาย → คลังไอเทม → เซิร์ฟเวอร์ (ผู้ใช้ขอ 28 ก.ย. 2569 · ตัด "จัดการไอเทมคงเหลือได้แบบเป็นสัดส่วน" ที่ซ้ำกับ 6 คลังแยกสัดส่วน)
@@ -7870,12 +7870,12 @@
         'คลังไอเทมแยกตามเซิร์ฟเวอร์ ไม่ปนกัน',
         {divider:'หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรีทั้งหมด'}
       ] },
-    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:179, yearly:1790, promoMonthly:89, promoYearly:1790, badge:'ยอดนิยม',
+    { key:'bundle', name:'<span class="pricing-card-name-main">— 3 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม</span>', monthly:179, yearly:1790, promoMonthly:143, promoYearly:1432, badge:'ยอดนิยม',
       // แพ็กรวม: บอกว่าได้ระบบไหนบ้างด้วยแถวระบบ (modules) แทนรายการฟีเจอร์ยาว — ระบบที่ไม่ได้แสดงเป็นสีเทา
       modules:['investor','items','farm'],
       // รายละเอียด (ส่วนที่กดดูได้) = รวมรายการของแพ็กย่อยที่อยู่ในแพ็กนี้ แบ่งหัวข้อตามระบบ
       detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems']] },
-    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:99, promoYearly:1990, badge:'สายล่าบอส',
+    { key:'timers', name:'จับเวลาบอส', monthly:199, yearly:1990, promoMonthly:159, promoYearly:1592, badge:'สายล่าบอส',
       modules:['timers'],
       tagline:'ระบบล่าบอสครบในทีเดียว',
       features:[
@@ -7893,7 +7893,7 @@
         'ประวัติปาร์ตี้ มีรายชื่อใช้หารของกับเพื่อนร่วมทีมได้เลย',
         'แสดงยอดเงินที่หารแบบเป็นสัดส่วน ทั้งแบบส่วนตัว/ปาร์ตี้'
       ] },
-    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม/จับเวลาบอส</span>', monthly:299, yearly:2990, promoMonthly:149, promoYearly:2990, best:true, badge:'แนะนำ · คุ้มที่สุด',
+    { key:'all', name:'<span class="pricing-card-name-main">— 4 in 1 —</span><span class="pricing-card-name-sub">บัญชีนักลงทุน/คลังไอเทม/ยอดนักฟาร์ม/จับเวลาบอส</span>', monthly:299, yearly:2990, promoMonthly:239, promoYearly:2392, best:true, badge:'แนะนำ · คุ้มที่สุด',
       modules:['investor','items','farm','timers'],
       detailFrom:[['ยอดนักฟาร์ม','farm'],['บัญชีนักลงทุน / คลังไอเทม','accountItems'],['จับเวลาบอส','timers']] }
   ];
@@ -7930,7 +7930,10 @@
   // วันสิ้นสุดโปร (ระบุเขตเวลา) — หลังจากนี้หน้าเว็บแสดงราคาปกติ และเซิร์ฟเวอร์ (buy_plan → promo_active) หักราคาปกติ
   // ฝั่งเซิร์ฟเวอร์ตั้งให้สิ้นสุดช้ากว่านี้ 5 นาที กันนาฬิกาเครื่องผู้ใช้เร็วกว่าแล้วโดนหักแพงกว่าราคาที่เห็น
   // ถ้าจะเลื่อนวันโปร ต้องแก้ทั้งค่านี้และฟังก์ชัน promo_active ในฐานข้อมูลให้ตรงกัน
-  var PROMO_END_AT = '2026-10-11T23:59:59+07:00';
+  // โปรลด 20% (ผู้ใช้สั่ง 15 ต.ค. 2569 — 3 วัน จบสิ้นวันอาทิตย์ 18 ต.ค.) · ฐานข้อมูลจบ 19 ต.ค. 00:04:59 (20261015000100)
+  var PROMO_END_AT = '2026-10-18T23:59:59+07:00';
+  // เปอร์เซ็นต์ที่ลด — ใช้แค่ป้าย "ลด X%" บนการ์ด/กล่องยืนยัน (ราคาจริงอยู่ใน PRICING_PLANS + plan_price ในฐานข้อมูล)
+  var PROMO_PERCENT = 20;
   // ฐานข้อมูลตอบว่าราคาจริงแพงกว่าที่หน้าเว็บโชว์ราคาโปร = โปรจบแล้วฝั่งเซิร์ฟเวอร์ (นาฬิกาเครื่องนี้เดินช้า)
   // → ถือว่าโปรจบในหน้านี้ด้วย ไม่งั้นการ์ดยังโชว์ราคาโปร กดซื้อกี่ครั้งก็ถูกปฏิเสธ (ดู buy_plan ด้านล่าง)
   var promoEndedByServer = false;
@@ -7944,6 +7947,12 @@
     var promoActive = isPromoActive();
     var promoBanner = document.querySelector('#view-pricing .pricing-promo-banner');
     if(promoBanner) promoBanner.style.display = promoActive ? '' : 'none';
+    // ป้าย "ลด X%" สีแดงข้างเมนูเติมแพ็กเกจ (ผู้ใช้ขอ 15 ต.ค. 2569) — หายเองทันทีที่โปรจบ
+    var railTag = document.getElementById('railPromoTag');
+    if(railTag){
+      railTag.hidden = !promoActive;
+      railTag.textContent = 'ลด ' + PROMO_PERCENT + '%';
+    }
     // โปรหมดตอนเปิดหน้านี้ค้างอยู่ → วาดการ์ดราคาใหม่เป็นราคาปกติทันที
     if(promoWasActive !== null && promoWasActive !== promoActive) renderPricingPage();
     promoWasActive = promoActive;
@@ -8067,10 +8076,10 @@
         var original = monthly ? p.monthly : (p.yearly == null ? p.displayYearly : p.yearly);
         var price = isPromoActive() ? (monthly ? p.promoMonthly : (p.yearly == null ? p.displayPromoYearly : p.promoYearly)) : original;
         var perDay = price / (monthly ? 30 : 365);
-        // รายปี: ประหยัดเท่าไหร่ เทียบกับจ่ายรายเดือนราคาปกติครบ 12 เดือน (รายปีไม่ลดช่วงโปรแล้ว — ราคาที่จ่ายจริง = ราคาเต็ม)
+        // รายปี: ประหยัดเท่าไหร่ เทียบกับจ่ายรายเดือนราคาปกติครบ 12 เดือน (ราคาที่จ่ายจริง — ช่วงโปรคือราคาโปร)
         var monthsTotal = p.monthly * 12;
         var yearlySave = monthly ? 0 : monthsTotal - price;
-        priceHtml = (original > price ? '<div class="pricing-card-price"><span class="pricing-original">'+fmtNum(original)+' บ'+unit+'</span><span class="pricing-promo-badge">ลด 50%</span></div>' : '')+
+        priceHtml = (original > price ? '<div class="pricing-card-price"><span class="pricing-original">'+fmtNum(original)+' บ'+unit+'</span><span class="pricing-promo-badge">ลด '+PROMO_PERCENT+'%</span></div>' : '')+
           '<div class="pricing-card-price"><span class="pricing-card-amount">'+fmtNum(price)+'</span><span class="pricing-card-unit"> บ '+unit+'</span></div>'+
           '<div class="pricing-perday">เฉลี่ย ~'+perDay.toFixed(1)+' บ/วัน</div>'+
           (yearlySave > 0 ? '<div class="pricing-yearly-save"><b>ประหยัด '+fmtNum(yearlySave)+' บาท</b><small>(รายเดือน 12 เดือน = '+fmtNum(monthsTotal)+' บ)</small></div>' : '');
@@ -8187,7 +8196,7 @@
       var pay = payNow();
       var rows = [
         ['รอบ', cycle==='yearly' ? 'รายปี (+1 ปี)' : 'รายเดือน (+30 วัน)'],
-        ['ราคา', '<b>'+fmtNum(price)+' แต้ม</b>'+(original > price ? ' <s>'+fmtNum(original)+'</s> <span class="buy-confirm-off">ลด 50%</span>' : '')]
+        ['ราคา', '<b>'+fmtNum(price)+' แต้ม</b>'+(original > price ? ' <s>'+fmtNum(original)+'</s> <span class="buy-confirm-off">ลด '+PROMO_PERCENT+'%</span>' : '')]
       ];
       if(discount) rows.push(
         ['ส่วนลดโค้ด '+escapeHtml(discount.code)+' ('+discount.percent+'%)', '<span class="buy-confirm-save">−'+fmtNum(discount.discount)+' แต้ม</span>'],

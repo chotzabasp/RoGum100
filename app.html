@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- สไตล์อยู่ที่ assets/app.css — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<link rel="stylesheet" href="assets/app.css?v=20261015-farmrare">
+<link rel="stylesheet" href="assets/app.css?v=20261015-promo20">
 
 <!-- ===================== AUTH MODAL (เข้าสู่ระบบ/สมัครสมาชิก) ===================== -->
 <!-- โชว์ทับหน้าแอพเสมอ ไม่ว่าจะกำลังดูแบบผู้เยี่ยมชม (guest) หรือไม่ก็ตาม -->
@@ -90,7 +90,7 @@
     <button class="rail-btn" data-page="items"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/></svg><span class="tip">คลังไอเทม</span><span class="rail-badge" id="railItemsBadge" hidden>0</span></button>
     <button class="rail-btn" data-page="farm"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3h4v4m0-4L6 18m-3 0h3v3m10.5-1c1.576-1.576 2.5-4.095 2.5-6.5C19 8.69 15.31 5 10.5 5C8.085 5 5.578 5.913 4 7.5z"/></svg><span class="tip">ยอดนักฟาร์ม</span></button>
     <button class="rail-btn" data-page="timers"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="tip">จับเวลาบอส</span></button>
-    <button class="rail-btn" data-page="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="tip">เติมแพ็กเกจ</span></button>
+    <button class="rail-btn" data-page="pricing"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="tip">เติมแพ็กเกจ</span><span class="rail-promo-tag" id="railPromoTag" hidden>ลด 20%</span></button>
     <button class="rail-btn" data-page="admin" id="railAdminBtn" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg><span class="tip">แอดมิน</span><span class="rail-badge" id="railAdminBadge" hidden>0</span></button>
     <button class="rail-btn" data-page="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="tip">ตั้งค่า</span></button>
   </nav>
@@ -717,13 +717,13 @@
       <div class="page-scroll">
       <div class="pricing-hero">
         <span class="pricing-badge">✦ ปลดล็อกฟีเจอร์เต็มรูปแบบ</span>
-        <div class="pricing-benefits"><span>✓ เริ่มต้นเพียง <span id="pricingStartPrice">49</span> บาท/เดือน</span><span>✓ เลือกใช้ตามระบบที่ต้องการ</span></div>
+        <div class="pricing-benefits"><span>✓ เริ่มต้นเพียง <span id="pricingStartPrice">79</span> บาท/เดือน</span><span>✓ เลือกใช้ตามระบบที่ต้องการ</span></div>
         <div class="seg-toggle pricing-cycle-toggle" id="pricingCycleToggle">
           <button type="button" class="seg-btn active" data-cycle="monthly">รายเดือน</button>
           <button type="button" class="seg-btn" data-cycle="yearly">รายปี</button>
         </div>
         <div class="pricing-promo-banner">
-          <div class="pricing-promo-copy"><strong>ราคาโปรโมชันเปิดตัว <span class="pricing-promo-off">ลด 50%</span> แพ็กรายเดือน</strong></div>
+          <div class="pricing-promo-copy"><strong>โปรโมชัน <span class="pricing-promo-off">ลด 20%</span> ทุกแพ็กเกจ ทั้งรายเดือนและรายปี</strong></div>
           <div class="pricing-promo-clock" role="timer" aria-live="off" aria-label="เวลาคงเหลือของโปรโมชั่น">
             <span class="pricing-promo-status" id="pricingPromoStatus">รอกำหนดวันสิ้นสุดโปรโมชั่น</span>
             <div class="pricing-promo-digits" id="pricingPromoDigits" hidden>
@@ -1285,4 +1285,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <!-- โค้ดทั้งหมดอยู่ที่ assets/app.js — แก้ไฟล์นั้นแล้วเปลี่ยนเลข v ข้างล่างทุกครั้ง (กันผู้ใช้ได้ไฟล์เก่าค้างในเครื่อง) -->
-<script src="assets/app.js?v=20261015-farmrare"></script>
+<script src="assets/app.js?v=20261015-promo20"></script>

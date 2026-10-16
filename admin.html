@@ -987,7 +987,10 @@ button.live-chip:hover{background:#28364d;border-color:#46577a;color:var(--text)
   }
   var FEED_META = {
     signup:['สมัครสมาชิก', 'var(--c2)'], purchase:['ซื้อแพ็กเกจ', 'var(--gold)'], topup:['เติมแต้ม', 'var(--c1)'],
-    reverse:['ยกเลิกการเติม', 'var(--danger)'], promo:['ใช้โค้ดโปรโมชัน', 'var(--c4)']
+    reverse:['ยกเลิกการเติม', 'var(--danger)'], promo:['ใช้โค้ดโปรโมชัน', 'var(--c4)'],
+    // การใช้แต้มอื่นนอกจากซื้อแพ็กเกจ (ผู้ใช้สั่ง 17 ต.ค. 2569 "บอกทุกอย่างที่มีการใช้แต้ม") — มาจากสมุดแต้มใน admin_dashboard
+    slot:['ซื้อช่องเซิร์ฟเวอร์', 'var(--c3)'], seat:['ซื้อที่นั่งปาร์ตี้', 'var(--accent)'], announce:['ลงประกาศรับ M', 'var(--success)'],
+    deduct:['แอดมินหักแต้ม', 'var(--warn)'], spend:['ใช้แต้ม', 'var(--text-mute)']
   };
   function renderFeed(list){
     $('feed').innerHTML = list.length ? list.map(function(x){

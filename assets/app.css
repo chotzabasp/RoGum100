@@ -231,7 +231,8 @@ svg.icon{width:18px;height:18px;display:block}
 @media (min-width:761px){
   .banner-wrap{display:grid}
   .banner-wrap > .home-banner-zone,.banner-wrap > .hero-row{grid-area:1/1}
-  .banner-wrap > .hero-row{align-self:end;position:relative;z-index:1;padding:0 1.5rem 1.25rem}
+  /* margin-top = เว้นที่ให้แถบบน (เวลา/แต้ม/ปุ่มออก — ความสูงจริงจาก --util-bar-h ใน app.js เพราะจอแคบแถบตัดเป็น 2 บรรทัด): การ์ดเยอะจนสูงเกินแบนเนอร์ → แบนเนอร์ยืดตาม ไม่ทับปุ่ม (ช่องเซิร์ฟไม่จำกัดแล้ว) */
+  .banner-wrap > .hero-row{align-self:end;position:relative;z-index:1;margin-top:calc(var(--util-bar-h,4.5rem) + .75rem);padding:0 1.5rem 1.25rem}
 }
 .hero-row{
   display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;

@@ -338,11 +338,6 @@
   // การ์ดใหม่จะซ้ำกับเซิร์ฟแรกไปก่อน จนกว่าผู้ใช้จะไปเลือกเซิร์ฟที่ 2 เองที่หน้าตั้งค่า
   // (แต้มหักที่ฝั่งเซิร์ฟเวอร์เท่านั้น ตรงนี้เช็คก่อนแค่เพื่อไม่ต้องยิง RPC ทิ้ง)
   function buyServerSlotFlow(){
-    // เพดานช่องเท่ากับจำนวนการ์ดเรทสูงสุด — ซื้อเกินนี้ไม่มีที่ใช้ (ฐานข้อมูลก็บล็อกซ้ำใน buy_server_slot)
-    if(serverQuota() >= MAX_RATE_CHIP_SLOTS){
-      toast('มีช่องเซิร์ฟเวอร์ครบ '+MAX_RATE_CHIP_SLOTS+' ช่องแล้ว (สูงสุด)');
-      return;
-    }
     // แต้มไม่พอก็เปิดกล่องยืนยันเหมือนกัน (เหมือนกล่องซื้อแพ็กเกจ/ที่นั่งปาร์ตี้): บอกว่าขาดกี่แต้ม + ปุ่มขวาเป็น "เติมแต้ม"
     var have = (App.profile && App.profile.points) || 0;
     var enough = have >= SERVER_SLOT_COST;
@@ -418,12 +413,12 @@
           if(App.rateSlots.indexOf(App.rateSlots[i]) !== i){ dupIdx = i; break; }
         }
         if(dupIdx !== -1) App.rateSlots[dupIdx] = id;
-        else if(App.rateSlots.length < Math.min(serverQuota(), MAX_RATE_CHIP_SLOTS)) App.rateSlots.push(id);
+        else if(App.rateSlots.length < serverQuota()) App.rateSlots.push(id);
       });
     }
     // จำนวนการ์ดห้ามเกินจำนวนช่องที่ซื้อไว้ — กันกรณีโควต้าลดลง หรือมีคนไปแก้ค่าใน
     // localStorage เพื่อให้ตัวเองมีการ์ดเกินที่จ่ายมา (ตัดท้ายทิ้งให้พอดีโควต้า)
-    var cap = Math.min(serverQuota(), MAX_RATE_CHIP_SLOTS);
+    var cap = serverQuota();
     if(App.rateSlots.length > cap) App.rateSlots = App.rateSlots.slice(0, cap);
     if(!App.rateSlots.length) App.rateSlots = defaultRateSlots().slice(0, cap);
     saveRateSlots();
@@ -436,7 +431,6 @@
   }
   function defaultRateSlots(){ return myServerIds().slice(0,3); }
   function defaultRateChipSlots(){ return myServerIds().slice(0,1); }
-  var MAX_RATE_CHIP_SLOTS = 12;
   // ราคารับ M: รับแพงขึ้นไม่จำกัด · รับถูกลงได้ไม่เกิน 50% ของราคาอ้างอิง (ผู้ใช้กำหนด 29 ก.ย. 2569)
   // ต้องตรงกับ announcements_guard (migration 20260929000600) — ข้อความแจ้งเตือนก็ต้องตรงกัน
   var RATE_MAX_DROP = 0.50;
@@ -517,10 +511,6 @@
       persist(keys.rateSlotsVer, RATE_SLOTS_VERSION);
     } else {
       App.rateSlots = read('rateSlots', null) || defaultRateChipSlots();
-    }
-    if(App.rateSlots.length > MAX_RATE_CHIP_SLOTS){
-      App.rateSlots = App.rateSlots.slice(0, MAX_RATE_CHIP_SLOTS);
-      persist(keys.rateSlots, App.rateSlots);
     }
     App.merchantLog = read('merchantLog', []);
     var merchantLogNeedsIdFix = false;
@@ -3084,13 +3074,11 @@
     }).join('');
     // ปุ่มนี้ทำ 2 หน้าที่: ถ้ายังมีเซิร์ฟในโควต้าที่ยังไม่ได้วางการ์ด = เพิ่มฟรี
     // ถ้าใช้โควต้าหมดแล้ว = ซื้อโควต้าเพิ่ม SERVER_SLOT_COST แต้ม — ราคาขึ้นในกล่องยืนยันตอนกด (ป้ายราคาบนปุ่มเอาออกตามที่ผู้ใช้ขอ 28 ก.ย. 2569)
-    var addBtn = App.rateSlots.length < MAX_RATE_CHIP_SLOTS
-      ? '<button type="button" class="stat-chip rate-chip-add" id="addRateChipBtn">'+
+    var addBtn = '<button type="button" class="stat-chip rate-chip-add" id="addRateChipBtn">'+
           '<span class="rate-chip-add-label">+ เพิ่มเซิร์ฟเวอร์</span>'+
           // ใช้ไปกี่ช่อง / ซื้อไว้ทั้งหมดกี่ช่อง
           '<span class="rate-chip-count">('+App.rateSlots.length+'/'+serverQuota()+')</span>'+
-        '</button>'
-      : '';
+        '</button>';
     root.innerHTML = cards + addBtn;
   }
 
@@ -6539,7 +6527,7 @@
     var addBtn = e.target.closest('#addRateChipBtn');
     if(addBtn){
       var mine = myServerIds();
-      if(App.rateSlots.length >= MAX_RATE_CHIP_SLOTS || !mine.length) return;
+      if(!mine.length) return;
       if(App.rateSlots.length >= serverQuota()){
         // ใช้ช่องครบโควต้าแล้ว → ต้องซื้อช่องเพิ่มก่อน (หักแต้มที่ฝั่งเซิร์ฟเวอร์)
         buyServerSlotFlow();
@@ -7864,8 +7852,8 @@
         'แสดงจำนวนไอเทม ต้นทุนค้าง และราคาเฉลี่ยที่รับมา',
         'เพิ่ม–ตัดสต็อกไอเทมอัตโนมัติเมื่อซื้อเข้า–ขายออก',
         '6 คลังไอเทมแยกสัดส่วนชัดเจน',
-        // จำนวนเซิร์ฟบอกตามระบบจริง (ลูกค้าเข้าใจผิดว่าซื้อแพ็กแล้วเพิ่มเซิร์ฟฟรีไม่จำกัด — 8 ต.ค. 2569) · ต้องตรงกับ SERVER_SLOT_COST / MAX_RATE_CHIP_SLOTS
-        'ใช้ได้หลายเซิร์ฟเวอร์ (ฟรี 1 เซิร์ฟ · เพิ่มเซิร์ฟละ 50 แต้ม ใช้ได้ถาวร สูงสุด 12 เซิร์ฟ)',
+        // จำนวนเซิร์ฟบอกตามระบบจริง (ลูกค้าเข้าใจผิดว่าซื้อแพ็กแล้วเพิ่มเซิร์ฟฟรีไม่จำกัด — 8 ต.ค. 2569) · ต้องตรงกับ SERVER_SLOT_COST
+        'ใช้ได้หลายเซิร์ฟเวอร์ (ฟรี 1 เซิร์ฟ · เพิ่มเซิร์ฟละ 50 แต้ม ใช้ได้ถาวร)',
         'แบ่งแยกข้อมูลบัญชีตามเซิร์ฟเวอร์ชัดเจน',
         'คลังไอเทมแยกตามเซิร์ฟเวอร์ ไม่ปนกัน',
         {divider:'หมวดอื่นๆ ใช้สิทธิแบบแพ็กฟรีทั้งหมด'}
@@ -8465,11 +8453,6 @@
     var el = document.getElementById('stServersSummary');
     var count = (App.profile && App.profile.servers || []).length;
     el.textContent = 'เล่นอยู่ '+count+'/'+serverQuota();
-    // ครบเพดานแล้วปิดปุ่มซื้อช่อง กันกดซื้อเกินจนเสียแต้มฟรี
-    var btn = document.getElementById('stAddServerSlotBtn');
-    var full = serverQuota() >= MAX_RATE_CHIP_SLOTS;
-    btn.disabled = full;
-    btn.textContent = full ? 'ครบ '+MAX_RATE_CHIP_SLOTS+' ช่องแล้ว' : '+ เพิ่มเซิร์ฟเวอร์';
   }
   document.addEventListener('click', function(e){
     var chip = e.target.closest('[data-server-pick]');
@@ -11138,6 +11121,11 @@
   // การ์ดกรอกรายการเลื่อนตามหน้าจอ (position:sticky ท้าย app.css): ส่งความสูงการ์ดให้ CSS เลือกว่าจะค้างขอบบน
   // (การ์ดอยู่ในจอพอดี) หรือค้างขอบล่าง (การ์ดสูงกว่าจอ ปุ่มบันทึกยังเห็น) — เพิ่ม/ลบแถวรายการ ความสูงเปลี่ยน ก็วัดใหม่เอง
   if(window.ResizeObserver){
+    // ความสูงแถบบนของแบนเนอร์ — การ์ดเรทเว้นที่ตามนี้ ไม่ขึ้นไปทับแต้ม/ปุ่มออกจากระบบตอนการ์ดเยอะ
+    var utilBarEl = document.getElementById('utilBar');
+    new ResizeObserver(function(){
+      utilBarEl.closest('.banner-wrap').style.setProperty('--util-bar-h', Math.ceil(utilBarEl.getBoundingClientRect().height)+'px');
+    }).observe(utilBarEl);
     var stickyCardRO = new ResizeObserver(function(entries){
       entries.forEach(function(en){
         en.target.style.setProperty('--sticky-card-h', Math.ceil(en.target.getBoundingClientRect().height)+'px');
